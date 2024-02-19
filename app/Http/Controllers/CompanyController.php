@@ -8,20 +8,19 @@ use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    public function __construct(){
+        $this->middleware(['auth', 'all']);
+    }
+
+    public function index(){
+        // Data Display
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
+    public function create(){
+        // Form for Insertion
     }
 
     /**
@@ -29,7 +28,7 @@ class CompanyController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Insertion
     }
 
     /**
@@ -37,7 +36,7 @@ class CompanyController extends Controller
      */
     public function show(Company $company)
     {
-        //
+        // Similar to get
     }
 
     /**
@@ -45,7 +44,7 @@ class CompanyController extends Controller
      */
     public function edit(Company $company)
     {
-        //
+        // Edit Form
     }
 
     /**
@@ -53,7 +52,7 @@ class CompanyController extends Controller
      */
     public function update(Request $request, Company $company)
     {
-        //
+        // Edit
     }
 
     /**
@@ -61,6 +60,6 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company)
     {
-        //
+        // Delete
     }
 }

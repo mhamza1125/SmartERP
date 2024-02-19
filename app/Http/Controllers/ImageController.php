@@ -3,64 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Image;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Repositories\ImageRepository;
+use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $imageRepository;
+
+    public function __construct(ImageRepository $imageRepository){
+        $this->middleware(['auth', 'all']);
+        $this->imageRepository = $imageRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+    public function index(){}
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    public function create(){}
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Image $image)
-    {
-        //
-    }
+    public function store(Request $request){}
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Image $image)
-    {
-        //
-    }
+    public function show(Image $image){}
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Image $image)
-    {
-        //
-    }
+    public function edit(Image $image){}
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Image $image)
-    {
-        //
+    public function update(Request $request, Image $image){}
+
+    public function destroy(Image $id){
+        $this->imageRepository->delete($id->image_id);
+        unlink('resources/employee/' . $id->image);
+        return back()->with('success', 'Image Deleted Successfully');
     }
 }

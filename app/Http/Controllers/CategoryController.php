@@ -3,64 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryRequest;
+use App\Repositories\CategoryRepository;
 
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $categoryRepository;
+
+    public function __construct(CategoryRepository $categoryRepository){
+        $this->middleware(['auth', 'all']);
+        $this->categoryRepository = $categoryRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(){
+        $category = $this->categoryRepository->all();
+        return view('category', [
+            'category' => $category,
+        ]); 
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(){
+        return view('addCategory');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Category $category)
-    {
-        //
+    public function store(CategoryRequest $request){
+        $validatedData = $request->validated();
+        $this->categoryRepository->store($validatedData);
+        return redirect()->route('category.add')->with('success', 'Record Inserted Successfully');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Category $category)
-    {
-        //
+    public function update(Request $request, $id){
+        $this->categoryRepository->update($id, $request->input());      
+        return redirect()->route('category')->with('success', 'Record Updated Successfully');
     }
+    
+    public function edit(Category $category){}
+    
+    public function show(Category $category){}
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Category $category)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Category $category)
-    {
-        //
-    }
+    public function destroy(Category $category){}
 }

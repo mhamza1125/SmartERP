@@ -3,64 +3,53 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CustomerRequest;
+use App\Repositories\CustomerRepository;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $customerRepository;
+
+    public function __construct(CustomerRepository $customerRepository){
+        $this->middleware(['auth', 'all']);
+        $this->customerRepository = $customerRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(){
+        $customer = $this->customerRepository->all();
+        return view('customer', [
+            'customer' => $customer,
+        ]); 
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(){
+        return view('addCustomer');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Customer $customer)
-    {
-        //
+    public function store(CustomerRequest $request){
+        $validatedData = $request->validated();
+        $this->customerRepository->store($validatedData);
+        return redirect()->route('customer.add')->with('success', 'Record Inserted Successfully');
+    }
+    
+    public function show(Customer $id){
+        return view('customerInfo', [
+            'customer' => $id,
+        ]);
+    }
+    
+    public function edit(Customer $id){
+        return view('editCustomer', [
+            'customer' => $id,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Customer $customer)
-    {
-        //
+    public function update(Request $request, $id){
+        $this->customerRepository->update($id, $request->input());      
+        return redirect()->route('customer.show', $id)->with('success', 'Record Updated Successfully');    
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Customer $customer)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Customer $customer)
-    {
-        //
-    }
+    
+    public function destroy(Customer $customer){}
 }

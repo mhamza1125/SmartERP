@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Image extends Model
 {
     use HasFactory;
+
+    protected $primaryKey = 'image_id';
+
+    protected $fillable = [
+        'table_name',
+        'table_id',
+        'image',
+        'updated_at',
+    ];
 }

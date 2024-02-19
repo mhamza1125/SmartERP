@@ -8,4 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class Vendor extends Model
 {
     use HasFactory;
+    
+    protected $primaryKey = 'vendor_id';
+
+    protected $fillable = [
+        'vendor_type_id',
+        'name',
+        'fname',
+        'phone1',
+        'phone2',
+        'city_id',
+        'address',
+        'description',
+        'created_by',
+        'updated_at',
+    ];
 }

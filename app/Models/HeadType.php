@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class HeadType extends Model
 {
     use HasFactory;
+
+    // Null Direct DB Entry
 }

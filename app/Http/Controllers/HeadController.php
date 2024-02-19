@@ -3,64 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\Head;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\HeadRequest;
+use App\Http\Controllers\Controller;
+use App\Repositories\HeadRepository;
+use App\Repositories\HeadTypeRepository;
 
 class HeadController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $headRepository;
+    protected $headTypeRepository;
+
+    public function __construct(
+        HeadRepository $headRepository, 
+        HeadTypeRepository $headTypeRepository
+    ){
+        $this->middleware(['auth', 'all']);
+        $this->headRepository = $headRepository;
+        $this->headTypeRepository = $headTypeRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(){
+        $head = $this->headRepository->all();
+        $headType = $this->headTypeRepository->all();
+        return view('head', [
+            'head' => $head,
+            'headType' => $headType,
+        ]);   
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(){
+        $headType = $this->headTypeRepository->all();
+        return view('addHead', [
+            'headType' => $headType,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Head $head)
-    {
-        //
+    public function store(HeadRequest $request){
+        $validatedData = $request->validated();
+        $this->headRepository->store($validatedData);
+        return redirect()->route('head.add')->with('success', 'Record Inserted Successfully');
+    }
+    
+    public function update(Request $request, $id){
+        $this->headRepository->update($id, $request->input());      
+        return redirect()->route('head')->with('success', 'Record Updated Successfully');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Head $head)
-    {
-        //
-    }
+    public function show(Head $head){}
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Head $head)
-    {
-        //
-    }
+    public function edit(Head $head){}
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Head $head)
-    {
-        //
-    }
+    public function destroy(Head $head){}
 }

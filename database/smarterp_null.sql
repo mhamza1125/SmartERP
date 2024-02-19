@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 16, 2024 at 12:03 PM
+-- Generation Time: Feb 16, 2024 at 07:46 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -29,9 +29,9 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `banks` (
   `bank_id` bigint(20) UNSIGNED NOT NULL,
-  `bank_type` bigint(20) UNSIGNED NOT NULL,
-  `banker_id` bigint(20) UNSIGNED NOT NULL,
-  `head_id` bigint(20) UNSIGNED NOT NULL,
+  `bank_holder` bigint(20) UNSIGNED NOT NULL COMMENT '0-Admin, 1-Employee, 2-Vendor',
+  `banker_id` bigint(20) UNSIGNED NOT NULL COMMENT '0-Admin',
+  `head_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Bank Type',
   `account` varchar(255) NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -61,8 +61,8 @@ CREATE TABLE `categories` (
 CREATE TABLE `company` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
-  `ceo_name` varchar(255) NOT NULL,
-  `postal_code` varchar(255) DEFAULT NULL,
+  `ceo` varchar(255) NOT NULL,
+  `zip` varchar(255) DEFAULT NULL,
   `phone` varchar(255) NOT NULL,
   `fax` varchar(255) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
@@ -87,10 +87,10 @@ CREATE TABLE `customers` (
   `phone` varchar(255) NOT NULL,
   `fax` varchar(255) NOT NULL,
   `address` longtext DEFAULT NULL,
+  `description` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `description` longtext DEFAULT NULL
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -101,7 +101,8 @@ CREATE TABLE `customers` (
 
 CREATE TABLE `employees` (
   `employee_id` bigint(20) UNSIGNED NOT NULL,
-  `department_id` bigint(20) UNSIGNED NOT NULL,
+  `employee_no` varchar(255) NOT NULL,
+  `department_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `employee_type_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Salary, Wages',
   `name` varchar(255) NOT NULL,
   `fname` varchar(255) NOT NULL,
@@ -109,9 +110,11 @@ CREATE TABLE `employees` (
   `cnic` varchar(255) NOT NULL,
   `phone1` varchar(255) NOT NULL,
   `phone2` varchar(255) DEFAULT NULL,
-  `city_id` bigint(20) UNSIGNED NOT NULL,
+  `city_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `address` longtext NOT NULL,
   `description` longtext DEFAULT NULL,
+  `joining_date` date NOT NULL,
+  `employee_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Active / Inactive',
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -143,6 +146,7 @@ CREATE TABLE `heads` (
   `head_id` bigint(20) UNSIGNED NOT NULL,
   `head_type_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
+  `head_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -174,7 +178,8 @@ INSERT INTO `head_types` (`head_type_id`, `name`, `created_at`, `updated_at`) VA
 (6, 'Bank Accounts', '2024-02-15 19:21:32', '2024-02-15 19:21:32'),
 (7, 'Expenses', '2024-02-15 19:21:32', '2024-02-15 19:21:32'),
 (8, 'Cities / Towns / Villages', '2024-02-15 19:22:44', '2024-02-15 19:22:44'),
-(9, 'Employee Types', '2024-02-16 09:56:31', '2024-02-16 09:56:31');
+(9, 'Employee Types', '2024-02-16 09:56:31', '2024-02-16 09:56:31'),
+(10, 'Material Types', '2024-02-16 18:10:01', '2024-02-16 18:10:01');
 
 -- --------------------------------------------------------
 
@@ -200,8 +205,9 @@ CREATE TABLE `images` (
 CREATE TABLE `materials` (
   `material_id` bigint(20) UNSIGNED NOT NULL,
   `material_no` varchar(255) NOT NULL,
+  `head_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Material Types',
   `name` varchar(255) NOT NULL,
-  `unit_id` bigint(20) UNSIGNED NOT NULL,
+  `unit_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `description` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -308,6 +314,7 @@ CREATE TABLE `products` (
   `category_id` bigint(20) UNSIGNED NOT NULL,
   `article_no` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `product_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -322,8 +329,8 @@ CREATE TABLE `products` (
 CREATE TABLE `product_variants` (
   `product_variant_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
-  `size_id` bigint(20) UNSIGNED NOT NULL,
-  `color_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `size_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
+  `color_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'HeadID',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -388,7 +395,7 @@ CREATE TABLE `receive_materials` (
 
 CREATE TABLE `return_materials` (
   `return_material_id` bigint(20) UNSIGNED NOT NULL,
-  `received_material_id` bigint(20) UNSIGNED NOT NULL,
+  `receive_material_id` bigint(20) UNSIGNED NOT NULL,
   `quantity` bigint(20) UNSIGNED NOT NULL,
   `return_date` date NOT NULL,
   `remarks` longtext DEFAULT NULL,
@@ -434,7 +441,7 @@ CREATE TABLE `salaries` (
 
 CREATE TABLE `stock_materials` (
   `store_material_id` bigint(20) UNSIGNED NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `receive_material_id` bigint(20) UNSIGNED NOT NULL,
   `quantity` bigint(20) UNSIGNED NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
@@ -453,9 +460,9 @@ CREATE TABLE `stock_products` (
   `stock_material_id` bigint(20) UNSIGNED NOT NULL,
   `department_id` bigint(20) UNSIGNED NOT NULL,
   `employee_id` bigint(20) UNSIGNED NOT NULL,
-  `type` bigint(20) UNSIGNED NOT NULL COMMENT 'Stock In/Out',
-  `product_stage` bigint(20) UNSIGNED NOT NULL COMMENT '1 - Raw\r\n2 - Cutting\r\n3 - Stitched\r\n4 - Finished',
+  `stock_type` bigint(20) UNSIGNED NOT NULL COMMENT 'Stock In/Out',
   `quantity` double UNSIGNED NOT NULL,
+  `product_stage` bigint(20) UNSIGNED NOT NULL COMMENT '1-Raw, 2-Cutting, 3-Stitched, 4-Finished',
   `movement_date` date NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -495,6 +502,7 @@ CREATE TABLE `transactions` (
 CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
+  `role` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) NOT NULL,
@@ -502,6 +510,13 @@ CREATE TABLE `users` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `name`, `role`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'Admin', 'admin', 'admin@gmail.com', NULL, '$2y$12$IsLNGwhB1PNBy6Lkxrtkx.ka9hfw2hEf/.qGrjPlN8EFnxkGIrcgW', 'fEoALirAtBlNvxMU916Uv3aqedz2LbSbOd5aHkZOc1d1qhPDIfgJ2M99f3cU', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -516,7 +531,7 @@ CREATE TABLE `vendors` (
   `fname` varchar(255) NOT NULL,
   `phone1` varchar(255) NOT NULL,
   `phone2` varchar(255) DEFAULT NULL,
-  `city_id` bigint(20) UNSIGNED NOT NULL,
+  `city_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `address` longtext NOT NULL,
   `description` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
@@ -559,6 +574,7 @@ ALTER TABLE `customers`
 --
 ALTER TABLE `employees`
   ADD PRIMARY KEY (`employee_id`);
+  ADD UNIQUE KEY `employee_no` (`employee_no`);
 
 --
 -- Indexes for table `failed_jobs`
@@ -758,7 +774,7 @@ ALTER TABLE `heads`
 -- AUTO_INCREMENT for table `head_types`
 --
 ALTER TABLE `head_types`
-  MODIFY `head_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `head_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `images`
@@ -866,7 +882,7 @@ ALTER TABLE `transactions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `vendors`
