@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\Material;
+
+class MaterialRepository implements GlobalInterface {
+    
+    public function all(){
+        return Material::join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->select('materials.*',
+            'mthead.name as mtname',
+            'uhead.name as uname')
+        ->get();
+    }
+
+    public function get($id){
+        return Material::where('material_id', $id)
+        ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->select('materials.*',
+            'mthead.name as mtname',
+            'uhead.name as uname')
+        ->first();
+    }
+
+    public function store(array $data){
+        $data['created_by'] = auth()->id();
+        $store = Material::create($data);
+        return $store->material_id;
+    }
+
+    public function update($id, array $data) {
+        $update = Material::findOrFail($id);
+        $update->update($data);
+        return $update->material_id;
+    }
+
+    public function delete($id){}
+}

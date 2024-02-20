@@ -13,7 +13,7 @@ class Material extends Model
 
     protected $fillable = [
         'material_no',
-        'head_id',
+        'material_type_id',
         'name',
         'unit_id',
         'description',

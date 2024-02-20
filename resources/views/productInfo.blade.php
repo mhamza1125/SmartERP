@@ -6,46 +6,31 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Employee Info</h4>
+            <h4>Product Info</h4>
             <div class="card-header-action">
-              <a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>
+              <a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit - {{$product['product_id']}}</a>
             </div>
           </div>
           <div class="card-body">
             <table class="table">
               <tbody>
                 <tr>
-                  <td><b>Employee No: </b> {{$employee['employee_no']}}</td>
-                  <td><b>Department: </b> {{$employee['dname']}}</td>
-                  <td><b>Type: </b> {{$employee['etname']}}</td>
+                  <td><b>Article No: </b> {{$product['article_no']}}</td>
+                  <td colspan="2"><b>Product Name: </b> {{$product['name']}}</td>
                 </tr>
                 <tr>
-                  <td><b>Name: </b> {{$employee['name']}}</td>
-                  <td><b>Short Name: </b> {{$employee['sname']}}</td>
-                  <td><b>Father Name: </b> {{$employee['fname']}}</td>
-                </tr>
-                <tr>
-                  <td><b>CNIC: </b> {{$employee['cnic']}}</td>
-                  <td><b>Contact No: </b> {{$employee['phone1']}}</td>
-                  <td><b>Emergency No: </b> {{$employee['phone2']}}</td>
-                </tr>
-                <tr>
-                  <td><b>City: </b> {{$employee['cname']}}</td>
-                  <td><b>Current Status: </b> @if($employee['employee_status']) 
+                  <td><b>Category: </b> {{$product['cname']}}</td>
+                  <td><b>Sizes: </b> @foreach($size as $item) {{$item->name}}, @endforeach </td>
+                  <td><b>Current Status: </b> @if($product['product_status']) 
                     <span class="badge badge-success">Active</span> @else 
                     <span class="badge badge-danger">Inactive</span> @endif</td>
-                  <td><b>Joining Date: </b> {{$employee['joining_date']}}</td>
-                </tr>
-                <tr>
-                  <td><b>Current Salary: </b> 000000 </td>
-                  <td colspan="2"><b>Address: </b> {{$employee['address']}}, {{$employee['cname']}}</td>
                 </tr>
                 <tr>
                   <td colspan="3">
                     <div class="row">
                       <div class="col-md-1"><b>Details: </b></div>
                       <div class="col-md-11">
-                        @php echo $employee['description'] @endphp
+                        @php echo $product['description'] @endphp
                       </div>
                     </div>
                   </td>
@@ -57,8 +42,8 @@
               <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
                 @foreach($image as $item)
                   <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-                    <a href="{{ URL::asset('resources/employee/'. $item->image) }}">
-                      <img class="img-responsive thumbnail" src="{{ URL::asset('resources/employee/'. $item->image) }}" alt="">
+                    <a href="{{ URL::asset('resources/product/'. $item->image) }}">
+                      <img class="img-responsive thumbnail" src="{{ URL::asset('resources/product/'. $item->image) }}" alt="">
                     </a>
                     <form action="{{route('image.delete', $item->image_id)}}" method="POST">
                       @csrf

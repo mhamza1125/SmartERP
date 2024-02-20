@@ -4,9 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HeadController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\DashboardController;
 
 // --------------------------------------
@@ -54,3 +58,35 @@ Route::post('/employee', [EmployeeController::class, 'store'])->name('employee.s
 Route::get('/employee/{id}', [EmployeeController::class, 'show'])->name('employee.show');
 Route::get('/editEmployee/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
 Route::post('/employee/{id}', [EmployeeController::class, 'update'])->name('employee.update');
+
+// Material
+Route::get('/material', [MaterialController::class, 'index'])->name('material');
+Route::get('/addMaterial', [MaterialController::class, 'create'])->name('material.add');
+Route::post('/material', [MaterialController::class, 'store'])->name('material.store');
+Route::get('/material/{id}', [MaterialController::class, 'show'])->name('material.show');
+Route::get('/editMaterial/{id}', [MaterialController::class, 'edit'])->name('material.edit');
+Route::post('/material/{id}', [MaterialController::class, 'update'])->name('material.update');
+
+// Product
+Route::get('/product', [ProductController::class, 'index'])->name('product');
+Route::get('/addProduct', [ProductController::class, 'create'])->name('product.add');
+Route::post('/product', [ProductController::class, 'store'])->name('product.store');
+Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
+Route::get('/editProduct/{id}', [ProductController::class, 'edit'])->name('product.edit');
+Route::post('/product/{id}', [ProductController::class, 'update'])->name('product.update');
+
+// Purchase
+Route::get('/purchase', [PurchaseController::class, 'index'])->name('purchase');
+Route::get('/addPurchase', [PurchaseController::class, 'create'])->name('purchase.add');
+Route::post('/purchase', [PurchaseController::class, 'store'])->name('purchase.store');
+Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchase.show');
+Route::get('/editpurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
+Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
+
+// Vendor
+Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
+Route::get('/addVendor', [VendorController::class, 'create'])->name('vendor.add');
+Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
+Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show');
+Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
+Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');

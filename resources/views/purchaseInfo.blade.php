@@ -6,32 +6,32 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Customer Info</h4>
+            <h4>Purchas Info</h4>
             <div class="card-header-action">
-              <a href="{{ route('customer.edit', $customer['customer_id']) }}" class="btn btn-primary">Edit</a>
+              <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
             </div>
           </div>
           <div class="card-body">
             <table class="table">
               <tbody>
                 <tr>
-                  <td><b>Customer No: </b> {{$customer['customer_no']}}</td>
-                  <td colspan="2"><b>Customer Name: </b> {{$customer['fname']}} {{$customer['lname']}}</td>
+                  <td><b>purchase No: </b> {{$purchase['purchase_no']}}</td>
+                  <td colspan="2"><b>purchase Name: </b> {{$purchase['fname']}} {{$purchase['lname']}}</td>
                 </tr>
                 <tr>
-                  <td><b>Email: </b> {{$customer['email']}}</td>
-                  <td><b>Contact: </b> {{$customer['phone']}}</td>
-                  <td><b>Fax No: </b> {{$customer['fax']}}</td>
+                  <td><b>Email: </b> {{$purchase['email']}}</td>
+                  <td><b>Contact: </b> {{$purchase['phone']}}</td>
+                  <td><b>Fax No: </b> {{$purchase['fax']}}</td>
                 </tr>
                 <tr>
-                  <td colspan="3"><b>Address: </b> {{$customer['address']}}</td>
+                  <td colspan="3"><b>Address: </b> {{$purchase['address']}}</td>
                 </tr>
                 <tr>
                   <td colspan="3">
                     <div class="row">
                       <div class="col-md-1"><b>Details: </b></div>
                       <div class="col-md-11">
-                        @php echo $customer['description'] @endphp
+                        @php echo $purchase['description'] @endphp
                       </div>
                     </div>
                   </td>

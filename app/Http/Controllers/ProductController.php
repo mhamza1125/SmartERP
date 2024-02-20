@@ -3,64 +3,104 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Repositories\HeadRepository;
+use App\Http\Requests\ProductRequest;
+use App\Repositories\ImageRepository;
+use App\Repositories\ProductRepository;
+use App\Repositories\CategoryRepository;
+use App\Repositories\ProductTypeRepository;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $headRepository;
+    protected $imageRepository;
+    protected $productRepository;
+    protected $categoryRepository;
+    protected $productTypeRepository;
+
+    public function __construct(
+        HeadRepository $headRepository,
+        ImageRepository $imageRepository,
+        ProductRepository $productRepository, 
+        CategoryRepository $categoryRepository, 
+        ProductTypeRepository $productTypeRepository, 
+    ){
+        $this->middleware(['auth', 'all']);
+        $this->headRepository = $headRepository;
+        $this->imageRepository = $imageRepository;
+        $this->productRepository = $productRepository;
+        $this->categoryRepository = $categoryRepository;
+        $this->productTypeRepository = $productTypeRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(){
+        $product = $this->productRepository->all();
+        return view('product', [
+            'product' => $product,
+        ]); 
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(){
+        $category = $this->categoryRepository->all();
+        $size = $this->headRepository->get('1');
+        return view('addproduct', [
+            'category' => $category,
+            'size' => $size,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
-    {
-        //
+    public function store(ProductRequest $request){
+        $validatedData = $request->validated();
+        $getId = $this->productRepository->store($validatedData);
+        foreach($request->input('size_id') as $size_id){
+            $productType = ['product_id' => $getId, 'size_id' => $size_id];
+            $this->productTypeRepository->store($productType);
+        }
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'product', 'products', $getId);        
+            }
+        }
+        return redirect()->route('product.add')->with('success', 'Record Inserted Successfully');
+    }
+    
+    public function show($id){
+        $product = $this->productRepository->get($id);
+        $size = $this->productTypeRepository->get($id);
+        $image = $this->imageRepository->get2('products', $id);
+        return view('productInfo', [
+            'product' => $product,
+            'size' => $size,
+            'image' => $image,
+        ]);
+    }
+    
+    public function edit(Product $id){
+        $category = $this->categoryRepository->all();
+        $productType = $this->productTypeRepository->get($id->product_id);
+        $size = $this->headRepository->get('1');
+        return view('editproduct', [
+            'product' => $id,
+            'category' => $category,
+            'size' => $size,
+            'productType' => $productType,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
-    {
-        //
-    }
+    public function update(Request $request, $id){
+        $getId = $this->productRepository->update($id, $request->input());
+        $sizes = $request->input('size_id');   
+        $this->productTypeRepository->update($getId, $sizes);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
-    {
-        //
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'product', 'products', $getId);        
+            }
+        }
+        return redirect()->route('product.show', $id)->with('success', 'Record Updated Successfully');    
     }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
-    {
-        //
-    }
+    
+    public function destroy(product $product){}
 }

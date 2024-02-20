@@ -192,6 +192,7 @@ CREATE TABLE `images` (
   `table_name` varchar(255) NOT NULL,
   `table_id` bigint(20) UNSIGNED NOT NULL,
   `image` varchar(255) NOT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -205,7 +206,7 @@ CREATE TABLE `images` (
 CREATE TABLE `materials` (
   `material_id` bigint(20) UNSIGNED NOT NULL,
   `material_no` varchar(255) NOT NULL,
-  `head_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Material Types',
+  `material_type_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Material Types',
   `name` varchar(255) NOT NULL,
   `unit_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `description` longtext DEFAULT NULL,
@@ -265,7 +266,7 @@ CREATE TABLE `orders` (
 CREATE TABLE `order_items` (
   `order_item_id` bigint(20) UNSIGNED NOT NULL,
   `order_id` bigint(20) UNSIGNED NOT NULL,
-  `product_variant_id` bigint(20) UNSIGNED NOT NULL,
+  `product_type_id` bigint(20) UNSIGNED NOT NULL,
   `quantity` bigint(20) UNSIGNED NOT NULL,
   `price` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -314,6 +315,7 @@ CREATE TABLE `products` (
   `category_id` bigint(20) UNSIGNED NOT NULL,
   `article_no` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `description` longtext DEFAULT NULL,
   `product_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -323,14 +325,15 @@ CREATE TABLE `products` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `product_variants`
+-- Table structure for table `product_types`
 --
 
-CREATE TABLE `product_variants` (
-  `product_variant_id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE `product_types` (
+  `product_type_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `size_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `color_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'HeadID',
+  `product_type_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -526,7 +529,7 @@ INSERT INTO `users` (`id`, `name`, `role`, `email`, `email_verified_at`, `passwo
 
 CREATE TABLE `vendors` (
   `vendor_id` bigint(20) UNSIGNED NOT NULL,
-  `vendor_type_id` bigint(20) UNSIGNED NOT NULL,
+  `vendor_type_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `name` varchar(255) NOT NULL,
   `fname` varchar(255) NOT NULL,
   `phone1` varchar(255) NOT NULL,
@@ -650,10 +653,10 @@ ALTER TABLE `products`
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Indexes for table `product_variants`
+-- Indexes for table `product_types`
 --
-ALTER TABLE `product_variants`
-  ADD PRIMARY KEY (`product_variant_id`);
+ALTER TABLE `product_types`
+  ADD PRIMARY KEY (`product_type_id`);
 
 --
 -- Indexes for table `purchases`
@@ -819,10 +822,10 @@ ALTER TABLE `products`
   MODIFY `product_id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `product_variants`
+-- AUTO_INCREMENT for table `product_types`
 --
-ALTER TABLE `product_variants`
-  MODIFY `product_variant_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+ALTER TABLE `product_types`
+  MODIFY `product_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchases`

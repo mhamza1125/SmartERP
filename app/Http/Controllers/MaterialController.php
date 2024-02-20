@@ -3,64 +3,85 @@
 namespace App\Http\Controllers;
 
 use App\Models\Material;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Repositories\HeadRepository;
+use App\Repositories\ImageRepository;
+use App\Http\Requests\MaterialRequest;
+use App\Repositories\MaterialRepository;
 
 class MaterialController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $materialRepository;
+    protected $headRepository;
+    protected $imageRepository;
+
+    public function __construct(
+        MaterialRepository $materialRepository, 
+        HeadRepository $headRepository,
+        ImageRepository $imageRepository,
+    ){
+        $this->middleware(['auth', 'all']);
+        $this->materialRepository = $materialRepository;
+        $this->headRepository = $headRepository;
+        $this->imageRepository = $imageRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(){
+        $material = $this->materialRepository->all();
+        return view('material', [
+            'material' => $material,
+        ]); 
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(){
+        $material = $this->headRepository->get('10');
+        $unit = $this->headRepository->get('4');
+        return view('addmaterial', [
+            'material' => $material,
+            'unit' => $unit,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Material $material)
-    {
-        //
+    public function store(MaterialRequest $request){
+        $validatedData = $request->validated();
+        $getId = $this->materialRepository->store($validatedData);
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'material', 'materials', $getId);        
+            }
+        }
+        return redirect()->route('material.add')->with('success', 'Record Inserted Successfully');
+    }
+    
+    public function show($id){
+        $material = $this->materialRepository->get($id);
+        $image = $this->imageRepository->get2('materials', $id);
+        return view('materialInfo', [
+            'material' => $material,
+            'image' => $image,
+        ]);
+    }
+    
+    public function edit(Material $id){
+        $material = $this->headRepository->get('10');
+        $unit = $this->headRepository->get('4');
+        return view('editmaterial', [
+            'material' => $id,
+            'materialType' => $material,
+            'unit' => $unit,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Material $material)
-    {
-        //
+    public function update(Request $request, $id){
+        $getId = $this->materialRepository->update($id, $request->input());      
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'material', 'materials', $getId);        
+            }
+        }
+        return redirect()->route('material.show', $id)->with('success', 'Record Updated Successfully');    
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Material $material)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Material $material)
-    {
-        //
-    }
+    
+    public function destroy(Material $material){}
 }

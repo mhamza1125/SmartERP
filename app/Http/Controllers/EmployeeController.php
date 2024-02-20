@@ -12,19 +12,19 @@ use App\Repositories\EmployeeRepository;
 
 class EmployeeController extends Controller
 {
-    protected $employeeRepository;
-    protected $headRepository;
     protected $imageRepository;
+    protected $headRepository;
+    protected $employeeRepository;
 
     public function __construct(
-        EmployeeRepository $employeeRepository, 
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
+        EmployeeRepository $employeeRepository, 
     ){
         $this->middleware(['auth', 'all']);
-        $this->employeeRepository = $employeeRepository;
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
+        $this->employeeRepository = $employeeRepository;
     }
 
     public function index(){

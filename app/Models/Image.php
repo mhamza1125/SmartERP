@@ -15,6 +15,7 @@ class Image extends Model
         'table_name',
         'table_id',
         'image',
+        'created_by',
         'updated_at',
     ];
 }

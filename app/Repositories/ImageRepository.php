@@ -17,6 +17,7 @@ class ImageRepository implements GlobalInterface {
     }
 
     public function store(array $data){
+        $data['created_by'] = auth()->id();
         $store = Image::create($data);
         return $store->image_id;
     }

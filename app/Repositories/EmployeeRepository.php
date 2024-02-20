@@ -12,14 +12,14 @@ class EmployeeRepository implements GlobalInterface {
 
     public function get($id){
         return Employee::where('employee_id', $id)
-            ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
-            ->join('heads as ethead', 'ethead.head_id', '=', 'employees.employee_type_id')
-            ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
-            ->select('employees.*', 
-                    'dhead.name as dname', 
-                    'ethead.name as etname', 
-                    'chead.name as cname')
-            ->first();
+        ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
+        ->join('heads as ethead', 'ethead.head_id', '=', 'employees.employee_type_id')
+        ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
+        ->select('employees.*', 
+            'dhead.name as dname', 
+            'ethead.name as etname', 
+            'chead.name as cname')
+        ->first();
     }
 
     public function store(array $data){

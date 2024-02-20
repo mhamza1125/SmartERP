@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('employee.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('employee.store') }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <div class="row">
                 <div class="col-md-4">
@@ -24,7 +24,7 @@
                       <option selected disabled>Select Department</option>
                       @if($department->count())
                         @foreach($department as $item)
-                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                          <option value="{{$item->head_id}}" {{ old('department_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -39,7 +39,7 @@
                       <option selected disabled>Select City</option>
                       @if($city->count())
                         @foreach($city as $item)
-                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                          <option value="{{$item->head_id}}" {{ old('city_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -54,7 +54,7 @@
                       <option selected disabled>Select Employee Type</option>
                       @if($employeeType->count())
                         @foreach($employeeType as $item)
-                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                          <option value="{{$item->head_id}}" {{ old('employee_type_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -112,7 +112,7 @@
                     <label>Father Name</label>
                     <input type="text" class="form-control" name="fname" required value="{{old('fname')}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Last Name</div>
+                    <div class="invalid-feedback">Enter Father Name</div>
                   </div>
                 </div>
               </div>

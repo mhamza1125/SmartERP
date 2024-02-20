@@ -112,7 +112,7 @@
                     <label>Father Name</label>
                     <input type="text" class="form-control" name="fname" required value="{{$employee['fname']}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Last Name</div>
+                    <div class="invalid-feedback">Enter Father Name</div>
                   </div>
                 </div>
               </div>

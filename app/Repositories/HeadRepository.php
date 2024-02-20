@@ -14,9 +14,8 @@ class HeadRepository implements GlobalInterface {
     }
 
     public function get($id){
-        return Head::join('head_types', 'head_types.head_type_id', '=', 'heads.head_type_id')
-        ->select('heads.*')
-        ->where('head_types.head_type_id', $id)
+        return Head::where('heads.head_type_id', $id)
+        ->where('heads.head_status', '1')
         ->get();
     }
 
