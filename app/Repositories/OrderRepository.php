@@ -7,7 +7,8 @@ use App\Models\Order;
 class OrderRepository implements GlobalInterface {
     
     public function all(){
-        return Order::all();
+        return Order::join('customers', 'customers.customer_id', '=', 'orders.customer_id')
+        ->get();
     }
 
     public function active(){
@@ -17,8 +18,8 @@ class OrderRepository implements GlobalInterface {
 
     public function get($id){
         return Order::where('order_id', $id)
-        ->join('customers', 'customer.customer_id', '=', 'order.customer_id')
-        ->select('orders.*', 'customer.name')
+        ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
+        ->select('orders.*', 'customers.fname')
         ->first();
     }
 

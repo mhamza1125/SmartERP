@@ -62,32 +62,15 @@ class PurchaseController extends Controller
         if (!$request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $purchase = [
-            'purchase_no' => $request->input('purchase_no'),
-            'vendor_id' => $request->input('vendor_id'),
-            'purchase_date' => $request->input('purchase_date'),
-            'description' => $request->input('description'),
-        ];
+
         $materials = $request->input('material_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
-
-        $getId = $this->purchaseRepository->store($validatedData);
         
-        foreach ($prices as $key => $price){
-            $material = $materials[$key] ?? null;
-            $quantity = $quantities[$key] ?? null;
-            $total = $price * $quantity;
-            $purchaseItem = [
-                'purchase_id' => $getId,
-                'material_id' => $material,
-                'price' => $price,
-                'quantity' => $quantity,
-                'total' => $total,
-            ];
-            $this->purchaseItemRepository->store($purchaseItem);
+        $getId = $this->purchaseRepository->store($validatedData);
 
-        }
+        $this->storePI($getId, $materials, $prices, $quantities);
+
         return redirect()->route('purchase.add')->with('success', 'Record Inserted Successfully');
     }
     
@@ -99,26 +82,50 @@ class PurchaseController extends Controller
     }
     
     public function edit(Purchase $id){
-        $department = $this->orderRepository->get('3');
-        $purchaseType = $this->orderRepository->get('9');
-        $city = $this->orderRepository->get('8');
+        $order = $this->orderRepository->active();
+        $vendor = $this->vendorRepository->all();
+        $material = $this->materialRepository->all();
+        $purchaseItem = $this->purchaseItemRepository->get($id->purchase_id);
         return view('editPurchase', [
             'purchase' => $id,
-            'department' => $department,
-            'purchaseType' => $purchaseType,
-            'city' => $city,
+            'order' => $order,
+            'vendor' => $vendor,
+            'material' => $material,
+            'purchaseItem' => $purchaseItem,
         ]);
     }
 
     public function update(Request $request, $id){
-        $getId = $this->purchaseRepository->update($id, $request->input());      
-        if ($request->hasFile('image')) {
-            foreach ($request->file('image') as $file) {
-                $this->storeImage($file, 'purchase', 'purchases', $getId);        
-            }
+        if (!$request->has('total')) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+
+        $materials = $request->input('material_id');
+        $prices = $request->input('price');
+        $quantities = $request->input('quantity');
+        
+        $this->purchaseItemRepository->delete($id);
+        $this->purchaseRepository->update($id, $request->input());
+        $this->storePI($id, $materials, $prices, $quantities);
         return redirect()->route('purchase.show', $id)->with('success', 'Record Updated Successfully');    
     }
     
     public function destroy(Purchase $purchase){}
+
+    private function storePI($getId, $materials, $prices, $quantities)
+    {
+        foreach ($prices as $key => $price) {
+            $material = $materials[$key] ?? null;
+            $quantity = $quantities[$key] ?? null;
+            $total = $price * $quantity;
+            $purchaseItem = [
+                'purchase_id' => $getId,
+                'material_id' => $material,
+                'price' => $price,
+                'quantity' => $quantity,
+                'total' => $total,
+            ];
+            $this->purchaseItemRepository->store($purchaseItem);
+        }
+    }
 }

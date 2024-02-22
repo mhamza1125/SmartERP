@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HeadController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
@@ -12,6 +13,8 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\PurchaseItemController;
 
 // --------------------------------------
 // ---------- Auth Controllers ----------
@@ -59,6 +62,14 @@ Route::get('/employee/{id}', [EmployeeController::class, 'show'])->name('employe
 Route::get('/editEmployee/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
 Route::post('/employee/{id}', [EmployeeController::class, 'update'])->name('employee.update');
 
+// Vendor
+Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
+Route::get('/addVendor', [VendorController::class, 'create'])->name('vendor.add');
+Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
+Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show');
+Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
+Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
+
 // Material
 Route::get('/material', [MaterialController::class, 'index'])->name('material');
 Route::get('/addMaterial', [MaterialController::class, 'create'])->name('material.add');
@@ -83,10 +94,11 @@ Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchas
 Route::get('/editpurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
 
-// Vendor
-Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
-Route::get('/addVendor', [VendorController::class, 'create'])->name('vendor.add');
-Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
-Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show');
-Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
-Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
+// Order
+Route::get('/order', [OrderController::class, 'index'])->name('order');
+Route::get('/addOrder', [OrderController::class, 'create'])->name('order.add');
+Route::post('/order', [OrderController::class, 'store'])->name('order.store');
+Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
+Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
+Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
+

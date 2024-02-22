@@ -41,7 +41,7 @@ class CustomerController extends Controller
     }
     
     public function edit(Customer $id){
-        return view('editCustomer', [
+        return view('editsCustomer', [
             'customer' => $id,
         ]);
     }

@@ -39,7 +39,7 @@
                   <div class="form-group">
                     <label>Material Type</label>
                     <select class="form-control select2" name="material_type_id" required>
-                      <option selected disabled>Select Material Type</option>
+                      <option value="" selected disabled>Select Material Type</option>
                       @if($material->count())
                         @foreach($material as $item)
                           <option value="{{$item->head_id}}" {{ old('material_type_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
@@ -54,7 +54,7 @@
                   <div class="form-group">
                     <label>Unit</label>
                     <select class="form-control select2" name="unit_id" required>
-                      <option selected disabled>Select Unit</option>
+                      <option value="" selected disabled>Select Unit</option>
                       @if($unit->count())
                         @foreach($unit as $item)
                           <option value="{{$item->head_id}}" {{ old('unit_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>

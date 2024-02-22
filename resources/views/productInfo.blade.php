@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Product Info</h4>
             <div class="card-header-action">
-              <a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit - {{$product['product_id']}}</a>
+              <a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>
             </div>
           </div>
           <div class="card-body">

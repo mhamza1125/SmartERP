@@ -27,7 +27,7 @@
                     <tr>
                       <td>{{ $loop->index + 1 }}</td>
                       <td>{{$item->name}}</td>                      
-                      <td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal{{$item->category_id}}">Edit</button></td>
+                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->category_id}}">Edit</button></td>
                     </tr>
                     @endforeach
                   @endif

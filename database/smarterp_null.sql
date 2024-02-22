@@ -269,6 +269,7 @@ CREATE TABLE `order_items` (
   `product_type_id` bigint(20) UNSIGNED NOT NULL,
   `quantity` bigint(20) UNSIGNED NOT NULL,
   `price` bigint(20) UNSIGNED DEFAULT NULL,
+  `total` double UNSIGNED NOT NULL COMMENT 'Quantity * Price',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

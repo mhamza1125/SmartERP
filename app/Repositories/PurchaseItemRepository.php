@@ -11,9 +11,10 @@ class PurchaseItemRepository implements GlobalInterface {
     }
 
     public function get($id){
-        return PurchaseItem::where('purchase_item_id', $id)
-        ->select('PurchaseItems.*', 'orders.job_no', 'vendors.fname')
-        ->first();
+        return PurchaseItem::where('purchase_id', $id)
+        ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+        ->select('purchase_items.*', 'materials.name')
+        ->get();
     }
 
     public function store(array $data){
@@ -22,11 +23,9 @@ class PurchaseItemRepository implements GlobalInterface {
         return $store->purchase_item_id;
     }
 
-    public function update($id, array $data) {
-        $update = PurchaseItem::findOrFail($id);
-        $update->update($data);
-        return $update->purchase_item_id;
-    }
+    public function update($id, array $data) {}
 
-    public function delete($id){}
+    public function delete($id){
+        PurchaseItem::where('purchase_id', $id)->delete();
+    }
 }

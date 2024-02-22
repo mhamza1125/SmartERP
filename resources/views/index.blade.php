@@ -19,6 +19,8 @@
   <!-- Custom style CSS -->
   <link rel="stylesheet" href="{{ URL::asset('assets/css/custom.css') }}">
   <link rel='shortcut icon' type='image/x-icon' href='{{ URL::asset('assets/img/favicon.ico') }}' />
+  {{-- Custom JS --}}
+  <script src="{{ URL::asset('assets/bundles/jquery-3.6.0.min.js') }}"></script>
 </head>
 
 <body>
@@ -195,11 +197,13 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
+                <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
                 <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
                 <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
                 <li><a class="nav-link" href="{{ route('material') }}">Material</a></li>
                 <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
                 <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('order') }}">Order</a></li>
               </ul>
             </li>
             

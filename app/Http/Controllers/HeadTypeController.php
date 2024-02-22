@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\HeadType;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class HeadTypeController extends Controller
 {

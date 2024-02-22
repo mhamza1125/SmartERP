@@ -21,7 +21,7 @@
                   <div class="form-group">
                     <label>Category</label>
                     <select class="form-control select2" name="category_id" required>
-                      <option selected disabled>Select Category</option>
+                      <option value="" selected disabled>Select Category</option>
                       @if($category->count())
                         @foreach($category as $item)
                           <option value="{{$item->category_id}}" {{ old('category_id') == $item->category_id ? 'selected' : '' }}>{{$item->name}}</option>
@@ -67,7 +67,7 @@
                   <div class="form-group">
                     <label>Sizes</label>
                     <select class="form-control select2" name="size_id[]" multiple="" required>
-                      <option disabled>Select Sizes</option>
+                      <option value="" disabled>Select Sizes</option>
                       @if($size->count())
                         @foreach($size as $item)
                           <option value="{{$item->head_id}}" {{ old('size_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>

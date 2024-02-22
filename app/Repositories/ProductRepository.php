@@ -12,6 +12,16 @@ class ProductRepository implements GlobalInterface {
         ->get();
     }
 
+    public function active(){
+        return Product::join('product_types', 'product_types.product_id', 'products.product_id')
+        ->join('heads', 'heads.head_id', 'product_types.size_id')
+        ->where('products.product_status', '1')
+        ->where('product_types.product_type_status', '1')
+        ->where('heads.head_type_id', '1')
+        ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
+        ->get();
+    }
+
     public function get($id){
         return Product::where('product_id', $id)->first();
     }

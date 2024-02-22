@@ -20,7 +20,7 @@
                 <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Head Type</label>
                 <div class="col-sm-12 col-md-7">
                   <select class="form-control" name="head_type_id" required>
-                    <option selected disabled>Choose Head Type</option>
+                    <option value="" selected disabled>Choose Head Type</option>
                     @if($headType->count())
                       @foreach($headType as $item)
                         <option value="{{$item->head_type_id}}" {{ old('head_type_id') == $item->head_type_id ? 'selected' : '' }}>{{$item->name}}</option>

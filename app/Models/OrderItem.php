@@ -16,6 +16,7 @@ class OrderItem extends Model
         'product_type_id',
         'quantity',
         'price',
+        'total',
         'updated_at',
     ];
 }

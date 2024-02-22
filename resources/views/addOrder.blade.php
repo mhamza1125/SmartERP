@@ -6,73 +6,68 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Add Purchase</h4>
+            <h4>Add Order</h4>
             <div class="card-header-action">
-              <a href="{{ route('purchase') }}" class="btn btn-primary">
+              <a href="{{ route('order') }}" class="btn btn-primary">
                 View All
               </a>
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('purchase.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('order.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Purchase No</label>
-                    <input type="text" class="form-control" name="purchase_no" required value="{{old('purchase_no')}}">
+                    <label>Order No</label>
+                    <input type="text" class="form-control" name="order_no" required value="{{old('order_no')}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Purchase No</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Vendor</label>
-                    <select class="form-control select2" name="vendor_id" required>
-                      <option value="" selected disabled>Select Vendor</option>
-                      @if($vendor->count())
-                        @foreach($vendor as $item)
-                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->fname}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Vendor</div>
+                    <div class="invalid-feedback">Enter Order No</div>
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Purchase For Orders</label>
-                    <select class="form-control select2" name="order_id" required>
-                      <option value="0" selected disabled>Default Purchase</option>
-                      @if($order->count())
-                        @foreach($order as $item)
-                          <option value="{{$item->order_id}}" {{ old('order_id') == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
+                    <label>Job No</label>
+                    <input type="text" class="form-control" name="job_no" required value="{{old('job_no')}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Job No</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Customer</label>
+                    <select class="form-control select2" name="customer_id" required>
+                      <option value="" selected disabled>Select Customer</option>
+                      @if($customer->count())
+                        @foreach($customer as $item)
+                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
                     </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Purchase Date</label>
-                    <input type="text" class="form-control datepicker" name="purchase_date" required value="{{old('purchase_date')}}">
+                    <label>Order Date</label>
+                    <input type="text" class="form-control datepicker" name="order_date" required value="{{old('order_date')}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Puchase Date</div>
+                    <div class="invalid-feedback">Select Order Date</div>
                   </div>
                 </div>
               </div>
 
-              <h6>Purchase Items</h6>
+              <h6>Order Items</h6>
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
-                    <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]">
-                      <option value="" disabled selected>Select Material</option>
-                      @if($material->count())
-                        @foreach($material as $item)
-                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->name}}</option>
+                    <label>Products</label>
+                    <select class="form-control select2" name="product_type_id[]">
+                      <option value="" disabled selected>Select Product</option>
+                      @if($product->count())
+                        @foreach($product as $item)
+                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->name}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -103,7 +98,7 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Item / Material</th>
+                        <th>Item / Product</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
@@ -143,5 +138,5 @@
     </div>
   </div>
 </section>
-<script> var isEditPage = false; </script>
+<script> var isOrderPage = false; </script>
 @endsection

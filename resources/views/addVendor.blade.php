@@ -55,7 +55,7 @@
                   <div class="form-group">
                     <label>Vendor Type</label>
                     <select class="form-control select2" name="vendor_type_id" required>
-                      <option selected disabled>Select Vendor Type</option>
+                      <option value="" selected disabled>Select Vendor Type</option>
                       @if($vendorType->count())
                         @foreach($vendorType as $item)
                           <option value="{{$item->head_id}}" {{ old('vendor_type_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
@@ -70,7 +70,7 @@
                   <div class="form-group">
                     <label>City</label>
                     <select class="form-control select2" name="city_id" required>
-                      <option selected disabled>Select City</option>
+                      <option value="" selected disabled>Select City</option>
                       @if($city->count())
                         @foreach($city as $item)
                           <option value="{{$item->head_id}}" {{ old('city_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>

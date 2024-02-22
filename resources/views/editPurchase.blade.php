@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Add Purchase</h4>
+            <h4>Edit Purchase</h4>
             <div class="card-header-action">
               <a href="{{ route('purchase') }}" class="btn btn-primary">
                 View All
@@ -14,13 +14,13 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('purchase.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('purchase.update', $purchase['purchase_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Purchase No</label>
-                    <input type="text" class="form-control" name="purchase_no" required value="{{old('purchase_no')}}">
+                    <input type="text" class="form-control" name="purchase_no" required value="{{$purchase['purchase_no']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Purchase No</div>
                   </div>
@@ -32,7 +32,7 @@
                       <option value="" selected disabled>Select Vendor</option>
                       @if($vendor->count())
                         @foreach($vendor as $item)
-                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->fname}}</option>
+                          <option value="{{$item->vendor_id}}" {{ $purchase['vendor_id'] == $item->vendor_id ? 'selected' : '' }}>{{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -47,7 +47,7 @@
                       <option value="0" selected disabled>Default Purchase</option>
                       @if($order->count())
                         @foreach($order as $item)
-                          <option value="{{$item->order_id}}" {{ old('order_id') == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
+                          <option value="{{$item->order_id}}" {{ $purchase['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -56,7 +56,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase Date</label>
-                    <input type="text" class="form-control datepicker" name="purchase_date" required value="{{old('purchase_date')}}">
+                    <input type="text" class="form-control datepicker" name="purchase_date" required value="{{$purchase['purchase_date']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Puchase Date</div>
                   </div>
@@ -111,7 +111,28 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <!-- Table rows will be dynamically added here -->
+                      <tr>
+                        @if($purchaseItem->count())
+                          @foreach($purchaseItem as $item)
+                            <tr data-item-id="{{ $item->purchase_item_id }}">
+                              <td></td>
+                              <td>{{$item->name}}
+                                <input type="hidden" name="material_name[]" value="{{$item->name}}">
+                                <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                              </td>
+                              <td>{{$item->quantity}}
+                                <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
+                              </td>
+                              <td>{{$item->quantity}}
+                                <input type="hidden" name="price[]" value="{{$item->price}}"></td>
+                              <td>{{$item->quantity * $item->price}}
+                                <input type="hidden" name="total[]" value="{{$item->total}}">
+                              </td>
+                              <td><button class="deleteRowBtn btn btn-danger">X</button></td>
+                            </tr>
+                          @endforeach
+                        @endif
+                      </tr>
                     </tbody>
                     <tfoot>
                       <tr>
@@ -127,7 +148,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
+                    <textarea class="summernote" name="description">{{$purchase['description']}}</textarea>
                   </div>
                 </div>
               </div>
@@ -143,5 +164,5 @@
     </div>
   </div>
 </section>
-<script> var isEditPage = false; </script>
+<script> var isEditPage = true; </script>
 @endsection
