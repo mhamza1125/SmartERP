@@ -10,14 +10,14 @@ class PurchaseRepository implements GlobalInterface {
         return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
         ->select('purchases.*', 'orders.job_no', 'vendors.fname')
-        ->get();
+        ->orderBy('purchases.created_at', 'desc')->get();
     }
 
     public function get($id){
         return Purchase::where('purchase_id', $id)
         ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-        ->select('purchases.*', 'orders.job_no', 'vendors.fname')
+        ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1')
         ->first();
     }
 

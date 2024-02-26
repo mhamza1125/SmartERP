@@ -12,8 +12,8 @@ use App\Repositories\EmployeeRepository;
 
 class EmployeeController extends Controller
 {
-    protected $imageRepository;
     protected $headRepository;
+    protected $imageRepository;
     protected $employeeRepository;
 
     public function __construct(

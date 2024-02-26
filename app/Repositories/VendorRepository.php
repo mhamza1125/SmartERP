@@ -9,16 +9,14 @@ class VendorRepository implements GlobalInterface {
     public function all(){
         return Vendor::join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
         ->select('vendors.*', 'vthead.name as vtname')
-        ->get();
+        ->orderBy('vendors.created_at', 'desc')->get();
     }
 
     public function get($id){
         return Vendor::where('vendor_id', $id)
         ->join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
         ->join('heads as chead', 'chead.head_id', '=', 'Vendors.city_id')
-        ->select('vendors.*', 
-            'vthead.name as vtname', 
-            'chead.name as cname')
+        ->select('vendors.*', 'vthead.name as vtname', 'chead.name as cname')
         ->first();
     }
 

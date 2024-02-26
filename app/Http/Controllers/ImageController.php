@@ -29,9 +29,9 @@ class ImageController extends Controller
 
     public function update(Request $request, Image $image){}
 
-    public function destroy(Image $id){
+    public function destroy(Image $id, $dir){
         $this->imageRepository->delete($id->image_id);
-        unlink('resources/employee/' . $id->image);
+        unlink('resources/' . $dir . '/' . $id->image);
         return back()->with('success', 'Image Deleted Successfully');
     }
 }

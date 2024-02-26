@@ -267,7 +267,7 @@ CREATE TABLE `order_items` (
   `order_item_id` bigint(20) UNSIGNED NOT NULL,
   `order_id` bigint(20) UNSIGNED NOT NULL,
   `product_type_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` bigint(20) UNSIGNED NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `price` bigint(20) UNSIGNED DEFAULT NULL,
   `total` double UNSIGNED NOT NULL COMMENT 'Quantity * Price',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -326,6 +326,22 @@ CREATE TABLE `products` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `product_materials`
+--
+
+CREATE TABLE `product_materials` (
+  `product_material_id` bigint(20) UNSIGNED NOT NULL,
+  `product_type_id` bigint(20) NOT NULL,
+  `material_id` bigint(20) NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
+  `created_by` bigint(20) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `product_types`
 --
 
@@ -367,7 +383,7 @@ CREATE TABLE `purchase_items` (
   `purchase_item_id` bigint(20) UNSIGNED NOT NULL,
   `purchase_id` bigint(20) UNSIGNED NOT NULL,
   `material_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` bigint(20) UNSIGNED NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `price` double UNSIGNED NOT NULL,
   `total` double UNSIGNED NOT NULL COMMENT 'Quantity * Price',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -383,7 +399,7 @@ CREATE TABLE `purchase_items` (
 CREATE TABLE `receive_materials` (
   `receive_material_id` bigint(20) UNSIGNED NOT NULL,
   `purchase_item_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` bigint(20) UNSIGNED NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `receive_date` date NOT NULL,
   `inspection_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 - Pending\r\n2 - Approved\r\n3 - Rejected',
   `created_by` bigint(20) UNSIGNED NOT NULL,
@@ -400,7 +416,7 @@ CREATE TABLE `receive_materials` (
 CREATE TABLE `return_materials` (
   `return_material_id` bigint(20) UNSIGNED NOT NULL,
   `receive_material_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` bigint(20) UNSIGNED NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `return_date` date NOT NULL,
   `remarks` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
@@ -447,7 +463,7 @@ CREATE TABLE `stock_materials` (
   `store_material_id` bigint(20) UNSIGNED NOT NULL,
   `store_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `receive_material_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` bigint(20) UNSIGNED NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -651,7 +667,12 @@ ALTER TABLE `personal_access_tokens`
 ALTER TABLE `products`
   ADD PRIMARY KEY (`product_id`),
   ADD UNIQUE KEY `article_no` (`article_no`),
-  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `product_materials`
+--
+ALTER TABLE `product_materials`
+  ADD PRIMARY KEY (`product_material_id`);
 
 --
 -- Indexes for table `product_types`
@@ -822,6 +843,13 @@ ALTER TABLE `personal_access_tokens`
 ALTER TABLE `products`
   MODIFY `product_id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT for table `product_materials`
+--
+ALTER TABLE `product_materials`
+  MODIFY `product_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 --
 -- AUTO_INCREMENT for table `product_types`
 --

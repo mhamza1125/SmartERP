@@ -8,8 +8,8 @@
           <div class="card-header">
             <h4>Add Category</h4>
             <div class="card-header-action">
-              <a href="{{ route('category') }}" class="btn btn-primary">
-                View All
+              <a href="{{ url()->previous() }}" class="btn btn-primary">
+                Back
               </a>
             </div>
           </div>

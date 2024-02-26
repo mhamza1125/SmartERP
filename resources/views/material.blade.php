@@ -17,8 +17,10 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Material Type</th>
                     <th>Material No</th>
                     <th>Material Name</th>
+                    <th>Unit</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -26,9 +28,11 @@
                   @if($material->count())
                     @foreach($material as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->mtname}}</td>
                       <td>{{$item->material_no}}</td>
                       <td>{{$item->name}}</td>                      
+                      <td>{{$item->uname}}</td>
                       <td>
                         <a href="{{ route('material.show', $item->material_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('material.edit', $item->material_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -40,8 +44,10 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Material Type</th>
                     <th>Material No</th>
                     <th>Material Name</th>
+                    <th>Unit</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

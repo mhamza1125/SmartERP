@@ -27,6 +27,7 @@ class OrderRequest extends FormRequest
             'customer_id' => 'required',
             'description' => '',
             'order_date' => 'required',
+            'order_status' => 'required',
             // Purchase Items
             'product_type_id.*' => 'required',
             'quantity.*' => 'required',

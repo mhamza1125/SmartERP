@@ -8,8 +8,8 @@
           <div class="card-header">
             <h4>Add Order</h4>
             <div class="card-header-action">
-              <a href="{{ route('order') }}" class="btn btn-primary">
-                View All
+              <a href="{{ url()->previous() }}" class="btn btn-primary">
+                Back
               </a>
             </div>
           </div>
@@ -17,23 +17,23 @@
             <form action="{{ route('order.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Order No</label>
-                    <input type="text" class="form-control" name="order_no" required value="{{old('order_no')}}">
+                    <input type="text" class="form-control" name="order_no" placeholder="Order No" required value="{{old('order_no')}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Order No</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Job No</label>
-                    <input type="text" class="form-control" name="job_no" required value="{{old('job_no')}}">
+                    <input type="text" class="form-control" name="job_no" placeholder="Job No" required value="{{old('job_no')}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Job No</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Customer</label>
                     <select class="form-control select2" name="customer_id" required>
@@ -43,6 +43,25 @@
                           <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Customer</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Order Status</label>
+                    <select class="form-control select2" name="order_status" required>
+                      <option value="" selected disabled>Select Order Status</option>
+                      <option value="1" selected>Pending</option>
+                      <option value="2">Processing</option>
+                      <option value="3">On Hold</option>
+                      <option value="4">Partially Delivered</option>
+                      <option value="5">Delivered</option>
+                      <option value="6">Completed</option>
+                      <option value="7">Cancelled</option>
+                      <option value="8">Returned</option>
+                      <option value="9">Disputed</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Customer</div>
@@ -67,7 +86,7 @@
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
-                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->name}} - Size {{$item->hname}}</option>
+                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>

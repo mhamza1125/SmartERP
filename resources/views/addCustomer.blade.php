@@ -8,13 +8,13 @@
           <div class="card-header">
             <h4>Add Customer</h4>
             <div class="card-header-action">
-              <a href="{{ route('customer') }}" class="btn btn-primary">
-                View All
+              <a href="{{ url()->previous() }}" class="btn btn-primary">
+                Back
               </a>
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('customer.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('customer.store') }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <div class="row">
                 <div class="col-md-4">
@@ -43,22 +43,33 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Email</label>
                     <input type="text" class="form-control" name="email" value="{{old('email')}}">
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Contact No</label>
                     <input type="text" class="form-control" name="phone" value="{{old('phone')}}">
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Fax Number</label>
                     <input type="text" class="form-control" name="fax" value="{{old('fax')}}">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>File / Images</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
+                      <label class="custom-file-label" for="customFile">Choose file</label>
+                    </div>
+                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
+                    <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
               </div>

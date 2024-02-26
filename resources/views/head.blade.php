@@ -27,7 +27,7 @@
                   @if($head->count())
                     @foreach($head as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
                       <td>{{$item->htname}}</td>
                       <td>{{$item->name}}</td>                      
                       <td>

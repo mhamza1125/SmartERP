@@ -16,6 +16,7 @@ class ReturnMaterial extends Model
         'quantity',
         'return_date',
         'remarks',
-        'created_by'
+        'created_by',
+        'updated_at',
     ];
 }

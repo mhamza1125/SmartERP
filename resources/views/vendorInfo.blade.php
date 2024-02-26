@@ -47,7 +47,7 @@
                     <a href="{{ URL::asset('resources/vendor/'. $item->image) }}">
                       <img class="img-responsive thumbnail" src="{{ URL::asset('resources/vendor/'. $item->image) }}" alt="">
                     </a>
-                    <form action="{{route('image.delete', $item->image_id)}}" method="POST">
+                    <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'vendor'])}}" method="POST">
                       @csrf
                       <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                     </form>

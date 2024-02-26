@@ -4,7 +4,7 @@
 
 "use strict";
 
-// Toaster Message
+// Start - Toaster Message
 $(document).ready(function() {
     var successMessage = $('#successMessage').val();
     var errorMessage = $('#errorMessage').val();
@@ -22,8 +22,9 @@ $(document).ready(function() {
         });
     }
 });
+// End - Toaster Message
 
-// Wrong Extension Image
+// Start - Wrong Extension Image
 document.addEventListener("DOMContentLoaded", function() {
     var fileInput = document.getElementById('customFile');
     var fileError = document.getElementById('fileError');
@@ -55,6 +56,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+// End - Wrong Extension Image
 
 // Start - Purchase Script
 $(document).ready(function() {
@@ -283,3 +285,120 @@ $(document).ready(function() {
     }
 });
 // End - Order Script
+
+// Start - Product Material Script
+$(document).ready(function() {
+    if (typeof isPMPage !== 'undefined') {
+        var tableRowCount = 1;
+        updateSrNumbers();
+        // Initially disable the add button
+        $('#addBtn').prop('disabled', true);
+
+        // Function to check if both fields have data
+        function checkFields() {
+            var materialId = $('select[name="material_id[]"]').val();
+            var quantity = $('input[name="quantity"]').val();
+            return (materialId && quantity);
+        }
+
+        // Enable/disable add button based on field values
+        $('select[name="material_id[]"], input[name="quantity"]').on('change keyup', function() {
+            $('#addBtn').prop('disabled', !checkFields());
+        });
+
+        $('#addBtn').on('click', function() {
+            var materialId = $('select[name="material_id[]"]').val();
+            var materialName = $('select[name="material_id[]"] option:selected').text();
+            var quantity = $('input[name="quantity"]').val();
+
+            var existingMaterial = false;
+            $('#items-table tbody tr').each(function(index, row) {
+                var existingMaterialId = $(row).find('input[name="material_id[]"]').val();
+                if (existingMaterialId == materialId) {
+                    existingMaterial = true;
+                    return false; // Exit the loop
+                }
+            });
+
+            if (existingMaterial) {
+                // Material already exists, show an alert or handle the situation
+                alert('Material already exists in the table.');
+            } else {
+                // Material does not exist, add row to table
+                var newRow = '<tr>' +
+                    '<td>' + tableRowCount + '</td>' +
+                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"></td>' +
+                    '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
+                    '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
+                    '</tr>';
+
+                $('#items-table tbody').append(newRow);
+
+                tableRowCount++;
+
+                // Disable Btn & Reset input field
+                $('#addBtn').prop('disabled', true);
+                $('input[name="quantity"]').val('0');
+                $('select[name="material_id[]"]').val('').trigger('change');
+                updateSrNumbers();
+            }
+        });
+
+        // Delete row when delete button is clicked
+        $(document).on('click', '.deleteRowBtn', function() {
+            $(this).closest('tr').remove();
+            updateSrNumbers();
+        });
+
+        // Function to update Sr. numbers
+        function updateSrNumbers() {
+            $('#items-table tbody tr').each(function(index) {
+                if (isPMPage) {
+                    $(this).find('td:first').text(index);
+                } else {
+                    $(this).find('td:first').text(index + 1);
+                }
+            });
+        }
+
+        $('#submitBtn').on('click', function() {
+            // Gather data from table and submit
+            var tableData = [];
+            $('#items-table tbody tr').each(function(index, row) {
+                var rowData = {
+                    'material_id': $(row).find('input[name="material_id[]"]').val(),
+                    'material_name': $(row).find('input[name="material_name[]"]').val(),
+                    'quantity': $(row).find('input[name="quantity[]"]').val(),
+                };
+                tableData.push(rowData);
+            });
+        });
+    }
+});
+// End - Product Material Script
+
+// Start - Receive Material Script
+document.addEventListener('input', function(event) {
+    if (event.target.classList.contains('qty')) {
+      var row = event.target.closest('tr');
+      var received = parseInt(row.querySelector('.received').innerText, 10) || 0;
+      var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
+      var enteredQuantity = parseInt(event.target.value, 10) || 0;
+      var remaining = total - received - enteredQuantity;
+
+      // Ensure the entered quantity does not exceed the remaining quantity
+      var maxQuantity = total - received;
+      event.target.setAttribute('max', maxQuantity);
+
+      // Update the remaining input value
+      var remainingInput = row.querySelector('.remaining');
+      remainingInput.value = remaining >= 0 ? remaining : 0;
+
+      // If the entered quantity exceeds the max, adjust it to the max
+      if (enteredQuantity > maxQuantity) {
+        event.target.value = maxQuantity;
+        remainingInput.value = 0;
+      }
+    }
+});
+// End - Receive Material Script

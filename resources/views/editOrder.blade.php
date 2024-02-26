@@ -8,8 +8,8 @@
           <div class="card-header">
             <h4>Add Order</h4>
             <div class="card-header-action">
-              <a href="{{ route('order') }}" class="btn btn-primary">
-                View All
+              <a href="{{ url()->previous() }}" class="btn btn-primary">
+                Back
               </a>
             </div>
           </div>
@@ -17,7 +17,7 @@
             <form action="{{ route('order.update', $order['order_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Order No</label>
                     <input type="text" class="form-control" name="order_no" required value="{{$order['order_no']}}">
@@ -25,7 +25,7 @@
                     <div class="invalid-feedback">Enter Order No</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Job No</label>
                     <input type="text" class="form-control" name="job_no" required value="{{$order['job_no']}}">
@@ -33,7 +33,7 @@
                     <div class="invalid-feedback">Enter Job No</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Customer</label>
                     <select class="form-control select2" name="customer_id" required>
@@ -43,6 +43,25 @@
                           <option value="{{$item->customer_id}}" {{ $order['customer_id'] == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Customer</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Order Status</label>
+                    <select class="form-control select2" name="order_status" required>
+                      <option value="" selected disabled>Select Order Status</option>
+                      <option value="1" {{ $order['order_status'] == 1 ? 'selected' : '' }}>Pending</option>
+                      <option value="2" {{ $order['order_status'] == 2 ? 'selected' : '' }}>Processing</option>
+                      <option value="3" {{ $order['order_status'] == 3 ? 'selected' : '' }}>On Hold</option>
+                      <option value="4" {{ $order['order_status'] == 4 ? 'selected' : '' }}>Partially Delivered</option>
+                      <option value="5" {{ $order['order_status'] == 5 ? 'selected' : '' }}>Delivered</option>
+                      <option value="6" {{ $order['order_status'] == 6 ? 'selected' : '' }}>Completed</option>
+                      <option value="7" {{ $order['order_status'] == 7 ? 'selected' : '' }}>Cancelled</option>
+                      <option value="8" {{ $order['order_status'] == 8 ? 'selected' : '' }}>Returned</option>
+                      <option value="9" {{ $order['order_status'] == 9 ? 'selected' : '' }}>Disputed</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Customer</div>
@@ -67,7 +86,7 @@
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
-                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->name}} - Size {{$item->hname}}</option>
+                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -118,7 +137,7 @@
                               <td>{{$item->quantity}}
                                 <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                               </td>
-                              <td>{{$item->quantity}}
+                              <td>{{$item->price}}
                                 <input type="hidden" name="price[]" value="{{$item->price}}"></td>
                               <td>{{$item->quantity * $item->price}}
                                 <input type="hidden" name="total[]" value="{{$item->total}}">

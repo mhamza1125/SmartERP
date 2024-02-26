@@ -18,8 +18,9 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Category</th>
-                    <th>Product No</th>
+                    <th>Article No</th>
                     <th>Product Name</th>
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -27,10 +28,17 @@
                   @if($product->count())
                     @foreach($product as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
                       <td>{{$item->cname}}</td>
                       <td>{{$item->article_no}}</td>
-                      <td>{{$item->name}}</td>                      
+                      <td>{{$item->name}}</td>
+                      <td>
+                        @if($item->product_status)
+                          <span class="badge badge-success">Active</span>
+                        @else
+                          <span class="badge badge-danger">Inactive</span>
+                        @endif
+                      </td>                 
                       <td>
                         <a href="{{ route('product.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('product.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -43,8 +51,9 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Category</th>
-                    <th>Product No</th>
+                    <th>Article No</th>
                     <th>Product Name</th>
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

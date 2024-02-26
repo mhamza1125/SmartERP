@@ -18,7 +18,7 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Purchase No</th>
-                    <th>Order/Job No</th>
+                    <th>Job No</th>
                     <th>Vendor</th>
                     <th>Date</th>
                     <th>Action</th>
@@ -28,7 +28,7 @@
                   @if($purchase->count())
                     @foreach($purchase as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>
                       <td>{{$item->fname}}</td>
@@ -36,6 +36,7 @@
                       <td>
                         <a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('purchase.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Receive</a>
                       </td>
                     </tr>
                     @endforeach
@@ -45,7 +46,7 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Purchase No</th>
-                    <th>Order/Job No</th>
+                    <th>Job No</th>
                     <th>Vendor</th>
                     <th>Date</th>
                     <th>Action</th>

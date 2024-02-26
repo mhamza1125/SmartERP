@@ -13,7 +13,17 @@ class PurchaseItemRepository implements GlobalInterface {
     public function get($id){
         return PurchaseItem::where('purchase_id', $id)
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+        ->select('purchase_items.*', 'materials.name', 'materials.material_no')
+        ->get();
+    }
+
+    public function receive($id){
+        return PurchaseItem::where('purchase_id', $id)
+        ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+        ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
         ->select('purchase_items.*', 'materials.name')
+        ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received')
+        ->groupBy('purchase_items.purchase_item_id')
         ->get();
     }
 

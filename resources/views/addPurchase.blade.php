@@ -8,8 +8,8 @@
           <div class="card-header">
             <h4>Add Purchase</h4>
             <div class="card-header-action">
-              <a href="{{ route('purchase') }}" class="btn btn-primary">
-                View All
+              <a href="{{ url()->previous() }}" class="btn btn-primary">
+                Back
               </a>
             </div>
           </div>
@@ -17,15 +17,15 @@
             <form action="{{ route('purchase.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase No</label>
-                    <input type="text" class="form-control" name="purchase_no" required value="{{old('purchase_no')}}">
+                    <input type="text" class="form-control" name="purchase_no" placeholder="Purchase No" required value="{{old('purchase_no')}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Purchase No</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Vendor</label>
                     <select class="form-control select2" name="vendor_id" required>
@@ -59,6 +59,14 @@
                     <input type="text" class="form-control datepicker" name="purchase_date" required value="{{old('purchase_date')}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Puchase Date</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Required Date</label>
+                    <input type="text" class="form-control datepicker" name="require_date" required value="{{old('require_date')}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Require Date</div>
                   </div>
                 </div>
               </div>

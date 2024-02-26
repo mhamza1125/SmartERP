@@ -26,7 +26,7 @@
                   @if($vendor->count())
                     @foreach($vendor as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
                       <td>{{$item->vtname}}</td>                      
                       <td>{{$item->fname}}</td>                      
                       <td>

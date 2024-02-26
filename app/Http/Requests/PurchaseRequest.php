@@ -26,6 +26,7 @@ class PurchaseRequest extends FormRequest
             'vendor_id' => 'required',
             'description' => '',
             'purchase_date' => 'required',
+            'require_date' => 'required',
             // Purchase Items
             'material_id.*' => 'required',
             'quantity.*' => 'required',

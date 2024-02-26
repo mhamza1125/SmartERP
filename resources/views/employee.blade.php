@@ -18,7 +18,9 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Employee No</th>
-                    <th>Employee Name</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>City</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -26,9 +28,11 @@
                   @if($employee->count())
                     @foreach($employee as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
                       <td>{{$item->employee_no}}</td>
-                      <td>{{$item->fname}} {{$item->lname}}</td>                      
+                      <td>{{$item->name}}</td>                      
+                      <td>{{$item->dname}}</td>                      
+                      <td>{{$item->cname}}</td>                      
                       <td>
                         <a href="{{ route('employee.show', $item->employee_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('employee.edit', $item->employee_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -41,7 +45,9 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Employee No</th>
-                    <th>Employee Name</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>City</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

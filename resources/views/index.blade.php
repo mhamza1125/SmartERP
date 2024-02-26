@@ -193,17 +193,60 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>My Work</span></a>
+                  data-feather="briefcase"></i><span>All</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
+                <li><a class="nav-link" href="{{ route('material') }}">Material</a></li>
+                <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
                 <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
                 <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('material') }}">Material</a></li>
-                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
                 <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
+                <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
                 <li><a class="nav-link" href="{{ route('order') }}">Order</a></li>
+                <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Products</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
+                <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Material</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('material') }}">Material</a></li>
+                <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Persons Record</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
+                <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
+                <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Order / PO</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
+                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
+                <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Settings</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
               </ul>
             </li>
             
@@ -316,9 +359,10 @@
       </div>
       <footer class="main-footer">
         <div class="footer-left">
-          <a href="templateshub.net">Templateshub</a></a>
+          <a href="#">Palls Enterprises</a>
         </div>
         <div class="footer-right">
+          Copyright &copy; Designed & Developed by <a href="#">Core Web Solutions</a> {{date("Y")}}
         </div>
       </footer>
     </div>

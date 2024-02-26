@@ -7,7 +7,12 @@ use App\Models\Employee;
 class EmployeeRepository implements GlobalInterface {
     
     public function all(){
-        return Employee::all();
+        return Employee::
+        join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
+        ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
+        ->select('employees.*', 'dhead.name as dname', 'chead.name as cname')
+        ->orderBy('employees.created_at', 'desc')
+        ->get();
     }
 
     public function get($id){
@@ -15,10 +20,8 @@ class EmployeeRepository implements GlobalInterface {
         ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
         ->join('heads as ethead', 'ethead.head_id', '=', 'employees.employee_type_id')
         ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
-        ->select('employees.*', 
-            'dhead.name as dname', 
-            'ethead.name as etname', 
-            'chead.name as cname')
+        ->select('employees.*', 'dhead.name as dname', 
+            'ethead.name as etname', 'chead.name as cname')
         ->first();
     }
 

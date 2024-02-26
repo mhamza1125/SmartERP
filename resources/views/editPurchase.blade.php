@@ -8,8 +8,8 @@
           <div class="card-header">
             <h4>Edit Purchase</h4>
             <div class="card-header-action">
-              <a href="{{ route('purchase') }}" class="btn btn-primary">
-                View All
+              <a href="{{ url()->previous() }}" class="btn btn-primary">
+                Back
               </a>
             </div>
           </div>
@@ -59,6 +59,14 @@
                     <input type="text" class="form-control datepicker" name="purchase_date" required value="{{$purchase['purchase_date']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Puchase Date</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Required Date</label>
+                    <input type="text" class="form-control datepicker" name="require_date" required value="{{$purchase['require_date']}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Require Date</div>
                   </div>
                 </div>
               </div>
@@ -123,7 +131,7 @@
                               <td>{{$item->quantity}}
                                 <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                               </td>
-                              <td>{{$item->quantity}}
+                              <td>{{$item->price}}
                                 <input type="hidden" name="price[]" value="{{$item->price}}"></td>
                               <td>{{$item->quantity * $item->price}}
                                 <input type="hidden" name="total[]" value="{{$item->total}}">

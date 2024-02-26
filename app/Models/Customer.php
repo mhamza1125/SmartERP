@@ -19,8 +19,8 @@ class Customer extends Model
         'phone',
         'fax',
         'address',
-        'created_by',
         'description',
+        'created_by',
         'updated_at',
     ];
 }

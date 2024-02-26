@@ -42,7 +42,16 @@
 .dnone{
     display: none;
 }
-
+/* Row Style for Export Table */
+.trow{
+    border-bottom: 1px solid #ddd !important;
+    background-color: rgba(0,0,0,0.04);
+}
+.theme-white .nav-tabs .nav-item .nav-link {
+    /* color: #6777ef; */
+    color: #212529;
+    font-weight: 600;
+}
 /* =========================================================================================
 ======================================== Custom CSS ========================================
 ========================================================================================= */

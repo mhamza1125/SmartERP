@@ -17,6 +17,7 @@ class Purchase extends Model
         'vendor_id',
         'description',
         'purchase_date',
+        'require_date',
         'created_by',
         'updated_at',
     ];

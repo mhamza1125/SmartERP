@@ -17,7 +17,8 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
-                    <th>Customer Name</th>
+                    <th>Customer No</th>
+                    <th>Name</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -25,7 +26,8 @@
                   @if($customer->count())
                     @foreach($customer as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->customer_no}}</td>                      
                       <td>{{$item->fname}} {{$item->lname}}</td>                      
                       <td>
                         <a href="{{ route('customer.show', $item->customer_id) }}" class="btn btn-info btn-sm">View</a>
@@ -38,7 +40,8 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
-                    <th>Customer Name</th>
+                    <th>Customer No</th>
+                    <th>Name</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Purchase;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Repositories\ImageRepository;
 use App\Repositories\OrderRepository;
 use App\Http\Requests\PurchaseRequest;
 use App\Repositories\VendorRepository;
@@ -15,7 +14,6 @@ use App\Repositories\PurchaseItemRepository;
 
 class PurchaseController extends Controller
 {
-    protected $imageRepository;
     protected $orderRepository;
     protected $vendorRepository;
     protected $purchaseRepository;
@@ -24,7 +22,6 @@ class PurchaseController extends Controller
 
     public function __construct(
         OrderRepository $orderRepository,
-        ImageRepository $imageRepository,
         VendorRepository $vendorRepository, 
         PurchaseRepository $purchaseRepository, 
         MaterialRepository $materialRepository, 
@@ -32,7 +29,6 @@ class PurchaseController extends Controller
     ){
         $this->middleware(['auth', 'all']);
         $this->orderRepository = $orderRepository;
-        $this->imageRepository = $imageRepository;
         $this->vendorRepository = $vendorRepository;
         $this->purchaseRepository = $purchaseRepository;
         $this->materialRepository = $materialRepository;
@@ -76,8 +72,10 @@ class PurchaseController extends Controller
     
     public function show($id){
         $purchase = $this->purchaseRepository->get($id);
+        $purchaseItem = $this->purchaseItemRepository->get($id);
         return view('purchaseInfo', [
             'purchase' => $purchase,
+            'purchaseItem' => $purchaseItem,
         ]);
     }
     
@@ -112,8 +110,7 @@ class PurchaseController extends Controller
     
     public function destroy(Purchase $purchase){}
 
-    private function storePI($getId, $materials, $prices, $quantities)
-    {
+    private function storePI($getId, $materials, $prices, $quantities){
         foreach ($prices as $key => $price) {
             $material = $materials[$key] ?? null;
             $quantity = $quantities[$key] ?? null;

@@ -8,7 +8,7 @@ class OrderRepository implements GlobalInterface {
     
     public function all(){
         return Order::join('customers', 'customers.customer_id', '=', 'orders.customer_id')
-        ->get();
+        ->orderBy('orders.created_at', 'desc')->get();
     }
 
     public function active(){
@@ -19,7 +19,7 @@ class OrderRepository implements GlobalInterface {
     public function get($id){
         return Order::where('order_id', $id)
         ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
-        ->select('orders.*', 'customers.fname')
+        ->select('orders.*', 'customers.*')
         ->first();
     }
 

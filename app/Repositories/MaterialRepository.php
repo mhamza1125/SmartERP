@@ -9,9 +9,8 @@ class MaterialRepository implements GlobalInterface {
     public function all(){
         return Material::join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-        ->select('materials.*',
-            'mthead.name as mtname',
-            'uhead.name as uname')
+        ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname')
+        ->orderBy('materials.created_at', 'desc')
         ->get();
     }
 

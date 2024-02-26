@@ -68,7 +68,7 @@ class ProductController extends Controller
     
     public function show($id){
         $product = $this->productRepository->get($id);
-        $size = $this->productTypeRepository->get($id);
+        $size = $this->productTypeRepository->active($id);
         $image = $this->imageRepository->get2('products', $id);
         return view('productInfo', [
             'product' => $product,
@@ -79,7 +79,7 @@ class ProductController extends Controller
     
     public function edit(Product $id){
         $category = $this->categoryRepository->all();
-        $productType = $this->productTypeRepository->get($id->product_id);
+        $productType = $this->productTypeRepository->active($id->product_id);
         $size = $this->headRepository->get('1');
         return view('editproduct', [
             'product' => $id,
