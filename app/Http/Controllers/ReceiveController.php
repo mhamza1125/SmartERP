@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Receive;
 use Illuminate\Http\Request;
-use App\Models\ReceiveMaterial;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReceiveRequest;
 use App\Repositories\ReceiveRepository;
@@ -56,7 +56,7 @@ class ReceiveController extends Controller
         $quantities = $request->input('quantity');
         $getId = $this->receiveRepository->store($validatedData);
         $this->storeRM($getId, $pid, $quantities);
-        return redirect()->route('purchase')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('receive.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
@@ -68,23 +68,40 @@ class ReceiveController extends Controller
         ]);
     }
     
-    public function edit(ReceiveMaterial $id){}
+    public function edit($id){
+        $receive = $this->receiveRepository->get($id);        
+        $receiveMaterial = $this->receiveMaterialRepository->get($id);
+        $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
+        return view('editReceive', [
+            'receive' => $receive,
+            'purchaseItem' => $purchaseItem,
+            'receiveMaterial' => $receiveMaterial,
+        ]);
+    }
 
-    public function update(Request $request, $id){}
+    public function update(Request $request, $id){
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
+        }
+        $pid = $request->input('purchase_item_id');
+        $quantities = $request->input('quantity');
+        $this->receiveMaterialRepository->delete($id);
+        $this->receiveRepository->update($id, $request->input());
+        $this->storeRM($id, $pid, $quantities);
+        return redirect()->route('receive.show', $id)->with('success', 'Record Updated Successfully');
+    }
     
     public function destroy(ReceiveMaterial $receive){}
 
     private function storeRM($getId, $pids, $quantities){
         foreach ($quantities as $key => $quantity) {
-            if($quantity){
-                $pid = $pids[$key] ?? null;
-                $receiveMaterial = [
-                    'receive_id' => $getId,
-                    'purchase_item_id' => $pid,
-                    'quantity' => $quantity,
-                ];
-                $this->receiveMaterialRepository->store($receiveMaterial);
-            }
+            $pid = $pids[$key] ?? null;
+            $receiveMaterial = [
+                'receive_id' => $getId,
+                'purchase_item_id' => $pid,
+                'quantity' => $quantity,
+            ];
+            $this->receiveMaterialRepository->store($receiveMaterial);
         }
     }
 }

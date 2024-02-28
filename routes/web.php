@@ -119,10 +119,14 @@ Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
 Route::get('/addReceive/{id}', [ReceiveController::class, 'create'])->name('receive.add');
 Route::post('/receive', [ReceiveController::class, 'store'])->name('receive.store');
 Route::get('/receive/{id}', [ReceiveController::class, 'show'])->name('receive.show');
+Route::get('/editReceive/{id}', [ReceiveController::class, 'edit'])->name('receive.edit');
+Route::post('/receive/{id}', [ReceiveController::class, 'update'])->name('receive.update');
 
 // Purchase Return
 Route::get('/return', [ReturnController::class, 'index'])->name('return');
 Route::get('/addReturn/{id}', [ReturnController::class, 'create'])->name('return.add');
 Route::post('/return', [ReturnController::class, 'store'])->name('return.store');
 Route::get('/return/{id}', [ReturnController::class, 'show'])->name('return.show');
+Route::get('/editReturn/{id}', [ReturnController::class, 'edit'])->name('return.edit');
+Route::post('/return/{id}', [ReturnController::class, 'update'])->name('return.update');
 

@@ -3,15 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ReturnMaterial;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReturnRequest;
 use App\Repositories\ReturnRepository;
 use App\Repositories\ReceiveRepository;
-use App\Repositories\MaterialRepository;
-use App\Repositories\PurchaseRepository;
-use App\Http\Requests\ReturnMaterialRequest;
-use App\Repositories\PurchaseItemRepository;
 use App\Repositories\ReturnMaterialRepository;
 use App\Repositories\ReceiveMaterialRepository;
 
@@ -19,27 +14,18 @@ class ReturnController extends Controller
 {
     protected $returnRepository;
     protected $receiveRepository;
-    protected $purchaseRepository;
-    protected $materialRepository;
-    protected $purchaseItemRepository;
     protected $receiveMaterialRepository;
     protected $returnMaterialRepository;
 
     public function __construct(
         ReturnRepository $returnRepository, 
         ReceiveRepository $receiveRepository, 
-        PurchaseRepository $purchaseRepository, 
-        MaterialRepository $materialRepository, 
-        PurchaseItemRepository $purchaseItemRepository, 
         ReceiveMaterialRepository $receiveMaterialRepository, 
         ReturnMaterialRepository $returnMaterialRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->returnRepository = $returnRepository;
         $this->receiveRepository = $receiveRepository;
-        $this->purchaseRepository = $purchaseRepository;
-        $this->materialRepository = $materialRepository;
-        $this->purchaseItemRepository = $purchaseItemRepository;
         $this->receiveMaterialRepository = $receiveMaterialRepository;
         $this->returnMaterialRepository = $returnMaterialRepository;
     }
@@ -67,9 +53,10 @@ class ReturnController extends Controller
         }
         $rid = $request->input('receive_material_id');
         $quantities = $request->input('quantity');
+        $remarks = $request->input('remarks');
         $getId = $this->returnRepository->store($validatedData);
-        $this->storeRM($getId, $rid, $quantities);
-        return redirect()->route('receive')->with('success', 'Record Inserted Successfully');
+        $this->storeRM($getId, $rid, $quantities, $remarks);
+        return redirect()->route('return.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
@@ -81,23 +68,43 @@ class ReturnController extends Controller
         ]);
     }
     
-    public function edit(ReturnMaterial $id){}
+    public function edit($id){
+        $return = $this->returnRepository->get($id);
+        $returnMaterial = $this->returnMaterialRepository->get($id);
+        $receiveMaterial = $this->receiveMaterialRepository->get($return['receive_id']);
+        return view('editReturn', [
+            'return' => $return,
+            'returnMaterial' => $returnMaterial,
+            'receiveMaterial' => $receiveMaterial,
+        ]);
+    }
 
-    public function update(Request $request, $id){}
+    public function update(Request $request, $id){
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
+        }
+        $rid = $request->input('receive_material_id');
+        $quantities = $request->input('quantity');
+        $remarks = $request->input('remarks');
+        $this->returnMaterialRepository->delete($id);
+        $this->returnRepository->update($id, $request->input());
+        $this->storeRM($id, $rid, $quantities, $remarks);
+        return redirect()->route('return.show', $id)->with('success', 'Record Updated Successfully');
+    }
     
     public function destroy(ReturnMaterial $return){}
 
-    private function storeRM($getId, $rids, $quantities){
+    private function storeRM($getId, $rids, $quantities, $remarks){
         foreach ($quantities as $key => $quantity) {
-            if($quantity){
-                $id = $rids[$key] ?? null;
-                $returnMaterial = [
-                    'return_id' => $getId,
-                    'receive_material_id' => $id,
-                    'quantity' => $quantity,
-                ];
-                $this->returnMaterialRepository->store($returnMaterial);
-            }
+            $id = $rids[$key] ?? null;
+            $remark = $remarks[$key] ?? null;
+            $returnMaterial = [
+                'return_id' => $getId,
+                'receive_material_id' => $id,
+                'quantity' => $quantity,
+                'remarks' => $remark,
+            ];
+            $this->returnMaterialRepository->store($returnMaterial);
         }
     }
 }

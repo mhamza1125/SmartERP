@@ -8,9 +8,12 @@
           <div class="card-header">
             <h4>Receive Info</h4>
             <div class="card-header-action">
-              <a href="{{ url()->previous() }}" class="btn btn-primary">
-                Back
-              </a>
+              
+              <div class="btn-group">
+                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('receive.edit', $receive['receive_id']) }}" class="btn btn-primary">Edit</a>
+                <a href="{{ route('return.add', $receive['receive_id']) }}" class="btn btn-primary">Return</a>
+              </div>
             </div>
           </div>
           <div class="card-body row">

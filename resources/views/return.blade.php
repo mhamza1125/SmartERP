@@ -37,7 +37,7 @@
                       <td>{{$item->return_date}}</td>                      
                       <td>
                         <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
-                        {{-- <a href="{{ route('return.edit', $item->return_id) }}" class="btn btn-primary btn-sm">Edit</a> --}}
+                        <a href="{{ route('return.edit', $item->return_id) }}" class="btn btn-primary btn-sm">Edit</a>
                       </td>
                     </tr>
                     @endforeach

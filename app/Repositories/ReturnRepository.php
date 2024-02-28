@@ -20,7 +20,8 @@ class ReturnRepository implements GlobalInterface {
         ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
         ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-        ->select('receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 'receives.description as desc')
+        ->select('returns.*', 'receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 
+            'returns.description as desc')
         ->first();
     }
 
@@ -30,7 +31,11 @@ class ReturnRepository implements GlobalInterface {
         return $store->return_id;
     }
 
-    public function update($id, array $data) {}
+    public function update($id, array $data) {
+        $update = Returns::findOrFail($id);
+        $update->update($data);
+        return $update->return_id;
+    }
 
     public function delete($id){}
 }

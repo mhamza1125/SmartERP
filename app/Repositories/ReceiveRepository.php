@@ -28,7 +28,11 @@ class ReceiveRepository implements GlobalInterface {
         return $store->receive_id;
     }
 
-    public function update($id, array $data) {}
+    public function update($id, array $data) {
+        $update = Receive::findOrFail($id);
+        $update->update($data);
+        return $update->receive_id;
+    }
 
     public function delete($id){}
 }

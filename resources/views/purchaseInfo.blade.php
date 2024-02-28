@@ -9,9 +9,9 @@
             <h4>Purchase Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                
-              <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
-              <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
+                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
+                <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
               </div>
             </div>
           </div>

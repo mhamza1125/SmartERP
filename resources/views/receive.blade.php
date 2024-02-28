@@ -35,7 +35,7 @@
                       <td>{{$item->receive_date}}</td>                      
                       <td>
                         <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>
-                        {{-- <a href="{{ route('receive.edit', $item->receive_id) }}" class="btn btn-primary btn-sm">Edit</a> --}}
+                        <a href="{{ route('receive.edit', $item->receive_id) }}" class="btn btn-primary btn-sm">Edit</a>
                         <a href="{{ route('return.add', $item->receive_id) }}" class="btn btn-success btn-sm">Return</a>
                       </td>
                     </tr>

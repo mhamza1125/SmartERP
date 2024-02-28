@@ -22,6 +22,8 @@
                   <tr><td><b>Vendor Name:</b> {{$return['fname']}}</td></tr>
                   <tr><td><b>Phone:</b> {{$return['phone1']}}</td></tr>
                   <tr><td><b>Address:</b> {{$return['address']}}</td></tr>
+                  @if($return['desc'])<tr><td><b>Detail:</b></td></tr>
+                  <tr><td>@php echo $return['desc'] @endphp</td></tr>@endif
                 </tbody>
               </table>
             </div>

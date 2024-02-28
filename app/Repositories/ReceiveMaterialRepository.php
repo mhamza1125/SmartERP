@@ -15,8 +15,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
         ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
         ->join('heads', 'heads.head_id', '=' ,'materials.unit_id')
-        ->select('material_no', 'materials.name', 'heads.name as hname',
-            'receive_materials.quantity', 'receive_materials.receive_material_id')
+        ->select('material_no', 'materials.name', 'heads.name as hname', 'receive_materials.*')
         ->get();
     }
 
@@ -63,5 +62,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
 
     public function update($id, array $data) {}
 
-    public function delete($id){}
+    public function delete($id){
+        ReceiveMaterial::where('receive_id', $id)->delete();
+    }
 }
