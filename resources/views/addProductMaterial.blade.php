@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('productMaterial.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('productMaterial.store') }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
                 <div class="col-md-12">
@@ -52,7 +52,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantity" required value="0">
+                    <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">

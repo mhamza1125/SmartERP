@@ -5,15 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ReturnMaterial;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReturnRequest;
+use App\Repositories\ReturnRepository;
+use App\Repositories\ReceiveRepository;
 use App\Repositories\MaterialRepository;
 use App\Repositories\PurchaseRepository;
 use App\Http\Requests\ReturnMaterialRequest;
 use App\Repositories\PurchaseItemRepository;
-use App\Repositories\ReceiveMaterialRepository;
 use App\Repositories\ReturnMaterialRepository;
+use App\Repositories\ReceiveMaterialRepository;
 
-class ReturnMaterialController extends Controller
+class ReturnController extends Controller
 {
+    protected $returnRepository;
+    protected $receiveRepository;
     protected $purchaseRepository;
     protected $materialRepository;
     protected $purchaseItemRepository;
@@ -21,6 +26,8 @@ class ReturnMaterialController extends Controller
     protected $returnMaterialRepository;
 
     public function __construct(
+        ReturnRepository $returnRepository, 
+        ReceiveRepository $receiveRepository, 
         PurchaseRepository $purchaseRepository, 
         MaterialRepository $materialRepository, 
         PurchaseItemRepository $purchaseItemRepository, 
@@ -28,6 +35,8 @@ class ReturnMaterialController extends Controller
         ReturnMaterialRepository $returnMaterialRepository, 
     ){
         $this->middleware(['auth', 'all']);
+        $this->returnRepository = $returnRepository;
+        $this->receiveRepository = $receiveRepository;
         $this->purchaseRepository = $purchaseRepository;
         $this->materialRepository = $materialRepository;
         $this->purchaseItemRepository = $purchaseItemRepository;
@@ -36,45 +45,39 @@ class ReturnMaterialController extends Controller
     }
 
     public function index(){
-        $receive = $this->receiveMaterialRepository->all();
-        return view('receiveMaterial', [
-            'receive' => $receive,
+        $return = $this->returnRepository->all();
+        return view('return', [
+            'return' => $return,
         ]); 
     }
 
-    public function create($id){   
-        $receiveMaterialAll = $this->receiveMaterialRepository->getEach($id);
-        $totalReceive = $this->receiveMaterialRepository->times($id);
-        return view('addReturnMaterial', [
-            'id' => $id,
-            'receiveMaterialAll' => $receiveMaterialAll,
-            'totalReceive' => $totalReceive,
-            'count' => $totalReceive->count(),
+    public function create($id){  
+        $receive = $this->receiveRepository->get($id);
+        $receiveMaterial = $this->receiveMaterialRepository->get($id);
+        return view('addReturn', [
+            'receive' => $receive,
+            'receiveMaterial' => $receiveMaterial,
         ]);
     }
 
-    public function store(ReturnMaterialRequest $request){
+    public function store(ReturnRequest $request){
         $validatedData = $request->validated();
-        $id = $request->input('receive_material_id');
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
+        }
+        $rid = $request->input('receive_material_id');
         $quantities = $request->input('quantity');
-        $date = date('Y-m-d');
-
-        $this->storeRM($id, $quantities, $date);
-
-        return redirect()->route('purchase')->with('success', 'Record Inserted Successfully');
+        $getId = $this->returnRepository->store($validatedData);
+        $this->storeRM($getId, $rid, $quantities);
+        return redirect()->route('receive')->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
-        $purchase = $this->purchaseRepository->get($id);
-        $receiveMaterial = $this->receiveMaterialRepository->get($id);
-        $receiveMaterialAll = $this->receiveMaterialRepository->getEach($id);
-        $totalReceive = $this->receiveMaterialRepository->times($id);
-        return view('receiveInfo', [
-            'purchase' => $purchase,
-            'receiveMaterial' => $receiveMaterial,
-            'receiveMaterialAll' => $receiveMaterialAll,
-            'totalReceive' => $totalReceive,
-            'count' => $totalReceive->count(),
+        $return = $this->returnRepository->get($id);
+        $returnMaterial = $this->returnMaterialRepository->get($id);
+        return view('returnInfo', [
+            'return' => $return,
+            'returnMaterial' => $returnMaterial,
         ]);
     }
     
@@ -84,14 +87,14 @@ class ReturnMaterialController extends Controller
     
     public function destroy(ReturnMaterial $return){}
 
-    private function storeRM($getIds, $quantities, $date){
+    private function storeRM($getId, $rids, $quantities){
         foreach ($quantities as $key => $quantity) {
             if($quantity){
-                $id = $getIds[$key] ?? null;
+                $id = $rids[$key] ?? null;
                 $returnMaterial = [
+                    'return_id' => $getId,
                     'receive_material_id' => $id,
                     'quantity' => $quantity,
-                    'return_date' => $date,
                 ];
                 $this->returnMaterialRepository->store($returnMaterial);
             }

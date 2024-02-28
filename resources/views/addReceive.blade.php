@@ -14,19 +14,29 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('receive.store', $purchase['purchase_id']) }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('receive.store', $purchase['purchase_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label>Purchase No</label>
-                    <input type="text" class="form-control" readonly value="{{ $purchase['purchase_no'] }}">
+                    <label>Receive No</label>
+                    <input type="text" class="form-control" name="receive_no" required value="{{ old('receive_no') }}" placeholder="Receive No">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Receive No</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label>Vendor</label>
-                    <input type="text" class="form-control" readonly value="{{ $purchase['fname'] }}">
+                    <label>Receiving Date</label>
+                    <input type="text" class="form-control datepicker" name="receive_date" required value="{{old('receive_date')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Purchase No</label>
+                    <input type="text" name="purchase_id" hidden value="{{ $purchase['purchase_id'] }}">
+                    <input type="text" class="form-control" readonly value="{{ $purchase['purchase_no'] }}">
                   </div>
                 </div>
                 <div class="col-md-3">
@@ -35,12 +45,10 @@
                     <input type="text" class="form-control" readonly value="{{( $purchase['job_no'])? $purchase['job_no'] : 'Default Purchase' }}">
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group">
-                    <label>Receiving Date</label>
-                    <input type="text" class="form-control datepicker" name="receive_date" required value="{{old('receive_date')}}">
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Receiving Date</div>
+                    <label>Vendor</label>
+                    <input type="text" class="form-control" readonly value="{{ $purchase['fname'] }}">
                   </div>
                 </div>
               </div>
@@ -70,7 +78,7 @@
                               <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
                             </td>
                             <td class="form-group">
-                              <input type="text" class="qty form-control" name="quantity[]" placeholder="0">
+                              <input type="number" class="qty form-control" name="quantity[]" placeholder="0">
                             </td>
                             <td class="form-group">
                               <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly>
@@ -91,6 +99,14 @@
                   </table>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
+                  </div>
+                </div>
+              </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
                   <button class="btn btn-primary" type="submit">Submit</button>
@@ -103,6 +119,4 @@
     </div>
   </div>
 </section>
-<script>
-</script>
 @endsection

@@ -5,8 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HeadController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReturnController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReceiveController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
@@ -16,7 +18,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\PurchaseItemController;
 use App\Http\Controllers\ProductMaterialController;
-use App\Http\Controllers\ReceiveMaterialController;
 
 // --------------------------------------
 // ---------- Auth Controllers ----------
@@ -88,6 +89,15 @@ Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.s
 Route::get('/editProduct/{id}', [ProductController::class, 'edit'])->name('product.edit');
 Route::post('/product/{id}', [ProductController::class, 'update'])->name('product.update');
 
+// Order
+Route::get('/order', [OrderController::class, 'index'])->name('order');
+Route::get('/addOrder', [OrderController::class, 'create'])->name('order.add');
+Route::post('/order', [OrderController::class, 'store'])->name('order.store');
+Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
+Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
+Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
+Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
+
 // Product Material
 Route::get('/productMaterial', [ProductMaterialController::class, 'index'])->name('productMaterial');
 Route::get('/addProductMaterial', [ProductMaterialController::class, 'create'])->name('productMaterial.add');
@@ -105,17 +115,14 @@ Route::get('/editpurchase/{id}', [PurchaseController::class, 'edit'])->name('pur
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
 
 // Purchase Receive
-Route::get('/receive', [ReceiveMaterialController::class, 'index'])->name('receive');
-Route::get('/addReceive/{id}', [ReceiveMaterialController::class, 'create'])->name('receive.add');
-Route::post('/receive', [ReceiveMaterialController::class, 'store'])->name('receive.store');
-Route::get('/receive/{id}', [ReceiveMaterialController::class, 'show'])->name('receive.show');
+Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
+Route::get('/addReceive/{id}', [ReceiveController::class, 'create'])->name('receive.add');
+Route::post('/receive', [ReceiveController::class, 'store'])->name('receive.store');
+Route::get('/receive/{id}', [ReceiveController::class, 'show'])->name('receive.show');
 
-// Order
-Route::get('/order', [OrderController::class, 'index'])->name('order');
-Route::get('/addOrder', [OrderController::class, 'create'])->name('order.add');
-Route::post('/order', [OrderController::class, 'store'])->name('order.store');
-Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
-Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
-Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
-Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
+// Purchase Return
+Route::get('/return', [ReturnController::class, 'index'])->name('return');
+Route::get('/addReturn/{id}', [ReturnController::class, 'create'])->name('return.add');
+Route::post('/return', [ReturnController::class, 'store'])->name('return.store');
+Route::get('/return/{id}', [ReturnController::class, 'show'])->name('return.show');
 

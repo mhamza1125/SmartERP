@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Receive Purchase Table</h4>
+            <h4>Return Table</h4>
             <div class="card-header-action">
               {{-- <a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Purchase</a> --}}
             </div>
@@ -17,6 +17,8 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Return No</th>
+                    <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
                     <th>Date</th>
@@ -24,17 +26,18 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @if($receive->count())
-                    @foreach($receive as $item)
+                  @if($return->count())
+                    @foreach($return as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->return_no}}</td>
+                      <td>{{$item->receive_no}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{$item->fname}}</td>
-                      <td>{{$item->receive_date}}</td>                      
+                      <td>{{$item->return_date}}</td>                      
                       <td>
-                        <a href="{{ route('receive.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
-                        {{-- <a href="{{ route('receive.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a> --}}
-                        <a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Return</a>
+                        <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
+                        {{-- <a href="{{ route('return.edit', $item->return_id) }}" class="btn btn-primary btn-sm">Edit</a> --}}
                       </td>
                     </tr>
                     @endforeach
@@ -43,6 +46,8 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Return No</th>
+                    <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
                     <th>Date</th>

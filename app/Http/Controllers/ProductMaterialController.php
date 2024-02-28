@@ -60,7 +60,7 @@ class ProductMaterialController extends Controller
         $quantities = $request->input('quantity');
         $this->storePM($getId, $products, $quantities);
 
-        return redirect()->route('productMaterial.add')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('productMaterial.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
@@ -89,9 +89,7 @@ class ProductMaterialController extends Controller
         }
         $products = $request->input('material_id');
         $quantities = $request->input('quantity');
-        
         $this->productMaterialRepository->delete($id);
-        // $check = $this->productTypeRepository->update($id, $request->input());
         $this->storePM($id, $products, $quantities);
 
         return redirect()->route('productMaterial.show', $id)->with('success', 'Record Updated Successfully');    

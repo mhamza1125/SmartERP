@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('order.update', $order['order_id']) }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('order.update', $order['order_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
                 <div class="col-md-2">
@@ -64,7 +64,6 @@
                       <option value="9" {{ $order['order_status'] == 9 ? 'selected' : '' }}>Disputed</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -72,7 +71,6 @@
                     <label>Order Date</label>
                     <input type="text" class="form-control datepicker" name="order_date" required value="{{$order['order_date']}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Order Date</div>
                   </div>
                 </div>
               </div>
@@ -95,13 +93,13 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantity" required value="0">
+                    <input type="number" min="0" class="form-control" name="quantity" required placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Price</label>
-                    <input type="number" min="0" class="form-control" name="price" required value="0">
+                    <input type="number" min="0" class="form-control" name="price" required placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">

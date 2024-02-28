@@ -47,18 +47,21 @@
                   <div class="form-group">
                     <label>Email</label>
                     <input type="text" class="form-control" name="email" value="{{old('email')}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Contact No</label>
                     <input type="text" class="form-control" name="phone" value="{{old('phone')}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Fax Number</label>
                     <input type="text" class="form-control" name="fax" value="{{old('fax')}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-3">

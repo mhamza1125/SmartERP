@@ -402,3 +402,29 @@ document.addEventListener('input', function(event) {
     }
 });
 // End - Receive Material Script
+
+// Start - Return Material Script
+var returnQuantityInputs = document.querySelectorAll('.return-qty');
+returnQuantityInputs.forEach(function(input) {
+    var row = input.closest('tr');
+    var receiveQuantityCell = row.querySelector('td:nth-child(5)');
+    var receiveQuantity = parseInt(receiveQuantityCell.textContent.trim());
+    input.addEventListener('input', function() {
+        var inputValue = parseInt(this.value.trim());
+        if (inputValue > receiveQuantity) {
+            this.value = receiveQuantity;
+        }
+    });
+    input.setAttribute('max', receiveQuantity);
+});
+// End - Return Material Script
+
+// Start - Make Qty 0
+document.getElementById('makeZero').addEventListener('submit', function(event) {
+    document.querySelectorAll('.qty, .return-qty, .price').forEach(function(input) {
+        if (input.value.trim() === '') {
+            input.value = '0';
+        }
+    });
+});
+// End - Make Qty 0

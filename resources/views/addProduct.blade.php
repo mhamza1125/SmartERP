@@ -40,7 +40,6 @@
                       <option value="0" {{ old('product_status') == '0' ? 'selected' : '' }}>Inactive</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Product Status</div>
                   </div>
                 </div>
               </div>

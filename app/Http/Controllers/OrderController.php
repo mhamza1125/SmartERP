@@ -50,17 +50,16 @@ class OrderController extends Controller
 
     public function store(OrderRequest $request){
         $validatedData = $request->validated();
-        if (!$request->has('quantity')) {
+        if (!$request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-
         $products = $request->input('product_type_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
         $getId = $this->orderRepository->store($validatedData);
         $this->storeOI($getId, $products, $prices, $quantities);
 
-        return redirect()->route('order.add')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
@@ -91,7 +90,6 @@ class OrderController extends Controller
         $products = $request->input('product_type_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
-        
         $this->orderItemRepository->delete($id);
         $this->orderRepository->update($id, $request->input());
         $this->storeOI($id, $products, $prices, $quantities);

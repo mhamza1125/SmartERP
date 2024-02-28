@@ -77,7 +77,6 @@
                     <label>Joining Date</label>
                     <input type="text" class="form-control datepicker" name="joining_date" required value="{{$employee['joining_date']}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Joining Date</div>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -88,7 +87,6 @@
                       <option value="0" {{ $employee['employee_status'] == '0' ? 'selected' : '' }}>Inactive</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee Status</div>
                   </div>
                 </div>
               </div>
@@ -105,6 +103,7 @@
                   <div class="form-group">
                     <label>Short Name</label>
                     <input type="text" class="form-control" name="sname" value="{{$employee['sname']}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -137,6 +136,7 @@
                   <div class="form-group">
                     <label>Emergency No</label>
                     <input type="text" class="form-control" name="phone2" value="{{$employee['phone2']}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>

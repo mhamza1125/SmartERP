@@ -12,9 +12,9 @@ class ReturnMaterial extends Model
     protected $primaryKey = 'return_material_id';
 
     protected $fillable = [
+        'return_id',
         'receive_material_id',
         'quantity',
-        'return_date',
         'remarks',
         'created_by',
         'updated_at',

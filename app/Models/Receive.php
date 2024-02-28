@@ -5,17 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ReceiveMaterial extends Model
+class Receive extends Model
 {
     use HasFactory;
     
-    protected $primaryKey = 'receive_material_id';
+    protected $primaryKey = 'receive_id';
 
     protected $fillable = [
-        'receive_id',
-        'purchase_item_id',
-        'quantity',
-        'inspection_status',
+        'receive_no',
+        'purchase_id',
+        'receive_date',
+        'description',
         'created_by',
         'updated_at',
     ];

@@ -11,6 +11,7 @@ use App\Repositories\VendorRepository;
 use App\Repositories\MaterialRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\PurchaseItemRepository;
+use App\Repositories\ReceiveMaterialRepository;
 
 class PurchaseController extends Controller
 {
@@ -26,6 +27,7 @@ class PurchaseController extends Controller
         PurchaseRepository $purchaseRepository, 
         MaterialRepository $materialRepository, 
         PurchaseItemRepository $purchaseItemRepository, 
+        ReceiveMaterialRepository $receiveMaterialRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->orderRepository = $orderRepository;
@@ -33,6 +35,7 @@ class PurchaseController extends Controller
         $this->purchaseRepository = $purchaseRepository;
         $this->materialRepository = $materialRepository;
         $this->purchaseItemRepository = $purchaseItemRepository;
+        $this->receiveMaterialRepository = $receiveMaterialRepository;
     }
 
     public function index(){
@@ -58,24 +61,28 @@ class PurchaseController extends Controller
         if (!$request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-
         $materials = $request->input('material_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
-        
         $getId = $this->purchaseRepository->store($validatedData);
-
         $this->storePI($getId, $materials, $prices, $quantities);
-
-        return redirect()->route('purchase.add')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('purchase.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
-        $purchase = $this->purchaseRepository->get($id);
-        $purchaseItem = $this->purchaseItemRepository->get($id);
+        $purchase = $this->purchaseRepository->get($id); // Old/New
+        $purchaseItem = $this->purchaseItemRepository->get($id); // Old
+        $receiveSum = $this->receiveMaterialRepository->rSum($id);
+        $receiveAll = $this->receiveMaterialRepository->rAll($id);
+        $totalTimes = $this->receiveMaterialRepository->times($id);
+
         return view('purchaseInfo', [
-            'purchase' => $purchase,
-            'purchaseItem' => $purchaseItem,
+            'purchase' => $purchase, // Old/New
+            'purchaseItem' => $purchaseItem, // Old
+            'receiveSum' => $receiveSum,
+            'receiveAll' => $receiveAll,
+            'totalTimes' => $totalTimes,
+            'count' => $totalTimes->count(),
         ]);
     }
     

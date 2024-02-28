@@ -14,10 +14,10 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('purchase.update', $purchase['purchase_id']) }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('purchase.update', $purchase['purchase_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase No</label>
                     <input type="text" class="form-control" name="purchase_no" required value="{{$purchase['purchase_no']}}">
@@ -25,7 +25,7 @@
                     <div class="invalid-feedback">Enter Purchase No</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Vendor</label>
                     <select class="form-control select2" name="vendor_id" required>
@@ -58,7 +58,6 @@
                     <label>Purchase Date</label>
                     <input type="text" class="form-control datepicker" name="purchase_date" required value="{{$purchase['purchase_date']}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Puchase Date</div>
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -66,7 +65,6 @@
                     <label>Required Date</label>
                     <input type="text" class="form-control datepicker" name="require_date" required value="{{$purchase['require_date']}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Require Date</div>
                   </div>
                 </div>
               </div>
@@ -89,13 +87,13 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantity" required value="0">
+                    <input type="number" min="0" class="form-control" name="quantity" required placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Price</label>
-                    <input type="number" min="0" class="form-control" name="price" required value="0">
+                    <input type="number" min="0" class="form-control" name="price" required placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">

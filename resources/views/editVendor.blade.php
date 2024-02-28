@@ -47,6 +47,7 @@
                   <div class="form-group">
                     <label>Phone No</label>
                     <input type="text" class="form-control" name="phone2" value="{{$vendor['phone2']}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>

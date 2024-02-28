@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Receive Info</h4>
+            <h4>Return Info</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -17,22 +17,21 @@
             <div class="col-md-7">
               <table class="table table-sm">
                 <tbody>
-                  <tr><td><b>Receive No:</b> {{$receive['receive_no']}}</td></tr>
-                  <tr><td><b>Vendor Name:</b> {{$receive['fname']}}</td></tr>
-                  <tr><td><b>Phone:</b> {{$receive['phone1']}}</td></tr>
-                  <tr><td><b>Address:</b> {{$receive['address']}}</td></tr>
-                  @if($receive['desc'])<tr><td><b>Detail:</b></td></tr>
-                  <tr><td>@php echo $receive['desc'] @endphp</td></tr>@endif
+                  <tr><td><b>Return No:</b> {{$return['receive_no']}}</td></tr>
+                  <tr><td><b>Receive No:</b> {{$return['receive_no']}}</td></tr>
+                  <tr><td><b>Vendor Name:</b> {{$return['fname']}}</td></tr>
+                  <tr><td><b>Phone:</b> {{$return['phone1']}}</td></tr>
+                  <tr><td><b>Address:</b> {{$return['address']}}</td></tr>
                 </tbody>
               </table>
             </div>
             <div class="col-md-5">
               <table class="table table-sm">
                 <tbody>
-                  <tr><td><b>P.O.#:</b> {{$receive['purchase_no']}}</td></tr>
-                  <tr><td><b>Job.#:</b> {{($receive['job_no'])? $receive['job_no']:'Default Purchase'}}</td></tr>
-                  <tr><td><b>Date:</b> {{$receive['purchase_date']}}</td></tr>
-                  <tr><td><b>Required Date:</b> {{$receive['require_date']}}</td></tr>
+                  <tr><td><b>P.O.#:</b> {{$return['purchase_no']}}</td></tr>
+                  <tr><td><b>Job.#:</b> {{($return['job_no'])? $return['job_no']:'Default Purchase'}}</td></tr>
+                  <tr><td><b>Date:</b> {{$return['purchase_date']}}</td></tr>
+                  <tr><td><b>Required Date:</b> {{$return['require_date']}}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -44,18 +43,20 @@
                     <th>Code</th>
                     <th>Material</th>
                     <th>Units</th>
-                    <th>Receive Qty</th>
+                    <th>Return Qty</th>
+                    <th>Remarks</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @if($receiveMaterial->count())
-                    @foreach($receiveMaterial as $item)
+                  @if($returnMaterial->count())
+                    @foreach($returnMaterial as $item)
                       <tr>
                         <td>{{$loop->index + 1}}</td>
                         <td>{{$item->material_no}}</td>
                         <td>{{$item->name}}</td>
                         <td>{{$item->hname}}</td>
                         <td>{{$item->quantity}}</td>
+                        <td>{{$item->remarks}}</td>
                       </tr>
                     @endforeach
                   @endif
@@ -66,7 +67,8 @@
                     <th>Code</th>
                     <th>Material</th>
                     <th>Units</th>
-                    <th>Receive Qty</th>
+                    <th>Return Qty</th>
+                    <th>Remarks</th>
                   </tr>
                 </tfoot>
               </table>

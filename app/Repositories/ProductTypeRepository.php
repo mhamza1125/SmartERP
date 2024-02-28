@@ -27,7 +27,7 @@ class ProductTypeRepository implements GlobalInterface {
     public function store(array $data){
         $data['created_by'] = auth()->id();
         $store = ProductType::create($data);
-        return $store->product_variant_id;
+        return $store->product_type_id;
     }
 
     public function update($id, array $data) {   
