@@ -35,8 +35,8 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>City</label>
-                    <select value="" class="form-control select2" name="city_id" required>
-                      <option selected disabled>Select City</option>
+                    <select class="form-control select2" name="city_id" required>
+                      <option value="" selected disabled>Select City</option>
                       @if($city->count())
                         @foreach($city as $item)
                           <option value="{{$item->head_id}}" {{ $employee['city_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>

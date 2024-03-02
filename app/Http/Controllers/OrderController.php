@@ -98,7 +98,7 @@ class OrderController extends Controller
     public function updateStatus($id, $status){
         $orderStatus = ['order_status' => $status];        
         $this->orderRepository->update($id, $orderStatus);
-        return redirect()->route('order')->with('success', 'Record Updated Successfully');    
+        return redirect()->route('order')->with('success', 'Status Updated Successfully');    
     }
     
     public function destroy(Purchase $purchase){}

@@ -8,7 +8,6 @@
           <div class="card-header">
             <h4>Receive Info</h4>
             <div class="card-header-action">
-              
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('receive.edit', $receive['receive_id']) }}" class="btn btn-primary">Edit</a>
@@ -38,7 +37,7 @@
                   <tr><td><b>Required Date:</b> {{$receive['require_date']}}</td></tr>
                 </tbody>
               </table>
-            </div>
+            </div> 
             <div class="col-md-12">
               <table class="table table-sm table-striped">
                 <thead>
@@ -52,14 +51,17 @@
                 </thead>
                 <tbody>
                   @if($receiveMaterial->count())
+                    @php $loopIndex = 1; @endphp
                     @foreach($receiveMaterial as $item)
+                      @if($item->quantity)
                       <tr>
-                        <td>{{$loop->index + 1}}</td>
+                        <td>{{$loopIndex++}}</td>
                         <td>{{$item->material_no}}</td>
                         <td>{{$item->name}}</td>
                         <td>{{$item->hname}}</td>
                         <td>{{$item->quantity}}</td>
                       </tr>
+                      @endif
                     @endforeach
                   @endif
                 </tbody>

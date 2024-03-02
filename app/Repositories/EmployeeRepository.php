@@ -15,6 +15,24 @@ class EmployeeRepository implements GlobalInterface {
         ->get();
     }
 
+    public function salary(){
+        return Employee::where('employee_type_id', '39')
+        ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
+        ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
+        ->select('employees.*', 'dhead.name as dname', 'chead.name as cname')
+        ->orderBy('employees.created_at', 'desc')
+        ->get();
+    }
+
+    public function wages(){
+        return Employee::where('employee_type_id', '!=', '40')
+        ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
+        ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
+        ->select('employees.*', 'dhead.name as dname', 'chead.name as cname')
+        ->orderBy('employees.created_at', 'desc')
+        ->get();
+    }
+
     public function get($id){
         return Employee::where('employee_id', $id)
         ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')

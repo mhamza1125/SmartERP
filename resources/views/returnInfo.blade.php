@@ -8,9 +8,10 @@
           <div class="card-header">
             <h4>Return Info</h4>
             <div class="card-header-action">
-              <a href="{{ url()->previous() }}" class="btn btn-primary">
-                Back
-              </a>
+              <div class="btn-group">
+                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('return.edit', $return['return_id']) }}" class="btn btn-primary">Edit</a>
+              </div>
             </div>
           </div>
           <div class="card-body row">
@@ -51,15 +52,18 @@
                 </thead>
                 <tbody>
                   @if($returnMaterial->count())
+                    @php $loopIndex = 1; @endphp
                     @foreach($returnMaterial as $item)
+                      @if($item->quantity)
                       <tr>
-                        <td>{{$loop->index + 1}}</td>
+                        <td>{{$loopIndex++}}</td>
                         <td>{{$item->material_no}}</td>
                         <td>{{$item->name}}</td>
                         <td>{{$item->hname}}</td>
                         <td>{{$item->quantity}}</td>
                         <td>{{$item->remarks}}</td>
                       </tr>
+                      @endif
                     @endforeach
                   @endif
                 </tbody>

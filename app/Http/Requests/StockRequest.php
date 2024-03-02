@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ReceiveRequest extends FormRequest
+class StockRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,14 +22,18 @@ class ReceiveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'receive_no' => 'required',
-            'purchase_id' => 'required',
-            'receive_date' => 'required',
+            'stock_no' => 'required',
+            'order_id' => 'required',
+            'employee_id' => 'required',
+            'stock_date' => 'required',
+            'department_id' => '',
+            'stock_type' => '',
             'description' => '',
             // Receive Material
             'purchase_item_id.*' => 'required',
-            'inspection_status.*' => 'required',
+            'material_id.*' => 'required',
             'quantity.*' => 'required',
+            'product_stage.*' => '',
         ];
     }
 }

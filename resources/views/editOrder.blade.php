@@ -93,13 +93,13 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantity" required placeholder="0">
+                    <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Price</label>
-                    <input type="number" min="0" class="form-control" name="price" required placeholder="0">
+                    <input type="number" min="0" class="form-control" name="price" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">

@@ -63,12 +63,13 @@
                         <th>Received / Total</th>
                         <th>Receive</th>
                         <th>Remaining</th>
+                        <th>Receive</th>
                       </tr>
                     </thead>
                     <tbody>
                       @if($purchaseItem->count())
                         @foreach($purchaseItem as $key => $item)
-                        @php if($item->purchase_item_id == $receiveMaterial[$key]['purchase_item_id']){
+                        @php if(isset($receiveMaterial[$key]['purchase_item_id']) && $item->purchase_item_id == $receiveMaterial[$key]['purchase_item_id']){
                           $qty = $receiveMaterial[$key]['quantity'];}else{$qty = 0;} @endphp
                         <tr>
                             <td>{{ $loop->index + 1 }}</td>
@@ -84,6 +85,13 @@
                             <td class="form-group">
                               <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received - $qty}}" readonly>
                             </td>
+                            <td class="form-group">
+                              <select class="form-control" name="inspection_status[]" required>
+                                <option value="1" {{ $receiveMaterial[$key]['inspection_status'] == '1' ? 'selected' : '' }}>Pending</option>
+                                <option value="2" {{ $receiveMaterial[$key]['inspection_status'] == '2' ? 'selected' : '' }}>Approved</option>
+                                <option value="3" {{ $receiveMaterial[$key]['inspection_status'] == '3' ? 'selected' : '' }}>Rejected</option>
+                              </select>
+                            </td>
                         </tr>
                         @endforeach
                       @endif
@@ -95,6 +103,7 @@
                         <th>Received / Total</th>
                         <th>Receive</th>
                         <th>Remaining</th>
+                        <th>Status</th>
                       </tr>
                     </tfoot>
                   </table>

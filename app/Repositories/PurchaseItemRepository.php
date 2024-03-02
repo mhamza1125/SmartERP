@@ -46,7 +46,35 @@ class PurchaseItemRepository implements GlobalInterface {
         return $store->purchase_item_id;
     }
 
-    public function update($id, array $data) {}
+    public function update($id, array $data) {
+        $existingItems = PurchaseItem::where('purchase_id', $id)->get();
+        foreach ($existingItems as $existingItem) {
+            if (!in_array($existingItem->material_id, $data['material_id'])) {
+                $existingItem->delete();
+            }
+        }
+        foreach ($data['quantity'] as $key => $quantity) {
+            $price = $data['price'][$key] ?? null;
+            $material = $data['material_id'][$key] ?? null;
+            $total = $price * $quantity;
+            $purchaseItem = [
+                'purchase_id' => $id,
+                'material_id' => $material,
+                'price' => $price,
+                'quantity' => $quantity,
+                'total' => $total,
+            ];
+            $purchase = PurchaseItem::where('purchase_id', $id)
+                ->where('material_id', $material)
+                ->first();
+            if ($purchase) {
+                $purchase->update($purchaseItem);
+            } else {
+                $purchaseItem['created_by'] = auth()->id();
+                $store = PurchaseItem::create($purchaseItem);
+            }
+        }
+    }
 
     public function delete($id){
         PurchaseItem::where('purchase_id', $id)->delete();

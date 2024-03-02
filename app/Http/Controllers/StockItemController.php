@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StockProduct;
+use App\Models\StockItem;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class StockProductController extends Controller
+class StockItemController extends Controller
 {
     /**
      * Display a listing of the resource.

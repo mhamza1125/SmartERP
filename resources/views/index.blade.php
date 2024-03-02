@@ -193,19 +193,10 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>All</span></a>
+                  data-feather="briefcase"></i><span>Stock</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
-                <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
-                <li><a class="nav-link" href="{{ route('material') }}">Material</a></li>
-                <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
-                <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
-                <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
-                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
-                <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
-                <li><a class="nav-link" href="{{ route('order') }}">Order</a></li>
-                <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
+                <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>
+                <li><a class="nav-link" href="{{ route('stock.add') }}">Issue</a></li>
               </ul>
             </li>
             <li class="dropdown">

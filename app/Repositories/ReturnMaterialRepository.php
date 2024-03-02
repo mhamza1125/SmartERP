@@ -27,7 +27,34 @@ class ReturnMaterialRepository implements GlobalInterface {
         return $store->return_material_id;
     }
 
-    public function update($id, array $data) {}
+    public function update($id, array $data) {
+        $existingItems = ReturnMaterial::where('return_id', $id)->get();
+        foreach ($existingItems as $existingItem) {
+            if (!in_array($existingItem->receive_material_id, $data['receive_material_id'])) {
+                $existingItem->delete();
+            }
+        }
+        foreach ($data['quantity'] as $key => $quantity) {
+            $rid = $data['receive_material_id'][$key] ?? null;
+            $remarks = $data['remarks'][$key] ?? null;
+
+            $returnMaterial = [
+                'return_id' => $id,
+                'receive_material_id' => $rid,
+                'quantity' => $quantity,
+                'remarks' => $remarks,
+            ];
+            $return = ReturnMaterial::where('return_id', $id)
+                ->where('receive_material_id', $rid)
+                ->first();
+            if ($return) {
+                $return->update($returnMaterial);
+            } else {
+                $returnMaterial['created_by'] = auth()->id();
+                $store = returnMaterial::create($returnMaterial);
+            }
+        }
+    }
 
     public function delete($id){
         ReturnMaterial::where('return_id', $id)->delete();

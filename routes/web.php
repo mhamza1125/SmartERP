@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HeadController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\ReturnController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProductController;
@@ -121,6 +122,7 @@ Route::post('/receive', [ReceiveController::class, 'store'])->name('receive.stor
 Route::get('/receive/{id}', [ReceiveController::class, 'show'])->name('receive.show');
 Route::get('/editReceive/{id}', [ReceiveController::class, 'edit'])->name('receive.edit');
 Route::post('/receive/{id}', [ReceiveController::class, 'update'])->name('receive.update');
+Route::get('/receiveStatus/{id}/{status}', [ReceiveController::class, 'updateStatus'])->name('receive.updateStatus');
 
 // Purchase Return
 Route::get('/return', [ReturnController::class, 'index'])->name('return');
@@ -130,3 +132,12 @@ Route::get('/return/{id}', [ReturnController::class, 'show'])->name('return.show
 Route::get('/editReturn/{id}', [ReturnController::class, 'edit'])->name('return.edit');
 Route::post('/return/{id}', [ReturnController::class, 'update'])->name('return.update');
 
+// Stock
+Route::get('/stock', [StockController::class, 'index'])->name('stock');
+Route::get('/addStock', [StockController::class, 'create'])->name('stock.add');
+Route::post('/stock', [StockController::class, 'store'])->name('stock.store');
+// Route::get('/stock/{id}', [StockController::class, 'show'])->name('stock.show');
+// Route::get('/editstock/{id}', [StockController::class, 'edit'])->name('stock.edit');
+// Route::post('/stock/{id}', [StockController::class, 'update'])->name('stock.update');
+Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM');
+Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT');

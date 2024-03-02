@@ -104,12 +104,15 @@ class PurchaseController extends Controller
         if (!$request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $materials = $request->input('material_id');
-        $prices = $request->input('price');
-        $quantities = $request->input('quantity');
-        $this->purchaseItemRepository->delete($id);
         $this->purchaseRepository->update($id, $request->input());
-        $this->storePI($id, $materials, $prices, $quantities);
+        $this->purchaseItemRepository->update($id, $request->input());
+        
+        // dd($request->input());
+        // $materials = $request->input('material_id');
+        // $prices = $request->input('price');
+        // $quantities = $request->input('quantity');
+        // $this->purchaseItemRepository->delete($id);
+        // $this->storePI($id, $materials, $prices, $quantities);
         return redirect()->route('purchase.show', $id)->with('success', 'Record Updated Successfully');    
     }
     

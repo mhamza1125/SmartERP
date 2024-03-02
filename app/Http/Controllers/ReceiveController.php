@@ -54,8 +54,9 @@ class ReceiveController extends Controller
         }
         $pid = $request->input('purchase_item_id');
         $quantities = $request->input('quantity');
+        $inspections = $request->input('inspection_status');
         $getId = $this->receiveRepository->store($validatedData);
-        $this->storeRM($getId, $pid, $quantities);
+        $this->storeRM($getId, $pid, $quantities, $inspections);
         return redirect()->route('receive.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
@@ -69,7 +70,7 @@ class ReceiveController extends Controller
     }
     
     public function edit($id){
-        $receive = $this->receiveRepository->get($id);        
+        $receive = $this->receiveRepository->get($id);
         $receiveMaterial = $this->receiveMaterialRepository->get($id);
         $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
         return view('editReceive', [
@@ -83,23 +84,33 @@ class ReceiveController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $pid = $request->input('purchase_item_id');
-        $quantities = $request->input('quantity');
-        $this->receiveMaterialRepository->delete($id);
         $this->receiveRepository->update($id, $request->input());
-        $this->storeRM($id, $pid, $quantities);
+        $this->receiveMaterialRepository->update($id, $request->input());
+        // $pid = $request->input('purchase_item_id');
+        // $quantities = $request->input('quantity');
+        // $inspections = $request->input('inspection_status');
+        // $this->receiveMaterialRepository->delete($id);
+        // $this->storeRM($id, $pid, $quantities, $inspections);
         return redirect()->route('receive.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    public function updateStatus($id, $status){
+        $receiveStatus = ['receive_status' => $status];        
+        $this->receiveRepository->update($id, $receiveStatus);
+        return redirect()->route('receive')->with('success', 'Status Updated Successfully');    
     }
     
     public function destroy(ReceiveMaterial $receive){}
 
-    private function storeRM($getId, $pids, $quantities){
+    private function storeRM($getId, $pids, $quantities, $inspections){
         foreach ($quantities as $key => $quantity) {
             $pid = $pids[$key] ?? null;
+            $status = $inspections[$key] ?? null;
             $receiveMaterial = [
                 'receive_id' => $getId,
                 'purchase_item_id' => $pid,
                 'quantity' => $quantity,
+                'inspection_status' => $status,
             ];
             $this->receiveMaterialRepository->store($receiveMaterial);
         }

@@ -379,7 +379,7 @@ $(document).ready(function() {
 
 // Start - Receive Material Script
 document.addEventListener('input', function(event) {
-    if (event.target.classList.contains('qty')) {
+    if (event.target.classList.contains('receive-qty')) {
       var row = event.target.closest('tr');
       var received = parseInt(row.querySelector('.received').innerText, 10) || 0;
       var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
@@ -421,7 +421,7 @@ returnQuantityInputs.forEach(function(input) {
 
 // Start - Make Qty 0
 document.getElementById('makeZero').addEventListener('submit', function(event) {
-    document.querySelectorAll('.qty, .return-qty, .price').forEach(function(input) {
+    document.querySelectorAll('.receive-qty, .return-qty').forEach(function(input) {
         if (input.value.trim() === '') {
             input.value = '0';
         }

@@ -5,18 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Receive extends Model
+class StockItem extends Model
 {
     use HasFactory;
     
-    protected $primaryKey = 'receive_id';
+    protected $primaryKey = 'store_item_id';
 
     protected $fillable = [
-        'receive_no',
-        'purchase_id',
-        'receive_date',
-        'receive_status',
-        'description',
+        'store_id',
+        'product_item_id',
+        'material_id',
+        'quantity',
+        'product_stage',
         'created_by',
         'updated_at',
     ];

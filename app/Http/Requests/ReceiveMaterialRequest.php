@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ReceiveMaterialRequest extends FormRequest
+class ReceiveMaterialRequest123 extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,6 +22,7 @@ class ReceiveMaterialRequest extends FormRequest
     public function rules(): array
     {
         return [
+            //Not Used
             'receive_date' => 'required',
             // Receive Material
             'purchase_item_id.*' => 'required',

@@ -83,12 +83,13 @@ class ReturnController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $rid = $request->input('receive_material_id');
-        $quantities = $request->input('quantity');
-        $remarks = $request->input('remarks');
-        $this->returnMaterialRepository->delete($id);
         $this->returnRepository->update($id, $request->input());
-        $this->storeRM($id, $rid, $quantities, $remarks);
+        $this->returnMaterialRepository->update($id, $request->input());
+        // $rid = $request->input('receive_material_id');
+        // $quantities = $request->input('quantity');
+        // $remarks = $request->input('remarks');
+        // $this->returnMaterialRepository->delete($id);
+        // $this->storeRM($id, $rid, $quantities, $remarks);
         return redirect()->route('return.show', $id)->with('success', 'Record Updated Successfully');
     }
     

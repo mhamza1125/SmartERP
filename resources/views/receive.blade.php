@@ -20,6 +20,7 @@
                     <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>
@@ -32,6 +33,21 @@
                       <td>{{$item->receive_no}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{$item->fname}}</td>
+                      <td>
+                        <div class="btn-group">
+                          <button class="btn <?php 
+                              if($item->receive_status == 0){ echo 'btn-warning'; $status = 'Pending'; }
+                              elseif($item->receive_status == 1){ echo 'btn-success'; $status = 'Checked'; }
+                              else{ echo 'btn-danger'; $status = 'Unknown'; }
+                             ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {{$status}}
+                          </button>
+                          <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '0']) }}">Pending</a>
+                            <a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '1']) }}">Checked</a>
+                          </div>
+                        </div>
+                      </td>
                       <td>{{$item->receive_date}}</td>                      
                       <td>
                         <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>
@@ -48,6 +64,7 @@
                     <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>

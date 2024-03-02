@@ -64,6 +64,7 @@
                         <th>Received / Total</th>
                         <th>Receive</th>
                         <th>Remaining</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -78,10 +79,17 @@
                               <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
                             </td>
                             <td class="form-group">
-                              <input type="number" class="qty form-control" name="quantity[]" placeholder="0">
+                              <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0">
                             </td>
                             <td class="form-group">
                               <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly>
+                            </td>
+                            <td class="form-group">
+                              <select class="form-control" name="inspection_status[]" required>
+                                <option value="1" selected>Pending</option>
+                                <option value="2">Approved</option>
+                                <option value="3">Rejected</option>
+                              </select>
                             </td>
                         </tr>
                         @endforeach
@@ -94,6 +102,7 @@
                         <th>Received / Total</th>
                         <th>Receive</th>
                         <th>Remaining</th>
+                        <th>Status</th>
                       </tr>
                     </tfoot>
                   </table>
