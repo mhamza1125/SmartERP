@@ -12,37 +12,86 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
-                <thead>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Code</th>
-                    <th>Material Name</th>
-                    <th>Quantity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @if($stock->count())
-                    @foreach($stock as $item)
-                    <tr>
-                      <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->material_no}}</td>
-                      <td>{{$item->name}}</td>
-                      <td>{{$item->total_received - $item->total_returned}}</td>                  
-                    </tr>
-                    @endforeach
-                  @endif
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Code</th>
-                    <th>Material Name</th>
-                    <th>Quantity</th>
-                  </tr>
-                </tfoot>
-              </table>
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="true">Material Stock</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Product Stock</a>
+              </li>
+            </ul> 
+            
+            <div class="tab-content" id="myTabContent">
+              {{-- Material Stock --}}
+              <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped">                    
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Code</th>
+                        <th>Material Name</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @if($stock->count())
+                        @foreach($stock as $item)
+                        <tr>
+                          <td>{{$loop->index + 1}}</td>
+                          <td>{{$item->material_no}}</td>
+                          <td>{{$item->name}}</td>
+                          <td>{{$item->total_received + $item->stockIn - $item->stockOut - $item->total_returned}}</td>                  
+                        </tr>
+                        @endforeach
+                      @endif
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Code</th>
+                        <th>Material Name</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+              {{-- Issuance --}}
+              <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped">                    
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Prouct</th>
+                        <th>Stage</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @if($pstock->count())
+                        @foreach($pstock as $item)
+                        <tr>
+                          <td>{{$loop->index + 1}}</td>
+                          <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                          <td>{{$item->stname}}</td>
+                          <td>{{$item->stockIn - $item->stockOut}}</td>                  
+                        </tr>
+                        @endforeach
+                      @endif
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Prouct</th>
+                        <th>Stage</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -26,14 +26,15 @@ class StockRequest extends FormRequest
             'order_id' => 'required',
             'employee_id' => 'required',
             'stock_date' => 'required',
+            'stock_type' => 'required',
+            'receive_issue_id' => '',
             'department_id' => '',
-            'stock_type' => '',
             'description' => '',
             // Receive Material
             'purchase_item_id.*' => 'required',
             'material_id.*' => 'required',
             'quantity.*' => 'required',
-            'product_stage.*' => '',
+            'stage_id.*' => '',
         ];
     }
 }

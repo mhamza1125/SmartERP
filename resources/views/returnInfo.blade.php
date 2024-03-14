@@ -18,7 +18,7 @@
             <div class="col-md-7">
               <table class="table table-sm">
                 <tbody>
-                  <tr><td><b>Return No:</b> {{$return['receive_no']}}</td></tr>
+                  <tr><td><b>Return No:</b> {{$return['return_no']}}</td></tr>
                   <tr><td><b>Receive No:</b> {{$return['receive_no']}}</td></tr>
                   <tr><td><b>Vendor Name:</b> {{$return['fname']}}</td></tr>
                   <tr><td><b>Phone:</b> {{$return['phone1']}}</td></tr>

@@ -13,7 +13,8 @@ class PurchaseItemRepository implements GlobalInterface {
     public function get($id){
         return PurchaseItem::where('purchase_id', $id)
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-        ->select('purchase_items.*', 'materials.name', 'materials.material_no')
+        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+        ->select('purchase_items.*', 'materials.name', 'materials.material_no', 'heads.name as hname')
         ->get();
     }
 
@@ -77,6 +78,6 @@ class PurchaseItemRepository implements GlobalInterface {
     }
 
     public function delete($id){
-        PurchaseItem::where('purchase_id', $id)->delete();
+        // PurchaseItem::where('purchase_id', $id)->delete();
     }
 }

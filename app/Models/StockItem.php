@@ -9,14 +9,14 @@ class StockItem extends Model
 {
     use HasFactory;
     
-    protected $primaryKey = 'store_item_id';
+    protected $primaryKey = 'stock_item_id';
 
     protected $fillable = [
-        'store_id',
-        'product_item_id',
+        'stock_id',
+        'product_type_id',
         'material_id',
         'quantity',
-        'product_stage',
+        'stage_id',
         'created_by',
         'updated_at',
     ];

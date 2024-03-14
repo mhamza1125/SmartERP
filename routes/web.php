@@ -132,12 +132,22 @@ Route::get('/return/{id}', [ReturnController::class, 'show'])->name('return.show
 Route::get('/editReturn/{id}', [ReturnController::class, 'edit'])->name('return.edit');
 Route::post('/return/{id}', [ReturnController::class, 'update'])->name('return.update');
 
-// Stock
+// Stock / Issuance
 Route::get('/stock', [StockController::class, 'index'])->name('stock');
-Route::get('/addStock', [StockController::class, 'create'])->name('stock.add');
-Route::post('/stock', [StockController::class, 'store'])->name('stock.store');
-// Route::get('/stock/{id}', [StockController::class, 'show'])->name('stock.show');
-// Route::get('/editstock/{id}', [StockController::class, 'edit'])->name('stock.edit');
-// Route::post('/stock/{id}', [StockController::class, 'update'])->name('stock.update');
-Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM');
-Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT');
+Route::get('/issue', [StockController::class, 'issue'])->name('issue');
+Route::get('/addIssue', [StockController::class, 'create'])->name('stock.add');
+Route::post('/issue', [StockController::class, 'store'])->name('stock.store');
+Route::get('/issue/{id}', [StockController::class, 'show'])->name('stock.show');
+Route::get('/editIssue/{id}', [StockController::class, 'edit'])->name('stock.edit');
+Route::post('/issue/{id}', [StockController::class, 'update'])->name('stock.update');
+Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Product Material
+Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
+
+// Receive Issuance
+Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
+Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
+Route::post('/receiveIssue', [StockController::class, 'rStore'])->name('rstock.store');
+Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
+Route::get('/editReceiveIssue/{id}', [StockController::class, 'rEdit'])->name('rstock.edit');
+Route::post('/receiveIssue/{id}', [StockController::class, 'rUpdate'])->name('rstock.update');
+// Route::get('/ajaxRPT', [StockController::class, 'ajaxRPT'])->name('ajaxRPT'); //Receive Product Type

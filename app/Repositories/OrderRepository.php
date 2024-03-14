@@ -23,6 +23,14 @@ class OrderRepository implements GlobalInterface {
         ->first();
     }
 
+    public function material($id){
+        return Order::where('orders.order_id', $id)
+        ->join('order_items', 'order_items.order_id', '=', 'orders.order_id')
+        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+        ->select('product_materials.*')
+        ->get();
+    }
+
     public function store(array $data){
         $data['created_by'] = auth()->id();
         $store = Order::create($data);

@@ -60,6 +60,7 @@
                         <th>Sr.</th>
                         <th>Code</th>
                         <th>Material</th>
+                        <th>Unti</th>
                         <th>Quantity</th>
                         <th>Rate</th>
                         <th>Amount</th>
@@ -72,6 +73,7 @@
                             <td>{{$loop->index + 1}}</td>
                             <td>{{$item->material_no}}</td>
                             <td>{{$item->name}}</td>
+                            <td>{{$item->hname}}</td>
                             <td>{{$item->quantity}}</td>
                             <td>{{$item->price}}</td>
                             <td>{{$item->quantity * $item->price}}</td>

@@ -12,6 +12,7 @@ class Stock extends Model
     protected $primaryKey = 'stock_id';
 
     protected $fillable = [
+        'receive_issue_id',
         'stock_no',
         'order_id',
         'department_id',

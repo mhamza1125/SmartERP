@@ -117,28 +117,26 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        @if($purchaseItem->count())
-                          @foreach($purchaseItem as $item)
-                            <tr data-item-id="{{ $item->purchase_item_id }}">
-                              <td></td>
-                              <td>{{$item->name}}
-                                <input type="hidden" name="material_name[]" value="{{$item->name}}">
-                                <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
-                              </td>
-                              <td>{{$item->quantity}}
-                                <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
-                              </td>
-                              <td>{{$item->price}}
-                                <input type="hidden" name="price[]" value="{{$item->price}}"></td>
-                              <td>{{$item->quantity * $item->price}}
-                                <input type="hidden" name="total[]" value="{{$item->total}}">
-                              </td>
-                              <td><button class="deleteRowBtn btn btn-danger">X</button></td>
-                            </tr>
-                          @endforeach
-                        @endif
-                      </tr>
+                      @if($purchaseItem->count())
+                        @foreach($purchaseItem as $item)
+                          <tr data-item-id="{{ $item->purchase_item_id }}">
+                            <td></td>
+                            <td>{{$item->name}}
+                              <input type="hidden" name="material_name[]" value="{{$item->name}}">
+                              <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                            </td>
+                            <td>{{$item->quantity}}
+                              <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
+                            </td>
+                            <td>{{$item->price}}
+                              <input type="hidden" name="price[]" value="{{$item->price}}"></td>
+                            <td>{{$item->quantity * $item->price}}
+                              <input type="hidden" name="total[]" value="{{$item->total}}">
+                            </td>
+                            <td><button class="deleteRowBtn btn btn-danger">X</button></td>
+                          </tr>
+                        @endforeach
+                      @endif
                     </tbody>
                     <tfoot>
                       <tr>

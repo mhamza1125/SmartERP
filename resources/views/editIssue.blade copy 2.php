@@ -14,14 +14,13 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('stock.store') }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Issuance No</label>
-                    <input type="hidden" name="stock_type" required value="2">
-                    <input type="text" class="form-control" name="stock_no" required value="{{ old('stock_no') }}" placeholder="Issue No">
+                    <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}" placeholder="Issue No">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
                   </div>
@@ -33,7 +32,7 @@
                       <option value="" selected disabled>Select Employee</option>
                       @if($employee->count())
                         @foreach($employee as $item)
-                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{$item->fname}}</option>
+                          <option value="{{$item->employee_id}}" {{ $issue['employee_id'] == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -44,7 +43,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Issue Date</label>
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{old('stock_date')}}">
+                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$issue['issue_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -57,7 +56,7 @@
                       <option value="0" selected disabled>Default Purchase</option>
                       @if($order->count())
                         @foreach($order as $item)
-                          <option value="{{$item->order_id}}" {{ old('order_id') == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
+                          <option value="{{$item->order_id}}" {{ $issue['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -120,6 +119,23 @@
                       </tr>
                     </thead>
                     <tbody>
+                      @if($issueItem->count())
+                        @foreach($issueItem as $item)
+                          <tr data-item-id="{{ $item->purchase_item_id }}">
+                            <td></td>
+                            <td>{{$item->article_no}} - Size {{$item->sname}}
+                              <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
+                            </td>
+                            <td>{{$item->name}}
+                              <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                            </td>
+                            <td>{{$item->quantity}}
+                              <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
+                            </td>
+                            <td><button class="deleteRow btn btn-danger">X</button></td>
+                          </tr>
+                        @endforeach
+                      @endif
                     </tbody>
                     <tfoot>
                       <tr>
@@ -137,7 +153,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
+                    <textarea class="summernote" name="description">{{$issue['description']}}</textarea>
                   </div>
                 </div>
               </div>
