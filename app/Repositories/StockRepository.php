@@ -34,7 +34,7 @@ class StockRepository implements GlobalInterface {
         ->leftJoin('stocks as sdate', 'sdate.stock_id', '=', 'stocks.receive_issue_id')
         ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
         ->join('heads', 'heads.head_id', '=', 'employees.department_id')
-        ->select('stocks.stock_id', 'stocks.stock_no', 'stocks.stock_date', 'stocks.order_id', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employee_no', 'employees.name','heads.name as hname', 'stocks.description', 'stocks.employee_id')
+        ->select('stocks.stock_id', 'stocks.stock_no', 'stocks.stock_date', 'stocks.order_id', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employee_no', 'employees.name','heads.name as hname', 'stocks.description', 'stocks.employee_id', 'stocks.receive_issue_id')
         ->first();
     }
 

@@ -60,7 +60,7 @@
                         <th>Sr.</th>
                         <th>Code</th>
                         <th>Material</th>
-                        <th>Unti</th>
+                        <th>Unit</th>
                         <th>Quantity</th>
                         <th>Rate</th>
                         <th>Amount</th>

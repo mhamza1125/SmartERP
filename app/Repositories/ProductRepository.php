@@ -35,7 +35,8 @@ class ProductRepository implements GlobalInterface {
     public function get($id){
         return Product::where('product_id', $id)
         ->join('categories', 'categories.category_id', '=', 'products.category_id')
-        ->select('products.*', 'categories.name as cname')
+        ->join('heads', 'heads.head_id', '=', 'products.unit_id')
+        ->select('products.*', 'categories.name as cname', 'heads.name as hname')
         ->first();
     }
 

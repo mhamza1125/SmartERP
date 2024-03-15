@@ -37,6 +37,7 @@
                     <th>Article</th>
                     <th>Item / Product</th>
                     <th>Size</th>
+                    <th>Unit</th>
                     <th>Quantity</th>
                     <th>Price</th>
                     <th>Total</th>
@@ -51,6 +52,7 @@
                           <td>{{$loop->index + 1}}</td>
                           <td colspan="2"></td>
                           <td>{{$item->hname}}</td>
+                          <td>{{$item->uname}}</td>
                           <td>{{$item->quantity}}</td>
                           <td>{{$item->price}}</td>
                           <td>{{$item->quantity * $item->price}}</td>
@@ -59,6 +61,7 @@
                           <td>{{$item->article_no}}</td>
                           <td>{{$item->name}}</td>
                           <td>{{$item->hname}}</td>
+                          <td>{{$item->uname}}</td>
                           <td>{{$item->quantity}}</td>
                           <td>{{$item->price}}</td>
                           <td>{{$item->quantity * $item->price}}</td>

@@ -15,8 +15,10 @@ class OrderItemRepository implements GlobalInterface {
         ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
         ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname')
         ->orderBy('product_types.product_id')
+        ->orderBy('product_types.size_id')
         ->get();
     }
 

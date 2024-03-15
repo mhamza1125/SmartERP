@@ -20,6 +20,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Issuance No</label>
+                    <input type="hidden" name="stock_type" required value="2">
                     <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}" placeholder="Issue No">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
@@ -66,7 +67,7 @@
                 <div class="col-md-7">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id[]" id="product_type_id">
+                    <select class="form-control select2" name="sproduct_type_id[]" id="product_type_id">
                       <!-- Options will be dynamically added here via JavaScript -->
                       <option value="" disabled selected>Select Product</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
@@ -144,7 +145,7 @@
                       <tr>
                         <th>Sr.</th>
                         <th>Item / Product</th>
-                        <th>Material</th>
+                        <th>Material / Stage</th>
                         <th>Quantity</th>
                         <th>Action</th>
                       </tr>
@@ -186,7 +187,7 @@
                       <tr>
                         <th>Sr.</th>
                         <th>Item / Product</th>
-                        <th>Material</th>
+                        <th>Material / Stage</th>
                         <th>Quantity</th>
                         <th>Action</th>
                       </tr>

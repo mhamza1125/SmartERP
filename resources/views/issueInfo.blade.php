@@ -56,7 +56,7 @@
                         <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                         {{-- <td>{{$item->pname}} {{$item->sname}}</td> --}}
                         <td>{{($item->name)? $item->name:$item->stage}}</td>
-                        <td>{{$item->quantity}} {{$item->uname}}</td>
+                        <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                       </tr>
                       @endif
                     @endforeach

@@ -45,9 +45,11 @@ class ProductController extends Controller
     public function create(){
         $category = $this->categoryRepository->all();
         $size = $this->headRepository->get('1');
+        $unit = $this->headRepository->get('4');
         return view('addproduct', [
             'category' => $category,
             'size' => $size,
+            'unit' => $unit,
         ]);
     }
 
@@ -81,10 +83,12 @@ class ProductController extends Controller
         $category = $this->categoryRepository->all();
         $productType = $this->productTypeRepository->active($id->product_id);
         $size = $this->headRepository->get('1');
+        $unit = $this->headRepository->get('4');
         return view('editproduct', [
+            'size' => $size,
+            'unit' => $unit,
             'product' => $id,
             'category' => $category,
-            'size' => $size,
             'productType' => $productType,
         ]);
     }

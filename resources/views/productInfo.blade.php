@@ -16,7 +16,8 @@
               <tbody>
                 <tr>
                   <td><b>Article No: </b> {{$product['article_no']}}</td>
-                  <td colspan="2"><b>Product Name: </b> {{$product['name']}}</td>
+                  <td><b>Product Name: </b> {{$product['name']}}</td>
+                  <td><b>Unit: </b> {{$product['hname']}}</td>
                 </tr>
                 <tr>
                   <td><b>Category: </b> {{$product['cname']}}</td>

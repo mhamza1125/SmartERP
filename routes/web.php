@@ -146,8 +146,8 @@ Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Pro
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
 Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
-Route::post('/receiveIssue', [StockController::class, 'rStore'])->name('rstock.store');
+// Route::post('/receiveIssue', [StockController::class, 'rStore'])->name('rstock.store');
 Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
 Route::get('/editReceiveIssue/{id}', [StockController::class, 'rEdit'])->name('rstock.edit');
-Route::post('/receiveIssue/{id}', [StockController::class, 'rUpdate'])->name('rstock.update');
+// Route::post('/receiveIssue/{id}', [StockController::class, 'rUpdate'])->name('rstock.update');
 // Route::get('/ajaxRPT', [StockController::class, 'ajaxRPT'])->name('ajaxRPT'); //Receive Product Type

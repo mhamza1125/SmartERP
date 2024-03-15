@@ -57,8 +57,50 @@ class StockController extends Controller
         ]); 
     }
 
+    public function issue(){
+        // All Issuance
+        $issue = $this->stockRepository->issue();
+        return view('issue', [
+            'issue' => $issue,
+        ]); 
+    }
+
+    public function rIssue(){
+        // All Receive Issuance
+        $receive = $this->stockRepository->receive();
+        return view('receiveIssue', [
+            'receive' => $receive,
+        ]); 
+    }
+
+    public function create(){
+        // Add Issuance
+        $employee = $this->employeeRepository->wages();
+        $stock = $this->stockItemRepository->stock();
+        $pstock = $this->stockItemRepository->pStock();
+        $order = $this->orderRepository->active();
+        return view('addIssue', [
+            'order' => $order,
+            'stock' => $stock,
+            'pstock' => $pstock,
+            'employee' => $employee,
+        ]);
+    }
+
+    public function rCreate($id){
+        // Receive Issuance
+        $head = $this->headRepository->get('12');
+        $issue = $this->stockRepository->get($id);
+        $issueItem = $this->stockItemRepository->get($id);
+        return view('addReceiveIssue', [
+            'head' => $head,
+            'issue' => $issue,
+            'issueItem' => $issueItem,
+            'issueItemUnique' => $issueItem,
+        ]);
+    }
+    
     public function ajaxPM(Request $request){
-        // Ajax Product Material
         $productId = $request->input('productId');
         $productMaterial = $this->productMaterialRepository->get($productId);
         $stockItem = $this->stockItemRepository->pStockGet($productId);
@@ -75,32 +117,6 @@ class StockController extends Controller
         return response()->json(['data' => $orderItem]);
     }
 
-    // ==================================================
-    // ==================== Issuance ====================
-    // ==================================================
-
-    public function issue(){
-        // All Issuance
-        $issue = $this->stockRepository->issue();
-        return view('issue', [
-            'issue' => $issue,
-        ]); 
-    }
-    
-    public function create(){
-        // Add Issuance
-        $employee = $this->employeeRepository->wages();
-        $stock = $this->stockItemRepository->stock();
-        $pstock = $this->stockItemRepository->pStock();
-        $order = $this->orderRepository->active();
-        return view('addIssue', [
-            'order' => $order,
-            'stock' => $stock,
-            'pstock' => $pstock,
-            'employee' => $employee,
-        ]);
-    }
-
     public function store(StockRequest $request){
         // Store Issuance
         $validatedData = $request->validated();
@@ -113,11 +129,24 @@ class StockController extends Controller
         $stages = $request->input('stage_id');
         $getId = $this->stockRepository->store($validatedData);
         $this->storeSI($getId, $ptid, $mid, $quantities, $stages);
-        if(!$request->has('receive_issue_id')){
-            return redirect()->route('stock.show', $getId)->with('success', 'Record Inserted Successfully');
-        } else {
-            return redirect()->route('rstock.show', $getId)->with('success', 'Record Inserted Successfully');
+        return redirect()->route('stock.add')->with('success', 'Record Inserted Successfully');
+    }
+
+    public function rStore(StockRequest $request){
+        $validatedData = $request->validated();
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+        $ptid = $request->input('product_type_id');
+        $mid = $request->input('material_id');
+        $stages = $request->input('stage_id');
+        $quantities = $request->input('quantity');
+        $ptid = array_values(array_slice($ptid, 1));
+        $mid = array_values(array_slice($mid, 1));
+        $stages = array_values(array_slice($stages, 1));
+        $getId = $this->stockRepository->store($validatedData);
+        $this->storeSI($getId, $ptid, $mid, $quantities, $stages);
+        return redirect()->route('stock.add')->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
@@ -130,6 +159,16 @@ class StockController extends Controller
         ]);
     }
 
+    public function rShow($id){
+        // Show Issuance
+        $issue = $this->stockRepository->get($id);
+        $issueItem = $this->stockItemRepository->get($id);
+        return view('receiveIssueInfo', [
+            'issue' => $issue,
+            'issueItem' => $issueItem,
+        ]);
+    }
+    
     public function edit(Stock $id){
         // Edit Issuance
         $issueItem = $this->stockItemRepository->get($id->stock_id);
@@ -146,55 +185,6 @@ class StockController extends Controller
             'employee' => $employee,
         ]);
     }
-    
-    public function update(Request $request, $id){
-        // Update Issuance
-        if (array_sum($request->input('quantity', [])) == 0) {
-            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
-        }
-        $this->stockRepository->update($id, $request->input());
-        $this->stockItemRepository->update($id, $request->input());
-        if(!$request->has('receive_issue_id')){
-            return redirect()->route('stock.show', $id)->with('success', 'Record Updated Successfully');
-        } else {
-            return redirect()->route('rstock.show', $id)->with('success', 'Record Updated Successfully');
-        }
-    }
-
-    // ==================================================
-    // ==============-= Receive Issuance ========-=======
-    // ==================================================
-
-    public function rIssue(){
-        // All Receive Issuance
-        $receive = $this->stockRepository->receive();
-        return view('receiveIssue', [
-            'receive' => $receive,
-        ]); 
-    }
-
-    public function rCreate($id){
-        // Receive Issuance
-        $head = $this->headRepository->get('12');
-        $issue = $this->stockRepository->get($id);
-        $issueItem = $this->stockItemRepository->get($id);
-        return view('addReceiveIssue', [
-            'head' => $head,
-            'issue' => $issue,
-            'issueItem' => $issueItem,
-            'issueItemUnique' => $issueItem,
-        ]);
-    }
-    
-    public function rShow($id){
-        // Show Receive Issuance
-        $issue = $this->stockRepository->get($id);
-        $issueItem = $this->stockItemRepository->get($id);
-        return view('receiveIssueInfo', [
-            'issue' => $issue,
-            'issueItem' => $issueItem,
-        ]);
-    }
 
     public function rEdit($id){
         // Edit Receive Issuance
@@ -209,6 +199,29 @@ class StockController extends Controller
             'receiveItem' => $receiveItem,
             'issueItemUnique' => $issueItem,
         ]);
+
+    }
+
+    public function update(Request $request, $id){
+        // Update Issuance
+        dd($request->input());
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
+        }
+        $this->stockRepository->update($id, $request->input());
+        $this->stockItemRepository->update($id, $request->input());
+        return redirect()->route('stock.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    public function rUpdate(Request $request, $id){
+        // Update Issuance
+        // dd($request->input());
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
+        }
+        $this->stockRepository->update($id, $request->input());
+        $this->stockItemRepository->update($id, $request->input());
+        return redirect()->route('rstock.show', $id)->with('success', 'Record Updated Successfully');
     }
     
     public function destroy(Stock $stock){}
@@ -218,7 +231,7 @@ class StockController extends Controller
         foreach ($quantities as $key => $quantity) {
             $ptid = $ptids[$key] ?? null;
             $mid = $mids[$key] ?? null;
-            $stage = $stages[$key] ?? null;
+            $stage = $stages[$key] ?? '1';
             $stockItem = [
                 'stock_id' => $getId,
                 'product_type_id' => $ptid,

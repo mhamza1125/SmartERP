@@ -18,10 +18,9 @@ class StockItemRepository implements GlobalInterface {
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
         ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
         ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-        ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
         ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
         ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-        ->select('stock_items.*', 'products.*', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname')   
+        ->select('stock_items.*', 'products.*', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage')   
         ->get();
     }
 
@@ -77,14 +76,13 @@ class StockItemRepository implements GlobalInterface {
 
     public function pStock(){
         // Product Stock
-        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname')
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
         ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
         ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
         ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
         ->where('stock_items.material_id', '=', 0)
         ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
@@ -118,17 +116,21 @@ class StockItemRepository implements GlobalInterface {
         // Assuming $data['product_type_id'] and $data['material_id'] are arrays of IDs.
         foreach ($existingItems as $existingItem) {
             // Check if combination does not exist in the provided data
-            if (!in_array($existingItem->product_type_id, $data['product_type_id']) || !in_array($existingItem->material_id, $data['material_id']) || !in_array($existingItem->stage_id, $data['stage_id'])) {
-                StockItem::where('stock_item_id', $existingItem->stock_item_id)->delete();
+            if (!in_array($existingItem->product_type_id, $data['product_type_id']) || !in_array($existingItem->material_id, $data['material_id'])) {
+                StockItem::where('stock_id', $id)
+                    ->where('product_type_id', $existingItem->product_type_id)
+                    ->where('material_id', $existingItem->material_id)
+                    ->delete();
             }
         }
         
         // Assuming you have an array of product_type_ids and material_ids indexed similarly to quantities
         foreach ($data['quantity'] as $key => $quantity) {
             // Assuming you have these arrays in your $data and they are indexed accordingly
-            $ptid = $data['product_type_id'][$key] ?? null;
+            $ptid = $data['product_type_id'][$key+1] ?? null;
             $mid = $data['material_id'][$key] ?? null;
             $sid = $data['stage_id'][$key] ?? null;
+            
             // Validate that both $ptid and $mid are not null
             if ($ptid !== null && $mid !== null && $sid !== null) {
                 $stockItem = [
@@ -153,6 +155,6 @@ class StockItemRepository implements GlobalInterface {
             }
         }
     }
-
+    
     public function delete($id){}
 }

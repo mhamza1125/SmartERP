@@ -17,7 +17,7 @@
             <form action="{{ route('product.store') }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Category</label>
                     <select class="form-control select2" name="category_id" required>
@@ -32,7 +32,22 @@
                     <div class="invalid-feedback">Select Category</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Unit</label>
+                    <select class="form-control select2" name="unit_id" required>
+                      <option value="" selected disabled>Select Unit</option>
+                      @if($unit->count())
+                        @foreach($unit as $item)
+                          <option value="{{$item->head_id}}" {{ old('unit_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Unit</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Product Status</label>
                     <select class="form-control" name="product_status" required>
