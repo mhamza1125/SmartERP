@@ -1,4 +1,5 @@
 @extends('index')
+
 @section('content')
 <section class="section">
   <div class="section-body">
@@ -6,7 +7,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Add Product Material</h4>
+            <h4>Add Product Cost</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,32 +15,30 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('productMaterial.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('productCost.store') }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
-                    <label>Product</label>
-                    <select class="form-control select2" name="product_type_id" required>
-                      <option value="" selected disabled>Select Product</option>
+                    <label>Products</label>
+                    <select class="form-control select2" name="product_type_id">
+                      <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
                           <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Product</div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]">
-                      <option value="" disabled selected>Select Material</option>
-                      @if($material->count())
-                        @foreach($material as $item)
-                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->name}}</option>
+                    <label>Costing Heads</label>
+                    <select class="form-control select2" name="head_id">
+                      <option value="" disabled selected>Select Head</option>
+                      @if($head->count())
+                        @foreach($head as $item)
+                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -47,8 +46,8 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
+                    <label>Wages</label>
+                    <input type="number" min="0" class="form-control" name="amount" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">
@@ -64,8 +63,8 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Item / Product</th>
-                        <th>Quantity</th>
+                        <th>Costing Head</th>
+                        <th>Wages</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -73,29 +72,6 @@
                       <!-- Table rows will be dynamically added here -->
                     </tbody>
                   </table>
-                </div>
-              </div>
-
-              <h6>Product Packing</h6>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Boxes</label>
-                    <select class="form-control select2" name="box_id">
-                      <option value="" disabled selected>Select Boxes</option>
-                      @if($box->count())
-                        @foreach($box as $item)
-                          <option value="{{$item->box_id}}" {{ old('box_id') == $item->box_id ? 'selected' : '' }}>{{$item->box_no}} - {{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Product Unit in Box</label>
-                    <input type="number" min="0" class="form-control" name="bqty" placeholder="0">
-                  </div>
                 </div>
               </div>
               <div class="form-group row mb-4">
@@ -110,5 +86,5 @@
     </div>
   </div>
 </section>
-<script> var isPMPage = false; </script>
+<script> var isProductCostPage = false; </script>
 @endsection

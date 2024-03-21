@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('order.store') }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('order.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-2">
@@ -80,7 +80,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id[]">
+                    <select class="form-control select2" name="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)

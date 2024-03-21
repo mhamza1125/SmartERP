@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Add Product</h4>
+            <h4>Add Box</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,45 +14,56 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('product.store') }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
+            <form action="{{ route('box.update', $box['box_id']) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Box No</label>
+                    <input type="text" class="form-control" name="box_no" required value="{{$box['box_no']}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Box No</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Box Name</label>
+                    <input type="text" class="form-control" name="name" required value="{{$box['name']}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Box Name</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Category</label>
-                    <select class="form-control select2" name="category_id" required>
-                      <option value="" selected disabled>Select Category</option>
-                      @if($category->count())
-                        @foreach($category as $item)
-                          <option value="{{$item->category_id}}" {{ old('category_id') == $item->category_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
+                    <label>Box Weight (Grams)</label>
+                    <input type="number" class="form-control" min="0" step="0.01" name="weight" required value="{{$box['weight']}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Category</div>
+                    <div class="invalid-feedback">Enter Box Weight</div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Unit</label>
-                    <select class="form-control select2" name="unit_id" required>
-                      <option value="" selected disabled>Select Unit</option>
-                      @if($unit->count())
-                        @foreach($unit as $item)
-                          <option value="{{$item->head_id}}" {{ old('unit_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                    <label>Box Material</label>
+                    <select class="form-control select2" name="head_id" required>
+                      <option value="" selected disabled>Select Box Material</option>
+                      @if($material->count())
+                        @foreach($material as $item)
+                          <option value="{{$item->head_id}}" {{ $box['head_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Unit</div>
+                    <div class="invalid-feedback">Select Box Material</div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Product Status</label>
-                    <select class="form-control" name="product_status" required>
-                      <option value="1" {{ old('product_status') == '1' ? 'selected' : '' }}>Active</option>
-                      <option value="0" {{ old('product_status') == '0' ? 'selected' : '' }}>Inactive</option>
+                    <label>Box Status</label>
+                    <select class="form-control" name="box_status" required>
+                      <option value="1" {{ $box['box_status'] == '1' ? 'selected' : '' }}>Active</option>
+                      <option value="0" {{ $box['box_status'] == '0' ? 'selected' : '' }}>Inactive</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>
@@ -61,40 +72,29 @@
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Article No</label>
-                    <input type="text" class="form-control" name="article_no" required value="{{old('article_no')}}">
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Article No</div>
-                  </div>
+                    <label>Dimensions (Length - Width - Height) Inches</label>
+                    <div class="row">
+                      <div class="col">
+                        <input type="number" class="form-control" min="0" step="0.01" name="length" placeholder="Length" required value="{{$box['length']}}">
+                        <div class="valid-feedback">Good job!</div>
+                        <div class="invalid-feedback">Enter Length</div>
+                      </div>
+                      <div class="col">
+                        <input type="number" class="form-control" min="0" step="0.01" name="width" placeholder="Width" required value="{{$box['width']}}">
+                        <div class="valid-feedback">Good job!</div>
+                        <div class="invalid-feedback">Enter Width</div>
+                      </div>
+                      <div class="col">
+                        <input type="number" class="form-control" min="0" step="0.01" name="height" placeholder="Height" required value="{{$box['height']}}">
+                        <div class="valid-feedback">Good job!</div>
+                        <div class="invalid-feedback">Enter Height</div>
+                      </div>
+                    </div>
+                </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Product Name</label>
-                    <input type="text" class="form-control" name="name" required value="{{old('name')}}">
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Product Name</div>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Sizes</label>
-                    <select class="form-control select2" name="size_id[]" multiple="" required>
-                      <option value="" disabled>Select Sizes</option>
-                      @if($size->count())
-                        @foreach($size as $item)
-                          <option value="{{$item->head_id}}" {{ old('size_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Sizes</div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Product Images</label>
+                    <label>Box Images</label>
                     <div class="custom-file">
                       <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
                       <label class="custom-file-label" for="customFile">Choose Images</label>
@@ -141,7 +141,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
+                    <textarea class="summernote" name="description">{{$box['description']}}</textarea>
                   </div>
                 </div>
               </div>

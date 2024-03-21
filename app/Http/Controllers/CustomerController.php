@@ -46,7 +46,7 @@ class CustomerController extends Controller
     }
     
     public function show(Customer $id){
-        $image = $this->imageRepository->get2('customers', $id->customer_id);
+        $image = $this->imageRepository->image('customers', $id->customer_id);
         return view('customerInfo', [
             'customer' => $id,
             'image' => $image,

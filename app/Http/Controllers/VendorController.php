@@ -58,7 +58,7 @@ class VendorController extends Controller
     
     public function show($id){
         $vendor = $this->vendorRepository->get($id);
-        $image = $this->imageRepository->get2('vendors', $id);
+        $image = $this->imageRepository->image('vendors', $id);
         return view('vendorInfo', [
             'vendor' => $vendor,
             'image' => $image,

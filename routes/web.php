@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BoxController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HeadController;
 use App\Http\Controllers\ImageController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\ProductCostController;
 use App\Http\Controllers\PurchaseItemController;
 use App\Http\Controllers\ProductMaterialController;
 
@@ -90,6 +92,14 @@ Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.s
 Route::get('/editProduct/{id}', [ProductController::class, 'edit'])->name('product.edit');
 Route::post('/product/{id}', [ProductController::class, 'update'])->name('product.update');
 
+// Box
+Route::get('/box', [BoxController::class, 'index'])->name('box');
+Route::get('/addBox', [BoxController::class, 'create'])->name('box.add');
+Route::post('/box', [BoxController::class, 'store'])->name('box.store');
+Route::get('/box/{id}', [BoxController::class, 'show'])->name('box.show');
+Route::get('/editBox/{id}', [BoxController::class, 'edit'])->name('box.edit');
+Route::post('/box/{id}', [BoxController::class, 'update'])->name('box.update');
+
 // Order
 Route::get('/order', [OrderController::class, 'index'])->name('order');
 Route::get('/addOrder', [OrderController::class, 'create'])->name('order.add');
@@ -112,7 +122,7 @@ Route::get('/purchase', [PurchaseController::class, 'index'])->name('purchase');
 Route::get('/addPurchase', [PurchaseController::class, 'create'])->name('purchase.add');
 Route::post('/purchase', [PurchaseController::class, 'store'])->name('purchase.store');
 Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchase.show');
-Route::get('/editpurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
+Route::get('/editPurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
 
 // Purchase Receive
@@ -146,8 +156,13 @@ Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Pro
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
 Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
-// Route::post('/receiveIssue', [StockController::class, 'rStore'])->name('rstock.store');
 Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
 Route::get('/editReceiveIssue/{id}', [StockController::class, 'rEdit'])->name('rstock.edit');
-// Route::post('/receiveIssue/{id}', [StockController::class, 'rUpdate'])->name('rstock.update');
-// Route::get('/ajaxRPT', [StockController::class, 'ajaxRPT'])->name('ajaxRPT'); //Receive Product Type
+
+// Product Costing
+Route::get('/productCost', [ProductCostController::class, 'index'])->name('productCost');
+Route::get('/addProductCost', [ProductCostController::class, 'create'])->name('productCost.add');
+Route::post('/productCost', [ProductCostController::class, 'store'])->name('productCost.store');
+Route::get('/productCost/{id}', [ProductCostController::class, 'show'])->name('productCost.show');
+Route::get('/editProductCost/{id}', [ProductCostController::class, 'edit'])->name('productCost.edit');
+Route::post('/productCost/{id}', [ProductCostController::class, 'update'])->name('productCost.update');

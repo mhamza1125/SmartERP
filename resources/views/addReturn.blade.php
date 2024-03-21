@@ -69,14 +69,14 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @if($receiveMaterial->count())
-                        @foreach($receiveMaterial as $item)
+                      @if($combined->count())
+                        @foreach($combined as $item)
                         <tr>
                           <td>{{ $loop->index + 1 }}</td>
                           <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}<input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
                           <td>{{$item->hname}}</td>
-                          <td>{{$item->quantity}}</td>
+                          <td>{{$item->rqty}} / {{$item->quantity}}</td>
                           <td>
                             <input type="number" class="form-control return-qty" name="quantity[]" placeholder="0">
                           </td>

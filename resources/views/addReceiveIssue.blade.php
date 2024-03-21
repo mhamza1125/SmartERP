@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('stock.store', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('stock.store', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-3">
@@ -55,7 +55,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="smaterial_id[]" id="material_id">
+                    <select class="form-control select2" name="material_id" id="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @if($issueItem->count())
                           @foreach($issueItem as $item)
@@ -91,7 +91,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="sproduct_type_id[]" id="product_type_id">
+                    <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($issueItem->count())
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
@@ -223,7 +223,7 @@
   </div>
 </section>
 <script>
-  var isEditReceiveIssue = false;
+  var isReceiveIssuePage = false;
   var issueItems = @json($issueItem);
 </script>
 @endsection

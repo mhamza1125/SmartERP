@@ -39,9 +39,22 @@ class ReturnController extends Controller
 
     public function create($id){  
         $receive = $this->receiveRepository->get($id);
+        $returned = $this->returnRepository->returned($id);
         $receiveMaterial = $this->receiveMaterialRepository->get($id);
+        $combined = $receiveMaterial->map(function ($item) use ($returned) {
+            $returnedItem = $returned->firstWhere('receive_material_id', $item->receive_material_id);
+            $item->rqty = $returnedItem->quantity ?? 0;
+            // if ($returnedItem) {
+            //     $item->rqty = $returnedItem->quantity;
+            // }else{
+            //     $item->rqty = 0;
+            // }
+            return $item;
+        });
         return view('addReturn', [
             'receive' => $receive,
+            'received' => $returned,
+            'combined' => $combined,
             'receiveMaterial' => $receiveMaterial,
         ]);
     }
@@ -85,11 +98,6 @@ class ReturnController extends Controller
         }
         $this->returnRepository->update($id, $request->input());
         $this->returnMaterialRepository->update($id, $request->input());
-        // $rid = $request->input('receive_material_id');
-        // $quantities = $request->input('quantity');
-        // $remarks = $request->input('remarks');
-        // $this->returnMaterialRepository->delete($id);
-        // $this->storeRM($id, $rid, $quantities, $remarks);
         return redirect()->route('return.show', $id)->with('success', 'Record Updated Successfully');
     }
     

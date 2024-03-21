@@ -214,17 +214,13 @@
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Products</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
+                <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
+                <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing</a></li>
               </ul>
             </li>
             <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Material</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('material') }}">Material</a></li>
-                <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
-              </ul>
+              <a href="{{ route('material') }}" class="nav-link"><i data-feather="briefcase"></i><span>Material</span></a>
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
@@ -239,7 +235,9 @@
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Settings</span></a>
               <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
+                <li><a class="nav-link" href="{{ route('box') }}">Boxes</a></li>
               </ul>
             </li>
             

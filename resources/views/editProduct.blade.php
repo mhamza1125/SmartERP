@@ -94,16 +94,49 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>File / Images</label>
+                    <label>Product Images</label>
                     <div class="custom-file">
                       <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
-                      <label class="custom-file-label" for="customFile">Choose file</label>
+                      <label class="custom-file-label" for="customFile">Choose Images</label>
                     </div>
                     <div class="valid-feedback" id="fileSuccess">Good job!</div>
                     <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
               </div>
+              <div id="attachmentContainer">
+                <div class="row attachment-row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Attachment Title</label>
+                      <input type="text" class="form-control attachment-title" name="file_title[]" value="">
+                      <div class="valid-feedback">Good job!</div>
+                      <div class="invalid-feedback">Enter Attachment Title</div>
+                    </div>
+                  </div>
+                  <div class="col-md-5">
+                    <div class="form-group">
+                        <label>Attach Files</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input attachment-file" id="customFile2" name="file[]">
+                            <label class="custom-file-label" for="customFile2">Choose file</label>
+                        </div>
+                        <div class="valid-feedback attachment-success">Good job!</div>
+                        <div class="invalid-feedback attachment-error"></div>
+                    </div>
+                  </div>                
+                  <div class="col-md-1">
+                    <div class="form-group">
+                      <label class="add-attachment-label">&nbsp</label>
+                      <label class="remove-attachment-label" style="display:none;">&nbsp</label>
+                      <div>
+                        <button type="button" class="btn btn-primary add-attachment">+</button>
+                      <button type="button" class="btn btn-danger remove-attachment" style="display:none;">X</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>   
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">

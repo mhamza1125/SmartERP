@@ -10,9 +10,17 @@ class ImageRepository implements GlobalInterface {
 
     public function get($id){}
 
-    public function get2($tname, $tid){
+    public function image($tname, $tid){
         return Image::where('table_name', $tname)
         ->where('table_id', $tid)
+        ->whereNull('file_type')
+        ->get();
+    }
+
+    public function file($tname, $tid){
+        return Image::where('table_name', $tname)
+        ->where('table_id', $tid)
+        ->whereNotNull('file_type')
         ->get();
     }
 

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <style type="text/css">
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(rgb(0, 249, 236), rgb(71, 150, 229));
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    .header_text {
+      font-family: "Nunito";
+      font-size: 50px;
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    .gif_container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .btn {
+      background-color: #017cff;
+      color: white;
+      font-weight: 600;
+      padding: 15px 32px;
+      text-align: center;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 3px 3px black;
+      margin-top: 20px;
+    }
+
+    .btn:hover {
+      background-color: #ffffff;
+      color: #017cff;
+    }
+
+    #noButton {
+      position: absolute;
+      margin-left: 150px;
+      transition: 0.5s;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div>
+      <h1 class="header_text" id="pageContent">I Love You ***** <br> Will You Marry Me Please....! <br> </h1>
+    </div>
+    <div class="gif_container" id="gifContainer1">
+      <img src="https://i.postimg.cc/pdNqPxx1/milk-and-mocha-cute.gif" alt="Cute animated illustration" />
+    </div>
+    <div class="gif_container" id="gifContainer2" style="display: none;">
+      <img src="https://i.postimg.cc/wTDG30TB/yes.gif" alt="Cute animated illustration" />
+    </div>
+    <button class="btn" id="yesButton" onclick="toggleContent()">Yes</button>
+    <button class="btn" id="noButton" onmouseover="moveButton()" onclick="moveButton()">No</button>
+    <button class="btn" id="fixDateButton" style="display: none;" onclick="fixDate()">Let's Fix a Date</button>
+  </div>
+
+  <script>
+    function toggleContent() {
+      var gifContainer1 = document.getElementById("gifContainer1");
+      var gifContainer2 = document.getElementById("gifContainer2");
+      var fixDateButton = document.getElementById("fixDateButton");
+      var pageContent = document.getElementById("pageContent");
+      var yesButton = document.getElementById("yesButton");
+      var noButton = document.getElementById("noButton");
+
+      if (gifContainer1.style.display !== "none") {
+        gifContainer1.style.display = "none";
+        gifContainer2.style.display = "flex";
+        yesButton.style.display = "none";
+        noButton.style.display = "none";
+        fixDateButton.style.display = "inline-block";
+        pageContent.innerHTML = "Yeeyy ! Finally <br> Thank you for being the reason of my Happiness";
+      } else {
+        // Additional content toggle logic can be added here if needed
+      }
+    }
+
+    function moveButton() {
+      var noButton = document.getElementById("noButton");
+      var x = Math.random() * (window.innerWidth - noButton.offsetWidth);
+      var y = Math.random() * (window.innerHeight - noButton.offsetHeight);
+      noButton.style.left = `${x}px`;
+      noButton.style.top = `${y}px`;
+    }
+
+    function fixDate() {
+      alert("Oye Hoyeee 😍😂");
+      // You can add further logic or redirect the user to another page
+    }
+  </script>
+</body>
+
+</html>

@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('order.update', $order['order_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('order.update', $order['order_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-2">
@@ -80,11 +80,11 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id[]">
+                    <select class="form-control select2" name="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
-                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
+                          <option value="{{$item->product_type_id}}" {{ old('sproduct_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>

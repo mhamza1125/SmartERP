@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('purchase.store') }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('purchase.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-2">
@@ -152,5 +152,5 @@
     </div>
   </div>
 </section>
-<script> var isEditPage = false; </script>
+<script> var isPurchasePage = false; </script>
 @endsection

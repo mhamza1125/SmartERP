@@ -58,7 +58,7 @@ class EmployeeController extends Controller
     
     public function show($id){
         $employee = $this->employeeRepository->get($id);
-        $image = $this->imageRepository->get2('employees', $id);
+        $image = $this->imageRepository->image('employees', $id);
         return view('employeeInfo', [
             'employee' => $employee,
             'image' => $image,

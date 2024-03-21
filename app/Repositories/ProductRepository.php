@@ -25,9 +25,19 @@ class ProductRepository implements GlobalInterface {
         return Product::join('product_types', 'product_types.product_id', 'products.product_id')
         ->join('heads', 'heads.head_id', 'product_types.size_id')
         ->leftJoin('product_materials', 'product_materials.product_type_id', '=', 'product_types.product_type_id')
-        ->where('products.product_status', '1')
-        ->where('product_types.product_type_status', '1')
+        // ->where('products.product_status', '1')
+        // ->where('product_types.product_type_status', '1')
         ->whereNull('product_materials.product_type_id')
+        ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
+        ->get();
+    }
+
+    public function productCost(){
+        return Product::join('product_types', 'product_types.product_id', 'products.product_id')
+        ->join('heads', 'heads.head_id', 'product_types.size_id')
+        ->leftJoin('product_costs', 'product_costs.product_type_id', '=', 'product_types.product_type_id')
+        ->groupBy('product_costs.product_type_id')
+        ->whereNotNull('product_costs.product_type_id')
         ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
         ->get();
     }

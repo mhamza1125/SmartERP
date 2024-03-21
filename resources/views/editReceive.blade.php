@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('receive.update', $receive['receive_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('receive.update', $receive['receive_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-2">
@@ -63,7 +63,7 @@
                         <th>Received / Total</th>
                         <th>Receive</th>
                         <th>Remaining</th>
-                        <th>Receive</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -32,6 +32,10 @@ class ImageController extends Controller
     public function destroy(Image $id, $dir){
         $this->imageRepository->delete($id->image_id);
         unlink('resources/' . $dir . '/' . $id->image);
-        return back()->with('success', 'Image Deleted Successfully');
+        if (strpos($dir, "file")) {
+            return back()->with('success', 'File Deleted Successfully');
+        } else {
+            return back()->with('success', 'Image Deleted Successfully');
+        }
     }
 }

@@ -1,4 +1,5 @@
 @extends('index')
+
 @section('content')
 <section class="section">
   <div class="section-body">
@@ -6,7 +7,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Edit Product Material</h4>
+            <h4>Add Product Cost</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,23 +15,23 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('productMaterial.update', $productType['product_type_id']) }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('productCost.update', $productType['product_type_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
-                    <label>Product</label>
+                    <label>Products</label>
                     <input type="text" class="form-control" readonly value="{{ $productType['article_no'] }} Size - {{$productType['hname']}}">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]">
-                      <option value="" disabled selected>Select Material</option>
-                      @if($material->count())
-                        @foreach($material as $item)
-                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->name}}</option>
+                    <label>Costing Heads</label>
+                    <select class="form-control select2" name="head_id">
+                      <option value="" disabled selected>Select Head</option>
+                      @if($head->count())
+                        @foreach($head as $item)
+                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -38,8 +39,8 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
+                    <label>Wages</label>
+                    <input type="number" min="0" class="form-control" name="amount" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">
@@ -55,29 +56,26 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Item / Product</th>
-                        <th>Quantity</th>
+                        <th>Costing Head</th>
+                        <th>Wages</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        @if($productMaterial->count())
-                          @foreach($productMaterial as $item)
-                            <tr data-item-id="{{ $item->product_type_id }}">
-                              <td></td>
-                              <td>{{$item->name}}
-                                <input type="hidden" name="material_name[]" value="{{$item->name}}">
-                                <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
-                              </td>
-                              <td>{{$item->quantity}}
-                                <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
-                              </td>
-                              <td><button class="deleteRowBtn btn btn-danger">X</button></td>
-                            </tr>
-                          @endforeach
-                        @endif
-                      </tr>
+                      @if($productCost->count())
+                        @foreach($productCost as $item)
+                          <tr data-item-id="{{ $item->product_type_id }}">
+                            <td></td>
+                            <td>{{$item->hname}}
+                              <input type="hidden" name="head_id[]" value="{{$item->head_id}}">
+                            </td>
+                            <td>{{$item->amount}}
+                              <input type="hidden" name="amount[]" value="{{$item->amount}}"></td>
+                            </td>
+                            <td><button class="deleteRowBtn btn btn-danger">X</button></td>
+                          </tr>
+                        @endforeach
+                      @endif
                       <!-- Table rows will be dynamically added here -->
                     </tbody>
                   </table>
@@ -95,5 +93,5 @@
     </div>
   </div>
 </section>
-<script> var isPMPage = true; </script>
+<script> var isProductCostPage = true; </script>  
 @endsection

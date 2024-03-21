@@ -36,4 +36,15 @@ class Controller extends BaseController
         $getId = $this->imageRepository->store($store);
         return $getId;
     }
+
+    protected function storeFile($image, $folder, $table, $tableId, $title) {
+        $fileNameWithExtension = $image->getClientOriginalName();
+        $fileName = pathinfo($fileNameWithExtension, PATHINFO_FILENAME);
+        $extension = $image->getClientOriginalExtension();
+        $fileNameToStore = $fileName . '_' . time() . '.' . $extension;
+        $path = $image->move(public_path('resources/' . $folder), $fileNameToStore);
+        $store = ['table_name' => $table, 'table_id' => $tableId, 'image' => $fileNameToStore, 'file_title' => $title, 'file_type' => '1'];
+        $getId = $this->imageRepository->store($store);
+        return $getId;
+    }
 }

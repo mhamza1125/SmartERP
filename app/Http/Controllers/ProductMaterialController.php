@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ProductType;
 use Illuminate\Http\Request;
 use App\Models\ProductMaterial;
+use App\Repositories\BoxRepository;
 use App\Http\Controllers\Controller;
 use App\Repositories\ProductRepository;
 use App\Repositories\MaterialRepository;
@@ -14,18 +15,21 @@ use App\Repositories\ProductMaterialRepository;
 
 class ProductMaterialController extends Controller
 {
+    protected $boxRepository;
     protected $productRepository;
     protected $materialRepository;
     protected $productTypeRepository;
     protected $productMaterialRepository;
 
     public function __construct(
+        BoxRepository $boxRepository,
         ProductRepository $productRepository,
         MaterialRepository $materialRepository, 
         ProductTypeRepository $productTypeRepository, 
         ProductMaterialRepository $productMaterialRepository,
     ){
         $this->middleware(['auth', 'all']);
+        $this->boxRepository = $boxRepository;
         $this->productRepository = $productRepository;
         $this->materialRepository = $materialRepository;
         $this->productTypeRepository = $productTypeRepository;
@@ -43,7 +47,9 @@ class ProductMaterialController extends Controller
     public function create(){
         $product = $this->productRepository->material();
         $material = $this->materialRepository->all();
+        $box = $this->boxRepository->active();
         return view('addProductMaterial', [
+            'box' => $box,
             'product' => $product,
             'material' => $material,
         ]);
@@ -51,6 +57,7 @@ class ProductMaterialController extends Controller
 
     public function store(ProductMaterialRequest $request){
         $validatedData = $request->validated();
+        dd($validatedData);
         if (!$request->has('quantity')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }

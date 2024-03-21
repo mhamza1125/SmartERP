@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-3">
@@ -238,7 +238,7 @@
   </div>
 </section>
 <script>
-  var isEditReceiveIssue = true;
+  var isReceiveIssuePage = true;
   var issueItems = @json($issueItem);
 </script>
 @endsection

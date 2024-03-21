@@ -56,7 +56,7 @@ class MaterialController extends Controller
     
     public function show($id){
         $material = $this->materialRepository->get($id);
-        $image = $this->imageRepository->get2('materials', $id);
+        $image = $this->imageRepository->image('materials', $id);
         return view('materialInfo', [
             'material' => $material,
             'image' => $image,

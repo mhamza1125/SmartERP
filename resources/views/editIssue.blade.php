@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-5">
@@ -67,7 +67,7 @@
                 <div class="col-md-7">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="sproduct_type_id[]" id="product_type_id">
+                    <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <!-- Options will be dynamically added here via JavaScript -->
                       <option value="" disabled selected>Select Product</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
@@ -80,7 +80,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]" id="material_id">
+                    <select class="form-control select2" name="material_id" id="material_id">
                       <!-- Options will be dynamically added here via JavaScript -->
                       <option value="" disabled selected>Select Material</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
@@ -111,7 +111,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Product</label>
-                    <select class="form-control select2" name="stage_id[]" id="stage_id">
+                    <select class="form-control select2" name="stage_id" id="stage_id">
                       <!-- Options will be dynamically added here via JavaScript -->
                       <option value="" disabled selected>Select Product</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
@@ -216,7 +216,7 @@
   </div>
 </section>
 <script>
-  var isEditIssue = true;
+  var isIssuePage = true;
   var stockData = @json($stock);
   var pstockData = @json($pstock);
   var ajaxPTUrl = "{{ route('ajaxPT') }}";

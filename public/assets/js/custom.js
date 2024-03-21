@@ -24,43 +24,99 @@ $(document).ready(function() {
 });
 // End - Toaster Message
 
-// Start - Wrong Extension Image
+// Start - Wrong Extension Image / File Name
 document.addEventListener("DOMContentLoaded", function() {
     var fileInput = document.getElementById('customFile');
     var fileError = document.getElementById('fileError');
     var fileSuccess = document.getElementById('fileSuccess');
+    
+    function handleFileInputChange(fileInput, fileError, fileSuccess) {
+        fileInput.addEventListener('change', function() {
+            var files = this.files;
+            var errorMessage = '';
+            var fileNames = '';
 
-    fileInput.addEventListener('change', function() {
-        var files = this.files;
-        var errorMessage = '';
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var extension = file.name.split('.').pop().toLowerCase();
+                var allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
 
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
-            var extension = file.name.split('.').pop().toLowerCase();
-            var allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-
-            if (allowedExtensions.indexOf(extension) === -1) {
-                errorMessage = 'Please select JPG, JPEG, PNG, GIF, or SVG files only.';
-                break;
+                if (allowedExtensions.indexOf(extension) === -1) {
+                    errorMessage = 'Please select JPG, JPEG, PNG, GIF, or SVG files only.';
+                    break;
+                } if (i > 0) {
+                    fileNames += ', ';
+                }
+                fileNames += file.name;
             }
-        }
+            if (errorMessage) {
+                fileError.textContent = errorMessage;
+                fileError.style.display = 'block';
+                fileSuccess.style.display = 'none';
+                this.value = '';
+            } else {
+                fileError.style.display = 'none';
+                fileSuccess.textContent = 'Selected files: ' + fileNames;
+                fileSuccess.style.display = 'block';
+            }
+        });
+    }
+    handleFileInputChange(fileInput, fileError, fileSuccess);
+});
 
-        if (errorMessage) {
-            fileError.textContent = errorMessage;
-            fileError.style.display = 'block';
-            fileSuccess.style.display = 'none';
-            this.value = '';
-        } else {
-            fileError.style.display = 'none';
+document.addEventListener("DOMContentLoaded", function() {
+    function handleFileInputChange(event) {
+        var fileInput = event.target;
+        var fileSuccess = fileInput.closest('.attachment-row').querySelector('.attachment-success');
+
+        if (fileInput.files.length > 0) {
+            fileSuccess.textContent = 'Selected file: ' + fileInput.files[0].name;
             fileSuccess.style.display = 'block';
+        } else {
+            fileSuccess.textContent = '';
+            fileSuccess.style.display = 'none';
+        }
+    }
+
+    // Attach change event listener to the document and delegate it to .attachment-file inputs
+    document.addEventListener('change', function(event) {
+        if (event.target && event.target.classList.contains('attachment-file')) {
+            handleFileInputChange(event);
         }
     });
 });
-// End - Wrong Extension Image
+// End - Wrong Extension Image / File Name
+
+// Start - Duplicate Attachment Row
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById('attachmentContainer').addEventListener('click', function(e) {
+        var target = e.target;
+
+        if (target.classList.contains('add-attachment')) {
+            // Clone the attachment row
+            var originalRow = target.closest('.attachment-row');
+            var clonedRow = originalRow.cloneNode(true);
+
+            // Clear the input values in the cloned row and adjust visibility of action buttons
+            clonedRow.querySelectorAll('input').forEach(function(input) { input.value = ''; });
+            clonedRow.querySelector('.add-attachment').style.display = 'none';
+            clonedRow.querySelector('.add-attachment-label').style.display = 'none';
+            clonedRow.querySelector('.remove-attachment').style.display = 'inline-block';
+            clonedRow.querySelector('.remove-attachment-label').style.display = 'inline';
+            
+            // Append the cloned row
+            document.getElementById('attachmentContainer').appendChild(clonedRow);
+        } else if (target.classList.contains('remove-attachment')) {
+            // Remove the attachment row
+            target.closest('.attachment-row').remove();
+        }
+    });
+});
+// End - Duplicate Attachment Row
 
 // Start - Purchase Script
 $(document).ready(function() {
-    if (typeof isEditPage !== 'undefined') {
+    if (typeof isPurchasePage !== 'undefined') {
         var tableRowCount = 1;
         updateSrNumbers();
         updateGrandTotal();
@@ -134,7 +190,7 @@ $(document).ready(function() {
         // Function to update Sr. numbers
         function updateSrNumbers() {
             $('#items-table tbody tr').each(function(index) {
-                if (isEditPage) {
+                if (isPurchasePage) {
                     $(this).find('td:first').text(index);
                 } else {
                     $(this).find('td:first').text(index + 1);
@@ -291,14 +347,31 @@ $(document).ready(function() {
     if (typeof isPMPage !== 'undefined') {
         var tableRowCount = 1;
         updateSrNumbers();
+
+        // Event listener for change in product_type_id
+        $('select[name="product_type_id"]').change(function() {
+            if ($('#items-table tbody tr').length > 0) {
+                if (!confirm('Changing the product type will clear the table. Are you sure you want to proceed?')) {
+                    $(this).val($(this).data('previous')).trigger('change.select2');
+                    return;
+                }
+            }
+            clearTable();
+        });
+
         // Initially disable the add button
         $('#addBtn').prop('disabled', true);
 
         // Function to check if both fields have data
         function checkFields() {
+            var productId = $('select[name="product_type_id"]').val();
             var materialId = $('select[name="material_id[]"]').val();
             var quantity = $('input[name="quantity"]').val();
-            return (materialId && quantity);
+            if (isPMPage) {
+                return (materialId && quantity);
+            } else {
+                return (productId && materialId && quantity);
+            }
         }
 
         // Enable/disable add button based on field values
@@ -327,8 +400,8 @@ $(document).ready(function() {
                 // Material does not exist, add row to table
                 var newRow = '<tr>' +
                     '<td>' + tableRowCount + '</td>' +
-                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"></td>' +
-                    '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
+                    '<td>' + materialName + '<input type="text" name="material_name[]" value="' + materialName + '"><input type="text" name="material_id[]" value="' + materialId + '"></td>' +
+                    '<td>' + quantity + '<input type="text" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
 
@@ -359,6 +432,12 @@ $(document).ready(function() {
                     $(this).find('td:first').text(index + 1);
                 }
             });
+        }
+
+        // Function to clear the table if product_type_id changes
+        function clearTable() {
+            $('#items-table tbody').empty();
+            updateSrNumbers();
         }
 
         $('#submitBtn').on('click', function() {
@@ -408,30 +487,33 @@ var returnQuantityInputs = document.querySelectorAll('.return-qty');
 returnQuantityInputs.forEach(function(input) {
     var row = input.closest('tr');
     var receiveQuantityCell = row.querySelector('td:nth-child(5)');
-    var receiveQuantity = parseInt(receiveQuantityCell.textContent.trim());
+    var receiveQuantity = parseInt(receiveQuantityCell.textContent.split('/')[1].trim());
+    var returnedQuantity = parseInt(receiveQuantityCell.textContent.split('/')[0].trim()) || 0;
+    var availableToReturn = receiveQuantity - returnedQuantity;
     input.addEventListener('input', function() {
-        var inputValue = parseInt(this.value.trim());
-        if (inputValue > receiveQuantity) {
-            this.value = receiveQuantity;
+        var inputValue = parseInt(this.value.trim()) || 0;
+        if (inputValue > availableToReturn) {
+            this.value = availableToReturn;
         }
     });
-    input.setAttribute('max', receiveQuantity);
+    input.setAttribute('max', availableToReturn);
 });
 // End - Return Material Script
 
 // Start - Make Qty 0
-document.getElementById('makeZero').addEventListener('submit', function(event) {
-    document.querySelectorAll('.receive-qty, .return-qty').forEach(function(input) {
-        if (input.value.trim() === '') {
-            input.value = '0';
-        }
+var makeZeroForm = document.getElementById('makeZero');
+if (makeZeroForm) {
+    makeZeroForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        document.querySelectorAll('.receive-qty, .return-qty').forEach(input => input.value = input.value.trim() === '' ? '0' : input.value);
+        makeZeroForm.submit(); // Submit the form
     });
-});
+}
 // End - Make Qty 0
 
 // Start - Issue Material Script
 $(document).ready(function() {
-    if (typeof isEditIssue !== 'undefined') {
+    if (typeof isIssuePage !== 'undefined') {
         // Function to initialize select2
         function initializeSelect2() {
             $('.select2').select2();
@@ -714,10 +796,9 @@ $(document).ready(function() {
 });
 // End - Issue Material Script
 
-
 // Start - Receive Issue Material Script
 $(document).ready(function() {
-    if (typeof isEditReceiveIssue !== 'undefined') {
+    if (typeof isReceiveIssuePage !== 'undefined') {
 
         // Function to initialize select2
         function initializeSelect2() {
@@ -894,3 +975,97 @@ $(document).ready(function() {
     }
 });
 // End - Receive Issue Material Script
+
+// Start - Product Cost Script
+$(document).ready(function() {
+    if (typeof isProductCostPage !== 'undefined') {
+        var tableRowCount = 1;
+        updateSrNumbers();
+      
+        // Event listener for change in product_type_id
+        $('select[name="product_type_id"]').change(function() {
+            if ($('#items-table tbody tr').length > 0) {
+                if (!confirm('Changing the product type will clear the table. Are you sure you want to proceed?')) {
+                    $(this).val($(this).data('previous')).trigger('change.select2');
+                    return;
+                }
+            }
+            clearTable();
+        });
+
+        // Initially disable the add button
+        $('#addBtn').prop('disabled', true);
+
+        // Enable/disable add button based on field values
+        $('select[name="head_id"], input[name="amount"]').on('change keyup', function() {
+            $('#addBtn').prop('disabled', !checkFields());
+        });
+
+        $('#addBtn').click(function() {
+            var headId = $('select[name="head_id"]').val();
+            var headName = $('select[name="head_id"] option:selected').text();
+            var amount = $('input[name="amount"]').val();
+
+            // Check for duplicate entry
+            var isDuplicate = $('#items-table tbody tr').filter(function() {
+                return $(this).find('input[name="head_id[]"]').val() === headId;
+            }).length > 0;
+
+            if (isDuplicate) {
+                alert("This Costing head is already added.");
+                return;
+            }
+
+            // Append the new row
+            appendRow(headId, headName, amount);
+            // Disable Add button & Reset input field
+            $('#addBtn').prop('disabled', true);
+            $('input[name="amount"]').val('');
+            $('select[name="head_id"]').val('').trigger('change');
+            updateSrNumbers();
+        });
+
+        // Delete row functionality
+        $(document).on('click', '.deleteRowBtn', function() {
+            $(this).closest('tr').remove();
+            updateSrNumbers();
+        });
+
+        // Function to check if all fields have data
+        function checkFields() {
+            var productId = $('select[name="product_type_id"]').val();
+            var headId = $('select[name="head_id"]').val();
+            var amount = $('input[name="amount"]').val();
+            if (isProductCostPage) {
+              return (headId && amount);
+            } else {
+              return (productId && headId && amount);
+            }
+        }
+
+        // Function to update serial numbers
+        function updateSrNumbers() {
+            $('#items-table tbody tr').each(function(index) {
+                $(this).find('td:first').text(index + 1);
+            });
+        }
+
+        // Function to append a row to the table
+        function appendRow(headId, headName, amount) {
+            var newRow = `<tr>
+                <td class="sr"></td>
+                <td>${headName}<input type="hidden" name="head_id[]" value="${headId}"></td>
+                <td>${amount}<input type="hidden" name="amount[]" value="${amount}"></td>
+                <td><button type="button" class="deleteRowBtn btn btn-danger">X</button></td>
+            </tr>`;
+            $('#items-table tbody').append(newRow);
+        }
+
+        // Function to clear the table if product_type_id changes
+        function clearTable() {
+            $('#items-table tbody').empty();
+            updateSrNumbers();
+        }
+    }
+});
+// End - Product Cost Script

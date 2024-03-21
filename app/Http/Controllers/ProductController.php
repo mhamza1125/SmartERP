@@ -65,17 +65,25 @@ class ProductController extends Controller
                 $this->storeImage($file, 'product', 'products', $getId);        
             }
         }
+        if ($request->hasFile('file')) {
+            foreach ($request->file('file') as $key => $file) {
+                $title = $request->input('file_title')[$key] ?? null;
+                $this->storeFile($file, 'product_file', 'products', $getId, $title);        
+            }
+        }
         return redirect()->route('product.add')->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
         $product = $this->productRepository->get($id);
         $size = $this->productTypeRepository->active($id);
-        $image = $this->imageRepository->get2('products', $id);
+        $image = $this->imageRepository->image('products', $id);
+        $file = $this->imageRepository->file('products', $id);
         return view('productInfo', [
             'product' => $product,
             'size' => $size,
             'image' => $image,
+            'file' => $file,
         ]);
     }
     
@@ -101,6 +109,12 @@ class ProductController extends Controller
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'product', 'products', $getId);        
+            }
+        }
+        if ($request->hasFile('file')) {
+            foreach ($request->file('file') as $key => $file) {
+                $title = $request->input('file_title')[$key] ?? null;
+                $this->storeFile($file, 'product_file', 'products', $getId, $title);        
             }
         }
         return redirect()->route('product.show', $id)->with('success', 'Record Updated Successfully');    
