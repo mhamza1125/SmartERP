@@ -18,7 +18,29 @@
             <form action="{{ route('productCost.store') }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>General / Employee / Vendor</label>
+                    <select class="form-control select2" name="table_id">
+                      <option value="0" selected data-tname="general">General Cost</option>
+                      @if($employee->count())
+                        @foreach($employee as $item)
+                          <option value="{{$item->employee_id}}" data-tname="employee">
+                            {{$item->employee_no}} - {{$item->name}} {{$item->fname}}
+                          </option>
+                        @endforeach
+                      @endif
+                      @if($vendor->count())
+                        @foreach($vendor as $item)
+                          <option value="{{$item->vendor_id}}" data-tname="vendor">
+                            {{$item->vendor_no}} - {{$item->fname}}
+                          </option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Products</label>
                     <select class="form-control select2" name="product_type_id">
@@ -31,7 +53,9 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+              </div>
+              <div class="row">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Costing Heads</label>
                     <select class="form-control select2" name="head_id">
@@ -44,7 +68,7 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-5">
                   <div class="form-group">
                     <label>Wages</label>
                     <input type="number" min="0" class="form-control" name="amount" placeholder="0">
@@ -63,6 +87,7 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
+                        <th>General / Employee / Vendor</th>
                         <th>Costing Head</th>
                         <th>Wages</th>
                         <th>Action</th>

@@ -12,8 +12,9 @@ class ProductTypeRepository implements GlobalInterface {
     public function get($id){
         return ProductType::where('product_type_id', $id)
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
-        ->join('heads', 'heads.head_id', '=' ,'product_types.size_id')
-        ->select('products.*', 'heads.name as hname', 'product_type_id')
+        ->join('heads as shead', 'shead.head_id', '=' ,'product_types.size_id')
+        ->join('heads as uhead', 'uhead.head_id', '=' ,'products.unit_id')
+        ->select('products.*', 'shead.name as hname', 'uhead.name as uname', 'product_type_id')
         ->first();
     }
 

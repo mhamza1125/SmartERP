@@ -5,19 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class StockItem extends Model
+class ProductBox extends Model
 {
     use HasFactory;
     
-    protected $primaryKey = 'stock_item_id';
+    protected $primaryKey = 'product_box_id';
 
     protected $fillable = [
-        'stock_id',
         'product_type_id',
-        'material_id',
+        'box_id',
         'quantity',
-        'stage_id',
-        'work_logs',
         'created_by',
         'updated_at',
     ];

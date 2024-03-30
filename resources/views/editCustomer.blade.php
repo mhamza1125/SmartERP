@@ -43,28 +43,60 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Email</label>
                     <input type="text" class="form-control" name="email" value="{{$customer['email']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Contact No</label>
                     <input type="text" class="form-control" name="phone" value="{{$customer['phone']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Fax Number</label>
                     <input type="text" class="form-control" name="fax" value="{{$customer['fax']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Country</label>
+                    <select class="form-control select2" name="country_id" required>
+                      <option value="" selected disabled>Select Country</option>
+                      @if($country->count())
+                        @foreach($country as $item)
+                          <option value="{{$item->head_id}}" {{ $customer['country_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Country</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Currency</label>
+                    <select class="form-control select2" name="currency_id" required>
+                      <option value="" selected disabled>Select Currency</option>
+                      @if($currency->count())
+                        @foreach($currency as $item)
+                          <option value="{{$item->head_id}}" {{ $customer['currency_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Currency</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
 use App\Models\Employee;
 
 class EmployeeRepository implements GlobalInterface {
@@ -41,6 +42,13 @@ class EmployeeRepository implements GlobalInterface {
         ->select('employees.*', 'dhead.name as dname', 
             'ethead.name as etname', 'chead.name as cname')
         ->first();
+    }
+    
+    public function refNo() {
+        $year = Carbon::now()->format('y');
+        $count = Employee::whereYear('created_at', Carbon::now()->year)->count();
+        $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
+        return 'E' . $year . $threeDigitNumber;
     }
 
     public function store(array $data){

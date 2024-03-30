@@ -20,7 +20,7 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Return No</label>
-                    <input type="text" class="form-control" name="return_no" required value="{{ old('return_no') }}" placeholder="Return No">
+                    <input type="text" class="form-control" name="return_no" required value="{{$count}}-{{$receive['receive_no']}}" placeholder="Return No">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Return No</div>
                   </div>
@@ -63,7 +63,7 @@
                         <th>Code</th>
                         <th>Material</th>
                         <th>Units</th>
-                        <th>Receive Qty</th>
+                        <th>Returned / Receive Qty</th>
                         <th>Return Qty</th>
                         <th>Remarks</th>
                       </tr>
@@ -91,7 +91,7 @@
                         <th>Code</th>
                         <th>Material</th>
                         <th>Units</th>
-                        <th>Receive Qty</th>
+                        <th>Returned / Receive Qty</th>
                         <th>Return Qty</th>
                         <th>Remarks</th>
                       </tr>

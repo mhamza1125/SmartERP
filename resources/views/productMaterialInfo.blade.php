@@ -12,7 +12,34 @@
             </div>
           </div>
           <div class="card-body">
-            <table class="table" id="tableExport" style="width:100%;">
+            <h6>Product Packing</h6>
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <td><b>Article No: </b> {{$productType['article_no']}} - Size {{$productType['hname']}}</td>
+                  <td><b>Quantity in Box: </b> {{$productBox['quantity']}} {{$productType['uname']}}</td>
+                  <td><b>Box: </b> {{$productBox['box_no']}} - {{$productBox['name']}}</td>
+                </tr>
+                <tr>
+                  <td><b>Box Type: </b> {{$productBox['hname']}}</td>
+                  <td><b>Box Dimension: </b> {{$productBox['length']}} x {{$productBox['width']}} x {{$productBox['height']}} cms</td>
+                  <td><b>Box Weight: </b> {{$productBox['weight']}} Grams</td>
+                </tr>
+                <tr>
+                  <td colspan="3">
+                    <div class="row">
+                      <div class="col-md-1"><b>Details: </b></div>
+                      <div class="col-md-11">
+                        @php echo $productBox['description'] @endphp
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <h6>Product Material</h6>
+            <table class="table table-striped table-sm" style="width:100%;">
               <thead>
                 <tr>
                   <th>Sr.</th>

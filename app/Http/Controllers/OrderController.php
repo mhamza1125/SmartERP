@@ -86,12 +86,8 @@ class OrderController extends Controller
         if (!$request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $products = $request->input('product_type_id');
-        $prices = $request->input('price');
-        $quantities = $request->input('quantity');
-        $this->orderItemRepository->delete($id);
         $this->orderRepository->update($id, $request->input());
-        $this->storeOI($id, $products, $prices, $quantities);
+        $this->orderItemRepository->update($id, $request->input());
         return redirect()->route('order.show', $id)->with('success', 'Record Updated Successfully');    
     }
 

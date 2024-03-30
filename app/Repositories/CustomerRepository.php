@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
 use App\Models\Customer;
 
 class CustomerRepository implements GlobalInterface {
@@ -13,7 +14,16 @@ class CustomerRepository implements GlobalInterface {
 
     public function get($id){
         return Customer::where('customer_id', $id)
-        ->get();
+        ->join('heads as country', 'country.head_id', '=', 'customers.country_id')
+        ->join('heads as currency', 'currency.head_id', '=', 'customers.currency_id')
+        ->select('*', 'country.name as coname', 'currency.name as cuname')->first();
+    }
+    
+    public function refNo() {
+        $year = Carbon::now()->format('y');
+        $count = Customer::whereYear('created_at', Carbon::now()->year)->count();
+        $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
+        return 'C' . $year . $threeDigitNumber;
     }
 
     public function store(array $data){

@@ -26,7 +26,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]">
+                    <select class="form-control select2" name="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
@@ -81,6 +81,29 @@
                       <!-- Table rows will be dynamically added here -->
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+              <h6>Product Packing</h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Boxes</label>
+                    <select class="form-control select2" name="box_id" required>
+                      <option value="" disabled selected>Select Boxes</option>
+                      @if($box->count())
+                        @foreach($box as $item)
+                          <option value="{{$item->box_id}}" {{ $pbox['box_id'] == $item->box_id ? 'selected' : '' }}>{{$item->box_no}} - {{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Product Unit in Box</label>
+                    <input type="number" min="0" class="form-control" name="bqty" placeholder="0" value="{{$pbox['quantity']}}" required>
+                  </div>
                 </div>
               </div>
               <div class="form-group row mb-4">

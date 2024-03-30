@@ -38,10 +38,12 @@ class EmployeeController extends Controller
         $department = $this->headRepository->get('3');
         $employeeType = $this->headRepository->get('9');
         $city = $this->headRepository->get('8');
+        $count = $this->employeeRepository->refNo();
         return view('addEmployee', [
             'department' => $department,
             'employeeType' => $employeeType,
             'city' => $city,
+            'count' => $count,  
         ]);
     }
 
@@ -53,7 +55,7 @@ class EmployeeController extends Controller
                 $this->storeImage($file, 'employee', 'employees', $getId);        
             }
         }
-        return redirect()->route('employee.add')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('employee.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){

@@ -18,9 +18,13 @@
             <div class="col-md-7">
               <table class="table table-sm">
                 <tbody>
+                  @if($issue['table_name'] == 'employee')
                   <tr><td><b>Employee:</b> {{$issue['employee_no']}} - {{$issue['name']}}</td></tr>
-                  <tr><td><b>Department:</b> {{$issue['name']}}</td></tr>
-                  <tr><td><b>Date:</b> {{$issue['stock_date']}}</td></tr>
+                  <tr><td><b>Department:</b> {{$issue['hname']}}</td></tr>                  
+                  @else
+                  <tr><td><b>Vendor:</b> {{$issue['vendor_no']}} - {{$issue['fname']}}</td></tr>
+                  @endif
+                  <tr><td><b>Receive Date:</b> {{$issue['stock_date']}}</td></tr>
                   @if($issue['description'])<tr><td><b>Detail:</b></td></tr>
                   <tr><td>@php echo $issue['description'] @endphp</td></tr>@endif
                 </tbody>
@@ -29,10 +33,9 @@
             <div class="col-md-5">
               <table class="table table-sm">
                 <tbody>
-                  <tr><td><b>Issuance.#:</b> {{$issue['stock_no']}}</td></tr>
+                  <tr><td><b>Receive Issuance.#:</b> {{$issue['stock_no']}}</td></tr>
                   <tr><td><b>Issue Date:</b> {{$issue['sdate']}}</td></tr>
                   <tr><td><b>Job.#:</b> {{($issue['job_no'])? $issue['job_no']:'Default Purchase'}}</td></tr>
-                  <tr><td><b>Receive Date:</b> {{$issue['stock_date']}}</td></tr>
                 </tbody>
               </table>
             </div> 
@@ -56,7 +59,7 @@
                         <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                         {{-- <td>{{$item->pname}} {{$item->sname}}</td> --}}
                         <td>{{($item->name)? $item->name:$item->stage}}</td>
-                        <td>{{$item->quantity}} {{$item->uname}}</td>
+                        <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                       </tr>
                       @endif
                     @endforeach

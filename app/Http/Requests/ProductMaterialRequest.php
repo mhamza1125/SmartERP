@@ -23,6 +23,8 @@ class ProductMaterialRequest extends FormRequest
     {
         return [
             'product_type_id' => 'required',
+            'box_id' => 'required',
+            'bqty' => 'required',
             // Purchase Items
             'material_id.*' => 'required',
             'quantity.*' => 'required',

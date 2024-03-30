@@ -20,7 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase No</label>
-                    <input type="text" class="form-control" name="purchase_no" placeholder="Purchase No" required value="{{old('purchase_no')}}">
+                    <input type="text" class="form-control" name="purchase_no" placeholder="Purchase No" required value="{{$count}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Purchase No</div>
                   </div>
@@ -32,7 +32,7 @@
                       <option value="" selected disabled>Select Vendor</option>
                       @if($vendor->count())
                         @foreach($vendor as $item)
-                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->fname}}</option>
+                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>

@@ -17,7 +17,15 @@
             <form action="{{ route('vendor.update', $vendor['vendor_id']) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Vendor No</label>
+                    <input type="text" class="form-control" name="vendor_no" required value="{{$vendor['vendor_no']}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Vendor No</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Name</label>
                     <input type="text" class="form-control" name="name" required value="{{$vendor['name']}}">
@@ -25,7 +33,7 @@
                     <div class="invalid-feedback">Enter Vendor Name</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Full Name</label>
                     <input type="text" class="form-control" name="fname" required value="{{$vendor['fname']}}">
@@ -35,7 +43,7 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Contact No</label>
                     <input type="text" class="form-control" name="phone1" required value="{{$vendor['phone1']}}">
@@ -43,11 +51,26 @@
                     <div class="invalid-feedback">Enter Contact No</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Phone No</label>
                     <input type="text" class="form-control" name="phone2" value="{{$vendor['phone2']}}">
                     <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>City</label>
+                    <select class="form-control select2" name="city_id" required>
+                      <option value="" selected disabled>Select City</option>
+                      @if($city->count())
+                        @foreach($city as $item)
+                          <option value="{{$item->head_id}}" {{ $vendor['city_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select City</div>
                   </div>
                 </div>
               </div>
@@ -69,17 +92,12 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>City</label>
-                    <select class="form-control select2" name="city_id" required>
-                      <option value="" selected disabled>Select City</option>
-                      @if($city->count())
-                        @foreach($city as $item)
-                          <option value="{{$item->head_id}}" {{ $vendor['city_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
+                    <label>Vendor as Worker</label>
+                    <select class="form-control" name="vendor_type" required>
+                      <option value="0" {{ $vendor['vendor_type'] == '0' ? 'selected' : '' }}>Inactive</option>
+                      <option value="1" {{ $vendor['vendor_type'] == '1' ? 'selected' : '' }}>Active</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select City</div>
                   </div>
                 </div>
                 <div class="col-md-4">

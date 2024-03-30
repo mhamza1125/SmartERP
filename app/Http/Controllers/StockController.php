@@ -9,9 +9,12 @@ use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
+
 use App\Repositories\EmployeeRepository;
+use App\Repositories\VendorRepository;
 use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
+use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductMaterialRepository;
 use App\Repositories\ReceiveMaterialRepository;
 
@@ -20,30 +23,36 @@ class StockController extends Controller
     protected $orderRepository;
     protected $stockRepository;
     protected $headRepository;
+    protected $vendorRepository;
     protected $employeeRepository;
-    protected $orderItemRepository;
-    protected $receiveMaterialRepository;
     protected $stockItemRepository;
+    protected $orderItemRepository;
+    protected $productCostRepository;
+    protected $receiveMaterialRepository;
     protected $productMaterialRepository;
 
     public function __construct(
+        HeadRepository $headRepository,  
         OrderRepository $orderRepository,  
         StockRepository $stockRepository,  
-        HeadRepository $headRepository,  
         EmployeeRepository $employeeRepository,  
+        VendorRepository $vendorRepository,  
         OrderItemRepository $orderItemRepository,  
-        ReceiveMaterialRepository $receiveMaterialRepository,  
         StockItemRepository $stockItemRepository,  
+        ProductCostRepository $productCostRepository,  
+        ReceiveMaterialRepository $receiveMaterialRepository,  
         ProductMaterialRepository $productMaterialRepository,  
     ){
         $this->middleware(['auth', 'all']);
+        $this->headRepository = $headRepository;
         $this->orderRepository = $orderRepository;
         $this->stockRepository = $stockRepository;
-        $this->headRepository = $headRepository;
         $this->employeeRepository = $employeeRepository;
-        $this->orderItemRepository = $orderItemRepository;
-        $this->receiveMaterialRepository = $receiveMaterialRepository;
+        $this->vendorRepository = $vendorRepository;
         $this->stockItemRepository = $stockItemRepository;
+        $this->orderItemRepository = $orderItemRepository;
+        $this->productCostRepository = $productCostRepository;
+        $this->receiveMaterialRepository = $receiveMaterialRepository;
         $this->productMaterialRepository = $productMaterialRepository;
     }
 
@@ -74,6 +83,13 @@ class StockController extends Controller
         $orderItem = $this->orderItemRepository->get($orderId);
         return response()->json(['data' => $orderItem]);
     }
+    
+    public function ajaxPC(Request $request){
+        // Ajax Product Cost
+        $productId = $request->input('productId');
+        $productCost = $this->productCostRepository->get($productId);
+        return response()->json(['data' => $productCost]);
+    }
 
     // ==================================================
     // ==================== Issuance ====================
@@ -90,14 +106,18 @@ class StockController extends Controller
     public function create(){
         // Add Issuance
         $employee = $this->employeeRepository->wages();
+        $vendor = $this->vendorRepository->worker();
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
         $order = $this->orderRepository->active();
+        $count = $this->stockRepository->refNo();
         return view('addIssue', [
+            'count' => $count,
             'order' => $order,
             'stock' => $stock,
             'pstock' => $pstock,
             'employee' => $employee,
+            'vendor' => $vendor,
         ]);
     }
 
@@ -111,9 +131,10 @@ class StockController extends Controller
         $quantities = $request->input('quantity');
         $mid = $request->input('material_id');
         $stages = $request->input('stage_id');
+        $works = $request->input('work_logs');
         $getId = $this->stockRepository->store($validatedData);
-        $this->storeSI($getId, $ptid, $mid, $quantities, $stages);
-        if(!$request->has('receive_issue_id')){
+        $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works);
+        if(!$request->has('issue_id')){
             return redirect()->route('stock.show', $getId)->with('success', 'Record Inserted Successfully');
         } else {
             return redirect()->route('rstock.show', $getId)->with('success', 'Record Inserted Successfully');
@@ -134,6 +155,7 @@ class StockController extends Controller
         // Edit Issuance
         $issueItem = $this->stockItemRepository->get($id->stock_id);
         $employee = $this->employeeRepository->wages();
+        $vendor = $this->vendorRepository->worker();
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
         $order = $this->orderRepository->active();
@@ -144,6 +166,7 @@ class StockController extends Controller
             'stock' => $stock,
             'pstock' => $pstock,
             'employee' => $employee,
+            'vendor' => $vendor,
         ]);
     }
     
@@ -178,7 +201,9 @@ class StockController extends Controller
         $head = $this->headRepository->get('12');
         $issue = $this->stockRepository->get($id);
         $issueItem = $this->stockItemRepository->get($id);
+        $count = $this->stockRepository->refNo2($id);
         return view('addReceiveIssue', [
+            'count' => $count,
             'head' => $head,
             'issue' => $issue,
             'issueItem' => $issueItem,
@@ -202,29 +227,33 @@ class StockController extends Controller
         $issue = $this->stockRepository->get($id);
         $issueItem = $this->stockItemRepository->get($issue['receive_issue_id']);
         $receiveItem = $this->stockItemRepository->get($id);
+        $workLog = $this->stockItemRepository->workLog($id);
         return view('editReceiveIssue', [
             'head' => $head,
             'issue' => $issue,
             'issueItem' => $issueItem,
             'receiveItem' => $receiveItem,
             'issueItemUnique' => $issueItem,
+            'workLog' => $workLog,
         ]);
     }
     
     public function destroy(Stock $stock){}
 
-    private function storeSI($getId, $ptids, $mids, $quantities, $stages){
+    private function storeSI($getId, $ptids, $mids, $quantities, $stages, $works){
         // Store Issuance Items
         foreach ($quantities as $key => $quantity) {
             $ptid = $ptids[$key] ?? null;
             $mid = $mids[$key] ?? null;
             $stage = $stages[$key] ?? null;
+            $work = $works[$key] ?? 0;
             $stockItem = [
                 'stock_id' => $getId,
                 'product_type_id' => $ptid,
                 'material_id' => $mid,
                 'quantity' => $quantity,
                 'stage_id' => $stage,
+                'work_logs' => $work,
             ];
             $this->stockItemRepository->store($stockItem);
         }

@@ -14,16 +14,15 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('stock.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Receiving Issuance No</label>
                     <input type="hidden" name="stock_type" required value="1">
-                    <input type="hidden" id="table_name" name="table_name" value="{{$issue['table_name']}}">
-                    <input type="hidden" name="issue_id" required value="{{$issue['stock_id']}}">
-                    <input type="text" class="form-control" name="stock_no" required value="{{$count}}-{{$issue['stock_no']}}">
+                    <input type="hidden" name="receive_issue_id" required value="{{$issue['receive_issue_id']}}">
+                    <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -37,9 +36,9 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>{{ ($issue['table_name'] == 'employee')? 'Employee':'Vendor' }}</label>
+                    <label>Employee</label>
                     <input type="hidden" name="employee_id" required value="{{$issue['employee_id']}}">
-                    <input type="text" class="form-control" required value="{{ $issue['table_name'] === 'employee' ? $issue['employee_no'] . ' - ' . $issue['name'] : $issue['vendor_no'] . ' - ' . $issue['fname'] }}" readonly>
+                    <input type="text" class="form-control" required value="{{$issue['employee_no']}} - {{$issue['name']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -56,7 +55,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="material_id" id="material_id">
+                    <select class="form-control select2" name="smaterial_id[]" id="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @if($issueItem->count())
                           @foreach($issueItem as $item)
@@ -89,10 +88,10 @@
               </div>
 
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-5">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id" id="product_type_id">
+                    <select class="form-control select2" name="sproduct_type_id[]" id="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($issueItem->count())
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
@@ -106,7 +105,7 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Product Stage</label>
-                    <select class="form-control select2" name="stage_id" id="stage_id">
+                    <select class="form-control select2" name="sstage_id[]" id="stage_id">
                       <option value="" selected disabled>Select Product Stage</option>
                       @if($head->count())
                         @foreach($head as $item)
@@ -118,17 +117,6 @@
                   </div>
                 </div>
                 <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Product Cost</label>
-                    <select class="form-control select2" name="pcost_id[]" id="pcost_id" multiple="">
-                      <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled>Select Product Cost</option>
-                      <!-- You can keep this option or remove it, depending on your needs -->
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantityProduct" placeholder="0" id="quantityProduct">
@@ -161,19 +149,32 @@
                             <th>Sr.</th>
                             <th>Item / Product</th>
                             <th>Material / Stage</th>
-                            <th>Work/Cost</th>
                             <th>Quantity</th>
                             <th>Action</th>
                           </tr>
                         </thead>
                         <tbody>
+                          @if($receiveItem->count())
+                            @foreach($receiveItem as $item)
+                              <tr>
+                                <td>{{$loop->index + 1}}</td>
+                                <td>{{$item->article_no}} - Size {{$item->sname}}
+                                  <input type="text" name="material_id[]" value="{{($item->material_id)? $item->material_id:'0'}}">
+                                  <input type="text" name="product_type_id[]" value="{{$item->product_type_id}}"></td>
+                                <td>{{($item->name)? $item->name:$item->stage}}
+                                  <input type="text" name="stage_id[]" value="{{$item->stage_id}}"></td>
+                                <td>{{$item->quantity}}
+                                  <input type="text" name="quantity[]" value="{{$item->quantity}}"></td>
+                                <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
+                              </tr>
+                            @endforeach
+                          @endif
                         </tbody>
                         <tfoot>
                           <tr>
                             <th>Sr.</th>
                             <th>Item / Product</th>
                             <th>Material / Stage</th>
-                            <th>Work/Cost</th>
                             <th>Quantity</th>
                             <th>Action</th>
                           </tr>
@@ -198,7 +199,7 @@
                                 <td>{{$loop->index + 1}}</td>
                                 <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                                 <td>{{($item->name)? $item->name:$item->stage}}</td>
-                                <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
+                                <td>{{$item->quantity}} {{$item->uname}}</td>
                               </tr>
                             @endforeach
                           @endif
@@ -220,7 +221,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description"></textarea>
+                    <textarea class="summernote" name="description">{{$issue['description']}}</textarea>
                   </div>
                 </div>
               </div>
@@ -237,8 +238,7 @@
   </div>
 </section>
 <script>
-  var isReceiveIssuePage = false;
+  var isReceiveIssuePage = true;
   var issueItems = @json($issueItem);
-  var ajaxPCUrl = "{{ route('ajaxPC') }}";
 </script>
 @endsection

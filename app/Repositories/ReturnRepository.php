@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
 use App\Models\Returns;
 
 class ReturnRepository implements GlobalInterface {
@@ -23,6 +24,12 @@ class ReturnRepository implements GlobalInterface {
         ->select('returns.*', 'receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 
             'returns.description as desc')
         ->first();
+    }
+
+    public function refNo($id) {
+        $yearMonth = Carbon::now()->format('ym');
+        $count = Returns::where('receive_id', $id)->count();
+        return 'Return' . $count+1;
     }
 
     public function returned($id){

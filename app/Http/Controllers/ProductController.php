@@ -10,7 +10,9 @@ use App\Http\Requests\ProductRequest;
 use App\Repositories\ImageRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\CategoryRepository;
+use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductTypeRepository;
+use App\Repositories\ProductMaterialRepository;
 
 class ProductController extends Controller
 {
@@ -19,6 +21,8 @@ class ProductController extends Controller
     protected $productRepository;
     protected $categoryRepository;
     protected $productTypeRepository;
+    protected $productCostRepository;
+    protected $productMaterialRepository;
 
     public function __construct(
         HeadRepository $headRepository,
@@ -26,6 +30,8 @@ class ProductController extends Controller
         ProductRepository $productRepository, 
         CategoryRepository $categoryRepository, 
         ProductTypeRepository $productTypeRepository, 
+        ProductCostRepository $productCostRepository, 
+        ProductMaterialRepository $productMaterialRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
@@ -33,6 +39,8 @@ class ProductController extends Controller
         $this->productRepository = $productRepository;
         $this->categoryRepository = $categoryRepository;
         $this->productTypeRepository = $productTypeRepository;
+        $this->productCostRepository = $productCostRepository;
+        $this->productMaterialRepository = $productMaterialRepository;
     }
 
     public function index(){
@@ -79,11 +87,22 @@ class ProductController extends Controller
         $size = $this->productTypeRepository->active($id);
         $image = $this->imageRepository->image('products', $id);
         $file = $this->imageRepository->file('products', $id);
+        $totalCost = $this->productCostRepository->times($id);
+        $getCost = $this->productCostRepository->getAll($id);
+        $totalMaterial = $this->productMaterialRepository->times($id);
+        $getMaterial = $this->productMaterialRepository->getAll($id);
+        // dd($getMaterial);
         return view('productInfo', [
             'product' => $product,
             'size' => $size,
             'image' => $image,
             'file' => $file,
+            'totalCost' => $totalCost,
+            'countCost' => $totalCost->count(),
+            'getCost' => $getCost,
+            'totalMaterial' => $totalMaterial,
+            'countMaterial' => $totalMaterial->count(),
+            'getMaterial' => $getMaterial,
         ]);
     }
     

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
 use App\Models\Purchase;
 
 class PurchaseRepository implements GlobalInterface {
@@ -19,6 +20,14 @@ class PurchaseRepository implements GlobalInterface {
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
         ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1')
         ->first();
+    }
+
+    public function refNo() {
+        $yearMonth = Carbon::now()->format('ym');
+        $count = Purchase::whereMonth('purchase_date', Carbon::now()->month)
+            ->whereYear('purchase_date', Carbon::now()->year)->count();
+        $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
+        return 'P' . $yearMonth . $threeDigitNumber;
     }
 
     public function store(array $data){

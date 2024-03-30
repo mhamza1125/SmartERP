@@ -16,18 +16,20 @@
               <tbody>
                 <tr>
                   <td><b>Customer No: </b> {{$customer['customer_no']}}</td>
+                  <td><b>Country: </b> {{$customer['coname']}}</td>
                   <td colspan="2"><b>Name: </b> {{$customer['fname']}} {{$customer['lname']}}</td>
                 </tr>
                 <tr>
                   <td><b>Email: </b> {{$customer['email']}}</td>
                   <td><b>Contact: </b> {{$customer['phone']}}</td>
                   <td><b>Fax No: </b> {{$customer['fax']}}</td>
+                  <td><b>Currency: </b> {{$customer['cuname']}}</td>
                 </tr>
                 <tr>
-                  <td colspan="3"><b>Address: </b> {{$customer['address']}}</td>
+                  <td colspan="4"><b>Address: </b> {{$customer['address']}}</td>
                 </tr>
                 <tr>
-                  <td colspan="3">
+                  <td colspan="4">
                     <div class="row">
                       <div class="col-md-1"><b>Details: </b></div>
                       <div class="col-md-11">

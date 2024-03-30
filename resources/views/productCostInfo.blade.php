@@ -16,6 +16,7 @@
               <thead>
                 <tr>
                   <th>Sr.</th>
+                  <th>Employee / Vendor</th>
                   <th>Cost Head</th>
                   <th>Price</th>
                 </tr>
@@ -24,12 +25,14 @@
                 <tr class="trow">
                   <th></th>
                   <th>Article No: &nbsp {{$productType['article_no']}}</th>
+                  <th></th>
                   <th>Size: &nbsp {{$productType['hname']}}</th>
                 </tr>
                 @if($productCost->count())
                   @foreach($productCost as $item)
                   <tr>
                     <td>{{$loop->index + 1}}</td>
+                    <td>{{$item->employee_no ?? $item->vendor_no}}{{$item->name ? ' - '.$item->name : 'General Cost'}}</td>
                     <td>{{$item->hname}}</td>
                     <td>{{$item->amount}}</td>
                   </tr>

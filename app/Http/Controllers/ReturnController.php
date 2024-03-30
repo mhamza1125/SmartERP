@@ -40,18 +40,15 @@ class ReturnController extends Controller
     public function create($id){  
         $receive = $this->receiveRepository->get($id);
         $returned = $this->returnRepository->returned($id);
+        $count = $this->returnRepository->refNo($id);
         $receiveMaterial = $this->receiveMaterialRepository->get($id);
         $combined = $receiveMaterial->map(function ($item) use ($returned) {
             $returnedItem = $returned->firstWhere('receive_material_id', $item->receive_material_id);
             $item->rqty = $returnedItem->quantity ?? 0;
-            // if ($returnedItem) {
-            //     $item->rqty = $returnedItem->quantity;
-            // }else{
-            //     $item->rqty = 0;
-            // }
             return $item;
         });
         return view('addReturn', [
+            'count' => $count,
             'receive' => $receive,
             'received' => $returned,
             'combined' => $combined,

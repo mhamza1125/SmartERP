@@ -20,7 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receive No</label>
-                    <input type="text" class="form-control" name="receive_no" required value="{{ old('receive_no') }}" placeholder="Receive No">
+                    <input type="text" class="form-control" name="receive_no" required value="{{$count}}-{{$purchase['purchase_no']}}" placeholder="Receive No">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Receive No</div>
                   </div>

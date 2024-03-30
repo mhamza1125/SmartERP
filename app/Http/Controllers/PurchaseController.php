@@ -49,7 +49,9 @@ class PurchaseController extends Controller
         $order = $this->orderRepository->active();
         $vendor = $this->vendorRepository->all();
         $material = $this->materialRepository->all();
+        $count = $this->purchaseRepository->refNo();
         return view('addPurchase', [
+            'count' => $count,
             'order' => $order,
             'vendor' => $vendor,
             'material' => $material,
@@ -106,13 +108,6 @@ class PurchaseController extends Controller
         }
         $this->purchaseRepository->update($id, $request->input());
         $this->purchaseItemRepository->update($id, $request->input());
-        
-        // dd($request->input());
-        // $materials = $request->input('material_id');
-        // $prices = $request->input('price');
-        // $quantities = $request->input('quantity');
-        // $this->purchaseItemRepository->delete($id);
-        // $this->storePI($id, $materials, $prices, $quantities);
         return redirect()->route('purchase.show', $id)->with('success', 'Record Updated Successfully');    
     }
     

@@ -38,8 +38,10 @@ class VendorController extends Controller
         $vendorType = $this->headRepository->get('11');
         $city = $this->headRepository->get('8');
         $vendor = $this->vendorRepository->all();
+        $count = $this->vendorRepository->refNo();
         return view('addVendor', [
             'city' => $city,
+            'count' => $count,
             'vendor' => $vendor,
             'vendorType' => $vendorType,
         ]);
@@ -53,7 +55,7 @@ class VendorController extends Controller
                 $this->storeImage($file, 'vendor', 'vendors', $getId);        
             }
         }
-        return redirect()->route('vendor.add')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('vendor.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){

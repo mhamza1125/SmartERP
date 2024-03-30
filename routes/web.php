@@ -152,6 +152,7 @@ Route::get('/editIssue/{id}', [StockController::class, 'edit'])->name('stock.edi
 Route::post('/issue/{id}', [StockController::class, 'update'])->name('stock.update');
 Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Product Material
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
+Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
 
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');

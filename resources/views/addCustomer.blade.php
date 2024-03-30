@@ -20,7 +20,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Customer No</label>
-                    <input type="text" class="form-control" name="customer_no" required value="{{old('customer_no')}}">
+                    <input type="text" class="form-control" name="customer_no" required value="{{$count}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Customer No</div>
                   </div>
@@ -43,28 +43,60 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Email</label>
-                    <input type="text" class="form-control" name="email" value="{{old('email')}}">
+                    <input type="text" class="form-control" name="email" required value="{{old('email')}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Contact No</label>
-                    <input type="text" class="form-control" name="phone" value="{{old('phone')}}">
+                    <input type="text" class="form-control" name="phone" required value="{{old('phone')}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Fax Number</label>
-                    <input type="text" class="form-control" name="fax" value="{{old('fax')}}">
+                    <input type="text" class="form-control" name="fax" required value="{{old('fax')}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Country</label>
+                    <select class="form-control select2" name="country_id" required>
+                      <option value="" selected disabled>Select Country</option>
+                      @if($country->count())
+                        @foreach($country as $item)
+                          <option value="{{$item->head_id}}" {{ old('country_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Country</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Currency</label>
+                    <select class="form-control select2" name="currency_id" required>
+                      <option value="" selected disabled>Select Currency</option>
+                      @if($currency->count())
+                        @foreach($currency as $item)
+                          <option value="{{$item->head_id}}" {{ old('currency_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Currency</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">

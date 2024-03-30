@@ -239,20 +239,20 @@ $(document).ready(function() {
 
         // Function to check if all three fields have data
         function checkFields() {
-            var productId = $('select[name="product_type_id"]').val();
+            var productId = $('select[name="product_type_id[]"]').val();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             return (productId && quantity && price);
         }
 
         // Enable/disable add button based on field values
-        $('select[name="product_type_id"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
+        $('select[name="product_type_id[]"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
             $('#addBtn').prop('disabled', !checkFields());
         });
 
         $('#addBtn').on('click', function() {
-            var productId = $('select[name="product_type_id"]').val();
-            var productName = $('select[name="product_type_id"] option:selected').text();
+            var productId = $('select[name="product_type_id[]"]').val();
+            var productName = $('select[name="product_type_id[]"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             var total = quantity * price;
@@ -400,8 +400,8 @@ $(document).ready(function() {
                 // Material does not exist, add row to table
                 var newRow = '<tr>' +
                     '<td>' + tableRowCount + '</td>' +
-                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"></td>' +
-                    '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
+                    '<td>' + materialName + '<input type="text" name="material_name[]" value="' + materialName + '"><input type="text" name="material_id[]" value="' + materialId + '"></td>' +
+                    '<td>' + quantity + '<input type="text" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
 
@@ -518,12 +518,6 @@ $(document).ready(function() {
         function initializeSelect2() {
             $('.select2').select2();
         }
-
-        // Getting Table name
-        $('#employee_id').on('change', function() {
-            var tableName = $(this).find('option:selected').data('type');
-            $('#table_name').val(tableName);
-        });
 
         updateSerialNumbers(); // Update serial numbers after deleting a row
 
@@ -713,9 +707,9 @@ $(document).ready(function() {
 
             var markup = `<tr>
                 <td>${srNo}</td>
-                <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td>${materialText}<input type="hidden" name="material_id[]" value="${materialId}"></td>
-                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
+                <td>${productName}<input type="text" name="product_type_id[]" value="${productId}"><input type="text" name="stage_id[]" value="${stageId}"></td>
+                <td>${materialText}<input type="text" name="material_id[]" value="${materialId}"></td>
+                <td>${quantity}<input type="text" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
             </tr>`;
 
@@ -766,9 +760,9 @@ $(document).ready(function() {
 
             var markup = `<tr>
                 <td>${srNo}</td>
-                <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td>${stageName}<input type="hidden" name="material_id[]" value="${materialId}"></td>
-                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
+                <td>${productName}<input type="text" name="product_type_id[]" value="${productId}"><input type="text" name="stage_id[]" value="${stageId}"></td>
+                <td>${stageName}<input type="text" name="material_id[]" value="${materialId}"></td>
+                <td>${quantity}<input type="text" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deletepRow">X</button></td>
             </tr>`;
 
@@ -895,10 +889,10 @@ $(document).ready(function() {
 
             var srNo = $('#items-table tbody tr').length + 1;
             
-            // var pcostInputs = '';
-            // selectedProductCosts.forEach(pcost => {
-            //     pcostInputs += `<input type="hidden" name="pcost_id[]" value="${productId}|${pcost}">`;
-            // });
+            var pcostInputs = '';
+            selectedProductCosts.forEach(pcost => {
+                pcostInputs += `<input type="text" name="pcost_id[]" value="${productId}|${pcost}">`;
+            });
 
             var selectedOptions = $('#pcost_id').val();
             var selectedOptionsText = selectedOptions.map(option => $('#pcost_id option[value="' + option + '"]').text());
@@ -910,7 +904,7 @@ $(document).ready(function() {
                 <td>${srNo}</td>
                 <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="material_id[]" value="${materialId}"></td>
                 <td>${stageName}<input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td>${selectedOptionsString}<input type="text" name="work_logs[]" value="${idsString}"></td>
+                <td>${selectedOptionsString}<input type="hidden" name="work_logs[]" value="${idsString}"></td>
                 <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
             </tr>`;
@@ -1050,31 +1044,11 @@ $(document).ready(function() {
         $('#addBtn').click(function() {
             var headId = $('select[name="head_id"]').val();
             var headName = $('select[name="head_id"] option:selected').text();
-            var tableId = $('select[name="table_id"]').val();
-            var evName = $('select[name="table_id"] option:selected').text();
-            var tname = $('select[name="table_id"] option:selected').data('tname');
             var amount = $('input[name="amount"]').val();
-
-            // Check for existing row with table_id = 0 and the same head_id
-            if (tableId != 0) {
-                var hasGeneralCost = $('#items-table tbody tr').filter(function() {
-                    var rowTableId = $(this).find('input[name="table_id[]"]').val();
-                    var rowHeadId = $(this).find('input[name="head_id[]"]').val();
-                    return rowTableId == 0 && rowHeadId == headId;
-                }).length > 0;
-
-                if (!hasGeneralCost) {
-                    alert("Add General cost first.");
-                    return;
-                }
-            }
 
             // Check for duplicate entry
             var isDuplicate = $('#items-table tbody tr').filter(function() {
-                var rowTableId = $(this).find('input[name="table_id[]"]').val();
-                var rowHeadId = $(this).find('input[name="head_id[]"]').val();
-                var rowTableName = $(this).find('input[name="table_name[]"]').val();
-                return rowTableId === tableId && rowHeadId === headId && rowTableName === tname;
+                return $(this).find('input[name="head_id[]"]').val() === headId;
             }).length > 0;
 
             if (isDuplicate) {
@@ -1083,7 +1057,7 @@ $(document).ready(function() {
             }
 
             // Append the new row
-            appendRow(headId, headName, amount, tableId, evName, tname);
+            appendRow(headId, headName, amount);
             // Disable Add button & Reset input field
             $('#addBtn').prop('disabled', true);
             $('input[name="amount"]').val('');
@@ -1116,32 +1090,15 @@ $(document).ready(function() {
             });
         }
 
-        // Function to append a row to the table and then sort
-        function appendRow(headId, headName, amount, tableId, evName, tname) {
-            var newRow = $(`<tr>
+        // Function to append a row to the table
+        function appendRow(headId, headName, amount) {
+            var newRow = `<tr>
                 <td class="sr"></td>
-                <td>${evName}<input type="hidden" name="table_id[]" value="${tableId}">
-                <input type="hidden" name="table_name[]" value="${tname}"></td>
                 <td>${headName}<input type="hidden" name="head_id[]" value="${headId}"></td>
                 <td>${amount}<input type="hidden" name="amount[]" value="${amount}"></td>
                 <td><button type="button" class="deleteRowBtn btn btn-danger">X</button></td>
-            </tr>`);
-            // Insert the new row in sorted order based on table_id
-            var inserted = false;
-            $('#items-table tbody tr').each(function() {
-                var currentTableId = parseInt($(this).find('input[name="table_id[]"]').val(), 10);
-                if (tableId < currentTableId && !inserted) {
-                    newRow.insertBefore($(this));
-                    inserted = true;
-                    return false; // Break loop
-                }
-            });
-            // If the row is not inserted, append it at the end
-            if (!inserted) {
-                $('#items-table tbody').append(newRow);
-            }
-            // Call updateSrNumbers to ensure serial numbers are correct
-            updateSrNumbers();
+            </tr>`;
+            $('#items-table tbody').append(newRow);
         }
 
         // Function to clear the table if product_type_id changes

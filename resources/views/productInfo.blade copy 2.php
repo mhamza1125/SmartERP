@@ -135,7 +135,7 @@
                                 </thead>
                                 <tbody>
                                   @foreach($getMaterial as $item)
-                                    @if(($totalMaterial[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
+                                    @if($totalCost[$i-1]['product_type_id'] == $item->product_type_id)
                                       <tr>
                                         <td>{{$loopIndex++}}</td>
                                         <td>{{$item->name}}</td>
@@ -186,17 +186,15 @@
                                 <thead>
                                   <tr>
                                     <th>Sr.</th>
-                                    <th>Employee / Vendor</th>
                                     <th>Cost Head</th>
                                     <th>Price</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   @foreach($getCost as $item)
-                                    @if(($totalCost[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
+                                    @if($totalCost[$i-1]['product_type_id'] == $item->product_type_id)
                                       <tr>
                                         <td>{{$loopIndex++}}</td>
-                                        <td>{{$item->employee_no ?? $item->vendor_no}}{{$item->name ? ' - '.$item->name : 'General Cost'}}</td>                    
                                         <td>{{$item->hname}}</td>
                                         <td>{{$item->amount}}</td>
                                       </tr>
@@ -206,7 +204,6 @@
                                 <tfoot>
                                   <tr>
                                     <th>Sr.</th>
-                                    <th>Employee / Vendor</th>
                                     <th>Cost Head</th>
                                     <th>Price</th>
                                   </tr>

@@ -19,8 +19,12 @@
             <div class="col-md-7">
               <table class="table table-sm">
                 <tbody>
+                  @if($issue['table_name'] == 'employee')
                   <tr><td><b>Employee:</b> {{$issue['employee_no']}} - {{$issue['name']}}</td></tr>
-                  <tr><td><b>Department:</b> {{$issue['name']}}</td></tr>
+                  <tr><td><b>Department:</b> {{$issue['hname']}}</td></tr>                  
+                  @else
+                  <tr><td><b>Vendor:</b> {{$issue['vendor_no']}} - {{$issue['fname']}}</td></tr>
+                  @endif
                   <tr><td><b>Date:</b> {{$issue['stock_date']}}</td></tr>
                   @if($issue['description'])<tr><td><b>Detail:</b></td></tr>
                   <tr><td>@php echo $issue['description'] @endphp</td></tr>@endif

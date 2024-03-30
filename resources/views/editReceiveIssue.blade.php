@@ -21,7 +21,7 @@
                   <div class="form-group">
                     <label>Receiving Issuance No</label>
                     <input type="hidden" name="stock_type" required value="1">
-                    <input type="hidden" name="receive_issue_id" required value="{{$issue['receive_issue_id']}}">
+                    <input type="hidden" name="issue_id" required value="{{$issue['issue_id']}}">
                     <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
@@ -55,7 +55,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="smaterial_id[]" id="material_id">
+                    <select class="form-control select2" name="material_id" id="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @if($issueItem->count())
                           @foreach($issueItem as $item)
@@ -88,10 +88,10 @@
               </div>
 
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="sproduct_type_id[]" id="product_type_id">
+                    <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($issueItem->count())
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
@@ -105,7 +105,7 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Product Stage</label>
-                    <select class="form-control select2" name="sstage_id[]" id="stage_id">
+                    <select class="form-control select2" name="stage_id" id="stage_id">
                       <option value="" selected disabled>Select Product Stage</option>
                       @if($head->count())
                         @foreach($head as $item)
@@ -117,6 +117,17 @@
                   </div>
                 </div>
                 <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Product Cost</label>
+                    <select class="form-control select2" name="pcost_id[]" id="pcost_id" multiple="">
+                      <!-- Options will be dynamically added here via JavaScript -->
+                      <option value="" disabled>Select Product Cost html</option>
+                      <!-- You can keep this option or remove it, depending on your needs -->
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantityProduct" placeholder="0" id="quantityProduct">
@@ -149,6 +160,7 @@
                             <th>Sr.</th>
                             <th>Item / Product</th>
                             <th>Material / Stage</th>
+                            <th>Work/Cost</th>
                             <th>Quantity</th>
                             <th>Action</th>
                           </tr>
@@ -159,12 +171,24 @@
                               <tr>
                                 <td>{{$loop->index + 1}}</td>
                                 <td>{{$item->article_no}} - Size {{$item->sname}}
-                                  <input type="text" name="material_id[]" value="{{($item->material_id)? $item->material_id:'0'}}">
-                                  <input type="text" name="product_type_id[]" value="{{$item->product_type_id}}"></td>
+                                  <input type="hidden" name="material_id[]" value="{{($item->material_id)? $item->material_id:'0'}}">
+                                  <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}"></td>
                                 <td>{{($item->name)? $item->name:$item->stage}}
-                                  <input type="text" name="stage_id[]" value="{{$item->stage_id}}"></td>
+                                  <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}"></td>
+                                <td>@php $workLogIds = array_map('intval', explode('|', $item->work_logs)); @endphp
+                                  @php $comma = false; @endphp
+                                    @foreach($workLogIds as $workLogId)
+                                      @php $found = false; @endphp
+                                      @foreach($workLog as $log)
+                                        @if($log->product_cost_id == $workLogId)
+                                          @if($comma), @endif {{$log->hname}}
+                                          @php $found = true; $comma = true; break; @endphp
+                                        @endif
+                                      @endforeach
+                                    @endforeach
+                                  <input type="hidden" name="work_logs[]" value="{{$item->work_logs}}"></td>
                                 <td>{{$item->quantity}}
-                                  <input type="text" name="quantity[]" value="{{$item->quantity}}"></td>
+                                  <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
                               </tr>
                             @endforeach
@@ -175,6 +199,7 @@
                             <th>Sr.</th>
                             <th>Item / Product</th>
                             <th>Material / Stage</th>
+                            <th>Work/Cost</th>
                             <th>Quantity</th>
                             <th>Action</th>
                           </tr>
@@ -240,5 +265,6 @@
 <script>
   var isReceiveIssuePage = true;
   var issueItems = @json($issueItem);
+  var ajaxPCUrl = "{{ route('ajaxPC') }}";
 </script>
 @endsection

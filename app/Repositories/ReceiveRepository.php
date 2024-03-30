@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
 use App\Models\Receive;
 
 class ReceiveRepository implements GlobalInterface {
@@ -20,6 +21,12 @@ class ReceiveRepository implements GlobalInterface {
         ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
         ->select('receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 'receives.description as desc')
         ->first();
+    }
+
+    public function refNo($id) {
+        $yearMonth = Carbon::now()->format('ym');
+        $count = Receive::where('purchase_id', $id)->count();
+        return 'R' . $count+1;
     }
 
     public function store(array $data){

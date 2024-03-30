@@ -23,6 +23,8 @@ class ProductCostRequest extends FormRequest
     {
         return [
             'product_type_id' => 'required',
+            'table_id.*' => 'required',
+            'table_name.*' => 'required',
             'head_id.*' => 'required',
             'amount.*' => 'required',
         ];

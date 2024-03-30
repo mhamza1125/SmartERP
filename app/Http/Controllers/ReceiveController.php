@@ -41,7 +41,9 @@ class ReceiveController extends Controller
     public function create($id){        
         $purchase = $this->purchaseRepository->get($id);
         $purchaseItem = $this->purchaseItemRepository->receive($id);
+        $count = $this->receiveRepository->refNo($id);
         return view('addReceive', [
+            'count' => $count,
             'purchase' => $purchase,
             'purchaseItem' => $purchaseItem,
         ]);

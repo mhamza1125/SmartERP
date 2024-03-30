@@ -15,14 +15,20 @@
             <table class="table">
               <tbody>
                 <tr>
+                  <td><b>Vendor No: </b> {{$vendor['vendor_no']}}</td>
                   <td><b>Name: </b> {{$vendor['name']}}</td>
                   <td><b>Full Name: </b> {{$vendor['fname']}}</td>
+                </tr>
+                <tr>
                   <td><b>Vendor Type: </b> {{$vendor['vtname']}}</td>
+                  <td><b>Vendor as Worker: </b> @if($vendor['vendor_type']) 
+                    <span class="badge badge-success">Active</span> @else 
+                    <span class="badge badge-danger">Inactive</span> @endif</td>
+                  <td><b>City: </b> {{$vendor['cname']}}</td>
                 </tr>
                 <tr>
                   <td><b>Contact No: </b> {{$vendor['phone1']}}</td>
                   <td><b>Phone No: </b> {{$vendor['phone2']}}</td>
-                  <td><b>City: </b> {{$vendor['cname']}}</td>
                 </tr>
                 <tr>
                   <td colspan="3"><b>Address: </b> {{$vendor['address']}}, {{$vendor['cname']}}</td>

@@ -21,24 +21,30 @@
                   <div class="form-group">
                     <label>Issuance No</label>
                     <input type="hidden" name="stock_type" required value="2">
-                    <input type="text" class="form-control" name="stock_no" required value="{{ old('stock_no') }}" placeholder="Issue No">
+                    <input type="hidden" id="table_name" name="table_name">
+                    <input type="text" class="form-control" name="stock_no" required value="{{$count}}" placeholder="Issue No">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
                   </div>
                 </div>
                 <div class="col-md-5">
-                  <div class="form-group">
-                    <label>Employee</label>
-                    <select class="form-control select2" name="employee_id" required>
-                      <option value="" selected disabled>Select Employee</option>
+                  <div class="form-group">                    
+                    <label>Employee / Vendor</label>
+                    <select class="form-control select2" name="employee_id" id="employee_id" required>
+                      <option value="" selected disabled>Select Employee / Vendor</option>
                       @if($employee->count())
                         @foreach($employee as $item)
-                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{$item->fname}}</option>
+                          <option data-type="employee" value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}</option>
+                        @endforeach
+                      @endif
+                      @if($vendor->count())
+                        @foreach($vendor as $item)
+                          <option data-type="vendor" value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee</div>
+                    <div class="invalid-feedback">Select Employee / Vendor</div>
                   </div>
                 </div>
                 <div class="col-md-2">

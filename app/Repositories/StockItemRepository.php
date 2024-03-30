@@ -25,6 +25,14 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function workLog($id){
+        return StockItem::where('stock_items.stock_id', $id)
+        ->join('product_costs', 'product_costs.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
+        ->select('product_costs.*','heads.name as hname')   
+        ->get();
+    }
+
     public function stock(){
         return DB::table(function ($subquery) {
             $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname')
@@ -48,7 +56,7 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
-    public function stockOld(){
+    public function stockOld123(){
         // Not Used
         return ReceiveMaterial::leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
         ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
@@ -64,7 +72,7 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
-    public function stockAll(){
+    public function stockAll123(){
         // Not Used
         return StockItem::select('stock_items.material_id')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
@@ -129,6 +137,7 @@ class StockItemRepository implements GlobalInterface {
             $ptid = $data['product_type_id'][$key] ?? null;
             $mid = $data['material_id'][$key] ?? null;
             $sid = $data['stage_id'][$key] ?? null;
+            $work = $data['work_logs'][$key] ?? 0;
             // Validate that both $ptid and $mid are not null
             if ($ptid !== null && $mid !== null && $sid !== null) {
                 $stockItem = [
@@ -137,6 +146,7 @@ class StockItemRepository implements GlobalInterface {
                     'material_id' => $mid,
                     'quantity' => $quantity,
                     'stage_id' => $sid,
+                    'work_logs' => $work,
                 ];
                 
                 $stock = StockItem::where('stock_id', $id)

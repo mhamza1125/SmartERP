@@ -23,6 +23,8 @@ class VendorRequest extends FormRequest
     {
         return [
             'vendor_type_id' => 'required',
+            'vendor_no' => 'required|max:255',
+            'vendor_type' => 'required',
             'city_id' => 'required',
             'name' => 'required|max:255',
             'fname' => 'required|max:255',

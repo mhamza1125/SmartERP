@@ -35,7 +35,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]">
+                    <select class="form-control select2" name="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
@@ -81,7 +81,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Boxes</label>
-                    <select class="form-control select2" name="box_id">
+                    <select class="form-control select2" name="box_id" required>
                       <option value="" disabled selected>Select Boxes</option>
                       @if($box->count())
                         @foreach($box as $item)
@@ -94,7 +94,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Product Unit in Box</label>
-                    <input type="number" min="0" class="form-control" name="bqty" placeholder="0">
+                    <input type="number" min="0" class="form-control" name="bqty" placeholder="0" value="{{old('bqty')}}" required>
                   </div>
                 </div>
               </div>

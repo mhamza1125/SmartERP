@@ -28,9 +28,38 @@ class OrderItemRepository implements GlobalInterface {
         return $store->order_item_id;
     }
 
-    public function update($id, array $data) {}
+    public function update($id, array $data) {
+        $existingItems = OrderItem::where('order_id', $id)->get();
+        foreach ($existingItems as $existingItem) {
+            if (!in_array($existingItem->product_type_id, $data['product_type_id'])) {
+                $existingItem->delete();
+            }
+        }
+        foreach ($data['quantity'] as $key => $quantity) {
+            $product = $data['product_type_id'][$key] ?? null;
+            $price = $data['price'][$key] ?? null;
+            $total = $data['total'][$key] ?? null;
+            $orderItem = [
+                'order_id' => $id,
+                'product_type_id' => $product,
+                'price' => $price,
+                'quantity' => $quantity,
+                'total' => $total,
+            ];
+            $order = OrderItem::where('order_id', $id)
+                ->where('product_type_id', $product)
+                ->first();
+            if ($order) {
+                $order->update($orderItem);
+            } else {
+                $orderItem['created_by'] = auth()->id();
+                $store = OrderItem::create($orderItem);
+            }
+        }
+    }
 
     public function delete($id){
-        OrderItem::where('order_id', $id)->delete();
+        // OrderItem::where('order_id', $id)->delete();
+        
     }
 }

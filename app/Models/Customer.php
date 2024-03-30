@@ -18,6 +18,8 @@ class Customer extends Model
         'email',
         'phone',
         'fax',
+        'country_id',
+        'currency_id',
         'address',
         'description',
         'created_by',

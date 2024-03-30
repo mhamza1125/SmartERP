@@ -22,19 +22,20 @@ class StockRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'issue_id' => '',
             'stock_no' => 'required',
             'order_id' => 'required',
             'employee_id' => 'required',
+            'table_name' => 'required',
             'stock_date' => 'required',
             'stock_type' => 'required',
-            'receive_issue_id' => '',
-            'department_id' => '',
             'description' => '',
             // Receive Material
             'purchase_item_id.*' => 'required',
             'material_id.*' => 'required',
             'quantity.*' => 'required',
             'stage_id.*' => '',
+            'work_logs.*' => '',
         ];
     }
 }

@@ -193,7 +193,7 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Stock</span></a>
+                  data-feather="briefcase"></i><span>Stock / Issuance</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>
                 <li><a class="nav-link" href="{{ route('issue') }}">Issue</a></li>
