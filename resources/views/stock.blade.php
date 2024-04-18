@@ -41,7 +41,7 @@
                           <td>{{$loop->index + 1}}</td>
                           <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}</td>
-                          <td>{{$item->total_received + $item->stockIn - $item->stockOut - $item->total_returned}} {{$item->uname}}</td>                  
+                          <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>                  
                         </tr>
                         @endforeach
                       @endif
@@ -57,7 +57,7 @@
                   </table>
                 </div>
               </div>
-              {{-- Issuance --}}
+              {{-- Product Stock --}}
               <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
                 <div class="table-responsive">
                   <table class="table table-sm table-striped">                    
@@ -76,7 +76,7 @@
                           <td>{{$loop->index + 1}}</td>
                           <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                           <td>{{$item->stname}}</td>
-                          <td>{{$item->stockIn - $item->stockOut}} {{$item->uname}}</td>                  
+                          <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
                         </tr>
                         @endforeach
                       @endif

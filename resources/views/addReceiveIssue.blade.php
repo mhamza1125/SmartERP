@@ -17,7 +17,7 @@
             <form action="{{ route('stock.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Issuance No</label>
                     <input type="hidden" name="stock_type" required value="1">
@@ -27,7 +27,7 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase For Orders</label>
                     <input type="hidden" name="order_id" required value="{{$issue['order_id']}}">
@@ -41,6 +41,15 @@
                     <input type="hidden" name="employee_id" required value="{{$issue['employee_id']}}">
                     <input type="text" class="form-control" required value="{{ $issue['table_name'] === 'employee' ? $issue['employee_no'] . ' - ' . $issue['name'] : $issue['vendor_no'] . ' - ' . $issue['fname'] }}" readonly>
                     <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Receiving Status</label>
+                    <select class="form-control" name="stock_status" required>
+                      <option value="1" selected>Completely Received</option>
+                      <option value="2">Partially Received</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-2">

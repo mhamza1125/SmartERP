@@ -19,6 +19,7 @@ class Stock extends Model
         'employee_id',
         'stock_type',
         'stock_date',
+        'stock_status',
         'description',
         'created_by',
         'updated_at',

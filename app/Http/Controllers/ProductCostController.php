@@ -48,7 +48,7 @@ class ProductCostController extends Controller
 
     public function create(){
         $head = $this->headRepository->get('14');
-        $product = $this->productRepository->active();
+        $product = $this->productRepository->cost();
         $employee = $this->employeeRepository->wages();
         $vendor = $this->vendorRepository->all();
         return view('addProductCost', [

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use Carbon\Carbon;
 use App\Models\Vendor;
+use Illuminate\Support\Facades\DB;
 
 class VendorRepository implements GlobalInterface {
     

@@ -20,6 +20,7 @@
                     <th>Issue No</th>
                     <th>Job No</th>
                     <th>Employee</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>
@@ -31,7 +32,16 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->stock_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default issue'}}</td>
-                      <td>{{$item->name}}</td>
+                      <td>{{$item->name}}</td>                      
+                      <td>
+                        @if($item->stock_status == 0)
+                            <span class="badge badge-danger">Not Received</span>
+                        @elseif($item->stock_status == 1)
+                            <span class="badge badge-success">Completely Received</span>
+                        @else
+                            <span class="badge badge-warning">Partially Received</span>
+                        @endif
+                      </td>                  
                       <td>{{$item->stock_date}}</td>                      
                       <td>
                         <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
@@ -48,6 +58,7 @@
                     <th>Issue No</th>
                     <th>Job No</th>
                     <th>Employee</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>

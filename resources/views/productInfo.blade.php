@@ -18,10 +18,10 @@
                   <a class="nav-link active" id="general-info-tab" data-toggle="tab" href="#generalInfo" role="tab" aria-controls="generalInfo" aria-selected="true">General Info</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="product-material-tab" data-toggle="tab" href="#productMaterial" role="tab" aria-controls="productMaterial" aria-selected="false">Product Material</a>
-                </li>              
+                  <a class="nav-link" id="product-material-tab" data-toggle="tab" href="#productMaterial" role="tab" aria-controls="productMaterial" aria-selected="false">Packing / Material</a>
+                </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="product-costing-tab" data-toggle="tab" href="#productCosting" role="tab" aria-controls="productCosting" aria-selected="false">Product Costing</a>
+                  <a class="nav-link" id="product-costing-tab" data-toggle="tab" href="#productCosting" role="tab" aria-controls="productCosting" aria-selected="false">Costing</a>
                 </li>
               </ul>
               
@@ -104,12 +104,12 @@
                   @endif
                 </div>
                 
-                {{-- Product Material --}}
+                {{-- Product Packing / Material --}}
                 <div class="tab-pane fade" id="productMaterial" role="tabpanel" aria-labelledby="product-material-tab">
                   <div class="row">
                     <div class="col-12 col-sm-12 col-md-2">
                       <ul class="nav nav-pills flex-column" id="materialTab" role="tablist">
-                        @if($countMaterial > 1)
+                        @if($countMaterial > 0)
                           @for($i=1; $i<=$countMaterial; $i++)
                             <li class="nav-item">
                               <a class="nav-link {{($i==1)? 'active':''}}" id="tabm-{{ $i }}" data-toggle="tab" href="#tab-contentm-{{ $i }}" role="tab" aria-controls="tab-contentm-{{ $i }}" aria-selected="false">Size - {{$totalMaterial[$i-1]['name']}}</a>
@@ -120,10 +120,40 @@
                     </div>
                     <div class="col-12 col-sm-12 col-md-10">
                       <div class="tab-content no-padding" id="materialTabContent">
-                        @if($countMaterial > 1)
+                        @if($countMaterial > 0)
                           @for($i=1; $i<=$countMaterial; $i++)
                           @php $loopIndex = 1; @endphp
                             <div class="tab-pane fade {{($i==1)? 'show active':''}}" id="tab-contentm-{{ $i }}" role="tabpanel" aria-labelledby="tabm-{{ $i }}">
+                              <h6 class="mt-2">Product Packing</h6>
+                              @foreach($productBox as $item)
+                                @if(($totalMaterial[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
+                                <table class="table table-sm">
+                                  <tbody>
+                                    <tr>
+                                      <td><b>Box: </b> {{$item->box_no}} - {{$item->name}}</td>
+                                      <td><b>Box Type: </b> {{$item->hname}}</td>
+                                      <td><b>Quantity in Box: </b> {{$item->quantity}} {{$product['hname']}}</td>
+                                    </tr>
+                                    <tr>
+                                      <td><b>Box Dimension: </b> {{$item->length}} x {{$item->width}} x {{$item->height}} cms</td>
+                                      <td><b>Box Weight: </b> {{$item->weight}} Grams</td>
+                                    </tr>
+                                    <tr>
+                                      <td colspan="3">
+                                        <div class="row">
+                                          <div class="col-md-1"><b>Details: </b></div>
+                                          <div class="col-md-11">
+                                            @php echo $item->description @endphp
+                                          </div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                @endif
+                              @endforeach
+                              
+                              <h6>Product Packing / Material</h6>
                               <table class="table table-sm table-striped">
                                 <thead>
                                   <tr>
@@ -167,7 +197,7 @@
                   <div class="row">
                     <div class="col-12 col-sm-12 col-md-2">
                       <ul class="nav nav-pills flex-column" id="costingTab" role="tablist">
-                        @if($countCost > 1)
+                        @if($countCost > 0)
                           @for($i=1; $i<=$countCost; $i++)
                             <li class="nav-item">
                               <a class="nav-link {{($i==1)? 'active':''}}" id="tabp-{{ $i }}" data-toggle="tab" href="#tab-contentp-{{ $i }}" role="tab" aria-controls="tab-contentp-{{ $i }}" aria-selected="false">Size - {{$totalCost[$i-1]['name']}}</a>
@@ -178,7 +208,7 @@
                     </div>
                     <div class="col-12 col-sm-12 col-md-10">
                       <div class="tab-content no-padding" id="costingTabContent">
-                        @if($countCost > 1)
+                        @if($countCost > 0)
                           @for($i=1; $i<=$countCost; $i++)
                           @php $loopIndex = 1; @endphp
                             <div class="tab-pane fade {{($i==1)? 'show active':''}}" id="tab-contentp-{{ $i }}" role="tabpanel" aria-labelledby="tabp-{{ $i }}">

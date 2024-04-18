@@ -41,41 +41,151 @@
               </table>
             </div> 
             <div class="col-md-12">
-              <table class="table table-sm table-striped">
-                <thead>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Article No</th>
-                    {{-- <th>Product</th> --}}
-                    <th>Material / Stage</th>
-                    <th>Quantity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @if($issueItem->count())
-                    @foreach($issueItem as $item)
-                      @if($item->quantity)
+              <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item">
+                  <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="true">Issuance</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Receive-All</a>
+                </li>
+                @if($count > 1)
+                  @for($i=1; $i<=$count; $i++)
+                    <li class="nav-item">
+                      <a class="nav-link" id="tab-{{ $i }}" data-toggle="tab" href="#tab-content-{{ $i }}" role="tab" aria-controls="tab-content-{{ $i }}" aria-selected="false">{{$totalTimes[$i-1]['stock_no']}}</a>
+                    </li>
+                  @endfor
+                @endif
+              </ul>
+              
+              <div class="tab-content" id="myTabContent">
+                {{-- Issuance --}}
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
+                  <table class="table table-sm table-striped">
+                    <thead>
                       <tr>
-                        <td>{{$loop->index + 1}}</td>
-                        <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                        {{-- <td>{{$item->pname}} {{$item->sname}}</td> --}}
-                        <td>{{($item->name)? $item->name:$item->stage}}</td>
-                        <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
+                        <th>Sr.</th>
+                        <th>Article No</th>
+                        <th>Material / Stage</th>
+                        <th>Quantity</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      @if($issueItem->count())
+                        @foreach($issueItem as $item)
+                          @if($item->quantity)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                            <td>{{($item->name)? $item->name:$item->stage}}</td>
+                            <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
+                          </tr>
+                          @endif
+                        @endforeach
                       @endif
-                    @endforeach
-                  @endif
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Article No</th>
-                    {{-- <th>Product</th> --}}
-                    <th>Material / Stage</th>
-                    <th>Quantity</th>
-                  </tr>
-                </tfoot>
-              </table>
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Article No</th>
+                        <th>Material / Stage</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {{-- Receive All --}}
+                <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
+                  <table class="table table-sm table-striped">
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Article No</th>
+                        <th>Material / Stage</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @if($issueSum->count())
+                        @foreach($issueSum as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                            <td>{{($item->name)? $item->name:$item->stage}}</td>
+                            <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}    </td>
+                          </tr>
+                        @endforeach
+                      @else
+                        <tr>
+                          <td valign="top" colspan="4" class="dataTables_empty text-center">No data available in table</td>
+                        </tr>
+                      @endif
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Article No</th>
+                        <th>Material / Stage</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {{-- Receive Times --}}
+                @if($count > 1)
+                  @for($i=1; $i<=$count; $i++)  
+                    @php $loopIndex = 1; @endphp
+                    <div class="tab-pane fade" id="tab-content-{{ $i }}" role="tabpanel" aria-labelledby="tab-{{ $i }}">
+                      <table class="table table-sm table-striped">
+                        <thead>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Article No</th>
+                            <th>Material / Stage</th>
+                            <th>Work Done</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @foreach($issueAll as $item)
+                            @if($totalTimes[$i-1]['stock_no'] == $item->stock_no)
+                            <tr>
+                              <td>{{$loopIndex++}}</td>
+                              <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                              <td>{{($item->name)? $item->name:$item->stage}}</td>
+                              <td>
+                                @foreach(explode('|', $item->work_logs) as $index => $work)
+                                  @php
+                                    $headName = $head->firstWhere('head_id', $work)?->name;
+                                  @endphp
+                                  @if($headName)
+                                    @if($index > 0)<span>, </span>@endif
+                                    <span>{{ $headName }}</span>
+                                  @else
+                                    <span> None </span>
+                                  @endif
+                                @endforeach
+                              </td>
+                              <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}    </td>
+                            </tr>
+                            @endif
+                          @endforeach
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Article No</th>
+                            <th>Material / Stage</th>
+                            <th>Work Done</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  @endfor
+                @endif
+              </div>
             </div>
           </div>
         </div>

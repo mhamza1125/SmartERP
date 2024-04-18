@@ -33,6 +33,14 @@ class ProductCostRepository implements GlobalInterface {
             ->get();
     }
 
+    public function pcost($id){
+        return ProductCost::where('product_costs.product_type_id', $id)
+            ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
+            ->select('product_costs.*', 'heads.name as hname')
+            ->groupBy('heads.head_id')
+            ->get();
+    }
+
     public function getAll($id){
         return ProductCost::where('product_types.product_id', $id)
         ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
@@ -65,6 +73,25 @@ class ProductCostRepository implements GlobalInterface {
         ->orderBy('heads.head_id')
         ->select('heads.name', 'product_costs.product_type_id')->get();
     }
+
+    public function wages($pid, $work, $tid, $tname){
+        $workArray = explode("|", $work);
+        $wages = '';
+        foreach($workArray as $item) {
+            $result = ProductCost::where('product_type_id', $pid)
+                ->where('table_name', $tname)->where('table_id', $tid)
+                ->where('head_id', $item)->select('amount')->first();
+            if(empty($result)){
+                $result = ProductCost::where('product_type_id', $pid)
+                    ->where('head_id', $item)->select('amount')->first();
+            }
+            if(!empty($result)){
+                $wages .= (empty($wages) ? '' : '|') . $result->amount;
+            }
+        }
+        return $wages;   
+    }
+    
 
     public function store(array $data){
         $data['created_by'] = auth()->id();

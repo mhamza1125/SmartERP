@@ -18,6 +18,7 @@ class StockItem extends Model
         'quantity',
         'stage_id',
         'work_logs',
+        'work_wages',
         'created_by',
         'updated_at',
     ];

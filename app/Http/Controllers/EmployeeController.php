@@ -9,22 +9,26 @@ use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Http\Requests\EmployeeRequest;
 use App\Repositories\EmployeeRepository;
+use App\Repositories\TransactionRepository;
 
 class EmployeeController extends Controller
 {
     protected $headRepository;
     protected $imageRepository;
     protected $employeeRepository;
+    protected $transactionRepository;
 
     public function __construct(
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         EmployeeRepository $employeeRepository, 
+        TransactionRepository $transactionRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
         $this->employeeRepository = $employeeRepository;
+        $this->transactionRepository = $transactionRepository;
     }
 
     public function index(){
@@ -64,6 +68,19 @@ class EmployeeController extends Controller
         return view('employeeInfo', [
             'employee' => $employee,
             'image' => $image,
+        ]);
+    }
+
+    public function detail($id){
+        $employee = $this->employeeRepository->get($id);
+        $detail = $this->transactionRepository->eDetail($id);
+        $totalCredit = $detail->where('transaction_type', 'advance')->sum('credit');
+        $totalDebit = $detail->where('transaction_type', 'advance')->sum('debit');
+        $balance = $totalCredit - $totalDebit;
+        return view('employeeDetail', [
+            'employee' => $employee,
+            'detail' => $detail,
+            'balance' => $balance,
         ]);
     }
     

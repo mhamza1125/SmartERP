@@ -21,6 +21,7 @@
                   <div class="form-group">
                     <label>Issuance No</label>
                     <input type="hidden" name="stock_type" required value="2">
+                    <input type="hidden" name="stock_status" required value="0">
                     <input type="hidden" id="table_name" name="table_name">
                     <input type="text" class="form-control" name="stock_no" required value="{{$count}}" placeholder="Issue No">
                     <div class="valid-feedback">Good job!</div>

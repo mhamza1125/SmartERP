@@ -72,15 +72,15 @@ class PurchaseController extends Controller
     }
     
     public function show($id){
-        $purchase = $this->purchaseRepository->get($id); // Old/New
-        $purchaseItem = $this->purchaseItemRepository->get($id); // Old
+        $purchase = $this->purchaseRepository->get($id);
+        $purchaseItem = $this->purchaseItemRepository->get($id);
         $receiveSum = $this->receiveMaterialRepository->rSum($id);
         $receiveAll = $this->receiveMaterialRepository->rAll($id);
         $totalTimes = $this->receiveMaterialRepository->times($id);
 
         return view('purchaseInfo', [
-            'purchase' => $purchase, // Old/New
-            'purchaseItem' => $purchaseItem, // Old
+            'purchase' => $purchase,
+            'purchaseItem' => $purchaseItem,
             'receiveSum' => $receiveSum,
             'receiveAll' => $receiveAll,
             'totalTimes' => $totalTimes,

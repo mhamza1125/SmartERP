@@ -202,6 +202,24 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Transactions</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('ePayment') }}">Employee</a></li>
+                <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Bank / Cash</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li>
+                <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li>
+                <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Order / PO</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
@@ -221,6 +239,9 @@
             </li>
             <li class="dropdown">
               <a href="{{ route('material') }}" class="nav-link"><i data-feather="briefcase"></i><span>Material</span></a>
+            </li>
+            <li class="dropdown">
+              <a href="{{ route('wages') }}" class="nav-link"><i data-feather="briefcase"></i><span>Work Wages</span></a>
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i

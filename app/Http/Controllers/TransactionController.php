@@ -3,64 +3,246 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Repositories\BankRepository;
+use App\Repositories\HeadRepository;
+use App\Repositories\ImageRepository;
+use App\Repositories\OrderRepository;
+use App\Repositories\VendorRepository;
+use App\Repositories\CustomerRepository;
+use App\Repositories\EmployeeRepository;
+use App\Http\Requests\TransactionRequest;
+use App\Repositories\TransactionRepository;
 
 class TransactionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    protected $bankRepository;
+    protected $customerRepository;
+    protected $orderRepository;
+    protected $headRepository;
+    protected $imageRepository;
+    protected $vendorRepository;
+    protected $employeeRepository;
+    protected $transactionRepository;
+
+    public function __construct(
+        BankRepository $bankRepository,
+        CustomerRepository $customerRepository,
+        OrderRepository $orderRepository,
+        HeadRepository $headRepository,
+        ImageRepository $imageRepository,
+        VendorRepository $vendorRepository,
+        EmployeeRepository $employeeRepository,
+        TransactionRepository $transactionRepository,
+    ){
+        $this->middleware(['auth', 'all']);
+        $this->bankRepository = $bankRepository;
+        $this->customerRepository = $customerRepository;
+        $this->orderRepository = $orderRepository;
+        $this->headRepository = $headRepository;
+        $this->imageRepository = $imageRepository;
+        $this->vendorRepository = $vendorRepository;
+        $this->employeeRepository = $employeeRepository;
+        $this->transactionRepository = $transactionRepository;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(){}
+
+    public function ePayment(){
+        $transaction = $this->transactionRepository->ePayment();
+        return view('epayment', [
+            'transaction' => $transaction,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function vPayment(){
+        $transaction = $this->transactionRepository->vPayment();
+        return view('vpayment', [
+            'transaction' => $transaction,
+        ]);
+    }
+    
+    public function expense(){
+        $transaction = $this->transactionRepository->expense();
+        return view('expense', [
+            'transaction' => $transaction,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Transaction $transaction)
-    {
-        //
+    public function bankBalance(){
+        $transaction = $this->transactionRepository->bankBalance();
+        return view('bankBalance', [
+            'transaction' => $transaction,
+        ]);
+    }
+    
+    public function cashBalance(){
+        $balance = $this->transactionRepository->cashBalance();
+        $transaction = $this->transactionRepository->cashTransaction();
+        return view('cashBalance', [
+            'cashBalance' => $balance,
+            'transaction' => $transaction,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Transaction $transaction)
-    {
-        //
+    public function create(){}
+
+    public function createEPayment(){
+        $bank = $this->bankRepository->self();
+        $employee = $this->employeeRepository->all();
+        return view('addPayEmployee', [
+            'bank' => $bank,
+            'employee' => $employee,
+        ]);
+    }
+    
+    public function createVPayment(){
+        $bank = $this->bankRepository->self();
+        $vendor = $this->vendorRepository->all();
+        return view('addPayVendor', [
+            'bank' => $bank,
+            'vendor' => $vendor,
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Transaction $transaction)
-    {
-        //
+    public function createExpense(){
+        $bank = $this->bankRepository->self();
+        $expense = $this->headRepository->get('7');
+        return view('addExpense', [
+            'bank' => $bank,
+            'expense' => $expense,
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Transaction $transaction)
-    {
-        //
+    public function createBalance(){
+        // Bank Balance
+        $customer = $this->customerRepository->all();
+        $bank = $this->bankRepository->self();
+        $order = $this->orderRepository->all();
+        return view('addPayOrder', [
+            'bank' => $bank,
+            'order' => $order,
+            'customer' => $customer,
+        ]);
     }
+    
+    public function createCashBalance(){
+        // Cash Balance
+        $bank = $this->bankRepository->self();
+        $expense = $this->headRepository->get('7');
+        return view('addExpense', [
+            'bank' => $bank,
+            'expense' => $expense,
+        ]);
+    }
+
+    public function ajaxBank(Request $request){
+        $table = $request->input('table');
+        $tableId = $request->input('tableId');
+        $bank = $this->bankRepository->getBank($table, $tableId);
+        return response()->json(['data' => $bank]);
+    }
+    
+    public function ajaxOrder(Request $request){
+        $customerId = $request->input('customerId');
+        $order = $this->orderRepository->getOrder($customerId);
+        return response()->json(['data' => $order]);
+    }
+
+    public function store(TransactionRequest $request){
+        $validatedData = $request->validated();
+        $getId = $this->transactionRepository->store($validatedData);
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'transaction', 'transactions', $getId);        
+            }
+        }
+        if($request->input('transaction_to') == 'employee'){
+            return redirect()->route('transaction.addEPayment')->with('success', 'Record Inserted Successfully');
+        }elseif($request->input('transaction_to') == 'vendor'){
+            return redirect()->route('transaction.addVPayment')->with('success', 'Record Inserted Successfully');
+        }else{
+            return redirect()->route('transaction.addExpense')->with('success', 'Record Inserted Successfully');
+        }
+    }
+    
+    public function show($id){}
+
+    public function showExpense($id){
+        $image = $this->imageRepository->image('transactions', $id);
+        $transaction = $this->transactionRepository->getExpense($id);
+        return view('expenseInfo', [
+            'transaction' => $transaction,
+            'image' => $image,
+        ]);
+    }
+
+    public function showEPayment($id){
+        $image = $this->imageRepository->image('transactions', $id);
+        $transaction = $this->transactionRepository->getEPayment($id);
+        return view('ePaymentInfo', [
+            'transaction' => $transaction,
+            'image' => $image,
+        ]);
+    }
+
+    public function showVPayment($id){
+        $image = $this->imageRepository->image('transactions', $id);
+        $transaction = $this->transactionRepository->getVPayment($id);
+        return view('vPaymentInfo', [
+            'transaction' => $transaction,
+            'image' => $image,
+        ]);
+    }
+    
+    public function edit(Box $id){}
+
+    public function editEPayment(Transaction $id){
+        $bank = $this->bankRepository->self();
+        $employee = $this->employeeRepository->all();
+        return view('editPayEmployee', [
+            'transaction' => $id,
+            'bank' => $bank,
+            'employee' => $employee,
+        ]);
+    }
+
+    public function editVPayment(Transaction $id){
+        $bank = $this->bankRepository->self();
+        $vendor = $this->vendorRepository->all();
+        return view('editPayVendor', [
+            'transaction' => $id,
+            'bank' => $bank,
+            'vendor' => $vendor,
+        ]);
+    }
+
+    public function editExpense(Transaction $id){
+        $bank = $this->bankRepository->self();
+        $expense = $this->headRepository->get('7');
+        return view('editExpense', [
+            'transaction' => $id,
+            'bank' => $bank,
+            'expense' => $expense,
+        ]);
+    }
+
+    public function update(Request $request, $id){
+        $getId = $this->transactionRepository->update($id, $request->input());
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'transaction', 'transactions', $id);        
+            }
+        }
+        if($request->input('transaction_to') == 'employee'){
+            return redirect()->route('transaction.showEPayment', $id)->with('success', 'Record Updated Successfully');    
+        }elseif($request->input('transaction_to') == 'vendor'){
+            return redirect()->route('transaction.showVPayment', $id)->with('success', 'Record Updated Successfully');    
+        }else{
+            return redirect()->route('transaction.showExpense', $id)->with('success', 'Record Updated Successfully');    
+        }
+    }
+    
+    public function destroy(product $product){}
 }

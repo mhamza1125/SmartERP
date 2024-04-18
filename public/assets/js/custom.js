@@ -826,7 +826,7 @@ $(document).ready(function() {
                     $('#pcost_id').empty().append('<option disabled>Select Product Cost</option>');
                     response.data.forEach(function(item) {
                         var optionText = item.hname;
-                        $('#pcost_id').append(new Option(optionText, item.product_cost_id));
+                        $('#pcost_id').append(new Option(optionText, item.head_id));
                     });
                     // Re-initialize select2 for the updated product cost select element
                     initializeSelect2();
@@ -910,7 +910,7 @@ $(document).ready(function() {
                 <td>${srNo}</td>
                 <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="material_id[]" value="${materialId}"></td>
                 <td>${stageName}<input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td>${selectedOptionsString}<input type="text" name="work_logs[]" value="${idsString}"></td>
+                <td>${selectedOptionsString}<input type="hidden" name="work_logs[]" value="${idsString}"></td>
                 <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
             </tr>`;
@@ -936,6 +936,7 @@ $(document).ready(function() {
             var availableStock = parseInt($('#receiveable_stock').val());
             var stageId = '0';
             var idsString = '0';
+            var workLog = 'None';
 
             if (!materialId || !quantity) return;
 
@@ -955,7 +956,7 @@ $(document).ready(function() {
                 <td>${srNo}</td>
                 <td>${productName}<input type="hidden" name="material_id[]" value="${materialId}"><input type="hidden" name="product_type_id[]" value="${productId}"></td>
                 <td>${materialName}<input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td><input type="hidden" name="work_logs[]" value="${idsString}"></td>
+                <td>${workLog}<input type="hidden" name="work_logs[]" value="${idsString}"></td>
                 <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
             </tr>`;
@@ -1152,3 +1153,110 @@ $(document).ready(function() {
     }
 });
 // End - Product Cost Script
+
+// Start - Bank Script
+$(document).ready(function() {
+    if (typeof isBankPage !== 'undefined') {
+        function toggleSections() {
+            var selected = $('select[name="bank_holder"]').val();
+            // Reset selects when not active
+            if (selected != 'employee') {
+                $('#employee select').val('').trigger('change');
+            }if (selected != 'vendor') {
+                $('#vendor select').val('').trigger('change');
+            }
+            // Hide all sections first
+            $('#admin, #employee, #vendor').hide();
+            if (selected == 'admin') {
+                $('#admin').show();
+            } else if (selected == 'employee') {
+                $('#employee').show();
+            } else if (selected == 'vendor') {
+                $('#vendor').show();
+            }
+            // Re-initialize Select2 for visible select elements
+            $('.select2:visible').select2();
+        }
+
+        
+        // Edit Bank Detail using Modal
+        toggleSections();
+        // Run on selection change
+        $('select[name="bank_holder"]').change(function() {
+            toggleSections();
+        });
+
+        // Reinitialize Select2 for Bank Types
+        function reinitializeSelect2(modalId) {
+            $('#' + modalId + ' select[name="head_id"]').select2();
+        }
+    
+        // Run on page load
+        $('.modal').each(function() {
+            var modalId = $(this).attr('id');
+            reinitializeSelect2(modalId);
+        });
+    
+        // Run after a modal is shown
+        $('.modal').on('shown.bs.modal', function() {
+            var modalId = $(this).attr('id');
+            reinitializeSelect2(modalId);
+        });
+    }
+});
+// End - Bank Script
+
+// Start - Pay Script
+$(document).ready(function () {
+    // Getting Account No of Employee / Vendor
+    if (typeof isPayPage !== 'undefined') {
+        $('#payee_id').on('change', function() {
+            var table = $('#transaction_to').val();
+            var tableId = $(this).val();
+            $.ajax({
+                url: ajaxBankUrl,
+                type: "GET",
+                data: {tableId: tableId, table: table},
+                dataType: "json",
+                success: function(response) {
+                    var bankSelect = $('#payee_bank_id');
+                    bankSelect.empty().append('<option value="0" selected>Cash Payment</option>');
+                    // Populate options dynamically based on the response
+                    $.each(response.data, function(index, item) {
+                        var optionText = item.hname + ' - ' + item.account_title + ' - ' + item.account;
+                        bankSelect.append(new Option(optionText, item.bank_id));
+                    });                    
+                    bankSelect.trigger('change');
+                },
+            });
+        });
+    }
+});
+// End - Pay Script
+
+// Start - Pay Order Payment Script
+$(document).ready(function () {
+    if (typeof isPayOrderPage !== 'undefined') {
+        $('#payee_id').on('change', function() {
+            var customerId = $(this).val();
+            console.log(customerId);
+            $.ajax({
+                url: ajaxOrderUrl,
+                type: "GET",
+                data: {customerId: customerId},
+                dataType: "json",
+                success: function(response) {
+                    var orderSelect = $('#order_id');
+                    orderSelect.empty().append('<option value="0" selected>Cash Order</option>');
+                    // Populate options dynamically based on the response
+                    $.each(response.data, function(index, item) {
+                        var optionText = item.order_no + ' | ' + item.job_no;
+                        orderSelect.append(new Option(optionText, item.order_id));
+                    });                    
+                    orderSelect.trigger('change');
+                },
+            });
+        });
+    }
+});
+// End - Pay Order Payment Script

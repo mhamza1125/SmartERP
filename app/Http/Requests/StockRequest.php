@@ -29,6 +29,7 @@ class StockRequest extends FormRequest
             'table_name' => 'required',
             'stock_date' => 'required',
             'stock_type' => 'required',
+            'stock_status' => 'required',
             'description' => '',
             // Receive Material
             'purchase_item_id.*' => 'required',

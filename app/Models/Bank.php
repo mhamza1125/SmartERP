@@ -16,6 +16,7 @@ class Bank extends Model
         'banker_id',
         'head_id',
         'account',
+        'account_title',
         'created_by',
         'updated_at',
     ];

@@ -32,6 +32,7 @@
                       <td>
                         <a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Record</a>
                       </td>
                     </tr>
                     @endforeach

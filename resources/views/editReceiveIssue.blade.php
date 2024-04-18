@@ -17,7 +17,7 @@
             <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Issuance No</label>
                     <input type="hidden" name="stock_type" required value="1">
@@ -26,7 +26,7 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase For Orders</label>
                     <input type="hidden" name="order_id" required value="{{$issue['order_id']}}">
@@ -38,14 +38,24 @@
                   <div class="form-group">
                     <label>Employee</label>
                     <input type="hidden" name="employee_id" required value="{{$issue['employee_id']}}">
+                    <input type="hidden" name="table_name" required value="{{$issue['table_name']}}">
                     <input type="text" class="form-control" required value="{{$issue['employee_no']}} - {{$issue['name']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
+                    <label>Receiving Status</label>
+                    <select class="form-control" name="stock_status" required>
+                      <option value="1"  {{$issue['stock_status'] == '1' ? 'selected' : ''}}>Completely Received</option>
+                      <option value="2"  {{$issue['stock_status'] == '2' ? 'selected' : ''}}>Partially Received</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
                     <label>Receiving Date</label>
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{old('stock_date')}}">
+                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$issue['stock_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -175,16 +185,18 @@
                                   <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}"></td>
                                 <td>{{($item->name)? $item->name:$item->stage}}
                                   <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}"></td>
-                                <td>@php $workLogIds = array_map('intval', explode('|', $item->work_logs)); @endphp
+                                <td>
+                                  @php $workLogIds = array_map('intval', explode('|', $item->work_logs)); @endphp
                                   @php $comma = false; @endphp
                                     @foreach($workLogIds as $workLogId)
                                       @php $found = false; @endphp
                                       @foreach($workLog as $log)
-                                        @if($log->product_cost_id == $workLogId)
+                                        @if($log->head_id == $workLogId)
                                           @if($comma), @endif {{$log->hname}}
                                           @php $found = true; $comma = true; break; @endphp
                                         @endif
                                       @endforeach
+                                      {{ !$found ? 'None' : '' }}
                                     @endforeach
                                   <input type="hidden" name="work_logs[]" value="{{$item->work_logs}}"></td>
                                 <td>{{$item->quantity}}

@@ -9,22 +9,26 @@ use App\Http\Requests\VendorRequest;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\VendorRepository;
+use App\Repositories\TransactionRepository;
 
 class VendorController extends Controller
 {
     protected $headRepository;
     protected $imageRepository;
     protected $vendorRepository;
+    protected $transactionRepository;
 
     public function __construct(
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         VendorRepository $vendorRepository, 
+        TransactionRepository $transactionRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
         $this->vendorRepository = $vendorRepository;
+        $this->transactionRepository = $transactionRepository;
     }
 
     public function index(){
@@ -64,6 +68,19 @@ class VendorController extends Controller
         return view('vendorInfo', [
             'vendor' => $vendor,
             'image' => $image,
+        ]);
+    }
+
+    public function detail($id){
+        $vendor = $this->vendorRepository->get($id);
+        $detail = $this->transactionRepository->vDetail($id);
+        $totalCredit = $detail->sum('credit');
+        $totalDebit = $detail->sum('debit');
+        $balance = $totalCredit - $totalDebit;
+        return view('vendorDetail', [
+            'vendor' => $vendor,
+            'detail' => $detail,
+            'balance' => $balance,
         ]);
     }
     

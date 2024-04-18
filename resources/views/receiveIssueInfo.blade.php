@@ -45,8 +45,8 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Article No</th>
-                    {{-- <th>Product</th> --}}
                     <th>Material / Stage</th>
+                    <th>Work Done</th>
                     <th>Quantity</th>
                   </tr>
                 </thead>
@@ -57,8 +57,20 @@
                       <tr>
                         <td>{{$loop->index + 1}}</td>
                         <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                        {{-- <td>{{$item->pname}} {{$item->sname}}</td> --}}
                         <td>{{($item->name)? $item->name:$item->stage}}</td>
+                        <td>
+                          @foreach(explode('|', $item->work_logs) as $index => $work)
+                            @php
+                              $headName = $head->firstWhere('head_id', $work)?->name;
+                            @endphp
+                            @if($headName)
+                              @if($index > 0)<span>, </span>@endif
+                              <span>{{ $headName }}</span>
+                            @else
+                              <span> None </span>
+                            @endif
+                          @endforeach
+                        </td>
                         <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                       </tr>
                       @endif
@@ -69,8 +81,8 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Article No</th>
-                    {{-- <th>Product</th> --}}
                     <th>Material / Stage</th>
+                    <th>Work Done</th>
                     <th>Quantity</th>
                   </tr>
                 </tfoot>

@@ -32,6 +32,13 @@ class HeadController extends Controller
         ]);   
     }
 
+    public function headType(){
+        $headType = $this->headRepository->headType();
+        return view('headType', [
+            'headType' => $headType,
+        ]);   
+    }
+
     public function create(){
         $headType = $this->headTypeRepository->all();
         return view('addHead', [

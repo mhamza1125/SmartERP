@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
-
 use App\Repositories\EmployeeRepository;
 use App\Repositories\VendorRepository;
 use App\Repositories\OrderItemRepository;
@@ -66,6 +65,37 @@ class StockController extends Controller
         ]); 
     }
 
+    public function wages(){
+        // Employee / Vendor Wages
+        $wages = $this->stockRepository->wages();
+        $employeeWages = $wages['employees'];
+        $vendorWages = $wages['vendors'];
+        foreach (['employeeWages', 'vendorWages'] as $key) {
+            foreach ($$key as &$item) {
+                $item = (object)$item;
+            }
+        }
+
+        return view('wages', [
+            'employeeWages' => $employeeWages,
+            'vendorWages' => $vendorWages,
+        ]); 
+    }
+
+    public function wShow($id){
+        // Show Wages
+        $head = $this->headRepository->get('14');
+        $issue = $this->stockRepository->get($id);
+        $wages = $this->stockRepository->wagesInfo($issue);
+        $totalWages = $wages->sum('total_wages');
+        return view('wagesInfo', [
+            'head' => $head,
+            'issue' => $issue,
+            'wages' => $wages,
+            'totalWages' => $totalWages,
+        ]);
+    }
+
     public function ajaxPM(Request $request){
         // Ajax Product Material
         $productId = $request->input('productId');
@@ -87,7 +117,7 @@ class StockController extends Controller
     public function ajaxPC(Request $request){
         // Ajax Product Cost
         $productId = $request->input('productId');
-        $productCost = $this->productCostRepository->get($productId);
+        $productCost = $this->productCostRepository->pcost($productId);
         return response()->json(['data' => $productCost]);
     }
 
@@ -132,8 +162,11 @@ class StockController extends Controller
         $mid = $request->input('material_id');
         $stages = $request->input('stage_id');
         $works = $request->input('work_logs');
+        if($request->has('issue_id')){ // Add Receive Issuance
+            $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+        }
         $getId = $this->stockRepository->store($validatedData);
-        $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works);
+        $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $request->input());
         if(!$request->has('issue_id')){
             return redirect()->route('stock.show', $getId)->with('success', 'Record Inserted Successfully');
         } else {
@@ -143,11 +176,21 @@ class StockController extends Controller
     
     public function show($id){
         // Show Issuance
+        $head = $this->headRepository->get('14');
         $issue = $this->stockRepository->get($id);
         $issueItem = $this->stockItemRepository->get($id);
+        $issueAll = $this->stockItemRepository->getAll($id);
+        $issueSum = $this->stockItemRepository->getSum($id);
+        $totalTimes = $this->stockItemRepository->times($id);
+        
         return view('issueInfo', [
+            'head' => $head,
             'issue' => $issue,
             'issueItem' => $issueItem,
+            'issueAll' => $issueAll,
+            'issueSum' => $issueSum,
+            'totalTimes' => $totalTimes,
+            'count' => $totalTimes->count(),
         ]);
     }
 
@@ -176,8 +219,13 @@ class StockController extends Controller
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $this->stockRepository->update($id, $request->input());
+        $issueId = $request->input('issue_id');
+        if($request->has('issue_id')){
+            $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+            $this->stockRepository->update($id, ['stock_status' => $request->input('stock_status')]);
+        }
         $this->stockItemRepository->update($id, $request->input());
-        if(!$request->has('receive_issue_id')){
+        if(!$request->has('issue_id')){
             return redirect()->route('stock.show', $id)->with('success', 'Record Updated Successfully');
         } else {
             return redirect()->route('rstock.show', $id)->with('success', 'Record Updated Successfully');
@@ -213,9 +261,11 @@ class StockController extends Controller
     
     public function rShow($id){
         // Show Receive Issuance
+        $head = $this->headRepository->get('14');
         $issue = $this->stockRepository->get($id);
         $issueItem = $this->stockItemRepository->get($id);
         return view('receiveIssueInfo', [
+            'head' => $head,
             'issue' => $issue,
             'issueItem' => $issueItem,
         ]);
@@ -225,7 +275,7 @@ class StockController extends Controller
         // Edit Receive Issuance
         $head = $this->headRepository->get('12');
         $issue = $this->stockRepository->get($id);
-        $issueItem = $this->stockItemRepository->get($issue['receive_issue_id']);
+        $issueItem = $this->stockItemRepository->get($issue['issue_id']);
         $receiveItem = $this->stockItemRepository->get($id);
         $workLog = $this->stockItemRepository->workLog($id);
         return view('editReceiveIssue', [
@@ -240,13 +290,16 @@ class StockController extends Controller
     
     public function destroy(Stock $stock){}
 
-    private function storeSI($getId, $ptids, $mids, $quantities, $stages, $works){
+    private function storeSI($getId, $ptids, $mids, $quantities, $stages, $works, $all){
         // Store Issuance Items
+        $tid = $all['employee_id'];
+        $tname = $all['table_name'];
         foreach ($quantities as $key => $quantity) {
             $ptid = $ptids[$key] ?? null;
             $mid = $mids[$key] ?? null;
             $stage = $stages[$key] ?? null;
             $work = $works[$key] ?? 0;
+            $wages = $work ? $this->productCostRepository->wages($ptid, $work, $tid, $tname) : '0';
             $stockItem = [
                 'stock_id' => $getId,
                 'product_type_id' => $ptid,
@@ -254,6 +307,7 @@ class StockController extends Controller
                 'quantity' => $quantity,
                 'stage_id' => $stage,
                 'work_logs' => $work,
+                'work_wages' => $wages,
             ];
             $this->stockItemRepository->store($stockItem);
         }

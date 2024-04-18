@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Heads Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>
+              <div class="btn-group">
+                <a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>
+                <a href="{{ route('head.headType') }}" class="btn btn-primary">Head Types</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

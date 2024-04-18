@@ -36,6 +36,7 @@
                       <td>
                         <a href="{{ route('employee.show', $item->employee_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('employee.edit', $item->employee_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{{ route('employee.detail', $item->employee_id) }}" class="btn btn-success btn-sm">Record</a>
                       </td>
                     </tr>
                     @endforeach

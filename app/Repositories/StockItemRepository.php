@@ -5,8 +5,15 @@ namespace App\Repositories;
 use App\Models\StockItem;
 use App\Models\ReceiveMaterial;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\ProductCostRepository;
 
 class StockItemRepository implements GlobalInterface {
+    protected $productCostRepository;
+
+    public function __construct(ProductCostRepository $productCostRepository)
+    {
+        $this->productCostRepository = $productCostRepository;
+    }
     
     public function all(){
         return StockItem::all();
@@ -25,11 +32,49 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function getAll($id){
+        return StockItem::where('stocks.issue_id', $id)
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->select('stock_items.*', 'products.*', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname', 'stocks.stock_no')   
+        ->get();
+    }
+
+    public function getSum($id){
+        return  StockItem::where('stocks.issue_id', $id)
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id')
+        ->selectRaw('stock_items.*, products.*, materials.*, stock_items.product_type_id,
+            stock_items.material_id, stock_items.stage_id, SUM(stock_items.quantity) as total_quantity, products.name as pname, uhead.name as uname, shead.name as sname, sthead.name as stage, puhead.name as puname, stocks.stock_no')
+        ->get();
+    }
+
+    public function times($id){
+        return StockItem::where('stocks.issue_id', $id)
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->groupBy('stocks.stock_id')
+        ->select('stock_no')->get();
+    }
+
     public function workLog($id){
         return StockItem::where('stock_items.stock_id', $id)
         ->join('product_costs', 'product_costs.product_type_id', '=', 'stock_items.product_type_id')
         ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
         ->select('product_costs.*','heads.name as hname')   
+        ->groupBy('heads.head_id')
         ->get();
     }
 
@@ -53,33 +98,6 @@ class StockItemRepository implements GlobalInterface {
         ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
         ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
         ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
-        ->get();
-    }
-
-    public function stockOld123(){
-        // Not Used
-        return ReceiveMaterial::leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-        ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-        ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-        ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
-        ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-        ->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname')
-        ->selectRaw('SUM(receive_materials.quantity) as total_received')
-        ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-        ->where('receive_materials.inspection_status', '2')
-        ->groupBy('materials.material_id')
-        ->orderBy('materials.name')
-        ->get();
-    }
-
-    public function stockAll123(){
-        // Not Used
-        return StockItem::select('stock_items.material_id')
-        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
-        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
-        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-        ->where('stock_items.material_id', '>', '0')
-        ->groupBy('stock_items.material_id')
         ->get();
     }
 
@@ -130,7 +148,8 @@ class StockItemRepository implements GlobalInterface {
                 StockItem::where('stock_item_id', $existingItem->stock_item_id)->delete();
             }
         }
-        
+        $tid = $data['employee_id'];
+        $tname = $data['table_name'];
         // Assuming you have an array of product_type_ids and material_ids indexed similarly to quantities
         foreach ($data['quantity'] as $key => $quantity) {
             // Assuming you have these arrays in your $data and they are indexed accordingly
@@ -138,6 +157,8 @@ class StockItemRepository implements GlobalInterface {
             $mid = $data['material_id'][$key] ?? null;
             $sid = $data['stage_id'][$key] ?? null;
             $work = $data['work_logs'][$key] ?? 0;
+            $wages = $work ? $this->productCostRepository->wages($ptid, $work, $tid, $tname) : '0';
+
             // Validate that both $ptid and $mid are not null
             if ($ptid !== null && $mid !== null && $sid !== null) {
                 $stockItem = [
@@ -147,6 +168,7 @@ class StockItemRepository implements GlobalInterface {
                     'quantity' => $quantity,
                     'stage_id' => $sid,
                     'work_logs' => $work,
+                    'work_wages' => $wages,
                 ];
                 
                 $stock = StockItem::where('stock_id', $id)

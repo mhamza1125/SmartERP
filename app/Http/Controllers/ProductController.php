@@ -10,6 +10,7 @@ use App\Http\Requests\ProductRequest;
 use App\Repositories\ImageRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\CategoryRepository;
+use App\Repositories\ProductBoxRepository;
 use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductTypeRepository;
 use App\Repositories\ProductMaterialRepository;
@@ -20,6 +21,7 @@ class ProductController extends Controller
     protected $imageRepository;
     protected $productRepository;
     protected $categoryRepository;
+    protected $productBoxRepository;
     protected $productTypeRepository;
     protected $productCostRepository;
     protected $productMaterialRepository;
@@ -29,6 +31,7 @@ class ProductController extends Controller
         ImageRepository $imageRepository,
         ProductRepository $productRepository, 
         CategoryRepository $categoryRepository, 
+        ProductBoxRepository $productBoxRepository, 
         ProductTypeRepository $productTypeRepository, 
         ProductCostRepository $productCostRepository, 
         ProductMaterialRepository $productMaterialRepository, 
@@ -38,6 +41,7 @@ class ProductController extends Controller
         $this->imageRepository = $imageRepository;
         $this->productRepository = $productRepository;
         $this->categoryRepository = $categoryRepository;
+        $this->productBoxRepository = $productBoxRepository;
         $this->productTypeRepository = $productTypeRepository;
         $this->productCostRepository = $productCostRepository;
         $this->productMaterialRepository = $productMaterialRepository;
@@ -91,7 +95,8 @@ class ProductController extends Controller
         $getCost = $this->productCostRepository->getAll($id);
         $totalMaterial = $this->productMaterialRepository->times($id);
         $getMaterial = $this->productMaterialRepository->getAll($id);
-        // dd($getMaterial);
+        $productBox = $this->productBoxRepository->getAll($id);
+        // dd($productBox);
         return view('productInfo', [
             'product' => $product,
             'size' => $size,
@@ -103,6 +108,7 @@ class ProductController extends Controller
             'totalMaterial' => $totalMaterial,
             'countMaterial' => $totalMaterial->count(),
             'getMaterial' => $getMaterial,
+            'productBox' => $productBox,
         ]);
     }
     
