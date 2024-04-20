@@ -110,6 +110,7 @@ Route::get('/order', [OrderController::class, 'index'])->name('order');
 Route::get('/addOrder', [OrderController::class, 'create'])->name('order.add');
 Route::post('/order', [OrderController::class, 'store'])->name('order.store');
 Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
+Route::get('/orderEst/{id}', [OrderController::class, 'estimate'])->name('order.estimate');
 Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
 Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
 Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
@@ -178,6 +179,7 @@ Route::get('/editProductCost/{id}', [ProductCostController::class, 'edit'])->nam
 Route::post('/productCost/{id}', [ProductCostController::class, 'update'])->name('productCost.update');
 
 // Transaction
+Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction');
 Route::get('/ajaxBank', [TransactionController::class, 'ajaxBank'])->name('ajaxBank'); //Bank Account
 Route::post('/transaction', [TransactionController::class, 'store'])->name('transaction.store');
 Route::get('/transaction/{id}', [TransactionController::class, 'show'])->name('transaction.show');
@@ -200,9 +202,13 @@ Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->
 // Bank Balance
 Route::get('/bankBalance', [TransactionController::class, 'bankBalance'])->name('bankBalance');
 Route::get('/cashBalance', [TransactionController::class, 'cashBalance'])->name('cashBalance');
-// Receive Order Payment
+// Order Payment
+Route::get('/oPayment', [TransactionController::class, 'oPayment'])->name('oPayment');
 Route::get('/ajaxOrder', [TransactionController::class, 'ajaxOrder'])->name('ajaxOrder'); //Dynamic Orders
-Route::get('/addPayOrder', [TransactionController::class, 'createBalance'])->name('transaction.addPayOrder');
+Route::get('/addOPayment', [TransactionController::class, 'createOPayment'])->name('transaction.addOPayment');
+Route::get('/oPayment/{id}', [TransactionController::class, 'showOPayment'])->name('transaction.showOPayment');
+Route::get('/editOPayment/{id}', [TransactionController::class, 'editOPayment'])->name('transaction.editOPayment');
+
 
 // Bank
 Route::get('/bank', [BankController::class, 'index'])->name('bank');

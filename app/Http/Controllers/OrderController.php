@@ -10,6 +10,7 @@ use App\Http\Requests\OrderRequest;
 use App\Repositories\ProductRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\OrderItemRepository;
+use App\Repositories\StockItemRepository;
 
 class OrderController extends Controller
 {
@@ -17,18 +18,21 @@ class OrderController extends Controller
     protected $productRepository;
     protected $customerRepository;
     protected $orderItemRepository;
+    protected $stockItemRepository;
 
     public function __construct(
         OrderRepository $orderRepository,
         ProductRepository $productRepository,
         CustomerRepository $customerRepository,
         OrderItemRepository $orderItemRepository, 
+        StockItemRepository $stockItemRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->orderRepository = $orderRepository;
         $this->productRepository = $productRepository;
         $this->customerRepository = $customerRepository;
         $this->orderItemRepository = $orderItemRepository;
+        $this->stockItemRepository = $stockItemRepository;
     }
 
     public function index(){
@@ -67,6 +71,19 @@ class OrderController extends Controller
         return view('orderInfo', [
             'order' => $order,
             'orderItem' => $orderItem,
+        ]);
+    }
+
+    public function estimate($id){
+        $order = $this->orderRepository->get($id);
+        $stock = $this->stockItemRepository->stock();
+        $estimate = $this->orderItemRepository->estimate($id);
+        $stockArray = $stock->keyBy('material_id')->toArray();
+        // dd($stockArray);
+        return view('orderEstimate', [
+            'order' => $order,
+            'stock' => $stockArray,
+            'estimate' => $estimate,
         ]);
     }
     

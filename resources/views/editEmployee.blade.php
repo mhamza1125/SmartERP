@@ -143,6 +143,14 @@
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
+                    <label>Employee Salary (Optional)</label>
+                    <input type="number" min="0" class="form-control" name="salary" value="{{$employee['salary']}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Employee Salary</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">
                       <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>

@@ -47,18 +47,30 @@ class TransactionController extends Controller
         $this->transactionRepository = $transactionRepository;
     }
 
-    public function index(){}
+    public function index(){
+        $transaction = $this->transactionRepository->all();
+        return view('transaction', [
+            'transaction' => $transaction,
+        ]);
+    }
+
+    public function oPayment(){
+        $transaction = $this->transactionRepository->oPayment();
+        return view('oPayment', [
+            'transaction' => $transaction,
+        ]);
+    }
 
     public function ePayment(){
         $transaction = $this->transactionRepository->ePayment();
-        return view('epayment', [
+        return view('ePayment', [
             'transaction' => $transaction,
         ]);
     }
 
     public function vPayment(){
         $transaction = $this->transactionRepository->vPayment();
-        return view('vpayment', [
+        return view('vPayment', [
             'transaction' => $transaction,
         ]);
     }
@@ -115,8 +127,7 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function createBalance(){
-        // Bank Balance
+    public function createOPayment(){
         $customer = $this->customerRepository->all();
         $bank = $this->bankRepository->self();
         $order = $this->orderRepository->all();
@@ -162,6 +173,8 @@ class TransactionController extends Controller
             return redirect()->route('transaction.addEPayment')->with('success', 'Record Inserted Successfully');
         }elseif($request->input('transaction_to') == 'vendor'){
             return redirect()->route('transaction.addVPayment')->with('success', 'Record Inserted Successfully');
+        }elseif($request->input('transaction_to') == 'customer'){
+            return redirect()->route('transaction.addOPayment')->with('success', 'Record Inserted Successfully');
         }else{
             return redirect()->route('transaction.addExpense')->with('success', 'Record Inserted Successfully');
         }
@@ -195,6 +208,16 @@ class TransactionController extends Controller
             'image' => $image,
         ]);
     }
+
+    public function showOPayment($id){
+        $image = $this->imageRepository->image('transactions', $id);
+        $transaction = $this->transactionRepository->getOPayment($id);
+        // dd($transaction);
+        return view('OPaymentInfo', [
+            'transaction' => $transaction,
+            'image' => $image,
+        ]);
+    }
     
     public function edit(Box $id){}
 
@@ -215,6 +238,18 @@ class TransactionController extends Controller
             'transaction' => $id,
             'bank' => $bank,
             'vendor' => $vendor,
+        ]);
+    }
+
+    public function editOPayment(Transaction $id){
+        $customer = $this->customerRepository->all();
+        $bank = $this->bankRepository->self();
+        $order = $this->orderRepository->all();
+        return view('editPayOrder', [
+            'transaction' => $id,
+            'bank' => $bank,
+            'order' => $order,
+            'customer' => $customer,
         ]);
     }
 
@@ -239,6 +274,8 @@ class TransactionController extends Controller
             return redirect()->route('transaction.showEPayment', $id)->with('success', 'Record Updated Successfully');    
         }elseif($request->input('transaction_to') == 'vendor'){
             return redirect()->route('transaction.showVPayment', $id)->with('success', 'Record Updated Successfully');    
+        }elseif($request->input('transaction_to') == 'customer'){
+            return redirect()->route('transaction.showOPayment', $id)->with('success', 'Record Updated Successfully');
         }else{
             return redirect()->route('transaction.showExpense', $id)->with('success', 'Record Updated Successfully');    
         }

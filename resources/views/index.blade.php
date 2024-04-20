@@ -204,9 +204,11 @@
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Transactions</span></a>
               <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
                 <li><a class="nav-link" href="{{ route('ePayment') }}">Employee</a></li>
                 <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor</a></li>
                 <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
+                <li><a class="nav-link" href="{{ route('oPayment') }}">Order</a></li>
               </ul>
             </li>
             <li class="dropdown">

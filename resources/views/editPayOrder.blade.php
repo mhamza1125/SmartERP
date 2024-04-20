@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Order Payment</h4>
+            <h4>Edit Order Payment</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('transaction.store') }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
+            <form action="{{ route('transaction.update', $transaction['transaction_id']) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <h6>Amount Receiving From</h6>
               <div class="row">
@@ -27,7 +27,7 @@
                       <option value="" selected disabled>Select Customer</option>
                       @if($customer->count())
                         @foreach($customer as $item)
-                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                          <option value="{{$item->customer_id}}" {{ $transaction['payee_id'] == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -80,7 +80,7 @@
                       <option value="0">Cash Balance</option>
                       @if($bank->count())
                         @foreach($bank as $item)
-                          <option value="{{$item->bank_id}}" {{ old('bank_id') == $item->head_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
+                          <option value="{{$item->bank_id}}" {{ $transaction['bank_id'] == $item->bank_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -91,7 +91,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Amount</label>
-                    <input type="number" min="0" class="form-control" name="credit" required value="{{ old('credit') }}">
+                    <input type="number" min="0" class="form-control" name="credit" required value="{{ $transaction['credit'] }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
@@ -99,7 +99,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Transaction Date</label>
-                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
+                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -108,7 +108,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
+                    <textarea class="summernote" name="description">{{$transaction['description']}}</textarea>
                   </div>
                 </div>
               </div>

@@ -34,6 +34,8 @@
                           {{$item->employee_no}} - {{$item->name}}
                         @elseif($item->bank_holder == 'vendor')
                           {{$item->vendor_no}} - {{$item->fname}}
+                        @elseif($item->bank_holder == 'customer')
+                          {{$item->customer_no}} - {{$item->cname}} {{$item->lname}}
                         @else
                           Admin / Self
                         @endif

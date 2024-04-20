@@ -23,6 +23,7 @@ class Employee extends Model
         'phone2',
         'city_id',
         'address',
+        'salary',
         'description',
         'joining_date',
         'employee_status',

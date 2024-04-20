@@ -6,21 +6,16 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Cash Balance Table</h4>
+            <h4>Transaction Table</h4>
             <div class="card-header-action">
-              <div class="btn-group">
-                <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Balance</a>
-                <a href="{{ route('stock') }}" class="btn btn-primary">BRS</a>
-              </div>
+              <a href="{{ route('transaction') }}" class="btn btn-primary">Add</a>
             </div>
           </div>
           <div class="card-body">
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="save-stage" style="width:100%;">
+              {{-- <table class="table table-striped table-hover" id="tableExport" style="width:100%;"> --}}
                 <thead>
-                  <tr>
-                    <th colspan="7"><h6 class="text-center">Available Cash: Rs. {{number_format($cashBalance)}}</h6></th>
-                  </tr>
                   <tr>
                     <th>Sr.</th>
                     <th>Transaction</th>
@@ -48,7 +43,7 @@
                           <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                         @elseif($item->transaction_to == 'expense')
                           <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                          @elseif($item->transaction_to == 'customer')
+                        @elseif($item->transaction_to == 'customer')
                           <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                         @else
                           <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View Else</a>

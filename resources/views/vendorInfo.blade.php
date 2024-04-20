@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Vendor Info</h4>
             <div class="card-header-action">
-              <a href="{{ route('vendor.edit', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>
+              <div class="btn-group">
+                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('vendor.edit', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

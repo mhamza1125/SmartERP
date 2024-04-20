@@ -77,7 +77,6 @@ class PurchaseController extends Controller
         $receiveSum = $this->receiveMaterialRepository->rSum($id);
         $receiveAll = $this->receiveMaterialRepository->rAll($id);
         $totalTimes = $this->receiveMaterialRepository->times($id);
-
         return view('purchaseInfo', [
             'purchase' => $purchase,
             'purchaseItem' => $purchaseItem,

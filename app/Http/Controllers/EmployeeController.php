@@ -6,6 +6,7 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
+use App\Repositories\SalaryRepository;
 use App\Repositories\ImageRepository;
 use App\Http\Requests\EmployeeRequest;
 use App\Repositories\EmployeeRepository;
@@ -14,18 +15,21 @@ use App\Repositories\TransactionRepository;
 class EmployeeController extends Controller
 {
     protected $headRepository;
+    protected $salaryRepository;
     protected $imageRepository;
     protected $employeeRepository;
     protected $transactionRepository;
 
     public function __construct(
         HeadRepository $headRepository,
+        SalaryRepository $salaryRepository,
         ImageRepository $imageRepository,
         EmployeeRepository $employeeRepository, 
         TransactionRepository $transactionRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
+        $this->salaryRepository = $salaryRepository;
         $this->imageRepository = $imageRepository;
         $this->employeeRepository = $employeeRepository;
         $this->transactionRepository = $transactionRepository;
@@ -54,9 +58,11 @@ class EmployeeController extends Controller
     public function store(EmployeeRequest $request){
         $validatedData = $request->validated();
         $getId = $this->employeeRepository->store($validatedData);
+        $salary = ['employee_id' => $getId, 'amount' => $request->input('salary')];
+        $this->salaryRepository->store($salary);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
-                $this->storeImage($file, 'employee', 'employees', $getId);        
+                $this->storeImage($file, 'employee', 'employees', $getId);
             }
         }
         return redirect()->route('employee.show', $getId)->with('success', 'Record Inserted Successfully');
@@ -98,6 +104,8 @@ class EmployeeController extends Controller
 
     public function update(Request $request, $id){
         $getId = $this->employeeRepository->update($id, $request->input());      
+        $salary = ['employee_id' => $id, 'amount' => $request->input('salary')];
+        $this->salaryRepository->update($id, $salary);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'employee', 'employees', $getId);        

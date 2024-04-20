@@ -1164,15 +1164,19 @@ $(document).ready(function() {
                 $('#employee select').val('').trigger('change');
             }if (selected != 'vendor') {
                 $('#vendor select').val('').trigger('change');
+            }if (selected != 'customer') {
+                $('#customer select').val('').trigger('change');
             }
             // Hide all sections first
-            $('#admin, #employee, #vendor').hide();
+            $('#admin, #employee, #vendor, #customer').hide();
             if (selected == 'admin') {
                 $('#admin').show();
             } else if (selected == 'employee') {
                 $('#employee').show();
             } else if (selected == 'vendor') {
                 $('#vendor').show();
+            } else if (selected == 'customer') {
+                $('#customer').show();
             }
             // Re-initialize Select2 for visible select elements
             $('.select2:visible').select2();
@@ -1230,6 +1234,7 @@ $(document).ready(function () {
                 },
             });
         });
+        $('#payee_id').trigger('change');
     }
 });
 // End - Pay Script
@@ -1239,7 +1244,6 @@ $(document).ready(function () {
     if (typeof isPayOrderPage !== 'undefined') {
         $('#payee_id').on('change', function() {
             var customerId = $(this).val();
-            console.log(customerId);
             $.ajax({
                 url: ajaxOrderUrl,
                 type: "GET",
@@ -1247,7 +1251,7 @@ $(document).ready(function () {
                 dataType: "json",
                 success: function(response) {
                     var orderSelect = $('#order_id');
-                    orderSelect.empty().append('<option value="0" selected>Cash Order</option>');
+                    orderSelect.empty().append('<option value="" selected disabled>Select Order</option>');
                     // Populate options dynamically based on the response
                     $.each(response.data, function(index, item) {
                         var optionText = item.order_no + ' | ' + item.job_no;
@@ -1257,6 +1261,7 @@ $(document).ready(function () {
                 },
             });
         });
+        $('#payee_id').trigger('change');
     }
 });
 // End - Pay Order Payment Script

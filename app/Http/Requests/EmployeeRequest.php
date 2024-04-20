@@ -34,6 +34,7 @@ class EmployeeRequest extends FormRequest
             'cnic' => 'required|max:255',
             'phone1' => 'required|max:255',
             'phone2' => '',
+            'salary' => '',
             'address' => 'required|max:255',
             'description' => '',
         ];

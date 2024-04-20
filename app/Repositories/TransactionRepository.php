@@ -8,29 +8,41 @@ use Illuminate\Support\Facades\DB;
 class TransactionRepository implements GlobalInterface {
     
     public function all(){
-        return Transaction::all();
+        return Transaction::orderBy('created_at', 'desc')->get();
     }
 
+    public function oPayment(){
+        return Transaction::where('transaction_to', 'customer')
+        ->join('customers', 'customers.customer_id', '=', 'transactions.payee_id')
+        ->join('orders', 'orders.order_id', '=', 'transactions.order_id')
+        ->orderBy('transactions.created_at', 'desc')
+        ->get();
+    }
+    
     public function ePayment(){
         return Transaction::where('transaction_to', 'employee')
         ->join('employees', 'employees.employee_id', '=', 'transactions.payee_id')
+        ->orderBy('transactions.created_at', 'desc')
         ->get();
     }
 
     public function vPayment(){
         return Transaction::where('transaction_to', 'vendor')
         ->join('vendors', 'vendors.vendor_id', '=', 'transactions.payee_id')
+        ->orderBy('transactions.created_at', 'desc')
         ->get();
     }
 
     public function expense(){
         return Transaction::where('transaction_to', 'expense')
         ->join('heads', 'heads.head_id', '=', 'transactions.payee_id')
+        ->orderBy('transactions.created_at', 'desc')
         ->get();
     }
 
     public function cashTransaction(){
-        return Transaction::where('payee_bank_id', '0')
+        return Transaction::where('transactions.bank_id', '0')
+        ->orderBy('created_at', 'desc')
         ->get();
     }
 
@@ -80,13 +92,24 @@ class TransactionRepository implements GlobalInterface {
 
     public function getVPayment($id){
         return Transaction::where('transaction_id', $id)
-        ->join('heads', 'heads.head_id', 'transactions.payee_id')
         ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
         ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
         ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
         ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
         ->join('vendors', 'vendors.vendor_id', 'transactions.payee_id')
-        ->select('*', 'heads.name as hname', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
+        ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
+       ->first();
+    }
+    
+    public function getOPayment($id){
+        return Transaction::where('transaction_id', $id)
+        ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
+        ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
+        ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
+        ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
+        ->join('customers', 'customers.customer_id', 'transactions.payee_id')
+        ->join('orders', 'orders.order_id', 'transactions.order_id')
+        ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
        ->first();
     }
     

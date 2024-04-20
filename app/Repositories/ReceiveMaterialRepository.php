@@ -28,7 +28,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
         ->join('heads', 'heads.head_id', '=' ,'materials.unit_id')
         ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
         ->groupBy('receive_materials.purchase_item_id')
-        ->selectRaw('purchase_items.quantity, materials.material_no, materials.name,
+        ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, materials.material_no, materials.name,
             heads.name as hname, orders.job_no, SUM(receive_materials.quantity) AS rqty')
         ->get();
     }
@@ -42,7 +42,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
         ->join('heads', 'heads.head_id', '=' ,'materials.unit_id')
         ->select('purchase_items.quantity', 'materials.material_no', 'materials.name',
             'heads.name as hname', 'receive_materials.quantity as rqty', 'receive_materials.created_at',
-            'receive_material_id', 'receives.receive_no')
+            'receive_material_id', 'receives.receive_no', 'purchase_items.purchase_item_id')
         ->get();
     }
 

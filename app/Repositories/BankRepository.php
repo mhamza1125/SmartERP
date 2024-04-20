@@ -7,7 +7,7 @@ use App\Models\Bank;
 class BankRepository implements GlobalInterface {
     
     public function all(){
-        return Bank::select('*', 'heads.name as hname', 'vendors.fname')
+        return Bank::select('*', 'heads.name as hname', 'vendors.fname', 'customers.fname as cname')
         ->join('heads', 'heads.head_id', '=', 'banks.head_id')
         ->leftJoin('vendors', function($join) {
             $join->on('vendors.vendor_id', '=', 'banks.banker_id')
@@ -16,6 +16,10 @@ class BankRepository implements GlobalInterface {
         ->leftJoin('employees', function($join) {
             $join->on('employees.employee_id', '=', 'banks.banker_id')
                 ->where('banks.bank_holder', '=', 'employee');
+        })
+        ->leftJoin('customers', function($join) {
+            $join->on('customers.customer_id', '=', 'banks.banker_id')
+                ->where('banks.bank_holder', '=', 'customer');
         })
         ->orderBy('bank_holder')->orderBy('banker_id')
         ->get();

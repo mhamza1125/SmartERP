@@ -15,7 +15,7 @@ class HeadRepository implements GlobalInterface {
 
     public function headType(){
         return \DB::table('head_types')
-        ->get();
+            ->get();
     }
 
     public function get($id){

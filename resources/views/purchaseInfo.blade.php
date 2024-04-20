@@ -105,6 +105,7 @@
                         <th>Order Qty</th>
                         <th>Receive Qty</th>
                         <th>Remaining</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -123,6 +124,7 @@
                             <td>{{$item->quantity}}</td>
                             <td>{{$item->rqty}}</td>
                             <td>{{$item->quantity - $item->rqty}}</td>
+                            <td><button type="button" class="btn btn-icon btn-sm btn-info" data-toggle="modal" data-target="#exampleModal{{$item->purchase_item_id}}"><i class="fas fa-info-circle"></i></button></td>
                           </tr>
                         @endforeach
                       @endif
@@ -189,4 +191,52 @@
     </div>
   </div>
 </section>
+
+@if($purchaseItem->count())
+@foreach($purchaseItem as $purchase)
+    <div class="modal fade" id="exampleModal{{$purchase->purchase_item_id}}" tabindex="-1" role="dialog" aria-labelledby="formModal"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="formModal">Purchase Item Detail</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="card-body">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th colspan="4">{{$purchase->material_no}} - {{$purchase->name}}</th>
+                  </tr>
+                  <tr>
+                    <th>Sr.</th>
+                    <th>Receive No</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @php $sr = 1; @endphp
+                  @foreach($receiveAll as $receive)
+                    @if($purchase->purchase_item_id == $receive->purchase_item_id)
+                    <tr>
+                      <td>{{$sr++}}</td>
+                      <td>{{$receive->receive_no}}</td>
+                      <td>{{$receive->rqty}}</td>
+                      <td>{{ date('Y-m-d', strtotime($receive->created_at)) }}</td>
+                    </tr>
+                    @endif
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  @endforeach
+@endif
 @endsection

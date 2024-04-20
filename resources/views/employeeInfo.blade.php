@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Employee Info</h4>
             <div class="card-header-action">
-              <a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>
+              <div class="btn-group">
+                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>
+              </div>
             </div>
           </div>
           <div class="card-body">
@@ -37,7 +40,7 @@
                   <td><b>Joining Date: </b> {{$employee['joining_date']}}</td>
                 </tr>
                 <tr>
-                  <td><b>Current Salary: </b> 000000 </td>
+                  <td><b>Current Salary: </b> Rs. {{number_format($employee['salary'])}} </td>
                   <td colspan="2"><b>Address: </b> {{$employee['address']}}, {{$employee['cname']}}</td>
                 </tr>
                 <tr>

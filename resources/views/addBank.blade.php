@@ -24,6 +24,7 @@
                       <option value="admin" {{ old('bank_holder') == 'admin' ? 'selected' : '' }}>Admin / Self</option>
                       <option value="vendor" {{ old('bank_holder') == 'vendor' ? 'selected' : '' }}>Vendor</option>
                       <option value="employee" {{ old('bank_holder') == 'employee' ? 'selected' : '' }}>Employee</option>
+                      <option value="customer" {{ old('bank_holder') == 'customer' ? 'selected' : '' }}>Customer</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>
@@ -62,7 +63,22 @@
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee</div>
+                    <div class="invalid-feedback">Select Vendor</div>
+                  </div>
+                </div>
+                <div class="col-md-5" id="customer">
+                  <div class="form-group">          
+                    <label>Customer</label>
+                    <select class="form-control select2" name="banker_id">
+                      <option value="" selected disabled>Select Customer</option>
+                      @if($customer->count())
+                        @foreach($customer as $item)
+                          <option data-type="customer" value="{{$item->customer_id}}" {{ old('banker_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
                 <div class="col-md-4">

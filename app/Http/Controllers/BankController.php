@@ -9,26 +9,30 @@ use App\Http\Controllers\Controller;
 use App\Repositories\BankRepository;
 use App\Repositories\HeadRepository;
 use App\Repositories\VendorRepository;
+use App\Repositories\CustomerRepository;
 use App\Repositories\EmployeeRepository;
 
 class BankController extends Controller
 {
     protected $headRepository;
     protected $bankRepository;
-    protected $employeeRepository;
     protected $vendorRepository;
+    protected $employeeRepository;
+    protected $customerRepository;
 
     public function __construct(
         HeadRepository $headRepository,
         BankRepository $bankRepository,
-        EmployeeRepository $employeeRepository,
         VendorRepository $vendorRepository,
+        CustomerRepository $customerRepository,
+        EmployeeRepository $employeeRepository,
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->bankRepository = $bankRepository;
-        $this->employeeRepository = $employeeRepository;
         $this->vendorRepository = $vendorRepository;
+        $this->employeeRepository = $employeeRepository;
+        $this->customerRepository = $customerRepository;
     }
 
     public function index(){
@@ -44,10 +48,12 @@ class BankController extends Controller
         $head = $this->headRepository->get('6');
         $vendor = $this->vendorRepository->all();
         $employee = $this->employeeRepository->all();
+        $customer = $this->customerRepository->all();
         return view('addBank', [
             'head' => $head,
             'vendor' => $vendor,
             'employee' => $employee,
+            'customer' => $customer,
         ]);
     }
 

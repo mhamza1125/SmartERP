@@ -8,7 +8,11 @@
           <div class="card-header">
             <h4>Order Info</h4>
             <div class="card-header-action">
-              <a href="{{ route('order.edit', $order['order_id']) }}" class="btn btn-primary">Edit</a>
+              <div class="btn-group">
+                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('order.edit', $order['order_id']) }}" class="btn btn-primary">Edit</a>
+              </div>
+              <a href="{{ route('order.estimate', $order['order_id']) }}" class="btn btn-success">Estimate Material</a>
             </div>
           </div>
           <div class="card-body row">
@@ -78,7 +82,7 @@
                   <tr>
                     <th colspan="4"></th>
                     <th colspan="2">Grand Total:</th>
-                    <th>{{ $total }}</th>
+                    <th>{{ number_format($total) }}</th>
                   </tr>
                 </tfoot>
               </table>

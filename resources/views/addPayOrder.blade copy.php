@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Pay Employee</h4>
+            <h4>Add Order Payment</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -16,42 +16,54 @@
           <div class="card-body">
             <form action="{{ route('transaction.store') }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
+              <h6>Amount Receivng From</h6>
               <div class="row">
-                <div class="col-md-6">
+                <input type="hidden" name="transaction_to" required value="customer">
+                <input type="hidden" name="transaction_type" required value="orderPayment">
+                <input type="hidden" name="payee_bank_id" required value="0">
+                <div class="col-md-5">
                   <div class="form-group">          
-                    <input type="hidden" name="transaction_to" required value="employee" id="transaction_to">
-                    <label>Employee</label>
-                    <select class="form-control select2" name="payee_id" required id="payee_id">
-                      <option value="" selected disabled>Select Employee</option>
-                      @if($employee->count())
-                        @foreach($employee as $item)
-                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{($item->salary > 0)? ' - [ Salary: '.$item->salary.' ]':''}}
-                          </option>
+                    <label>Customer</label>
+                    <select class="form-control select2" name="payee_id" id="payee_id" required>
+                      <option value="" selected disabled>Select Customer</option>
+                      @if($customer->count())
+                        @foreach($customer as $item)
+                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee</div>
+                    <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Receiver Cash / Bank (if any)</label>
-                    <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
-                      <option value="0" selected>Cash Payment</option>
-                      //Ajax Options 
+                <div class="col-md-5">
+                  <div class="form-group">          
+                    <label>Order</label>
+                    <select class="form-control select2" name="order_id" id="order_id" required>
+                      <option value="" selected disabled>Select Order</option>
+                      {{-- Ajax Orders --}}
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Cash / Bank</div>
+                    <div class="invalid-feedback">Select Order</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Transaction Date</label>
+                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>
+
+              <h6>Amount Added To</h6>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <div class="form-group">
-                    <label>Payee Cash / Bank (if any)</label>
+                    <label>Cash / Bank (if any)</label>
                     <select class="form-control select2" name="bank_id" required>
-                      <option value="0" selected>Cash Payment</option>
+                      <option value="" selected disabled>Select Cash / Bank</option>
+                      <option value="0">Cash Balance</option>
                       @if($bank->count())
                         @foreach($bank as $item)
                           <option value="{{$item->bank_id}}" {{ old('bank_id') == $item->head_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
@@ -59,38 +71,18 @@
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Cash / Bank</div>
+                    <div class="invalid-feedback">Select Bank</div>
                   </div>
                 </div>
                 <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Payment Type</label>
-                    <select class="form-control" name="transaction_type" required>
-                      <option value="salary" {{ old('transaction_type') == 'salary' ? 'selected' : '' }}>Salary</option>
-                      <option value="wages" {{ old('transaction_type') == 'wages' ? 'selected' : '' }}>Wages</option>
-                      <option value="advance" {{ old('transaction_type') == 'advance' ? 'selected' : '' }}>Advance</option>
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Pay Date</label>
-                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
                   <div class="form-group">
                     <label>Amount</label>
-                    <input type="number" min="0" class="form-control" name="debit" required value="{{ old('debit') }}">
+                    <input type="number" min="0" class="form-control" name="credit" required value="{{ old('credit') }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">
@@ -124,6 +116,8 @@
 </section>
 <script>
   var isPayPage = false;
+  var isPayOrderPage = false;
+  var ajaxOrderUrl = "{{ route('ajaxOrder') }}";
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
 </script>
 @endsection
