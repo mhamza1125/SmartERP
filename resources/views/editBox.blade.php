@@ -17,7 +17,7 @@
             <form action="{{ route('box.update', $box['box_id']) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Box No</label>
                     <input type="text" class="form-control" name="box_no" required value="{{$box['box_no']}}">
@@ -25,12 +25,27 @@
                     <div class="invalid-feedback">Enter Box No</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Box Name</label>
                     <input type="text" class="form-control" name="name" required value="{{$box['name']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Box Name</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">          
+                    <label>Current Vendor</label>
+                    <select class="form-control select2" name="vendor_id" required id="vendor_id">
+                      <option value="" selected disabled>Select Vendor</option>
+                      @if($vendor->count())
+                        @foreach($vendor as $item)
+                          <option value="{{$item->vendor_id}}" {{ $box['vendor_id'] == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Vendor</div>
                   </div>
                 </div>
               </div>

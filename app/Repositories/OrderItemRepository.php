@@ -27,9 +27,11 @@ class OrderItemRepository implements GlobalInterface {
         return OrderItem::where('order_id', $id)
         ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
         ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
         ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', DB::raw('SUM(order_items.quantity * product_materials.quantity) as total_qty'))
+        ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', DB::raw('SUM(order_items.quantity * product_materials.quantity) as total_qty'), 'vendors.fname', 'vendor_no')
         ->groupBy('product_materials.material_id')
+        ->orderBy('materials.vendor_id')
         ->orderBy('materials.material_id')->get();
     }
 

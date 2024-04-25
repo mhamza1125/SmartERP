@@ -20,17 +20,18 @@
                 <tr>
                   <td><b>Box No: </b> {{$box['box_no']}}</td>
                   <td><b>Box Name: </b> {{$box['name']}}</td>
-                  <td><b>Material: </b> {{$box['hname']}}</td>
+                  <td colspan="2"><b>Dimension (LxWxH): </b> {{$box['length']}} x {{$box['width']}} x {{$box['height']}} Inches</td>
                 </tr>
                 <tr>
-                  <td><b>Dimension (LxWxH): </b> {{$box['length']}} x {{$box['width']}} x {{$box['height']}} Inches</td>
+                  <td><b>Material: </b> {{$box['hname']}}</td>
                   <td><b>Box Weight (Grams): </b> {{$box['weight']}}</td>
+                  <td><b>Current Vendor: </b> {{$box['vendor_no']}} - {{$box['fname']}}</td>
                   <td><b>Current Status: </b> @if($box['box_status']) 
                     <span class="badge badge-success">Active</span> @else 
                     <span class="badge badge-danger">Inactive</span> @endif</td>
                 </tr>
                 <tr>
-                  <td colspan="3">
+                  <td colspan="4">
                     <div class="row">
                       <div class="col-md-1"><b>Details: </b></div>
                       <div class="col-md-11">

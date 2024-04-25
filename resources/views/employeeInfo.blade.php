@@ -48,7 +48,7 @@
                     <div class="row">
                       <div class="col-md-1"><b>Details: </b></div>
                       <div class="col-md-11">
-                        @php echo $employee['description'] @endphp
+                        @php echo $employee['descrpiption'] @endphp
                       </div>
                     </div>
                   </td>

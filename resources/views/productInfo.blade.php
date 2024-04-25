@@ -57,6 +57,35 @@
                       </tr>
                     </tbody>
                   </table>
+                  @if($material->count())
+                    <h5>Product Materials</h5>
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Material Type</th>
+                          <th>Material No</th>
+                          <th>Material Name</th>
+                          <th>Unit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if($material->count())
+                          @foreach($material as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>{{$item->mtname}}</td>
+                            <td>{{$item->material_no}}</td>
+                            <td>{{$item->name}}</td>                      
+                            <td>{{$item->uname}}</td>
+                          </tr>
+                          @endforeach
+                        @endif
+                      </tbody>
+                    </table>
+                  @else
+                    <blockquote> No Materials </blockquote>
+                  @endif
                   @if($image->count())
                     <h5>Images</h5>
                     <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

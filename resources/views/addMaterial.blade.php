@@ -17,7 +17,7 @@
             <form action="{{ route('material.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Material No</label>
                     <input type="text" class="form-control" name="material_no" required value="{{old('material_no')}}">
@@ -25,12 +25,27 @@
                     <div class="invalid-feedback">Enter Material No</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Material Name</label>
                     <input type="text" class="form-control" name="name" required value="{{old('name')}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Material Name</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">          
+                    <label>Current Vendor</label>
+                    <select class="form-control select2" name="vendor_id" required id="vendor_id">
+                      <option value="" selected disabled>Select Vendor</option>
+                      @if($vendor->count())
+                        @foreach($vendor as $item)
+                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Vendor</div>
                   </div>
                 </div>
               </div>

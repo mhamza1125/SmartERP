@@ -8,13 +8,12 @@
           <div class="card-header">
             <h4>Transaction Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('transaction') }}" class="btn btn-primary">Add</a>
+              {{-- <a href="{{ route('transaction') }}" class="btn btn-primary">Add</a> --}}
             </div>
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-striped table-hover" id="save-stage" style="width:100%;">
-              {{-- <table class="table table-striped table-hover" id="tableExport" style="width:100%;"> --}}
+              <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>
                   <tr>
                     <th>Sr.</th>

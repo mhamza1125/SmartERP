@@ -24,6 +24,79 @@ $(document).ready(function() {
 });
 // End - Toaster Message
 
+// Start - Remove Header Of Export Table
+$(document).ready(function() {
+    // Function to initialize DataTable with export buttons and custom header
+    function initializeDataTable(tableId) {
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            $(tableId).DataTable().destroy();
+        }
+
+        $(tableId).DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'print',
+                    title: '',
+                    customize: function(win) {
+                        $(win.document.body).prepend(customHeader);
+                    },
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                }
+            ]
+        });
+    }
+
+    // Custom header HTML
+    var customHeader = '<center><h1>Palls Enterprises</h1><h5> Nasir Road, Sialkot, Pakistan </h5></center>';
+
+    // Initialize DataTable for table with ID #tableExport
+    initializeDataTable('#tableExport');
+
+    // Initialize DataTable for table with ID #tableExport1
+    initializeDataTable('#tableExport1');
+});
+// End - Remove Header Of Export Table
+
+// Start - Stock Table Save Stage
+$(document).ready(function() {
+    $('#save-stage-all').DataTable({
+        "stateSave": true // Enable state saving
+    });
+
+    $('#save-stage-receive').DataTable({
+        "stateSave": true // Enable state saving
+    });
+
+    $('#recordsPerPage').on('change', function() {
+        // Retrieve the selected value
+        var selectedValue = $(this).val();
+        $('#save-stage-all').DataTable().page.len(selectedValue).draw();
+        $('#save-stage-receive').DataTable().page.len(selectedValue).draw();
+    });
+});
+// End - Stock Table Save Stage
+
 // Start - Wrong Extension Image / File Name
 document.addEventListener("DOMContentLoaded", function() {
     var fileInput = document.getElementById('customFile');
@@ -190,11 +263,7 @@ $(document).ready(function() {
         // Function to update Sr. numbers
         function updateSrNumbers() {
             $('#items-table tbody tr').each(function(index) {
-                if (isPurchasePage) {
-                    $(this).find('td:first').text(index);
-                } else {
-                    $(this).find('td:first').text(index + 1);
-                }
+                $(this).find('td:first').text(index + 1);
             });
         }
 
@@ -226,6 +295,14 @@ $(document).ready(function() {
         });
     }
 });
+// Print Purchase Info Modal
+function printPModal(modalId) {
+    var printContents = document.getElementById(modalId).innerHTML;
+    var originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+}
 // End - Purchase Script
 
 // Start - Order Script
@@ -239,20 +316,20 @@ $(document).ready(function() {
 
         // Function to check if all three fields have data
         function checkFields() {
-            var productId = $('select[name="product_type_id[]"]').val();
+            var productId = $('select[name="product_type_id"]').val();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             return (productId && quantity && price);
         }
 
         // Enable/disable add button based on field values
-        $('select[name="product_type_id[]"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
+        $('select[name="product_type_id"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
             $('#addBtn').prop('disabled', !checkFields());
         });
 
         $('#addBtn').on('click', function() {
-            var productId = $('select[name="product_type_id[]"]').val();
-            var productName = $('select[name="product_type_id[]"] option:selected').text();
+            var productId = $('select[name="product_type_id"]').val();
+            var productName = $('select[name="product_type_id"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             var total = quantity * price;
@@ -400,8 +477,8 @@ $(document).ready(function() {
                 // Material does not exist, add row to table
                 var newRow = '<tr>' +
                     '<td>' + tableRowCount + '</td>' +
-                    '<td>' + materialName + '<input type="text" name="material_name[]" value="' + materialName + '"><input type="text" name="material_id[]" value="' + materialId + '"></td>' +
-                    '<td>' + quantity + '<input type="text" name="quantity[]" value="' + quantity + '"></td>' +
+                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"></td>' +
+                    '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
 
@@ -518,6 +595,12 @@ $(document).ready(function() {
         function initializeSelect2() {
             $('.select2').select2();
         }
+
+        // Getting Table name
+        $('#employee_id').on('change', function() {
+            var tableName = $(this).find('option:selected').data('type');
+            $('#table_name').val(tableName);
+        });
 
         updateSerialNumbers(); // Update serial numbers after deleting a row
 
@@ -707,9 +790,9 @@ $(document).ready(function() {
 
             var markup = `<tr>
                 <td>${srNo}</td>
-                <td>${productName}<input type="text" name="product_type_id[]" value="${productId}"><input type="text" name="stage_id[]" value="${stageId}"></td>
-                <td>${materialText}<input type="text" name="material_id[]" value="${materialId}"></td>
-                <td>${quantity}<input type="text" name="quantity[]" value="${quantity}"></td>
+                <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="stage_id[]" value="${stageId}"></td>
+                <td>${materialText}<input type="hidden" name="material_id[]" value="${materialId}"></td>
+                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
             </tr>`;
 
@@ -760,9 +843,9 @@ $(document).ready(function() {
 
             var markup = `<tr>
                 <td>${srNo}</td>
-                <td>${productName}<input type="text" name="product_type_id[]" value="${productId}"><input type="text" name="stage_id[]" value="${stageId}"></td>
-                <td>${stageName}<input type="text" name="material_id[]" value="${materialId}"></td>
-                <td>${quantity}<input type="text" name="quantity[]" value="${quantity}"></td>
+                <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="stage_id[]" value="${stageId}"></td>
+                <td>${stageName}<input type="hidden" name="material_id[]" value="${materialId}"></td>
+                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deletepRow">X</button></td>
             </tr>`;
 
@@ -818,9 +901,10 @@ $(document).ready(function() {
                 dataType: "json",
                 success: function(response) {
                     $('#pcost_id').empty().append('<option disabled>Select Product Cost</option>');
+                    $('#pcost_id').append('<option value="0">None</option>');
                     response.data.forEach(function(item) {
                         var optionText = item.hname;
-                        $('#pcost_id').append(new Option(optionText, item.product_cost_id));
+                        $('#pcost_id').append(new Option(optionText, item.head_id));
                     });
                     // Re-initialize select2 for the updated product cost select element
                     initializeSelect2();
@@ -831,6 +915,7 @@ $(document).ready(function() {
         // Event listener for change in material select element
         $('#material_id').change(function() {
             var selectedOption = $(this).val();
+            console.log('123');
             if (!selectedOption) {
                 return;
             }
@@ -889,10 +974,10 @@ $(document).ready(function() {
 
             var srNo = $('#items-table tbody tr').length + 1;
             
-            var pcostInputs = '';
-            selectedProductCosts.forEach(pcost => {
-                pcostInputs += `<input type="text" name="pcost_id[]" value="${productId}|${pcost}">`;
-            });
+            // var pcostInputs = '';
+            // selectedProductCosts.forEach(pcost => {
+            //     pcostInputs += `<input type="hidden" name="pcost_id[]" value="${productId}|${pcost}">`;
+            // });
 
             var selectedOptions = $('#pcost_id').val();
             var selectedOptionsText = selectedOptions.map(option => $('#pcost_id option[value="' + option + '"]').text());
@@ -930,6 +1015,7 @@ $(document).ready(function() {
             var availableStock = parseInt($('#receiveable_stock').val());
             var stageId = '0';
             var idsString = '0';
+            var workLog = 'None';
 
             if (!materialId || !quantity) return;
 
@@ -949,7 +1035,7 @@ $(document).ready(function() {
                 <td>${srNo}</td>
                 <td>${productName}<input type="hidden" name="material_id[]" value="${materialId}"><input type="hidden" name="product_type_id[]" value="${productId}"></td>
                 <td>${materialName}<input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td><input type="hidden" name="work_logs[]" value="${idsString}"></td>
+                <td>${workLog}<input type="hidden" name="work_logs[]" value="${idsString}"></td>
                 <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
                 <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
             </tr>`;
@@ -1044,11 +1130,31 @@ $(document).ready(function() {
         $('#addBtn').click(function() {
             var headId = $('select[name="head_id"]').val();
             var headName = $('select[name="head_id"] option:selected').text();
+            var tableId = $('select[name="table_id"]').val();
+            var evName = $('select[name="table_id"] option:selected').text();
+            var tname = $('select[name="table_id"] option:selected').data('tname');
             var amount = $('input[name="amount"]').val();
+
+            // Check for existing row with table_id = 0 and the same head_id
+            if (tableId != 0) {
+                var hasGeneralCost = $('#items-table tbody tr').filter(function() {
+                    var rowTableId = $(this).find('input[name="table_id[]"]').val();
+                    var rowHeadId = $(this).find('input[name="head_id[]"]').val();
+                    return rowTableId == 0 && rowHeadId == headId;
+                }).length > 0;
+
+                if (!hasGeneralCost) {
+                    alert("Add General cost first.");
+                    return;
+                }
+            }
 
             // Check for duplicate entry
             var isDuplicate = $('#items-table tbody tr').filter(function() {
-                return $(this).find('input[name="head_id[]"]').val() === headId;
+                var rowTableId = $(this).find('input[name="table_id[]"]').val();
+                var rowHeadId = $(this).find('input[name="head_id[]"]').val();
+                var rowTableName = $(this).find('input[name="table_name[]"]').val();
+                return rowTableId === tableId && rowHeadId === headId && rowTableName === tname;
             }).length > 0;
 
             if (isDuplicate) {
@@ -1057,7 +1163,7 @@ $(document).ready(function() {
             }
 
             // Append the new row
-            appendRow(headId, headName, amount);
+            appendRow(headId, headName, amount, tableId, evName, tname);
             // Disable Add button & Reset input field
             $('#addBtn').prop('disabled', true);
             $('input[name="amount"]').val('');
@@ -1090,15 +1196,32 @@ $(document).ready(function() {
             });
         }
 
-        // Function to append a row to the table
-        function appendRow(headId, headName, amount) {
-            var newRow = `<tr>
+        // Function to append a row to the table and then sort
+        function appendRow(headId, headName, amount, tableId, evName, tname) {
+            var newRow = $(`<tr>
                 <td class="sr"></td>
+                <td>${evName}<input type="hidden" name="table_id[]" value="${tableId}">
+                <input type="hidden" name="table_name[]" value="${tname}"></td>
                 <td>${headName}<input type="hidden" name="head_id[]" value="${headId}"></td>
                 <td>${amount}<input type="hidden" name="amount[]" value="${amount}"></td>
                 <td><button type="button" class="deleteRowBtn btn btn-danger">X</button></td>
-            </tr>`;
-            $('#items-table tbody').append(newRow);
+            </tr>`);
+            // Insert the new row in sorted order based on table_id
+            var inserted = false;
+            $('#items-table tbody tr').each(function() {
+                var currentTableId = parseInt($(this).find('input[name="table_id[]"]').val(), 10);
+                if (tableId < currentTableId && !inserted) {
+                    newRow.insertBefore($(this));
+                    inserted = true;
+                    return false; // Break loop
+                }
+            });
+            // If the row is not inserted, append it at the end
+            if (!inserted) {
+                $('#items-table tbody').append(newRow);
+            }
+            // Call updateSrNumbers to ensure serial numbers are correct
+            updateSrNumbers();
         }
 
         // Function to clear the table if product_type_id changes
@@ -1109,3 +1232,115 @@ $(document).ready(function() {
     }
 });
 // End - Product Cost Script
+
+// Start - Bank Script
+$(document).ready(function() {
+    if (typeof isBankPage !== 'undefined') {
+        function toggleSections() {
+            var selected = $('select[name="bank_holder"]').val();
+            // Reset selects when not active
+            if (selected != 'employee') {
+                $('#employee select').val('').trigger('change');
+            }if (selected != 'vendor') {
+                $('#vendor select').val('').trigger('change');
+            }if (selected != 'customer') {
+                $('#customer select').val('').trigger('change');
+            }
+            // Hide all sections first
+            $('#admin, #employee, #vendor, #customer').hide();
+            if (selected == 'admin') {
+                $('#admin').show();
+            } else if (selected == 'employee') {
+                $('#employee').show();
+            } else if (selected == 'vendor') {
+                $('#vendor').show();
+            } else if (selected == 'customer') {
+                $('#customer').show();
+            }
+            // Re-initialize Select2 for visible select elements
+            $('.select2:visible').select2();
+        }
+
+        
+        // Edit Bank Detail using Modal
+        toggleSections();
+        // Run on selection change
+        $('select[name="bank_holder"]').change(function() {
+            toggleSections();
+        });
+
+        // Reinitialize Select2 for Bank Types
+        function reinitializeSelect2(modalId) {
+            $('#' + modalId + ' select[name="head_id"]').select2();
+        }
+    
+        // Run on page load
+        $('.modal').each(function() {
+            var modalId = $(this).attr('id');
+            reinitializeSelect2(modalId);
+        });
+    
+        // Run after a modal is shown
+        $('.modal').on('shown.bs.modal', function() {
+            var modalId = $(this).attr('id');
+            reinitializeSelect2(modalId);
+        });
+    }
+});
+// End - Bank Script
+
+// Start - Pay Script
+$(document).ready(function () {
+    // Getting Account No of Employee / Vendor
+    if (typeof isPayPage !== 'undefined') {
+        $('#payee_id').on('change', function() {
+            var table = $('#transaction_to').val();
+            var tableId = $(this).val();
+            $.ajax({
+                url: ajaxBankUrl,
+                type: "GET",
+                data: {tableId: tableId, table: table},
+                dataType: "json",
+                success: function(response) {
+                    var bankSelect = $('#payee_bank_id');
+                    bankSelect.empty().append('<option value="0" selected>Cash Payment</option>');
+                    // Populate options dynamically based on the response
+                    $.each(response.data, function(index, item) {
+                        var optionText = item.hname + ' - ' + item.account_title + ' - ' + item.account;
+                        bankSelect.append(new Option(optionText, item.bank_id));
+                    });                    
+                    bankSelect.trigger('change');
+                },
+            });
+        });
+        $('#payee_id').trigger('change');
+    }
+});
+// End - Pay Script
+
+// Start - Pay Order Payment Script
+$(document).ready(function () {
+    if (typeof isPayOrderPage !== 'undefined') {
+        $('#payee_id').on('change', function() {
+            var customerId = $(this).val();
+            $.ajax({
+                url: ajaxOrderUrl,
+                type: "GET",
+                data: {customerId: customerId},
+                dataType: "json",
+                success: function(response) {
+                    var orderSelect = $('#order_id');
+                    orderSelect.empty().append('<option value="" selected disabled>Select Order</option>');
+                    // Populate options dynamically based on the response
+                    $.each(response.data, function(index, item) {
+                        var optionText = item.order_no + ' | ' + item.job_no;
+                        orderSelect.append(new Option(optionText, item.order_id));
+                    });                    
+                    orderSelect.trigger('change');
+                },
+            });
+        });
+        $('#payee_id').trigger('change');
+    }
+});
+// End - Pay Order Payment Script

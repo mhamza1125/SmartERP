@@ -13,6 +13,7 @@ class Box extends Model
 
     protected $fillable = [
         'head_id',
+        'vendor_id',
         'box_no',
         'name',
         'length',

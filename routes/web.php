@@ -163,6 +163,7 @@ Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Pro
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
 Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
+Route::post('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
 Route::get('/editReceiveIssue/{id}', [StockController::class, 'rEdit'])->name('rstock.edit');
 

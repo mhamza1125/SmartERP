@@ -24,6 +24,7 @@ class MaterialRequest extends FormRequest
         return [
             'material_no' => 'required|max:255',
             'material_type_id' => 'required',
+            'vendor_id' => 'required',
             'unit_id' => 'required',
             'name' => 'required|max:255',
             'description' => '',

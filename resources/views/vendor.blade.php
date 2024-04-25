@@ -19,6 +19,7 @@
                     <th>Sr.</th>
                     <th>Vendor Type</th>
                     <th>Vendor Name</th>
+                    <th>Vendor As Worker</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -27,8 +28,11 @@
                     @foreach($vendor as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->vtname}}</td>                      
-                      <td>{{$item->fname}}</td>                      
+                      <td>{{$item->vtname}}</td>
+                      <td>{{$item->fname}}</td>
+                      <td><b>@if($item->vendor_type) 
+                        <span class="badge badge-success">Active</span> @else 
+                        <span class="badge badge-danger">Inactive</span> @endif</td> 
                       <td>
                         <a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>

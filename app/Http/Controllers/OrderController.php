@@ -79,7 +79,6 @@ class OrderController extends Controller
         $stock = $this->stockItemRepository->stock();
         $estimate = $this->orderItemRepository->estimate($id);
         $stockArray = $stock->keyBy('material_id')->toArray();
-        // dd($stockArray);
         return view('orderEstimate', [
             'order' => $order,
             'stock' => $stockArray,

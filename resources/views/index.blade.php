@@ -240,7 +240,6 @@
               </ul>
             </li>
             <li class="dropdown">
-              <a href="{{ route('material') }}" class="nav-link"><i data-feather="briefcase"></i><span>Material</span></a>
             </li>
             <li class="dropdown">
               <a href="{{ route('wages') }}" class="nav-link"><i data-feather="briefcase"></i><span>Work Wages</span></a>
@@ -261,6 +260,7 @@
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('box') }}">Boxes</a></li>
+                <li><a class="nav-link" href="{{ route('material') }}">Materials</a></li>
               </ul>
             </li>
             

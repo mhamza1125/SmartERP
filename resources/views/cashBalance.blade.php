@@ -8,15 +8,11 @@
           <div class="card-header">
             <h4>Cash Balance Table</h4>
             <div class="card-header-action">
-              <div class="btn-group">
-                <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Balance</a>
-                <a href="{{ route('stock') }}" class="btn btn-primary">BRS</a>
-              </div>
-            </div>
+              {{-- <a href="{{ route('stock') }}" class="btn btn-primary">BRS</a> --}}
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-striped table-hover" id="save-stage" style="width:100%;">
+              <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>
                   <tr>
                     <th colspan="7"><h6 class="text-center">Available Cash: Rs. {{number_format($cashBalance)}}</h6></th>

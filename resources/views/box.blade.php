@@ -20,6 +20,7 @@
                     <th>Box No</th>
                     <th>Box Name</th>
                     <th>Material</th>
+                    <th>Current Vendor</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -32,6 +33,7 @@
                       <td>{{$item->box_no}}</td>
                       <td>{{$item->name}}</td>
                       <td>{{$item->hname}}</td>
+                      <td>{{$item->vendor_no}} - {{$item->fname}}</td>
                       <td>
                         @if($item->box_status)
                           <span class="badge badge-success">Active</span>
@@ -53,6 +55,7 @@
                     <th>Box No</th>
                     <th>Box Name</th>
                     <th>Material</th>
+                    <th>Current Vendor</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>

@@ -104,6 +104,21 @@
                   </div>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Product Materials</label>
+                    <select class="form-control select2" name="material_id[]" multiple="" required>
+                      <option value="" disabled>Select Material</option>
+                      @if($material->count())
+                        @foreach($material as $item)
+                          <option value="{{$item->material_id}}" {{ $pmaterial->pluck('material_id')->contains($item->material_id) ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+              </div>
               <div id="attachmentContainer">
                 <div class="row attachment-row">
                   <div class="col-md-6">

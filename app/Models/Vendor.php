@@ -15,6 +15,7 @@ class Vendor extends Model
         'vendor_type_id',
         'vendor_no',
         'vendor_type',
+        'material_id',
         'name',
         'fname',
         'phone1',

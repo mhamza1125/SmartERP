@@ -67,6 +67,7 @@
                         <th>Article No</th>
                         <th>Material / Stage</th>
                         <th>Quantity</th>
+                        <th>Average</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -78,6 +79,7 @@
                             <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                             <td>{{($item->name)? $item->name:$item->stage}}</td>
                             <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
+                            <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }} Units</td>
                           </tr>
                           @endif
                         @endforeach
@@ -89,6 +91,7 @@
                         <th>Article No</th>
                         <th>Material / Stage</th>
                         <th>Quantity</th>
+                        <th>Average</th>
                       </tr>
                     </tfoot>
                   </table>

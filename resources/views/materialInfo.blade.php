@@ -20,10 +20,11 @@
                 <tr>
                   <td><b>Material No: </b> {{$material['material_no']}}</td>
                   <td><b>Material Name: </b> {{$material['name']}}</td>
+                  <td><b>Material Unit: </b> {{$material['uname']}}</td>
                 </tr>
                 <tr>
                   <td><b>Material Type: </b> {{$material['mtname']}}</td>
-                  <td><b>Material Unit: </b> {{$material['uname']}}</td>
+                  <td colspan="2"><b>Current Vendor: </b> {{$material['vendor_no']}} - {{$material['fname']}}</td>
                 </tr>
                 <tr>
                   <td colspan="3">

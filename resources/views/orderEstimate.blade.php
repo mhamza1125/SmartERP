@@ -51,6 +51,7 @@
                     <th>Sr.</th>
                     <th>Code</th>
                     <th>Material Name</th>
+                    <th>Current Vendor</th>
                     <th>Total Qty</th>
                     <th>Available Qty</th>
                     <th>Required Qty</th>
@@ -68,6 +69,7 @@
                             <td>{{ $loop->index + 1 }}</td>
                             <td>{{ $item->material_no }}</td>
                             <td>{{ $item->name }}</td>
+                            <td>{{ $item->vendor_no }} - {{ $item->fname }}</td>
                             <td>{{ number_format($item->total_qty) }}</td>
                             <td>{{ number_format($available) }}</td>
                             <td>{{ number_format(max($item->total_qty - $available, 0)) }}</td>
@@ -81,6 +83,7 @@
                     <th>Sr.</th>
                     <th>Code</th>
                     <th>Material Name</th>
+                    <th>Current Vendor</th>
                     <th>Total Qty</th>
                     <th>Available Qty</th>
                     <th>Required Qty</th>

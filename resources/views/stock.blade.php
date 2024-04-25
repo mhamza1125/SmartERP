@@ -25,7 +25,7 @@
               {{-- Material Stock --}}
               <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
                 <div class="table-responsive">
-                  <table class="table table-sm table-striped">                    
+                  <table class="table table-sm table-striped" id="tableExport" style="width:100%;">                    
                     <thead>
                       <tr>
                         <th>Sr.</th>
@@ -60,7 +60,7 @@
               {{-- Product Stock --}}
               <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
                 <div class="table-responsive">
-                  <table class="table table-sm table-striped">                    
+                  <table class="table table-sm table-striped" id="tableExport1" style="width:100%;">                    
                     <thead>
                       <tr>
                         <th>Sr.</th>

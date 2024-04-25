@@ -115,6 +115,21 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
+                    <label>Vendor Materials</label>
+                    <select class="form-control select2" name="material_id[]" multiple="" required>
+                      <option value="" disabled>Select Material</option>
+                      @if($material->count())
+                        @foreach($material as $item)
+                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
                     <label>Address</label>
                     <textarea class="form-control" name="address" required>{{old('address')}}</textarea>
                     <div class="valid-feedback">Good job!</div>

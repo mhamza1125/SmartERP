@@ -30,6 +30,7 @@ class BoxRequest extends FormRequest
             'weight' => 'required',
             'box_status' => 'required',
             'head_id' => 'required',
+            'vendor_id' => 'required',
             'description' => '',
         ];
     }

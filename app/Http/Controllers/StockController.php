@@ -178,11 +178,10 @@ class StockController extends Controller
         // Show Issuance
         $head = $this->headRepository->get('14');
         $issue = $this->stockRepository->get($id);
-        $issueItem = $this->stockItemRepository->get($id);
+        $issueItem = $this->stockItemRepository->getAvg($id);
         $issueAll = $this->stockItemRepository->getAll($id);
         $issueSum = $this->stockItemRepository->getSum($id);
         $totalTimes = $this->stockItemRepository->times($id);
-        
         return view('issueInfo', [
             'head' => $head,
             'issue' => $issue,
@@ -239,7 +238,9 @@ class StockController extends Controller
     public function rIssue(){
         // All Receive Issuance
         $receive = $this->stockRepository->receive();
+        $issue = $this->stockRepository->receiveIssue();
         return view('receiveIssue', [
+            'issue' => $issue,
             'receive' => $receive,
         ]); 
     }
@@ -248,12 +249,21 @@ class StockController extends Controller
         // Receive Issuance
         $head = $this->headRepository->get('12');
         $issue = $this->stockRepository->get($id);
-        $issueItem = $this->stockItemRepository->get($id);
+        $issueItem = $this->stockItemRepository->getAvg($id);
         $count = $this->stockRepository->refNo2($id);
+        $average = [];
+        foreach ($issueItem as $item) {
+            if ($item->material_id) {
+                $key = $item->article_no . '|' . $item->sname;
+                $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
+                $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
+            }
+        }
         return view('addReceiveIssue', [
             'count' => $count,
             'head' => $head,
             'issue' => $issue,
+            'average' => $average,
             'issueItem' => $issueItem,
             'issueItemUnique' => $issueItem,
         ]);
@@ -275,12 +285,21 @@ class StockController extends Controller
         // Edit Receive Issuance
         $head = $this->headRepository->get('12');
         $issue = $this->stockRepository->get($id);
-        $issueItem = $this->stockItemRepository->get($issue['issue_id']);
+        $issueItem = $this->stockItemRepository->getAvg($issue['issue_id']);
         $receiveItem = $this->stockItemRepository->get($id);
         $workLog = $this->stockItemRepository->workLog($id);
+        $average = [];
+        foreach ($issueItem as $item) {
+            if ($item->material_id) {
+                $key = $item->article_no . '|' . $item->sname;
+                $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
+                $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
+            }
+        }
         return view('editReceiveIssue', [
             'head' => $head,
             'issue' => $issue,
+            'average' => $average,
             'issueItem' => $issueItem,
             'receiveItem' => $receiveItem,
             'issueItemUnique' => $issueItem,

@@ -6,25 +6,29 @@ use App\Models\Box;
 use Illuminate\Http\Request;
 use App\Http\Requests\BoxRequest;
 use App\Repositories\BoxRepository;
-use App\Repositories\HeadRepository;
 use App\Http\Controllers\Controller;
+use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
+use App\Repositories\VendorRepository;
 
 class BoxController extends Controller
 {
     protected $boxRepository;
     protected $headRepository;
     protected $imageRepository;
+    protected $vendorRepository;
 
     public function __construct(
         BoxRepository $boxRepository,
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
+        VendorRepository $vendorRepository,
     ){
         $this->middleware(['auth', 'all']);
         $this->boxRepository = $boxRepository;
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
+        $this->vendorRepository = $vendorRepository;
     }
 
     public function index(){
@@ -36,8 +40,10 @@ class BoxController extends Controller
 
     public function create(){
         $material = $this->headRepository->get('13');
+        $vendor = $this->vendorRepository->all();
         return view('addBox', [
             'material' => $material,
+            'vendor' => $vendor,
         ]);
     }
 
@@ -71,9 +77,11 @@ class BoxController extends Controller
     
     public function edit(Box $id){
         $material = $this->headRepository->get('13');
+        $vendor = $this->vendorRepository->all();
         return view('editBox', [
             'box' => $id,
             'material' => $material,
+            'vendor' => $vendor,
         ]);
     }
 

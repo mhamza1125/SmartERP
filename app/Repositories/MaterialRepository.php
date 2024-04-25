@@ -9,7 +9,8 @@ class MaterialRepository implements GlobalInterface {
     public function all(){
         return Material::join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-        ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname')
+        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+        ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname', 'vendors.fname', 'vendor_no')
         ->orderBy('materials.created_at', 'desc')
         ->get();
     }
@@ -18,10 +19,19 @@ class MaterialRepository implements GlobalInterface {
         return Material::where('material_id', $id)
         ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-        ->select('materials.*',
-            'mthead.name as mtname',
-            'uhead.name as uname')
+        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+        ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname', 'vendors.fname', 'vendor_no')
         ->first();
+    }
+
+    public function getMaterial($id){ // Vendor & Product Materials
+        $materialIds = explode('|', $id);
+        return Material::whereIn('materials.material_id', $materialIds)
+            ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+            ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname', 'vendors.fname', 'vendor_no')
+            ->get();
     }
 
     public function store(array $data){

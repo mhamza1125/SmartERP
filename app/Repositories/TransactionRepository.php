@@ -140,7 +140,7 @@ class TransactionRepository implements GlobalInterface {
         $return = $purchases->concat($purchaseReturns)->concat($transactions);
         $sorted = $return->sortByDesc('timestamp');
         return $sorted;
-    }
+    }    
     
     public function eDetail($id){
         return Transaction::where('transactions.payee_id', $id)

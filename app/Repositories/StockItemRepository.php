@@ -28,7 +28,26 @@ class StockItemRepository implements GlobalInterface {
         ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
         ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
         ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-        ->select('stock_items.*', 'products.*', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname')   
+        ->select('stock_items.*', 'products.*', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname')
+        ->orderBy('product_id')
+        ->get();
+    }
+
+    public function getAvg($id){
+        return StockItem::where('stock_items.stock_id', $id)
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->leftJoin('product_materials', function($join) {
+            $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
+                 ->on('product_materials.material_id', '=', 'stock_items.material_id');
+        })
+        ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->select('stock_items.*', 'products.*', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty')   
+        ->orderBy('product_id')
         ->get();
     }
 

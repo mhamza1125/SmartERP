@@ -24,6 +24,79 @@ $(document).ready(function() {
 });
 // End - Toaster Message
 
+// Start - Remove Header Of Export Table
+$(document).ready(function() {
+    // Function to initialize DataTable with export buttons and custom header
+    function initializeDataTable(tableId) {
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            $(tableId).DataTable().destroy();
+        }
+
+        $(tableId).DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: '',
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                },
+                {
+                    extend: 'print',
+                    title: '',
+                    customize: function(win) {
+                        $(win.document.body).prepend(customHeader);
+                    },
+                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                }
+            ]
+        });
+    }
+
+    // Custom header HTML
+    var customHeader = '<center><h1>Palls Enterprises</h1><h5> Nasir Road, Sialkot, Pakistan </h5></center>';
+
+    // Initialize DataTable for table with ID #tableExport
+    initializeDataTable('#tableExport');
+
+    // Initialize DataTable for table with ID #tableExport1
+    initializeDataTable('#tableExport1');
+});
+// End - Remove Header Of Export Table
+
+// Start - Stock Table Save Stage
+$(document).ready(function() {
+    $('#save-stage-all').DataTable({
+        "stateSave": true // Enable state saving
+    });
+
+    $('#save-stage-receive').DataTable({
+        "stateSave": true // Enable state saving
+    });
+
+    $('#recordsPerPage').on('change', function() {
+        // Retrieve the selected value
+        var selectedValue = $(this).val();
+        $('#save-stage-all').DataTable().page.len(selectedValue).draw();
+        $('#save-stage-receive').DataTable().page.len(selectedValue).draw();
+    });
+});
+// End - Stock Table Save Stage
+
 // Start - Wrong Extension Image / File Name
 document.addEventListener("DOMContentLoaded", function() {
     var fileInput = document.getElementById('customFile');
@@ -190,11 +263,7 @@ $(document).ready(function() {
         // Function to update Sr. numbers
         function updateSrNumbers() {
             $('#items-table tbody tr').each(function(index) {
-                if (isPurchasePage) {
-                    $(this).find('td:first').text(index);
-                } else {
-                    $(this).find('td:first').text(index + 1);
-                }
+                $(this).find('td:first').text(index + 1);
             });
         }
 
@@ -226,6 +295,14 @@ $(document).ready(function() {
         });
     }
 });
+// Print Purchase Info Modal
+function printPModal(modalId) {
+    var printContents = document.getElementById(modalId).innerHTML;
+    var originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+}
 // End - Purchase Script
 
 // Start - Order Script
@@ -824,6 +901,7 @@ $(document).ready(function() {
                 dataType: "json",
                 success: function(response) {
                     $('#pcost_id').empty().append('<option disabled>Select Product Cost</option>');
+                    $('#pcost_id').append('<option value="0">None</option>');
                     response.data.forEach(function(item) {
                         var optionText = item.hname;
                         $('#pcost_id').append(new Option(optionText, item.head_id));
@@ -837,6 +915,7 @@ $(document).ready(function() {
         // Event listener for change in material select element
         $('#material_id').change(function() {
             var selectedOption = $(this).val();
+            console.log('123');
             if (!selectedOption) {
                 return;
             }

@@ -20,6 +20,16 @@ class StockRepository implements GlobalInterface {
         ->get();
     }
 
+    public function receiveIssue(){
+        return Stock::where('stocks.stock_type', '2')
+        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+        ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date', 'stock_status')
+        ->where('stocks.stock_status', '!=', '1')
+        ->orderBy('stocks.created_at', 'desc')
+        ->get();
+    }
+
     public function receive(){
         return Stock::where('stocks.stock_type', '1')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')

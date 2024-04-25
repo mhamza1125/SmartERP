@@ -25,7 +25,7 @@
                       <option value="" selected disabled>Select Employee</option>
                       @if($employee->count())
                         @foreach($employee as $item)
-                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{($item->salary > 0)? ' - [ Salary: '.$item->salary.' ]':''}}
+                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{($item->salary > 0)? ' - [ Salary: '.$item->salary.' ]':'Wages Employee'}}
                           </option>
                         @endforeach
                       @endif

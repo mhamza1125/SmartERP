@@ -214,12 +214,12 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Receive No</th>
-                    <th>Amount</th>
+                    <th>Quantity</th>
                     <th>Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @php $sr = 1; @endphp
+                  @php $sr = 1; $total = 0; @endphp
                   @foreach($receiveAll as $receive)
                     @if($purchase->purchase_item_id == $receive->purchase_item_id)
                     <tr>
@@ -227,10 +227,24 @@
                       <td>{{$receive->receive_no}}</td>
                       <td>{{$receive->rqty}}</td>
                       <td>{{ date('Y-m-d', strtotime($receive->created_at)) }}</td>
+                      @php $total += $receive->rqty @endphp
                     </tr>
                     @endif
                   @endforeach
                 </tbody>
+                <tfoot>
+                  <tr>
+                    <th></th>
+                    <th>Order Qty: {{$purchase->quantity}}</th>
+                    <th>Received: {{$total}}</th>
+                    <th>Remaining: {{$purchase->quantity - $total}}</th>
+                  </tr>
+                  <tr>
+                    <th colspan="4">
+                      <button class="btn btn-primary btn-print float-right" onclick="printPModal('exampleModal{{$purchase->purchase_item_id}}')">Print Disables Other Page Btn After</button>
+                    </th>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>

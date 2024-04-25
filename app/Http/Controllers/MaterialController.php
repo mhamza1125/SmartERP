@@ -8,22 +8,26 @@ use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Http\Requests\MaterialRequest;
+use App\Repositories\VendorRepository;
 use App\Repositories\MaterialRepository;
 
 class MaterialController extends Controller
 {
     protected $materialRepository;
     protected $headRepository;
+    protected $vendorRepository;
     protected $imageRepository;
 
     public function __construct(
         MaterialRepository $materialRepository, 
         HeadRepository $headRepository,
+        VendorRepository $vendorRepository,
         ImageRepository $imageRepository,
     ){
         $this->middleware(['auth', 'all']);
         $this->materialRepository = $materialRepository;
         $this->headRepository = $headRepository;
+        $this->vendorRepository = $vendorRepository;
         $this->imageRepository = $imageRepository;
     }
 
@@ -37,8 +41,10 @@ class MaterialController extends Controller
     public function create(){
         $material = $this->headRepository->get('10');
         $unit = $this->headRepository->get('4');
+        $vendor = $this->vendorRepository->all();
         return view('addmaterial', [
             'material' => $material,
+            'vendor' => $vendor,
             'unit' => $unit,
         ]);
     }
@@ -66,10 +72,12 @@ class MaterialController extends Controller
     public function edit(Material $id){
         $material = $this->headRepository->get('10');
         $unit = $this->headRepository->get('4');
+        $vendor = $this->vendorRepository->all();
         return view('editmaterial', [
             'material' => $id,
             'materialType' => $material,
             'unit' => $unit,
+            'vendor' => $vendor,
         ]);
     }
 

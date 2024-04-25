@@ -21,6 +21,7 @@
                     <th>Material No</th>
                     <th>Material Name</th>
                     <th>Unit</th>
+                    <th>Current Vendor</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -33,6 +34,7 @@
                       <td>{{$item->material_no}}</td>
                       <td>{{$item->name}}</td>                      
                       <td>{{$item->uname}}</td>
+                      <td>{{$item->vendor_no}} - {{$item->fname}}</td>
                       <td>
                         <a href="{{ route('material.show', $item->material_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('material.edit', $item->material_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -48,6 +50,7 @@
                     <th>Material No</th>
                     <th>Material Name</th>
                     <th>Unit</th>
+                    <th>Current Vendor</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

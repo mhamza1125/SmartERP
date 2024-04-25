@@ -8,21 +8,24 @@ class BoxRepository implements GlobalInterface {
     
     public function all(){
         return Box::join('heads', 'heads.head_id', '=', 'boxes.head_id')
-        ->select('boxes.*', 'heads.name as hname')
+        ->join('vendors', 'vendors.vendor_id', '=', 'boxes.vendor_id')
+        ->select('boxes.*', 'heads.name as hname', 'vendors.fname', 'vendor_no')
         ->orderBy('boxes.created_at', 'desc')->get();
     }
 
     public function active(){
         return Box::where('boxes.box_status', '1')
         ->join('heads', 'heads.head_id', '=', 'boxes.head_id')
-        ->select('boxes.*', 'heads.name as hname')
+        ->join('vendors', 'vendors.vendor_id', '=', 'boxes.vendor_id')
+        ->select('boxes.*', 'heads.name as hname', 'vendors.fname', 'vendor_no')
         ->orderBy('boxes.created_at', 'desc')->get();
     }
 
     public function get($id){
         return Box::where('box_id', $id)
         ->join('heads', 'heads.head_id', '=', 'boxes.head_id')
-        ->select('boxes.*', 'heads.name as hname')
+        ->join('vendors', 'vendors.vendor_id', '=', 'boxes.vendor_id')
+        ->select('boxes.*', 'heads.name as hname', 'vendors.fname', 'vendor_no')
         ->first();
     }
 

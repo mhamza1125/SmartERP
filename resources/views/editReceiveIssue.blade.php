@@ -65,16 +65,24 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="material_id" id="material_id">
+                    <select class="form-control select2" name="smaterial_id" required style="width: 100%" id="material_id">
                       <option value="" disabled selected>Select Material</option>
+                      @php $lastKey = null; @endphp
                       @if($issueItem->count())
                           @foreach($issueItem as $item)
                               @if($item->material_id)
-                                <option value="{{$item->material_id}}|{{$item->product_type_id}}">{{$item->name}} | {{$item->article_no}} - Size {{$item->sname}}</option>
+                                  @php $currentKey = $item->article_no . '|' . $item->sname; @endphp
+                                  @if($lastKey != $currentKey)
+                                      <option disabled>========== {{$item->article_no}} | Size {{$item->sname}} | Avg {{$average[$currentKey]['min_avg']}} ==========</option>
+                                      @php $lastKey = $currentKey; @endphp
+                                  @endif
+                                  <option value="{{$item->material_id}}|{{$item->product_type_id}}">
+                                      {{$item->name}} | Avg {{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }}
+                                  </option>
                               @endif
                           @endforeach
                       @endif
-                    </select>
+                    </select> 
                   </div>
                 </div>
                 <div class="col-md-3">                  
