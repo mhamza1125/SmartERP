@@ -19,6 +19,7 @@ class ProductBoxRepository implements GlobalInterface {
     }
 
     public function getAll($id){
+        // Used in ProductInfo 
         return ProductBox::where('product_types.product_id', $id)
         ->join('product_types', 'product_types.product_type_id', '=', 'product_boxes.product_type_id')
         ->join('boxes', 'boxes.box_id', '=', 'product_boxes.box_id')

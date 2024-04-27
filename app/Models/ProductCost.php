@@ -12,7 +12,7 @@ class ProductCost extends Model
     protected $primaryKey = 'product_cost_id';
 
     protected $fillable = [
-        'product_type_id',
+        'product_id',
         'table_id',
         'table_name',
         'head_id',

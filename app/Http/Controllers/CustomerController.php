@@ -9,22 +9,26 @@ use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Http\Requests\CustomerRequest;
 use App\Repositories\CustomerRepository;
+use App\Repositories\TransactionRepository;
 
 class CustomerController extends Controller
 {
     protected $headRepository;
     protected $imageRepository;
     protected $customerRepository;
+    protected $transactionRepository;
 
     public function __construct(
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         CustomerRepository $customerRepository,
+        TransactionRepository $transactionRepository,
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
         $this->customerRepository = $customerRepository;
+        $this->transactionRepository = $transactionRepository;
     }
 
     public function index(){
@@ -62,6 +66,19 @@ class CustomerController extends Controller
         return view('customerInfo', [
             'customer' => $customer,
             'image' => $image,
+        ]);
+    }
+
+    public function detail($id){
+        $customer = $this->customerRepository->get($id);
+        $detail = $this->transactionRepository->cDetail($id);
+        $totalCredit = $detail->sum('credit');
+        $totalDebit = $detail->sum('debit');
+        $balance = $totalCredit - $totalDebit;
+        return view('customerDetail', [
+            'customer' => $customer,
+            'detail' => $detail,
+            'balance' => $balance,
         ]);
     }
     

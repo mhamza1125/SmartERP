@@ -22,7 +22,7 @@
                     <label>Issuance No</label>
                     <input type="hidden" name="stock_type" required value="2">
                     <input type="hidden" id="table_name" name="table_name" value="{{$issue['table_name']}}">
-                    <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}" placeholder="Issue No">
+                    <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
                   </div>
@@ -168,15 +168,15 @@
                           <tr data-item-id="{{ $item->purchase_item_id }}">
                             <td></td>
                             <td>{{$item->article_no}} - Size {{$item->sname}}
-                              <input type="text" name="product_type_id[]" value="{{$item->product_type_id}}">
-                              <input type="text" name="stage_id[]" value="{{$item->stage_id}}">
+                              <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
+                              <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}">
                             </td>
                             <td>@if($item->material_id){{$item->name}}
-                              <input type="text" name="material_id[]" value="{{$item->material_id}}">
-                              @else{{$item->stage}}<input type="text" name="material_id[]" value="0">@endif
+                              <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                              @else{{$item->stage}}<input type="hidden" name="material_id[]" value="0">@endif
                             </td>
                             <td>{{$item->quantity}}
-                              <input type="text" name="quantity[]" value="{{$item->quantity}}"></td>
+                              <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                             </td>
                             <td>@if($item->material_id)
                               <button class="deleteRow btn btn-danger">X</button>
@@ -184,12 +184,12 @@
                           </tr>
                           <tr id="hiddentr" class="dnone">
                             <td colspan="5">
-                              <input type="text" name="hidden_product_type_id[]" value="{{$item->product_type_id}}">
-                              <input type="text" name="hidden_stage_id[]" value="{{$item->stage_id}}">
+                              <input type="hidden" name="hidden_product_type_id[]" value="{{$item->product_type_id}}">
+                              <input type="hidden" name="hidden_stage_id[]" value="{{$item->stage_id}}">
                               @if($item->material_id)
-                              <input type="text" name="hidden_material_id[]" value="{{$item->material_id}}">
-                              @else<input type="text" name="hidden_material_id[]" value="0">@endif
-                              <input type="text" name="hidden_quantity[]" value="{{$item->quantity}}">
+                              <input type="hidden" name="hidden_material_id[]" value="{{$item->material_id}}">
+                              @else<input type="hidden" name="hidden_material_id[]" value="0">@endif
+                              <input type="hidden" name="hidden_quantity[]" value="{{$item->quantity}}">
                             </td>                            
                           </tr>
                         @endforeach
@@ -217,7 +217,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

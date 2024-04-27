@@ -24,6 +24,12 @@ $(document).ready(function() {
 });
 // End - Toaster Message
 
+// Start - Confirm Form Submission
+function submits() {
+    return confirm('Are you sure you want to submit?');
+}
+// End - Confirm Form Submission
+
 // Start - Remove Header Of Export Table
 $(document).ready(function() {
     // Function to initialize DataTable with export buttons and custom header
@@ -198,20 +204,20 @@ $(document).ready(function() {
 
         // Function to check if all three fields have data
         function checkFields() {
-            var materialId = $('select[name="material_id[]"]').val();
+            var materialId = $('select[name="smaterial_id[]"]').val();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             return (materialId && quantity && price);
         }
 
         // Enable/disable add button based on field values
-        $('select[name="material_id[]"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
+        $('select[name="smaterial_id[]"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
             $('#addBtn').prop('disabled', !checkFields());
         });
 
         $('#addBtn').on('click', function() {
-            var materialId = $('select[name="material_id[]"]').val();
-            var materialName = $('select[name="material_id[]"] option:selected').text();
+            var materialId = $('select[name="smaterial_id[]"]').val();
+            var materialName = $('select[name="smaterial_id[]"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             var total = quantity * price;
@@ -247,7 +253,7 @@ $(document).ready(function() {
             $('#addBtn').prop('disabled', true); 
             $('input[name="quantity"]').val('0');
             $('input[name="price"]').val('0');
-            $('select[name="material_id[]"]').val('').trigger('change');
+            $('select[name="smaterial_id[]"]').val('').trigger('change');
             updateSrNumbers();
             updateGrandTotal();
         }
@@ -420,7 +426,7 @@ $(document).ready(function() {
 // End - Order Script
 
 // Start - Product Material Script
-$(document).ready(function() {
+$(document).ready(function() { // This is Updated No Need of JS
     if (typeof isPMPage !== 'undefined') {
         var tableRowCount = 1;
         updateSrNumbers();
@@ -575,6 +581,20 @@ returnQuantityInputs.forEach(function(input) {
     });
     input.setAttribute('max', availableToReturn);
 });
+
+var returnQuantityInputs = document.querySelectorAll('.ereturn-qty');
+returnQuantityInputs.forEach(function(input) {
+    var row = input.closest('tr');
+    var receiveQuantityCell = row.querySelector('td:nth-child(5)');
+    var availableToReturn = parseInt(receiveQuantityCell.textContent);
+    input.addEventListener('input', function() {
+        var inputValue = parseInt(this.value.trim()) || 0;
+        if (inputValue > availableToReturn) {
+            this.value = availableToReturn;
+        }
+    });
+    input.setAttribute('max', availableToReturn);
+});
 // End - Return Material Script
 
 // Start - Make Qty 0
@@ -705,7 +725,9 @@ $(document).ready(function() {
                     var materialSelect = $('#material_id');
                     materialSelect.empty().append('<option value="" disabled selected>Select Material</option>');
                     response.materials.forEach(function(item) {
-                        materialSelect.append(new Option(item.name, item.material_id));
+                        var optionText = item.material_no + ' - ' + item.name;
+                        materialSelect.append(new Option(optionText, item.material_id));
+                        // materialSelect.append(new Option(item.name, item.material_id));
                     });
                     materialSelect.trigger('change');
 
@@ -915,7 +937,6 @@ $(document).ready(function() {
         // Event listener for change in material select element
         $('#material_id').change(function() {
             var selectedOption = $(this).val();
-            console.log('123');
             if (!selectedOption) {
                 return;
             }
@@ -1108,8 +1129,8 @@ $(document).ready(function() {
         var tableRowCount = 1;
         updateSrNumbers();
       
-        // Event listener for change in product_type_id
-        $('select[name="product_type_id"]').change(function() {
+        // Event listener for change in product_id
+        $('select[name="product_id"]').change(function() {
             if ($('#items-table tbody tr').length > 0) {
                 if (!confirm('Changing the product type will clear the table. Are you sure you want to proceed?')) {
                     $(this).val($(this).data('previous')).trigger('change.select2');
@@ -1179,7 +1200,7 @@ $(document).ready(function() {
 
         // Function to check if all fields have data
         function checkFields() {
-            var productId = $('select[name="product_type_id"]').val();
+            var productId = $('select[name="product_id"]').val();
             var headId = $('select[name="head_id"]').val();
             var amount = $('input[name="amount"]').val();
             if (isProductCostPage) {
@@ -1224,7 +1245,7 @@ $(document).ready(function() {
             updateSrNumbers();
         }
 
-        // Function to clear the table if product_type_id changes
+        // Function to clear the table if product_id changes
         function clearTable() {
             $('#items-table tbody').empty();
             updateSrNumbers();

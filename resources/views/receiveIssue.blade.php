@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Received Issuance Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('stock.add') }}" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Receive Issuance</a>
+              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Receive Issuance</a>
             </div>
           </div>
           <div class="card-body">

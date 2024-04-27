@@ -43,7 +43,7 @@ class OrderController extends Controller
     }
 
     public function create(){
-        $product = $this->productRepository->active();
+        $product = $this->productRepository->activeTypes();
         $customer = $this->customerRepository->all();
         return view('addOrder', [
             'product' => $product,
@@ -88,7 +88,7 @@ class OrderController extends Controller
     
     public function edit(Order $id){
         $customer = $this->customerRepository->all();
-        $product = $this->productRepository->active();
+        $product = $this->productRepository->activeTypes();
         $orderItem = $this->orderItemRepository->get($id->order_id);
         return view('editOrder', [
             'order' => $id,

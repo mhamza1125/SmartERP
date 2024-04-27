@@ -34,6 +34,7 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function getAvg($id){
+        // Showing Product Average Along Matrials in Receive Issuance
         return StockItem::where('stock_items.stock_id', $id)
         ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
@@ -52,6 +53,7 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function getAll($id){
+        // Used by StockInfo
         return StockItem::where('stocks.issue_id', $id)
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
         ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
@@ -66,6 +68,7 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function getSum($id){
+        // Used By StockInfo
         return  StockItem::where('stocks.issue_id', $id)
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
         ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
@@ -82,6 +85,7 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function times($id){
+        // Used By StockInfo
         return StockItem::where('stocks.issue_id', $id)
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
         ->groupBy('stocks.stock_id')
@@ -89,6 +93,15 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function workLog($id){
+        // Used By Edit Receive Issuance
+        return StockItem::where('stock_items.stock_id', $id)
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('product_costs', 'product_costs.product_id', '=', 'product_types.product_id')
+        ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
+        ->select('product_costs.*','heads.name as hname')   
+        ->groupBy('heads.head_id')
+        ->get();
+
         return StockItem::where('stock_items.stock_id', $id)
         ->join('product_costs', 'product_costs.product_type_id', '=', 'stock_items.product_type_id')
         ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
@@ -98,6 +111,7 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function stock(){
+        // Available Material Stock
         return DB::table(function ($subquery) {
             $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname')
                 ->selectRaw('SUM(receive_materials.quantity) as total_received')
@@ -121,7 +135,7 @@ class StockItemRepository implements GlobalInterface {
     }
 
     public function pStock(){
-        // Product Stock
+        // Available Product Stock
         return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')

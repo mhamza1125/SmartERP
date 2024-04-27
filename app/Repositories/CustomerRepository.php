@@ -19,7 +19,7 @@ class CustomerRepository implements GlobalInterface {
         ->select('*', 'country.name as coname', 'currency.name as cuname')->first();
     }
     
-    public function refNo() {
+    public function refNo(){
         $year = Carbon::now()->format('y');
         $count = Customer::whereYear('created_at', Carbon::now()->year)->count();
         $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);

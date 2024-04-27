@@ -166,7 +166,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

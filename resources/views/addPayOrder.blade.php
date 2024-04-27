@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Receiver Cash / Bank (if any)</label>
+                    <label>Sender Cash / Bank (if any)</label>
                     <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
                       <option value="0" selected>Cash Payment</option>
                       //Ajax Options 

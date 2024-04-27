@@ -67,7 +67,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Employee No</label>
-                    <input type="text" class="form-control" name="employee_no" required value="{{$employee['employee_no']}}">
+                    <input type="text" class="form-control" name="employee_no" required value="{{$employee['employee_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Employee No</div>
                   </div>

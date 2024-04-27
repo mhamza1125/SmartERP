@@ -116,7 +116,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Vendor Materials</label>
-                    <select class="form-control select2" name="material_id[]" multiple="" required>
+                    <select class="form-control select2" name="material_id[]" multiple="">
                       <option value="" disabled>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)

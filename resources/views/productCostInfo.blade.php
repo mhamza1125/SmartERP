@@ -10,7 +10,7 @@
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('productCost.edit', $productType['product_type_id']) }}" class="btn btn-primary">Edit</a>
+                <a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>
               </div>
             </div>
           </div>
@@ -27,9 +27,9 @@
               <tbody>
                 <tr class="trow">
                   <th></th>
-                  <th>Article No: &nbsp {{$productType['article_no']}}</th>
+                  <th>Article No: &nbsp {{$product['article_no']}}</th>
+                  <th>Article: &nbsp {{$product['name']}}</th>
                   <th></th>
-                  <th>Size: &nbsp {{$productType['hname']}}</th>
                 </tr>
                 @if($productCost->count())
                   @foreach($productCost as $item)

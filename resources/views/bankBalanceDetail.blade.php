@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Cash Balance Table</h4>
+            <h4>Bank Balance Info</h4>
             <div class="card-header-action">
               {{-- <a href="{{ route('stock') }}" class="btn btn-primary">BRS</a> --}}
             </div>
@@ -15,9 +15,9 @@
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>
-                  <tr>
-                    <th colspan="7"><h6 class="text-center">Available Cash: Rs. {{number_format($cashBalance)}}</h6></th>
-                  </tr>
+                  {{-- <tr>
+                    <th colspan="7"><h6 class="text-center">Available Cash: Rs. {{number_format($balance)}}</h6></th>
+                  </tr> --}}
                   <tr>
                     <th>Sr.</th>
                     <th>Transaction</th>
@@ -29,6 +29,15 @@
                   </tr>
                 </thead>
                 <tbody>
+                  <tr class="trow">
+                    <td></td>
+                    <td><b>Account Title:</b> {{$bank['account_title']}}</td>
+                    <td><b>Account No:</b> {{$bank['account']}}</td>
+                    <td><b>Bank:</b> {{$bank['hname']}}</td>
+                    <td><b>Balance:</b> {{number_format($balance)}}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
                   @if($transaction->count())
                     @foreach($transaction as $item)
                     <tr>

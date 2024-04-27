@@ -20,7 +20,7 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Return No</label>
-                    <input type="text" class="form-control" name="return_no" required value="{{ $return['return_no'] }}" placeholder="Return No">
+                    <input type="text" class="form-control" name="return_no" required value="{{ $return['return_no'] }}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Return No</div>
                   </div>
@@ -79,7 +79,7 @@
                           <td>{{$item->hname}}</td>
                           <td>{{$item->quantity}}</td>
                           <td>
-                            <input type="number" class="form-control return-qty" name="quantity[]" value="{{$qty}}">
+                            <input type="number" class="form-control ereturn-qty" name="quantity[]" value="{{$qty}}">
                           </td>
                           <td><textarea class="form-control" name="remarks[]">{{ $returnMaterial[$key]['remarks'] }}</textarea></td>
                         </tr>
@@ -110,7 +110,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

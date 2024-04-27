@@ -20,7 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase No</label>
-                    <input type="text" class="form-control" name="purchase_no" required value="{{$purchase['purchase_no']}}">
+                    <input type="text" class="form-control" name="purchase_no" required value="{{$purchase['purchase_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Purchase No</div>
                   </div>
@@ -74,7 +74,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="material_id[]">
+                    <select class="form-control select2" name="smaterial_id[]">
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
@@ -158,7 +158,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

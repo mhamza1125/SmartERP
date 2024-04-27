@@ -82,8 +82,8 @@ class VendorController extends Controller
     public function detail($id){
         $vendor = $this->vendorRepository->get($id);
         $detail = $this->transactionRepository->vDetail($id);
-        $totalCredit = $detail->sum('credit');
-        $totalDebit = $detail->sum('debit');
+        $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
+        $totalDebit = $detail->where('transaction_type', '!=', 'wages')->sum('debit');
         $balance = $totalCredit - $totalDebit;
         return view('vendorDetail', [
             'vendor' => $vendor,

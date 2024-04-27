@@ -66,8 +66,10 @@
                     <label>Payment Type</label>
                     <select class="form-control" name="transaction_type" required>
                       <option value="salary" {{ $transaction['transaction_type'] == 'salary' ? 'selected' : '' }}>Salary</option>
+                      <option value="salaryAdvance" {{ $transaction['transaction_type'] == 'salaryAdvance' ? 'selected' : '' }}>Salary Advance</option>
                       <option value="wages" {{ $transaction['transaction_type'] == 'wages' ? 'selected' : '' }}>Wages</option>
                       <option value="advance" {{ $transaction['transaction_type'] == 'advance' ? 'selected' : '' }}>Advance</option>
+                      <option value="receiveAdvance" {{ $transaction['transaction_type'] == 'receiveAdvance' ? 'selected' : '' }}>Receive Advance</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>

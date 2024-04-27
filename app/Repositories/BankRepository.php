@@ -25,7 +25,12 @@ class BankRepository implements GlobalInterface {
         ->get();
     }
 
-    public function get($id){}
+    public function get($id){
+        return Bank::join('heads', 'heads.head_id', '=', 'banks.head_id')
+        ->select('*', 'heads.name as hname')
+        ->where('banks.bank_id', $id)
+        ->first();
+    }
 
     public function self(){
         return Bank::join('heads', 'heads.head_id', '=', 'banks.head_id')
@@ -35,6 +40,7 @@ class BankRepository implements GlobalInterface {
     }
 
     public function getBank($table, $tableId){   
+        // Used by Transaction AjaxBank
         return Bank::select('*', 'heads.name as hname')
         ->join('heads', 'heads.head_id', 'banks.head_id')
         ->where('bank_holder', $table)

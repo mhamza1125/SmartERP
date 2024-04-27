@@ -47,6 +47,7 @@
                     <th>Material</th>
                     <th>Units</th>
                     <th>Receive Qty</th>
+                    <th>Inspection Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -60,6 +61,9 @@
                         <td>{{$item->name}}</td>
                         <td>{{$item->hname}}</td>
                         <td>{{$item->quantity}}</td>
+                        <td>@if($item->inspection_status == 1) Pending
+                        @elseif($item->inspection_status == 2) Approved
+                        @else Rejected @endif</td>
                       </tr>
                       @endif
                     @endforeach
@@ -72,6 +76,7 @@
                     <th>Material</th>
                     <th>Units</th>
                     <th>Receive Qty</th>
+                    <th>Inspection Status</th>
                   </tr>
                 </tfoot>
               </table>

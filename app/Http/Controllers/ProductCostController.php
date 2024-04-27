@@ -64,7 +64,7 @@ class ProductCostController extends Controller
         if (!$request->has('amount')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $products = $request->input('product_type_id');
+        $products = $request->input('product_id');
         $amounts = $request->input('amount');
         $heads = $request->input('head_id');
         $tids = $request->input('table_id');
@@ -74,15 +74,16 @@ class ProductCostController extends Controller
     }
     
     public function show($id){
-        $productType = $this->productTypeRepository->get($id);
+        $product = $this->productRepository->get($id);
         $productCost = $this->productCostRepository->get($id);
         return view('productCostInfo', [
-            'productType' => $productType,
+            'product' => $product,
             'productCost' => $productCost,
         ]);
     }
     
     public function edit($id){
+        $product = $this->productRepository->get($id);
         $head = $this->headRepository->get('14');
         $productType = $this->productTypeRepository->get($id);
         $productCost = $this->productCostRepository->get($id);
@@ -90,6 +91,7 @@ class ProductCostController extends Controller
         $vendor = $this->vendorRepository->all();
         return view('editProductCost', [
             'head' => $head,
+            'product' => $product,
             'productType' => $productType,
             'productCost' => $productCost,
             'employee' => $employee,
@@ -113,7 +115,7 @@ class ProductCostController extends Controller
             $table_id = $tids[$key] ?? null;
             $table_name = $tnames[$key] ?? null;
             $productCost = [
-                'product_type_id' => $products,
+                'product_id' => $products,
                 'amount' => $amount,
                 'head_id' => $head,
                 'table_id' => $table_id,

@@ -1,5 +1,4 @@
 @extends('index')
-
 @section('content')
 <section class="section">
   <div class="section-body">
@@ -43,11 +42,11 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id">
+                    <select class="form-control select2" name="product_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
-                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
+                          <option value="{{$item->product_id}}" {{ old('product_id') == $item->product_id ? 'selected' : '' }}>{{$item->article_no}} - {{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -101,7 +100,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

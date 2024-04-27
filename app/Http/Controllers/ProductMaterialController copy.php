@@ -41,35 +41,19 @@ class ProductMaterialController extends Controller
     }
 
     public function index(){
-        $product = $this->productRepository->active();
         $productMaterial = $this->productMaterialRepository->all();
         return view('productMaterial', [
-            'product' => $product,
             'productMaterial' => $productMaterial,
         ]); 
     }
 
-    public function create(){ // Not Used
+    public function create(){
         $product = $this->productRepository->material();
         $material = $this->materialRepository->all();
         $box = $this->boxRepository->active();
         return view('addProductMaterial', [
             'box' => $box,
             'product' => $product,
-            'material' => $material,
-        ]);
-    }
-
-    public function create2($id){
-        $product = $this->productRepository->get($id);
-        $productType = $this->productRepository->material($id);
-        // $material = $this->materialRepository->all();
-        $material = $this->materialRepository->getMaterial($product['material_id']);
-        $box = $this->boxRepository->active();
-        return view('addProductMaterial', [
-            'product' => $product,
-            'box' => $box,
-            'productType' => $productType,
             'material' => $material,
         ]);
     }
@@ -102,15 +86,12 @@ class ProductMaterialController extends Controller
     }
     
     public function edit($id){
-        $product = $this->productRepository->get($id);
-        // $material = $this->materialRepository->all();
-        $material = $this->materialRepository->getMaterial($product['material_id']);
+        $material = $this->materialRepository->all();
         $productType = $this->productTypeRepository->get($id);
         $productMaterial = $this->productMaterialRepository->get($id);
         $box = $this->boxRepository->active();
         $pbox = $this->productBoxRepository->get($id);
         return view('editProductMaterial', [
-            'product' => $product,
             'box' => $box,
             'pbox' => $pbox,
             'material' => $material,

@@ -20,7 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receive No</label>
-                    <input type="text" class="form-control" name="receive_no" required value="{{ $receive['receive_no'] }}" placeholder="Receive No">
+                    <input type="text" class="form-control" name="receive_no" required value="{{ $receive['receive_no'] }}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Receive No</div>
                   </div>
@@ -119,7 +119,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

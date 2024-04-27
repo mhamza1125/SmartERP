@@ -227,37 +227,57 @@
                 {{-- Product Costing --}}
                 <div class="tab-pane fade" id="productCosting" role="tabpanel" aria-labelledby="product-costing-tab">
                   <div class="row">
-                    <div class="col-md-12">
-                      <table class="table table-sm table-striped">
-                        <thead>
-                          <tr>
-                            <th>Sr.</th>
-                            <th>Employee / Vendor</th>
-                            <th>Cost Head</th>
-                            <th>Price</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @if($pcost->count())
-                            @foreach($pcost as $item)
-                              <tr>
-                                <td>{{$loop->index + 1}}</td>
-                                <td>{{$item->employee_no ?? $item->vendor_no}}{{$item->name ? ' - '.$item->name : 'General Cost'}}</td>                    
-                                <td>{{$item->hname}}</td>
-                                <td>{{$item->amount}}</td>
-                              </tr>
-                            @endforeach
-                          @endif
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <th>Sr.</th>
-                            <th>Employee / Vendor</th>
-                            <th>Cost Head</th>
-                            <th>Price</th>
-                          </tr>
-                        </tfoot>
-                      </table>
+                    <div class="col-12 col-sm-12 col-md-2">
+                      <ul class="nav nav-pills flex-column" id="costingTab" role="tablist">
+                        @if($countCost > 0)
+                          @for($i=1; $i<=$countCost; $i++)
+                            <li class="nav-item">
+                              <a class="nav-link {{($i==1)? 'active':''}}" id="tabp-{{ $i }}" data-toggle="tab" href="#tab-contentp-{{ $i }}" role="tab" aria-controls="tab-contentp-{{ $i }}" aria-selected="false">Size - {{$totalCost[$i-1]['name']}}</a>
+                            </li>
+                          @endfor
+                        @endif
+                      </ul>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-10">
+                      <div class="tab-content no-padding" id="costingTabContent">
+                        @if($countCost > 0)
+                          @for($i=1; $i<=$countCost; $i++)
+                          @php $loopIndex = 1; @endphp
+                            <div class="tab-pane fade {{($i==1)? 'show active':''}}" id="tab-contentp-{{ $i }}" role="tabpanel" aria-labelledby="tabp-{{ $i }}">
+                              <table class="table table-sm table-striped">
+                                <thead>
+                                  <tr>
+                                    <th>Sr.</th>
+                                    <th>Employee / Vendor</th>
+                                    <th>Cost Head</th>
+                                    <th>Price</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @foreach($getCost as $item)
+                                    @if(($totalCost[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
+                                      <tr>
+                                        <td>{{$loopIndex++}}</td>
+                                        <td>{{$item->employee_no ?? $item->vendor_no}}{{$item->name ? ' - '.$item->name : 'General Cost'}}</td>                    
+                                        <td>{{$item->hname}}</td>
+                                        <td>{{$item->amount}}</td>
+                                      </tr>
+                                    @endif
+                                  @endforeach
+                                </tbody>
+                                <tfoot>
+                                  <tr>
+                                    <th>Sr.</th>
+                                    <th>Employee / Vendor</th>
+                                    <th>Cost Head</th>
+                                    <th>Price</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          @endfor
+                        @endif
+                      </div>
                     </div>
                   </div>
                 </div>

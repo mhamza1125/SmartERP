@@ -99,7 +99,8 @@ class ProductController extends Controller
         $size = $this->productTypeRepository->active($id);
         $image = $this->imageRepository->image('products', $id);
         $file = $this->imageRepository->file('products', $id);
-        $pcost = $this->productCostRepository->get($id);
+        $totalCost = $this->productCostRepository->times($id);
+        $getCost = $this->productCostRepository->getAll($id);
         $totalMaterial = $this->productMaterialRepository->times($id);
         $getMaterial = $this->productMaterialRepository->getAll($id);
         $productBox = $this->productBoxRepository->getAll($id);
@@ -109,7 +110,9 @@ class ProductController extends Controller
             'size' => $size,
             'image' => $image,
             'file' => $file,
-            'pcost' => $pcost,
+            'totalCost' => $totalCost,
+            'countCost' => $totalCost->count(),
+            'getCost' => $getCost,
             'totalMaterial' => $totalMaterial,
             'countMaterial' => $totalMaterial->count(),
             'getMaterial' => $getMaterial,

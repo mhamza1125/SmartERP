@@ -36,10 +36,6 @@ class ReturnRepository implements GlobalInterface {
         return Returns::where('returns.receive_id', $id)
         ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
         ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
-        // ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-        // ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-        // ->join('heads', 'heads.head_id', '=' ,'materials.unit_id')
-        // ->select('materials.*', 'heads.name as hname', 'return_materials.*')
         ->select('return_materials.*')
         ->get();
     }

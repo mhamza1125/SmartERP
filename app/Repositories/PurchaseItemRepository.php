@@ -19,6 +19,7 @@ class PurchaseItemRepository implements GlobalInterface {
     }
 
     public function receive($id){
+        // Receive Purchase Items
         return PurchaseItem::where('purchase_id', $id)
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
         ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
@@ -77,7 +78,5 @@ class PurchaseItemRepository implements GlobalInterface {
         }
     }
 
-    public function delete($id){
-        // PurchaseItem::where('purchase_id', $id)->delete();
-    }
+    public function delete($id){}
 }

@@ -65,7 +65,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="smaterial_id" required style="width: 100%" id="material_id">
+                    <select class="form-control select2" name="smaterial_id" style="width: 100%" id="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @php $lastKey = null; @endphp
                       @if($issueItem->count())
@@ -124,7 +124,8 @@
                       @if($issueItem->count())
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
                         @foreach($issueItemUnique as $item)
-                        <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->sname}}</option>
+                        @php $currentKey = $item->article_no . '|' . $item->sname; @endphp
+                        <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} | Size {{$item->sname}} | Avg {{$average[$currentKey]['min_avg']}}</option>
                         @endforeach
                       @endif
                   </select>
@@ -253,7 +254,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

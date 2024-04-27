@@ -28,7 +28,6 @@ class ProductMaterialRepository implements GlobalInterface {
     }
 
     public function getAll($id){
-        // Used By ProductInfo
         return ProductMaterial::where('product_types.product_id', $id)
         ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
         ->join('product_types', 'product_types.product_type_id', '=', 'product_materials.product_type_id')
@@ -38,7 +37,6 @@ class ProductMaterialRepository implements GlobalInterface {
     }
 
     public function times($id){
-        // Used By ProductInfo
         return ProductMaterial::where('product_types.product_id', $id)
         ->join('product_types', 'product_types.product_type_id', '=', 'product_materials.product_type_id')
         ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
@@ -79,5 +77,7 @@ class ProductMaterialRepository implements GlobalInterface {
         }
     }
 
-    public function delete($id){}
+    public function delete($id){
+        // ProductMaterial::where('product_type_id', $id)->delete();
+    }
 }

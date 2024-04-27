@@ -15,7 +15,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('productCost.update', $productType['product_type_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
+            <form action="{{ route('productCost.update', $product['product_id']) }}" method="POST" class="needs-validation" novalidate="" id="makeZero">
               @csrf
               <div class="row">
                 <div class="col-md-6">
@@ -43,7 +43,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Products</label>
-                    <input type="text" class="form-control" readonly value="{{ $productType['article_no'] }} Size - {{$productType['hname']}}">
+                    <input type="text" class="form-control" readonly value="{{ $product['article_no'] }} - {{$product['name']}}">
                   </div>
                 </div>
               </div>
@@ -119,7 +119,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

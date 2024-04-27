@@ -21,6 +21,7 @@
                     <th>Account No</th>
                     <th>Bank Type</th>
                     <th>Amount</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -32,6 +33,7 @@
                       <td>{{$item->account}}</td>
                       <td>{{$item->hname}}</td>           
                       <td>{{number_format($item->tcredit - $item->tdebit)}}</td>
+                      <td><a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Record</a></td>
                     </tr>
                     @endforeach
                   @endif
@@ -43,6 +45,7 @@
                     <th>Account No</th>
                     <th>Bank Type</th>
                     <th>Amount</th>
+                    <th>Action</th>
                   </tr>
                 </tfoot>
               </table>

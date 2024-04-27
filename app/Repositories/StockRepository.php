@@ -12,6 +12,7 @@ class StockRepository implements GlobalInterface {
     }
 
     public function issue(){
+        // All Issuance
         return Stock::where('stocks.stock_type', '2')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
         ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
@@ -21,6 +22,7 @@ class StockRepository implements GlobalInterface {
     }
 
     public function receiveIssue(){
+        // All UnReceived / Partially Received Issuance
         return Stock::where('stocks.stock_type', '2')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
         ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
@@ -31,6 +33,7 @@ class StockRepository implements GlobalInterface {
     }
 
     public function receive(){
+        // All Received Issuance
         return Stock::where('stocks.stock_type', '1')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
         ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
@@ -65,9 +68,9 @@ class StockRepository implements GlobalInterface {
         foreach ($stocks as $stock) {
             $stockDate = Carbon::parse($stock->stock_date);
             $monthYear = $stockDate->format('F Y');
-    
+            
             $groupKey = $monthYear . '_' . $stock->table_name . '_' . $stock->employee_id;
-    
+            
             // Initialize the employee or vendor record if not set
             if (!isset($employeeWages[$groupKey]) && $stock->table_name == 'employee') {
                 $employeeWages[$groupKey] = [
@@ -122,7 +125,7 @@ class StockRepository implements GlobalInterface {
     }
 
     public function wagesInfo($id){
-        // For Wages.blade.php page
+        // For Wagesinfo.blade.php page
         $stockDate = new \DateTime($id['stock_date']);
         $stocks = Stock::where('stocks.employee_id', $id['employee_id'])
             ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
@@ -152,22 +155,23 @@ class StockRepository implements GlobalInterface {
         return $stocks;
     }
     
-    public function wagesAll(){
-        $stocks = Stock::where('stock_type', '1') // StockIN
-            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('work_wages', '!=', '0')
-            ->get();
-        foreach ($stocks as $stock) {
-            $quantity = $stock->quantity;
-            $workWages = explode('|', $stock->work_wages);
-            $totalWages = 0;
-            foreach ($workWages as $wage) {
-                $totalWages += (int)$wage * $quantity;
-            }
-            $stock->total_wages = $totalWages;
-        }
-        return $stocks;
-    }
+    // public function wagesAll123(){ 
+    //     // Dont know where it is used 
+    //     $stocks = Stock::where('stock_type', '1') // StockIN
+    //         ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
+    //         ->where('work_wages', '!=', '0')
+    //         ->get();
+    //     foreach ($stocks as $stock) {
+    //         $quantity = $stock->quantity;
+    //         $workWages = explode('|', $stock->work_wages);
+    //         $totalWages = 0;
+    //         foreach ($workWages as $wage) {
+    //             $totalWages += (int)$wage * $quantity;
+    //         }
+    //         $stock->total_wages = $totalWages;
+    //     }
+    //     return $stocks;
+    // }
     
 
     public function get($id){
@@ -187,14 +191,6 @@ class StockRepository implements GlobalInterface {
                 'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname'
             )
             ->first();
-
-        return Stock::where('stocks.stock_id', $id)
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->leftJoin('stocks as sdate', 'sdate.stock_id', '=', 'stocks.issue_id')
-        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->join('heads', 'heads.head_id', '=', 'employees.department_id')
-        ->select('stocks.stock_id', 'stocks.stock_no', 'stocks.stock_date', 'stocks.order_id', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employee_no', 'employees.name','heads.name as hname', 'stocks.description', 'stocks.employee_id', 'stocks.issue_id')
-        ->first();
     }
 
     public function refNo() {

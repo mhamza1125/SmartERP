@@ -20,7 +20,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Customer No</label>
-                    <input type="text" class="form-control" name="customer_no" required value="{{$customer['customer_no']}}">
+                    <input type="text" class="form-control" name="customer_no" required value="{{$customer['customer_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Customer No</div>
                   </div>

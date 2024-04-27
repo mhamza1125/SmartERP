@@ -35,16 +35,6 @@ class OrderItemRepository implements GlobalInterface {
         ->orderBy('materials.material_id')->get();
     }
 
-    public function estimateAll($id){
-        // Not Used (Its is for showing Required Material for each Product Type)
-        return OrderItem::where('order_id', $id)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->select('*', 'heads.name as hname', 'materials.name', DB::raw('(order_items.quantity * product_materials.quantity) as tqty'))
-        ->orderBy('materials.material_id')->get();
-    }
-
     public function store(array $data){
         $data['created_by'] = auth()->id();
         $store = OrderItem::create($data);
@@ -81,8 +71,5 @@ class OrderItemRepository implements GlobalInterface {
         }
     }
 
-    public function delete($id){
-        // OrderItem::where('order_id', $id)->delete();
-        
-    }
+    public function delete($id){}
 }

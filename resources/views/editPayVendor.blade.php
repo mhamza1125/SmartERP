@@ -68,6 +68,7 @@
                       <option value="payment" {{ $transaction['transaction_type'] == 'payment' ? 'selected' : '' }}>Payment</option>
                       <option value="wages" {{ $transaction['transaction_type'] == 'wages' ? 'selected' : '' }}>Wages</option>
                       <option value="advance" {{ $transaction['transaction_type'] == 'advance' ? 'selected' : '' }}>Advance</option>
+                      <option value="receiveAdvance" {{ $transaction['transaction_type'] == 'receiveAdvance' ? 'selected' : '' }}>Receive Advance</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>

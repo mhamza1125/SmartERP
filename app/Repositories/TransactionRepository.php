@@ -46,14 +46,9 @@ class TransactionRepository implements GlobalInterface {
         ->get();
     }
 
-    public function bankBalance(){
-        return Transaction::where('transactions.bank_id', '>', '0')
-        ->join('banks', 'banks.bank_id', '=', 'transactions.bank_id')
-        ->join('heads', 'heads.head_id', '=', 'banks.head_id')
-        ->select('*', 'transactions.bank_id', 'heads.name as hname', 
-            DB::raw('SUM(transactions.debit) AS tdebit'),         
-            DB::raw('SUM(transactions.credit) AS tcredit'))
-        ->groupBy('transactions.bank_id')
+    public function bankTransaction($id){
+        return Transaction::where('transactions.bank_id', $id)
+        ->orderBy('created_at', 'desc')
         ->get();
     }
 
@@ -66,6 +61,18 @@ class TransactionRepository implements GlobalInterface {
         ->first();
 
         return $transaction->tcredit - $transaction->tdebit;
+    }
+
+    public function bankBalance(){
+        // Banks Balance All
+        return Transaction::where('transactions.bank_id', '>', '0')
+        ->join('banks', 'banks.bank_id', '=', 'transactions.bank_id')
+        ->join('heads', 'heads.head_id', '=', 'banks.head_id')
+        ->select('*', 'transactions.bank_id', 'heads.name as hname', 
+            DB::raw('SUM(transactions.debit) AS tdebit'),         
+            DB::raw('SUM(transactions.credit) AS tcredit'))
+        ->groupBy('transactions.bank_id')
+        ->get();
     }
 
     public function get($id){}
@@ -114,6 +121,7 @@ class TransactionRepository implements GlobalInterface {
     }
     
     public function vDetail($id){
+        // Vendor Ledger
         $purchases = \DB::table('purchases')
             ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(purchase_items.total) as credit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
@@ -140,9 +148,30 @@ class TransactionRepository implements GlobalInterface {
         $return = $purchases->concat($purchaseReturns)->concat($transactions);
         $sorted = $return->sortByDesc('timestamp');
         return $sorted;
+    }
+
+    public function cDetail($id){
+        // Customer Ledger
+        $orders = \DB::table('orders')
+            ->select('orders.*', 'orders.created_at as timestamp', \DB::raw('SUM(order_items.total) as debit'))
+            ->join('order_items', 'order_items.order_id', '=', 'orders.order_id')
+            ->where('orders.customer_id', $id)
+            ->groupBy('orders.order_id')
+            ->get();
+    
+        $transactions = \DB::table('transactions')
+            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->where('transactions.payee_id', $id)
+            ->where('transactions.transaction_to', 'customer')
+            ->get();
+            
+        $return = $orders->concat($transactions);
+        $sorted = $return->sortByDesc('timestamp');
+        return $sorted;
     }    
     
     public function eDetail($id){
+        // Employee Ledger
         return Transaction::where('transactions.payee_id', $id)
             ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.transaction_to', 'employee')

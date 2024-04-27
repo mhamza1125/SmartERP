@@ -23,7 +23,7 @@
                     <input type="hidden" name="stock_type" required value="2">
                     <input type="hidden" name="stock_status" required value="0">
                     <input type="hidden" id="table_name" name="table_name">
-                    <input type="text" class="form-control" name="stock_no" required value="{{$count}}" placeholder="Issue No">
+                    <input type="text" class="form-control" name="stock_no" required value="{{$count}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
                   </div>
@@ -181,7 +181,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
                 </div>
               </div>
             </form>

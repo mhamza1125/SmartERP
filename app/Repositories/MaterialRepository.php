@@ -24,7 +24,8 @@ class MaterialRepository implements GlobalInterface {
         ->first();
     }
 
-    public function getMaterial($id){ // Vendor & Product Materials
+    public function getMaterial($id){
+        // Vendor Selling  & Product Raw Materials
         $materialIds = explode('|', $id);
         return Material::whereIn('materials.material_id', $materialIds)
             ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')

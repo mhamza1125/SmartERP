@@ -22,7 +22,8 @@
                     <td><b>Vendor:</b> {{$vendor['vendor_no']}} - {{$vendor['fname']}}</td>
                     <td><b>Vendor Type:</b> {{$vendor['vtname']}}</td>
                     <td><b>Contact:</b> {{$vendor['phone1']}}</td>
-                    <td><b>Payable Amount:</b> {{number_format($balance)}}</td>
+                    <td><b>{{($balance < 0)? 'Receiveable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td>
+                    {{-- <td><b>Payable Amount:</b> {{number_format($balance)}}</td> --}}
                   </tr>
                 </tbody>
               </table>
@@ -45,11 +46,10 @@
                     <tr>
                       <td>{{ $loop->index + 1 }}</td>
                       <td>
-                        @if(isset($item->transaction_type)) ucfirst($item->transaction_type)
+                        @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
                         @elseif(isset($item->return_no)) Return - ({{$item->return_no}})
                         @elseif(isset($item->purchase_no)) Purchase - ({{$item->purchase_no}})
-                        @else Unknown Type
-                        @endif
+                        @else Unknown Type @endif
                       </td>
                       <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
                       <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>

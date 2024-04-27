@@ -20,7 +20,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
     }
 
     public function rSum($id){
-        // Used by Purchase
+        // Used by PurchaseInfo
         return ReceiveMaterial::where('purchase_items.purchase_id', $id)
         ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
         ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
@@ -34,7 +34,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
     }
 
     public function rAll($id){
-        // Used by Purchase
+        // Used by PurchaseInfo
         return ReceiveMaterial::where('purchase_items.purchase_id', $id)
         ->join('receives', 'receives.receive_id', 'receive_materials.receive_id')
         ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
@@ -90,7 +90,5 @@ class ReceiveMaterialRepository implements GlobalInterface {
         }
     }
 
-    public function delete($id){
-        // ReceiveMaterial::where('receive_id', $id)->delete();
-    }
+    public function delete($id){}
 }

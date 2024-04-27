@@ -56,7 +56,5 @@ class ReturnMaterialRepository implements GlobalInterface {
         }
     }
 
-    public function delete($id){
-        // ReturnMaterial::where('return_id', $id)->delete();
-    }
+    public function delete($id){}
 }

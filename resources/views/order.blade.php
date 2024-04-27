@@ -32,7 +32,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->order_no}}</td>
                       <td>{{$item->job_no}}</td>
-                      <td>{{$item->fname}} {{$item->lname}}</td>
+                      <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>
                         <div class="btn-group">
                             <button class="btn <?php 

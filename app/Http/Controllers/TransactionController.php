@@ -163,6 +163,10 @@ class TransactionController extends Controller
 
     public function store(TransactionRequest $request){
         $validatedData = $request->validated();
+        if($validatedData['transaction_type'] == 'receiveAdvance'){
+            $validatedData['credit'] = $validatedData['debit'];
+            $validatedData['debit'] = null;
+        }
         $getId = $this->transactionRepository->store($validatedData);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -170,13 +174,13 @@ class TransactionController extends Controller
             }
         }
         if($request->input('transaction_to') == 'employee'){
-            return redirect()->route('transaction.addEPayment')->with('success', 'Record Inserted Successfully');
+            return redirect()->route('transaction.showEPayment', $getId)->with('success', 'Record Inserted Successfully');
         }elseif($request->input('transaction_to') == 'vendor'){
-            return redirect()->route('transaction.addVPayment')->with('success', 'Record Inserted Successfully');
+            return redirect()->route('transaction.showVPayment', $getId)->with('success', 'Record Inserted Successfully');
         }elseif($request->input('transaction_to') == 'customer'){
-            return redirect()->route('transaction.addOPayment')->with('success', 'Record Inserted Successfully');
+            return redirect()->route('transaction.showOPayment', $getId)->with('success', 'Record Inserted Successfully');
         }else{
-            return redirect()->route('transaction.addExpense')->with('success', 'Record Inserted Successfully');
+            return redirect()->route('transaction.showExpense', $getId)->with('success', 'Record Inserted Successfully');
         }
     }
     
@@ -212,10 +216,22 @@ class TransactionController extends Controller
     public function showOPayment($id){
         $image = $this->imageRepository->image('transactions', $id);
         $transaction = $this->transactionRepository->getOPayment($id);
-        // dd($transaction);
         return view('OPaymentInfo', [
             'transaction' => $transaction,
             'image' => $image,
+        ]);
+    }
+
+    public function showBBalance($id){
+        $bank = $this->bankRepository->get($id);
+        $transaction = $this->transactionRepository->bankTransaction($id);
+        $totalCredit = $transaction->sum('credit');
+        $totalDebit = $transaction->sum('debit');
+        $balance = $totalCredit - $totalDebit;
+        return view('bankBalanceDetail', [
+            'bank' => $bank,
+            'balance' => $balance,
+            'transaction' => $transaction,
         ]);
     }
     

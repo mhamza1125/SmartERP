@@ -12,6 +12,7 @@ class OrderRepository implements GlobalInterface {
     }
 
     public function active(){
+        // Adding / Editing Purchases
         return Order::where('order_status', '1')
         ->get();
     }
@@ -23,20 +24,21 @@ class OrderRepository implements GlobalInterface {
         ->first();
     }
 
-    public function getOrder($id){ // By Customer Id
+    public function getOrder($id){
+        // Used By Transaction AjaxOrder
         return Order::where('orders.customer_id', $id)
         ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
         ->select('orders.*', 'customers.*')
         ->get();
     }
 
-    public function material($id){
-        return Order::where('orders.order_id', $id)
-        ->join('order_items', 'order_items.order_id', '=', 'orders.order_id')
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->select('product_materials.*')
-        ->get();
-    }
+    // public function material123($id){ // Dont know where it is used no to delete
+    //     return Order::where('orders.order_id', $id)
+    //     ->join('order_items', 'order_items.order_id', '=', 'orders.order_id')
+    //     ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+    //     ->select('product_materials.*')
+    //     ->get();
+    // }
 
     public function store(array $data){
         $data['created_by'] = auth()->id();

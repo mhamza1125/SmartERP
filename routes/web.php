@@ -62,6 +62,7 @@ Route::post('/customer', [CustomerController::class, 'store'])->name('customer.s
 Route::get('/customer/{id}', [CustomerController::class, 'show'])->name('customer.show');
 Route::get('/editCustomer/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
 Route::post('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
+Route::get('/customerDetail/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
 
 // Employee
 Route::get('/employee', [EmployeeController::class, 'index'])->name('employee');
@@ -117,7 +118,9 @@ Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'
 
 // Product Material
 Route::get('/productMaterial', [ProductMaterialController::class, 'index'])->name('productMaterial');
-Route::get('/addProductMaterial', [ProductMaterialController::class, 'create'])->name('productMaterial.add');
+// Route::get('/addProductMaterial', [ProductMaterialController::class, 'create'])->name('productMaterial.add');
+Route::get('/addProductMaterial/{id}', [ProductMaterialController::class, 'create2'])->name('productMaterial.add');
+Route::post('/addProductMaterial/{id}', [ProductMaterialController::class, 'create2'])->name('productMaterial.add');
 Route::post('/productMaterial', [ProductMaterialController::class, 'store'])->name('productMaterial.store');
 Route::get('/productMaterial/{id}', [ProductMaterialController::class, 'show'])->name('productMaterial.show');
 Route::get('/editProductMaterial/{id}', [ProductMaterialController::class, 'edit'])->name('productMaterial.edit');
@@ -202,6 +205,7 @@ Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
 // Bank Balance
 Route::get('/bankBalance', [TransactionController::class, 'bankBalance'])->name('bankBalance');
+Route::get('/bankBalance/{id}', [TransactionController::class, 'showBBalance'])->name('transaction.showBBalance');
 Route::get('/cashBalance', [TransactionController::class, 'cashBalance'])->name('cashBalance');
 // Order Payment
 Route::get('/oPayment', [TransactionController::class, 'oPayment'])->name('oPayment');

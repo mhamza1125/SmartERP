@@ -22,7 +22,7 @@ class ProductCostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_type_id' => 'required',
+            'product_id' => 'required',
             'table_id.*' => 'required',
             'table_name.*' => 'required',
             'head_id.*' => 'required',

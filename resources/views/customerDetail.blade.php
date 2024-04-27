@@ -6,11 +6,11 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Employee Detail</h4>
+            <h4>Customer Detail</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('transaction.addEPayment')}}" class="btn btn-primary">Pay</a>
+                <a href="{{ route('transaction.addOPayment')}}" class="btn btn-primary">Pay</a>
               </div>
             </div>
           </div>
@@ -19,11 +19,9 @@
               <table class="table table-sm">
                 <tbody>
                   <tr>
-                    <td><b>Employee:</b> {{$employee['employee_no']}} - {{$employee['name']}}</td>
-                    <td><b>Department:</b> {{$employee['dname']}} </td>
-                    <td><b>Contact:</b> {{$employee['phone']}}</td>
-                    <td><b>{{($balance > 0)? 'Payable':'Receivable'}} Amount:</b> {{number_format(abs($balance))}}</td>
-                    {{-- <td><b>Receivable Amount:</b> {{number_format($balance)}}</td> --}}
+                    <td><b>Customer:</b> {{$customer['customer_no']}} - {{$customer['fname']}} {{$customer['lname']}}</td>
+                    <td><b>{{($balance < 0)? 'Receiveable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td>
+                    {{-- <td><b>Payable Amount:</b> {{number_format($balance)}}</td> --}}
                   </tr>
                 </tbody>
               </table>
@@ -45,12 +43,20 @@
                     @foreach($detail as $item)
                     <tr>
                       <td>{{ $loop->index + 1 }}</td>
-                      <td>{{ isset($item->transaction_type) ? ucfirst($item->transaction_type) : 'Purchase Order' }}</td>
+                      <td>
+                        @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
+                        @elseif(isset($item->order_no)) Order - ({{$item->order_no}})
+                        @else Unknown Type @endif
+                      </td>
                       <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
                       <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
                       <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
                       <td>
-                        <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                        @if(isset($item->transaction_type))
+                          <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                        @elseif(isset($item->order_no))
+                        <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
+                        @endif
                       </td>
                     </tr>
                     @endforeach

@@ -80,9 +80,9 @@ class EmployeeController extends Controller
     public function detail($id){
         $employee = $this->employeeRepository->get($id);
         $detail = $this->transactionRepository->eDetail($id);
-        $totalCredit = $detail->where('transaction_type', 'advance')->sum('credit');
+        $totalCredit = $detail->where('transaction_type', 'receiveAdvance')->sum('credit');
         $totalDebit = $detail->where('transaction_type', 'advance')->sum('debit');
-        $balance = $totalCredit - $totalDebit;
+        $balance = $totalDebit - $totalCredit;
         return view('employeeDetail', [
             'employee' => $employee,
             'detail' => $detail,
