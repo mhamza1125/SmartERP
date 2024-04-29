@@ -45,7 +45,7 @@
                       <td>{{ $loop->index + 1 }}</td>
                       <td>
                         @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
-                        @elseif(isset($item->order_no)) Order - ({{$item->order_no}})
+                        @elseif(isset($item->order_no)) Order - ({{$item->job_no}})
                         @else Unknown Type @endif
                       </td>
                       <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
@@ -53,7 +53,11 @@
                       <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
                       <td>
                         @if(isset($item->transaction_type))
-                          <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                          @if($item->transaction_type == 'openingBalance')
+                            <a href="#" class="btn btn-info btn-sm">View</a>
+                          @else
+                            <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                          @endif
                         @elseif(isset($item->order_no))
                         <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
                         @endif

@@ -151,6 +151,26 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
+                    <label>Opening Balance</label>
+                    <input type="number" class="form-control" name="credit" required value="{{old('credit') ?? '0'}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Opening Balance</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Payable / Receiveable</label>
+                    <select class="form-control" name="balance_type" required>
+                      <option value="debit" {{ old('balance_type') == 'debit' ? 'selected' : '' }}>Receiveable</option>
+                      <option value="credit" {{ old('balance_type') == 'credit' ? 'selected' : '' }}>Payable</option>
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">
                       <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>

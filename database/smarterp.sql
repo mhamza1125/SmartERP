@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 27, 2024 at 12:57 PM
+-- Generation Time: Apr 29, 2024 at 06:17 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -198,7 +198,8 @@ INSERT INTO `employees` (`employee_id`, `employee_no`, `department_id`, `employe
 (5, 'E24002', 7, 39, 'Bashir Malik', 'Manoor', 'Basihr', '3460389902345', '03001122334', '03001122334', 43, 'Address of Bashir', 35000, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, voluptatibus. Laudantium corporis animi assumenda reprehenderit ipsum velit reiciendis nostrum esse id quod quisquam quasi veniam vel aliquid officia, voluptate debitis.</div>', '2024-02-25', 1, 1, '2024-02-25 13:56:59', '2024-04-20 07:56:56'),
 (6, 'E24003', 8, 40, 'Adil Nawaz', 'Adil Nawaz', 'Adil', '3460389902345', '03001122334', '03001122334', 44, 'Address of Adil Nawaz', 0, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-25', 1, 1, '2024-02-25 14:02:20', '2024-02-25 14:02:20'),
 (7, 'E24004', 9, 39, 'Haider Ali', 'Abdullah', 'Haider', '3460389902345', '03001122334', '03001122334', 45, 'Address of Haider', 20000, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-26', 1, 1, '2024-02-25 14:03:32', '2024-04-20 07:54:31'),
-(8, 'E24005', 9, 39, 'Uzair Aslam', 'Aslam', 'Uzair', '3460389902345', '03001122334', '03001122334', 46, 'Address of Uzair', 16000, '<p>Desc</p>', '2024-04-20', 1, 1, '2024-04-20 04:54:15', '2024-04-20 07:51:49');
+(8, 'E24005', 9, 39, 'Uzair Aslam', 'Aslam', 'Uzair', '3460389902345', '03001122334', '03001122334', 46, 'Address of Uzair', 16000, '<p>Desc</p>', '2024-04-20', 1, 1, '2024-04-20 04:54:15', '2024-04-20 07:51:49'),
+(11, 'E24006', 8, 39, 'Mubashir', 'Saleem', 'Bashir', '3460389902345', '03001122334', '03001122334', 44, 'Address', 12020, NULL, '2024-04-29', 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04');
 
 -- --------------------------------------------------------
 
@@ -276,7 +277,7 @@ INSERT INTO `heads` (`head_id`, `head_type_id`, `name`, `head_status`, `created_
 (58, 11, 'Zip Vendor', 1, 1, '2024-02-20 07:14:34', '2024-02-20 07:14:34'),
 (59, 11, 'Latex Solution Vendor', 1, 1, '2024-02-20 07:14:53', '2024-02-20 07:14:53'),
 (60, 11, 'Thread Vendor', 1, 1, '2024-02-20 07:15:06', '2024-02-20 07:15:06'),
-(61, 10, 'Boxes', 1, 1, '2024-02-24 11:51:44', '2024-02-24 11:51:44'),
+(61, 10, 'Packing Boxes', 1, 1, '2024-02-24 11:51:44', '2024-04-27 06:38:48'),
 (62, 10, 'Thread', 1, 1, '2024-02-25 13:22:16', '2024-02-25 13:22:16'),
 (63, 10, 'Liquid Items', 1, 1, '2024-02-25 13:22:26', '2024-02-25 13:22:26'),
 (64, 10, 'Rubber Items', 1, 1, '2024-02-25 13:22:41', '2024-02-25 13:22:41'),
@@ -493,9 +494,9 @@ INSERT INTO `materials` (`material_id`, `material_no`, `material_type_id`, `vend
 (5, 'PU-6060', 55, 3, 'Printed Black PU Leather', 49, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:10:31', '2024-04-25 03:49:42'),
 (6, 'Z-3001', 56, 4, 'Double sided A Quality Zip', 50, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:11:20', '2024-04-25 03:49:37'),
 (7, 'Z-3015', 56, 5, 'Single Sided Zip', 50, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:11:37', '2024-04-25 03:49:31'),
-(8, 'B-101', 61, 6, 'Box #1 5KG', 48, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:12', '2024-04-25 03:49:23'),
-(9, 'B-102', 61, 1, 'Box #2 7KG', 48, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:55', '2024-02-25 13:12:55'),
-(10, 'B-1030', 61, 3, 'Box #3 10KG', 48, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:13:14', '2024-04-25 03:49:14'),
+(8, 'B-101', 61, 6, 'Box #1 5KG', 52, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:12', '2024-04-27 10:31:31'),
+(9, 'B-102', 61, 1, 'Box #2 7KG', 52, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:55', '2024-04-27 10:30:52'),
+(10, 'B-1030', 61, 3, 'Box #3 10KG', 52, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:13:14', '2024-04-27 10:30:48'),
 (11, 'Lycra - 2020', 63, 4, 'Hyviz Yellow Lycra', 51, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</div>', 1, '2024-02-25 13:24:00', '2024-04-25 03:49:05'),
 (12, 'Sooter - 1929', 66, 5, 'Sooter # 18', 48, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</div>', 1, '2024-02-25 13:24:45', '2024-04-25 03:48:59'),
 (13, 'Hook - 4010', 66, 6, 'Hooks', 48, '<p><span style=\"color: rgb(0, 0, 0);\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</span><br></p>', 1, '2024-02-25 13:26:04', '2024-04-25 03:48:53'),
@@ -548,7 +549,8 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`order_id`, `order_no`, `job_no`, `customer_id`, `order_status`, `order_date`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
-(16, 'Order 101', 'Job 101', 6, 1, '2024-04-26', '<p>Order 101</p>', 1, '2024-04-26 13:36:18', '2024-04-26 13:36:18');
+(16, 'Order 101', 'Job 101', 6, 1, '2024-04-26', '<p>Order 101</p>', 1, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
+(17, 'Order 202', 'Job 202', 5, 1, '2024-04-27', NULL, 1, '2024-04-27 10:32:56', '2024-04-27 10:32:56');
 
 -- --------------------------------------------------------
 
@@ -579,7 +581,10 @@ INSERT INTO `order_items` (`order_item_id`, `order_id`, `product_type_id`, `quan
 (63, 16, 53, 1000, 0, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
 (64, 16, 54, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
 (65, 16, 55, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
-(66, 16, 56, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51');
+(66, 16, 56, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
+(67, 17, 92, 100, 1000, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
+(68, 17, 93, 100, 1000, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
+(69, 17, 94, 100, 1000, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56');
 
 -- --------------------------------------------------------
 
@@ -642,7 +647,8 @@ INSERT INTO `products` (`product_id`, `category_id`, `material_id`, `article_no`
 (11, 8, '14|13|12', 'LG-301', 'Leather Gloves 301', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Non voluptas accusamus doloremque aspernatur cum vero magnam tempora reiciendis reprehenderit earum ipsam, officia labore ficilis dolores, commodi facere provident, obceacati odio!</span><br></p>', 47, 1, 1, '2024-02-25 12:59:43', '2024-04-26 13:01:44'),
 (12, 9, '7|6|5|4', 'WinG-515', 'Winter Gloves 515', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Non voluptas accusamus doloremque aspernatur cum vero magnam tempora reiciendis reprehenderit earum ipsam, officia labore ficilis dolores, commodi facere provident, obceacati odio!</span><br></p>', 47, 1, 1, '2024-02-25 13:00:37', '2024-04-26 13:00:05'),
 (23, 8, '14|13|12|11|7', 'LG - 4001', 'Leather Gloves 4001', '<p>Desc</p>', 47, 1, 1, '2024-04-25 11:43:02', '2024-04-25 11:43:02'),
-(24, 8, '14|13|12|11', 'LG - 6010', 'Leather Gloves 6010', '<p>Desc</p>', 47, 1, 1, '2024-04-25 11:44:01', '2024-04-25 11:47:19');
+(24, 8, '14|13|12|11', 'LG - 6010', 'Leather Gloves 6010', '<p>Desc</p>', 47, 1, 1, '2024-04-25 11:44:01', '2024-04-25 11:47:19'),
+(25, 1, '14|13|12|11', 'BG 5050', 'Boxing Gloves 5050', NULL, 47, 1, 1, '2024-04-27 07:16:05', '2024-04-27 07:16:05');
 
 -- --------------------------------------------------------
 
@@ -665,51 +671,31 @@ CREATE TABLE `product_boxes` (
 --
 
 INSERT INTO `product_boxes` (`product_box_id`, `product_type_id`, `box_id`, `quantity`, `created_by`, `created_at`, `updated_at`) VALUES
-(13, 49, 1, 50, 1, '2024-04-26 13:06:21', '2024-04-26 13:06:21'),
 (14, 50, 1, 50, 1, '2024-04-26 13:07:06', '2024-04-26 13:07:06'),
 (15, 51, 1, 50, 1, '2024-04-26 13:07:12', '2024-04-26 13:07:12'),
-(16, 52, 1, 50, 1, '2024-04-26 13:07:19', '2024-04-26 13:07:19'),
 (17, 53, 1, 50, 1, '2024-04-26 13:07:23', '2024-04-26 13:07:23'),
-(18, 54, 1, 50, 1, '2024-04-26 13:08:17', '2024-04-26 13:08:17'),
-(19, 55, 1, 50, 1, '2024-04-26 13:08:23', '2024-04-26 13:08:23'),
 (20, 55, 1, 50, 1, '2024-04-26 13:08:25', '2024-04-26 13:08:25'),
 (21, 56, 1, 50, 1, '2024-04-26 13:09:49', '2024-04-26 13:09:49'),
 (22, 89, 2, 30, 1, '2024-04-26 13:14:56', '2024-04-26 13:14:56'),
-(23, 90, 2, 30, 1, '2024-04-26 13:15:03', '2024-04-26 13:15:03'),
-(24, 91, 2, 30, 1, '2024-04-26 13:15:08', '2024-04-26 13:15:08'),
 (25, 75, 2, 50, 1, '2024-04-26 13:30:03', '2024-04-26 13:30:03'),
-(26, 76, 2, 50, 1, '2024-04-26 13:30:11', '2024-04-26 13:30:11'),
 (27, 77, 2, 50, 1, '2024-04-26 13:30:18', '2024-04-26 13:30:18'),
 (28, 78, 2, 50, 1, '2024-04-26 13:30:26', '2024-04-26 13:30:26'),
-(29, 68, 1, 50, 1, '2024-04-26 13:31:01', '2024-04-26 13:31:01'),
-(30, 69, 1, 50, 1, '2024-04-26 13:31:09', '2024-04-26 13:31:09'),
-(31, 70, 1, 50, 1, '2024-04-26 13:31:16', '2024-04-26 13:31:16'),
+(29, 68, 1, 30, 1, '2024-04-26 13:31:01', '2024-04-27 07:14:38'),
+(30, 69, 1, 20, 1, '2024-04-26 13:31:09', '2024-04-27 07:14:08'),
+(31, 70, 1, 10, 1, '2024-04-26 13:31:16', '2024-04-27 07:13:22'),
 (32, 71, 2, 40, 1, '2024-04-26 13:31:45', '2024-04-26 13:31:45'),
-(33, 72, 2, 40, 1, '2024-04-26 13:31:51', '2024-04-26 13:31:51'),
 (34, 73, 2, 40, 1, '2024-04-26 13:31:57', '2024-04-26 13:31:57'),
-(35, 74, 2, 40, 1, '2024-04-26 13:32:03', '2024-04-26 13:32:03'),
 (36, 49, 1, 50, 1, '2024-04-26 13:54:42', '2024-04-26 13:54:42'),
-(37, 50, 1, 50, 1, '2024-04-26 13:54:47', '2024-04-26 13:54:47'),
-(38, 51, 1, 50, 1, '2024-04-26 13:54:52', '2024-04-26 13:54:52'),
 (39, 52, 1, 50, 1, '2024-04-26 13:54:57', '2024-04-26 13:54:57'),
-(40, 53, 1, 50, 1, '2024-04-26 13:55:03', '2024-04-26 13:55:03'),
 (41, 54, 1, 30, 1, '2024-04-26 13:55:27', '2024-04-26 13:55:27'),
-(42, 55, 1, 30, 1, '2024-04-26 13:55:32', '2024-04-26 13:55:32'),
-(43, 56, 1, 30, 1, '2024-04-26 13:55:37', '2024-04-26 13:55:37'),
-(44, 68, 2, 40, 1, '2024-04-26 13:56:02', '2024-04-26 13:56:02'),
-(45, 69, 2, 40, 1, '2024-04-26 13:56:07', '2024-04-26 13:56:07'),
-(46, 70, 2, 40, 1, '2024-04-26 13:56:11', '2024-04-26 13:56:11'),
-(47, 71, 2, 50, 1, '2024-04-26 13:56:27', '2024-04-26 13:56:27'),
 (48, 72, 2, 50, 1, '2024-04-26 13:56:36', '2024-04-26 13:56:36'),
-(49, 73, 2, 50, 1, '2024-04-26 13:56:42', '2024-04-26 13:56:42'),
 (50, 74, 2, 50, 1, '2024-04-26 13:56:48', '2024-04-26 13:56:48'),
-(51, 75, 2, 30, 1, '2024-04-26 13:57:12', '2024-04-26 13:57:12'),
 (52, 76, 2, 30, 1, '2024-04-26 13:57:17', '2024-04-26 13:57:17'),
-(53, 77, 2, 30, 1, '2024-04-26 13:57:22', '2024-04-26 13:57:22'),
-(54, 78, 2, 30, 1, '2024-04-26 13:57:27', '2024-04-26 13:57:27'),
-(55, 89, 2, 50, 1, '2024-04-26 13:57:48', '2024-04-26 13:57:48'),
 (56, 90, 2, 50, 1, '2024-04-26 13:57:54', '2024-04-26 13:57:54'),
-(57, 91, 2, 50, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59');
+(57, 91, 2, 50, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59'),
+(58, 92, 1, 30, 1, '2024-04-27 07:17:19', '2024-04-27 07:17:19'),
+(59, 93, 1, 90, 1, '2024-04-27 08:28:57', '2024-04-27 08:28:57'),
+(60, 94, 1, 40, 1, '2024-04-27 08:29:59', '2024-04-27 10:25:07');
 
 -- --------------------------------------------------------
 
@@ -767,7 +753,14 @@ INSERT INTO `product_costs` (`product_cost_id`, `product_id`, `table_name`, `tab
 (93, 12, 'general', 0, 81, 12, 1, '2024-04-26 13:34:23', '2024-04-26 13:34:23'),
 (94, 12, 'general', 0, 82, 12, 1, '2024-04-26 13:34:23', '2024-04-26 13:34:23'),
 (95, 12, 'general', 0, 83, 12, 1, '2024-04-26 13:34:23', '2024-04-26 13:34:23'),
-(96, 12, 'general', 0, 84, 12, 1, '2024-04-26 13:34:23', '2024-04-26 13:34:23');
+(96, 12, 'general', 0, 84, 12, 1, '2024-04-26 13:34:23', '2024-04-26 13:34:23'),
+(97, 25, 'general', 0, 78, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24'),
+(98, 25, 'general', 0, 79, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24'),
+(99, 25, 'general', 0, 80, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24'),
+(100, 25, 'general', 0, 81, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24'),
+(101, 25, 'general', 0, 82, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24'),
+(102, 25, 'general', 0, 83, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24'),
+(103, 25, 'general', 0, 84, 12, 1, '2024-04-27 07:20:24', '2024-04-27 07:20:24');
 
 -- --------------------------------------------------------
 
@@ -873,10 +866,44 @@ INSERT INTO `product_materials` (`product_material_id`, `product_type_id`, `mate
 (496, 90, 12, 3, 1, '2024-04-26 13:57:54', '2024-04-26 13:57:54'),
 (497, 90, 13, 2, 1, '2024-04-26 13:57:54', '2024-04-26 13:57:54'),
 (498, 90, 14, 3, 1, '2024-04-26 13:57:54', '2024-04-26 13:57:54'),
-(499, 91, 11, 2, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59'),
+(499, 91, 11, 2, 1, '2024-04-26 13:57:59', '2024-04-27 06:50:19'),
 (500, 91, 12, 3, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59'),
 (501, 91, 13, 2, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59'),
-(502, 91, 14, 3, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59');
+(502, 91, 14, 3, 1, '2024-04-26 13:57:59', '2024-04-26 13:57:59'),
+(503, 92, 11, 2, 1, '2024-04-27 07:17:19', '2024-04-27 07:17:19'),
+(504, 92, 12, 3, 1, '2024-04-27 07:17:19', '2024-04-27 07:17:19'),
+(505, 92, 13, 4, 1, '2024-04-27 07:17:19', '2024-04-27 07:17:19'),
+(506, 92, 14, 4, 1, '2024-04-27 07:17:19', '2024-04-27 07:17:19'),
+(507, 93, 1, 3, 1, '2024-04-27 08:28:57', '2024-04-27 08:28:57'),
+(509, 94, 11, 2, 1, '2024-04-27 08:29:59', '2024-04-27 08:29:59'),
+(510, 94, 12, 2, 1, '2024-04-27 08:29:59', '2024-04-27 08:29:59'),
+(511, 94, 13, 2, 1, '2024-04-27 08:29:59', '2024-04-27 08:29:59'),
+(512, 94, 14, 2, 1, '2024-04-27 08:29:59', '2024-04-27 08:29:59'),
+(513, 94, 10, 0.02, 1, '2024-04-27 08:29:59', '2024-04-29 11:10:27'),
+(514, 93, 10, 0.03333333333333333, 1, '2024-04-27 11:07:36', '2024-04-27 11:07:36'),
+(515, 92, 10, 0.03333333333333333, 1, '2024-04-27 11:08:07', '2024-04-27 11:08:07'),
+(516, 49, 9, 0.03333333333333333, 1, '2024-04-28 01:10:52', '2024-04-28 01:10:52'),
+(517, 50, 9, 0.025, 1, '2024-04-28 01:11:01', '2024-04-28 01:11:01'),
+(518, 51, 9, 0.03333333333333333, 1, '2024-04-28 01:11:07', '2024-04-28 01:11:07'),
+(519, 52, 9, 0.025, 1, '2024-04-28 01:11:14', '2024-04-28 01:11:14'),
+(520, 53, 9, 0.025, 1, '2024-04-28 01:11:21', '2024-04-28 01:11:21'),
+(521, 56, 8, 0.01, 1, '2024-04-28 01:12:03', '2024-04-28 01:12:03'),
+(522, 55, 8, 0.01, 1, '2024-04-28 01:12:08', '2024-04-28 01:12:08'),
+(523, 54, 8, 0.01, 1, '2024-04-28 01:12:13', '2024-04-28 01:12:13'),
+(524, 70, 10, 0.03333333333333333, 1, '2024-04-28 01:12:41', '2024-04-28 01:12:41'),
+(525, 69, 10, 0.03333333333333333, 1, '2024-04-28 01:12:46', '2024-04-28 01:12:46'),
+(526, 68, 10, 0.025, 1, '2024-04-28 01:12:51', '2024-04-28 01:12:51'),
+(527, 71, 10, 0.02, 1, '2024-04-28 01:13:15', '2024-04-28 01:13:15'),
+(528, 72, 10, 0.02, 1, '2024-04-28 01:13:20', '2024-04-28 01:13:20'),
+(529, 73, 10, 0.02, 1, '2024-04-28 01:13:26', '2024-04-28 01:13:26'),
+(530, 74, 10, 0.02, 1, '2024-04-28 01:13:32', '2024-04-28 01:13:32'),
+(531, 78, 10, 0.03333333333333333, 1, '2024-04-28 01:13:57', '2024-04-28 01:13:57'),
+(532, 77, 10, 0.025, 1, '2024-04-28 01:14:01', '2024-04-28 01:14:01'),
+(533, 76, 10, 0.025, 1, '2024-04-28 01:14:05', '2024-04-28 01:14:05'),
+(534, 75, 10, 0.025, 1, '2024-04-28 01:14:12', '2024-04-28 01:14:12'),
+(535, 91, 9, 0.03333333333333333, 1, '2024-04-28 01:14:31', '2024-04-28 01:14:31'),
+(536, 90, 9, 0.03333333333333333, 1, '2024-04-28 01:14:35', '2024-04-28 01:14:35'),
+(537, 89, 9, 0.03333333333333333, 1, '2024-04-28 01:14:39', '2024-04-28 01:14:39');
 
 -- --------------------------------------------------------
 
@@ -941,7 +968,10 @@ INSERT INTO `product_types` (`product_type_id`, `product_id`, `size_id`, `color_
 (88, 7, 3, NULL, 1, '2024-04-26 13:13:40', '2024-04-26 13:13:40'),
 (89, 6, 1, NULL, 1, '2024-04-26 13:14:07', '2024-04-26 13:14:07'),
 (90, 6, 2, NULL, 1, '2024-04-26 13:14:07', '2024-04-26 13:14:07'),
-(91, 6, 3, NULL, 1, '2024-04-26 13:14:07', '2024-04-26 13:14:07');
+(91, 6, 3, NULL, 1, '2024-04-26 13:14:07', '2024-04-26 13:14:07'),
+(92, 25, 1, NULL, 1, '2024-04-27 07:16:05', '2024-04-27 07:16:05'),
+(93, 25, 2, NULL, 1, '2024-04-27 07:16:05', '2024-04-27 07:16:05'),
+(94, 25, 3, NULL, 1, '2024-04-27 07:16:05', '2024-04-27 07:16:05');
 
 -- --------------------------------------------------------
 
@@ -968,7 +998,8 @@ CREATE TABLE `purchases` (
 
 INSERT INTO `purchases` (`purchase_id`, `purchase_no`, `order_id`, `vendor_id`, `description`, `purchase_date`, `require_date`, `created_by`, `created_at`, `updated_at`) VALUES
 (24, 'P2404001', NULL, 7, '<p>Detail of New Max Purchase From Abdulrehman</p>', '2024-04-26', '2024-04-26', 1, '2024-04-26 11:30:53', '2024-04-26 11:30:53'),
-(25, 'P2404002', NULL, 7, NULL, '2024-04-26', '2024-04-26', 1, '2024-04-26 11:43:36', '2024-04-26 11:43:36');
+(25, 'P2404002', NULL, 7, NULL, '2024-04-26', '2024-04-26', 1, '2024-04-26 11:43:36', '2024-04-26 11:43:36'),
+(26, 'P2404003', NULL, 5, NULL, '2024-04-27', '2024-04-27', 1, '2024-04-27 10:37:07', '2024-04-27 10:37:07');
 
 -- --------------------------------------------------------
 
@@ -1002,7 +1033,21 @@ INSERT INTO `purchase_items` (`purchase_item_id`, `purchase_id`, `material_id`, 
 (380, 24, 4, 1000, 100, 100000, '2024-04-26 11:30:53', '2024-04-26 11:30:53'),
 (381, 24, 3, 1000, 100, 100000, '2024-04-26 11:30:53', '2024-04-26 11:30:53'),
 (382, 24, 2, 1000, 100, 100000, '2024-04-26 11:30:53', '2024-04-26 11:30:53'),
-(383, 25, 14, 12, 12, 144, '2024-04-26 11:43:36', '2024-04-26 11:43:36');
+(383, 25, 14, 12, 12, 144, '2024-04-26 11:43:36', '2024-04-26 11:43:36'),
+(384, 26, 14, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(385, 26, 13, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(386, 26, 12, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(387, 26, 11, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(388, 26, 10, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(389, 26, 9, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(390, 26, 8, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(391, 26, 7, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(392, 26, 6, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(393, 26, 5, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(394, 26, 4, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(395, 26, 3, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(396, 26, 2, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07'),
+(397, 26, 1, 1000, 100, 100000, '2024-04-27 10:37:07', '2024-04-27 10:37:07');
 
 -- --------------------------------------------------------
 
@@ -1028,7 +1073,10 @@ CREATE TABLE `receives` (
 
 INSERT INTO `receives` (`receive_id`, `receive_no`, `purchase_id`, `receive_date`, `receive_status`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
 (38, 'R1-P2404001', 24, '2024-04-26', 0, NULL, 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(39, 'R1-P2404002', 25, '2024-04-26', 0, NULL, 1, '2024-04-26 11:46:50', '2024-04-26 12:42:15');
+(39, 'R1-P2404002', 25, '2024-04-26', 1, NULL, 1, '2024-04-26 11:46:50', '2024-04-27 06:20:31'),
+(40, 'R1-P2404003', 26, '2024-04-27', 0, NULL, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(41, 'R2-P2404001', 24, '2024-04-27', 0, NULL, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(42, 'R3-P2404001', 24, '2024-04-27', 0, NULL, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00');
 
 -- --------------------------------------------------------
 
@@ -1062,7 +1110,41 @@ INSERT INTO `receive_materials` (`receive_material_id`, `receive_id`, `purchase_
 (195, 38, 380, 900, 2, 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
 (196, 38, 381, 900, 2, 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
 (197, 38, 382, 900, 2, 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(198, 39, 383, 12, 1, 1, '2024-04-26 11:46:50', '2024-04-26 11:46:50');
+(198, 39, 383, 12, 1, 1, '2024-04-26 11:46:50', '2024-04-26 11:46:50'),
+(199, 40, 384, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(200, 40, 385, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(201, 40, 386, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(202, 40, 387, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(203, 40, 388, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(204, 40, 389, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(205, 40, 390, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(206, 40, 391, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(207, 40, 392, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(208, 40, 393, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(209, 40, 394, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(210, 40, 395, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(211, 40, 396, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(212, 40, 397, 1000, 2, 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(213, 41, 373, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(214, 41, 374, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(215, 41, 375, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(216, 41, 376, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(217, 41, 377, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(218, 41, 378, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(219, 41, 379, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(220, 41, 380, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(221, 41, 381, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(222, 41, 382, 50, 2, 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(223, 42, 373, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(224, 42, 374, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(225, 42, 375, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(226, 42, 376, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(227, 42, 377, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(228, 42, 378, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(229, 42, 379, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(230, 42, 380, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(231, 42, 381, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(232, 42, 382, 20, 2, 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00');
 
 -- --------------------------------------------------------
 
@@ -1086,7 +1168,9 @@ CREATE TABLE `returns` (
 --
 
 INSERT INTO `returns` (`return_id`, `receive_id`, `return_no`, `return_date`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
-(33, 39, 'Return1-R1-P2404002', '2024-04-26', '<p>Desc</p>', 1, '2024-04-26 12:40:52', '2024-04-26 12:40:52');
+(33, 39, 'Return1-R1-P2404002', '2024-04-26', '<p>Desc</p>', 1, '2024-04-26 12:40:52', '2024-04-26 12:40:52'),
+(34, 42, 'Return1-R3-P2404001', '2024-04-27', NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(35, 42, 'Return2-R3-P2404001', '2024-04-27', NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20');
 
 -- --------------------------------------------------------
 
@@ -1110,7 +1194,27 @@ CREATE TABLE `return_materials` (
 --
 
 INSERT INTO `return_materials` (`return_material_id`, `return_id`, `receive_material_id`, `quantity`, `remarks`, `created_by`, `created_at`, `updated_at`) VALUES
-(111, 33, 198, 12, 'Testing Return', 1, '2024-04-26 12:40:52', '2024-04-26 12:40:52');
+(111, 33, 198, 12, 'Testing Return', 1, '2024-04-26 12:40:52', '2024-04-26 12:40:52'),
+(112, 34, 223, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(113, 34, 224, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(114, 34, 225, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(115, 34, 226, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(116, 34, 227, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(117, 34, 228, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(118, 34, 229, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(119, 34, 230, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(120, 34, 231, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(121, 34, 232, 5, NULL, 1, '2024-04-27 13:15:53', '2024-04-27 13:15:53'),
+(122, 35, 223, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(123, 35, 224, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(124, 35, 225, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(125, 35, 226, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(126, 35, 227, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(127, 35, 228, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(128, 35, 229, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(129, 35, 230, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(130, 35, 231, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
+(131, 35, 232, 10, NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20');
 
 -- --------------------------------------------------------
 
@@ -1149,7 +1253,8 @@ INSERT INTO `salaries` (`salary_id`, `employee_id`, `amount`, `status`, `created
 (1, 8, 15000, 0, 1, '2024-04-20 04:54:16', '2024-04-20 07:51:49'),
 (3, 8, 16000, 1, 1, '2024-04-20 07:51:49', '2024-04-20 07:51:49'),
 (4, 7, 20000, 1, 1, '2024-04-20 07:56:29', '2024-04-20 07:56:29'),
-(5, 5, 35000, 1, 1, '2024-04-20 07:56:56', '2024-04-20 07:56:56');
+(5, 5, 35000, 1, 1, '2024-04-20 07:56:56', '2024-04-20 07:56:56'),
+(6, 11, 12020, 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04');
 
 -- --------------------------------------------------------
 
@@ -1180,7 +1285,9 @@ CREATE TABLE `stocks` (
 INSERT INTO `stocks` (`stock_id`, `issue_id`, `stock_no`, `order_id`, `table_name`, `employee_id`, `stock_type`, `stock_date`, `stock_status`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
 (82, NULL, 'I24040001', 16, 'vendor', 6, 2, '2024-04-27', 2, NULL, 1, '2024-04-26 14:05:16', '2024-04-26 14:43:24'),
 (83, 82, 'R1-I24040001', 16, 'vendor', 6, 1, '2024-04-27', 2, NULL, 1, '2024-04-26 14:18:45', '2024-04-26 14:18:45'),
-(84, 82, 'R2-I24040001', 16, 'vendor', 6, 1, '2024-04-27', 1, NULL, 1, '2024-04-26 14:33:56', '2024-04-26 14:33:56');
+(84, 82, 'R2-I24040001', 16, 'vendor', 6, 1, '2024-04-27', 1, NULL, 1, '2024-04-26 14:33:56', '2024-04-26 14:33:56'),
+(85, NULL, 'I24040002', 17, 'employee', 5, 2, '2024-04-27', 1, NULL, 1, '2024-04-27 10:53:46', '2024-04-27 11:42:38'),
+(86, 85, 'R1-I24040002', 17, 'employee', 5, 1, '2024-04-27', 1, NULL, 1, '2024-04-27 11:42:38', '2024-04-27 11:42:38');
 
 -- --------------------------------------------------------
 
@@ -1230,7 +1337,13 @@ INSERT INTO `stock_items` (`stock_item_id`, `stock_id`, `product_type_id`, `mate
 (167, 83, 50, 0, 7, 72, '78', '12', 1, '2024-04-26 14:18:45', '2024-04-26 14:43:24'),
 (168, 83, 51, 0, 8, 72, '78', '12', 1, '2024-04-26 14:18:45', '2024-04-26 14:43:24'),
 (169, 83, 52, 0, 4, 72, '78', '12', 1, '2024-04-26 14:18:45', '2024-04-26 14:43:24'),
-(171, 84, 54, 0, 10, 73, '78|79', '12|12', 1, '2024-04-26 14:33:56', '2024-04-26 14:42:56');
+(171, 84, 54, 0, 10, 73, '78|79', '12|12', 1, '2024-04-26 14:33:56', '2024-04-26 14:42:56'),
+(172, 85, 94, 11, 250, 0, '0', '0', 1, '2024-04-27 10:53:46', '2024-04-27 10:53:46'),
+(173, 85, 94, 12, 250, 0, '0', '0', 1, '2024-04-27 10:53:46', '2024-04-27 10:53:46'),
+(174, 85, 94, 13, 250, 0, '0', '0', 1, '2024-04-27 10:53:46', '2024-04-27 10:53:46'),
+(175, 85, 94, 14, 250, 0, '0', '0', 1, '2024-04-27 10:53:46', '2024-04-27 10:53:46'),
+(176, 85, 94, 10, 4, 0, '0', '0', 1, '2024-04-27 10:53:46', '2024-04-27 10:53:46'),
+(177, 86, 94, 0, 120, 74, '84', '12', 1, '2024-04-27 11:42:38', '2024-04-27 11:42:38');
 
 -- --------------------------------------------------------
 
@@ -1267,7 +1380,17 @@ INSERT INTO `transactions` (`transaction_id`, `transaction_to`, `transaction_typ
 (16, 'employee', 'receiveAdvance', 0, NULL, 7, 0, NULL, 5000, '2024-04-27', '<p>123</p>', 1, '2024-04-27 03:30:58', '2024-04-27 03:30:58'),
 (17, 'vendor', 'wages', 0, NULL, 6, 0, 2000, NULL, '2024-04-27', NULL, 1, '2024-04-27 04:24:11', '2024-04-27 04:24:11'),
 (18, 'vendor', 'advance', 0, NULL, 6, 0, 50000, NULL, '2024-04-27', NULL, 1, '2024-04-27 04:26:02', '2024-04-27 04:26:02'),
-(19, 'vendor', 'receiveAdvance', 0, NULL, 6, 0, NULL, 20000, '2024-04-27', NULL, 1, '2024-04-27 04:26:12', '2024-04-27 04:26:12');
+(19, 'vendor', 'receiveAdvance', 0, NULL, 6, 0, NULL, 20000, '2024-04-27', NULL, 1, '2024-04-27 04:26:12', '2024-04-27 04:26:12'),
+(20, 'vendor', 'payment', 0, 25, 7, 0, 22000, NULL, '2024-04-28', '<p>&nbsp;&nbsp;&nbsp;&nbsp;Twenty Two Thousand Paid</p>', 1, '2024-04-28 06:18:22', '2024-04-29 07:45:49'),
+(21, 'vendor', 'openingBalance', 0, NULL, 11, 0, NULL, 10000, '2024-04-29', NULL, 1, '2024-04-29 10:10:04', '2024-04-29 10:22:14'),
+(22, 'vendor', 'openingBalance', 0, NULL, 7, 0, NULL, 0, '2024-04-29', NULL, 1, '2024-04-29 10:22:52', '2024-04-29 10:22:52'),
+(23, 'vendor', 'openingBalance', 0, NULL, 6, 0, 1000, NULL, '2024-04-29', NULL, 1, '2024-04-29 10:23:56', '2024-04-29 10:23:56'),
+(24, 'vendor', 'openingBalance', 0, NULL, 5, 0, 15000, NULL, '2024-04-29', NULL, 1, '2024-04-29 10:24:10', '2024-04-29 10:24:10'),
+(25, 'vendor', 'openingBalance', 0, NULL, 4, 0, NULL, 10000, '2024-04-29', NULL, 1, '2024-04-29 10:24:20', '2024-04-29 10:24:20'),
+(26, 'vendor', 'openingBalance', 0, NULL, 3, 0, NULL, 12000, '2024-04-29', NULL, 1, '2024-04-29 10:24:32', '2024-04-29 10:24:32'),
+(27, 'vendor', 'openingBalance', 0, NULL, 1, 0, 5000, NULL, '2024-04-29', NULL, 1, '2024-04-29 10:24:42', '2024-04-29 10:24:42'),
+(28, 'employee', 'openingBalance', 0, NULL, 11, 0, 10000, NULL, '2024-04-29', NULL, 1, '2024-04-29 10:53:05', '2024-04-29 10:55:08'),
+(29, 'customer', 'openingBalance', 0, NULL, 6, 0, NULL, 50000, '2024-04-29', NULL, 1, '2024-04-29 10:56:20', '2024-04-29 10:56:20');
 
 -- --------------------------------------------------------
 
@@ -1328,7 +1451,8 @@ INSERT INTO `vendors` (`vendor_id`, `vendor_type_id`, `vendor_no`, `vendor_type`
 (4, 67, 'V24003', 0, '0', 'Rouf', 'Abdul Rouf', '03001122334', '03001122334', 46, 'Address of Box Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:09:18', '2024-04-26 11:11:22'),
 (5, 68, 'V24004', 0, '11', 'Arslan', 'Arslan Cheema', '03001122334', '03001122334', 43, 'Address of Liquid Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:10:00', '2024-04-26 11:10:13'),
 (6, 60, 'V24005', 1, '0', 'Shehzad', 'Shehzad Ahmed Stitcher', '03001122334', '03001122334', 43, 'Address of Vendor V24005', '<p>Desc</p>', 1, '2024-03-28 13:37:11', '2024-04-26 11:09:18'),
-(7, 69, 'V24006', 0, '14|13|12|11|10|9|8|7|3', 'Abdulrehman', 'Abdulrehman Tahir', '03001122334', '03001122334', 45, 'Addresss', '<p><br></p>', 1, '2024-04-25 06:24:36', '2024-04-26 11:07:45');
+(7, 69, 'V24006', 0, '14|13|12|11|10|9|8|7|3', 'Abdulrehman', 'Abdulrehman Tahir', '03001122334', '03001122334', 45, 'Addresss', '<p><br></p>', 1, '2024-04-25 06:24:36', '2024-04-26 11:07:45'),
+(11, 69, 'V24007', 0, '0', 'Umer', 'Umer Malik', '03001122334', '03001122334', 44, 'Address of Vendor Umer Malik', NULL, 1, '2024-04-29 10:10:04', '2024-04-29 10:10:04');
 
 --
 -- Indexes for dumped tables
@@ -1595,7 +1719,7 @@ ALTER TABLE `customers`
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `employee_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `employee_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -1637,13 +1761,13 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `order_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `order_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+  MODIFY `order_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
@@ -1655,67 +1779,67 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `product_id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `product_boxes`
 --
 ALTER TABLE `product_boxes`
-  MODIFY `product_box_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `product_box_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT for table `product_costs`
 --
 ALTER TABLE `product_costs`
-  MODIFY `product_cost_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `product_cost_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT for table `product_materials`
 --
 ALTER TABLE `product_materials`
-  MODIFY `product_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=503;
+  MODIFY `product_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=538;
 
 --
 -- AUTO_INCREMENT for table `product_types`
 --
 ALTER TABLE `product_types`
-  MODIFY `product_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `product_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
 
 --
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `purchase_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `purchase_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `purchase_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=384;
+  MODIFY `purchase_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=398;
 
 --
 -- AUTO_INCREMENT for table `receives`
 --
 ALTER TABLE `receives`
-  MODIFY `receive_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `receive_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `receive_materials`
 --
 ALTER TABLE `receive_materials`
-  MODIFY `receive_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=199;
+  MODIFY `receive_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
 
 --
 -- AUTO_INCREMENT for table `returns`
 --
 ALTER TABLE `returns`
-  MODIFY `return_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `return_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `return_materials`
 --
 ALTER TABLE `return_materials`
-  MODIFY `return_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+  MODIFY `return_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=132;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -1727,25 +1851,25 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `salaries`
 --
 ALTER TABLE `salaries`
-  MODIFY `salary_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `salary_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `stock_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+  MODIFY `stock_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
 
 --
 -- AUTO_INCREMENT for table `stock_items`
 --
 ALTER TABLE `stock_items`
-  MODIFY `stock_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `stock_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=178;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `transaction_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `transaction_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -1757,7 +1881,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `vendors`
 --
 ALTER TABLE `vendors`
-  MODIFY `vendor_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `vendor_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

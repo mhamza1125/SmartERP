@@ -23,6 +23,15 @@ class ReceiveRepository implements GlobalInterface {
         ->first();
     }
 
+    public function pending(){
+        // Used to Add Return
+        return Receive::where('receives.receive_status', '0')
+        ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
+        ->orderBy('receives.created_at', 'desc')->get();
+    }
+
     public function refNo($id) {
         $yearMonth = Carbon::now()->format('ym');
         $count = Receive::where('purchase_id', $id)->count();

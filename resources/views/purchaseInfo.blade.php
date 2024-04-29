@@ -41,12 +41,22 @@
                   <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="true">Purchase</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Receive-All</a>
+                  <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">All Record</a>
                 </li>
-                @if($count > 1)
+                <li class="nav-item">
+                  <a class="nav-link" id="payment-tab" data-toggle="tab" href="#payment" role="tab" aria-controls="payment" aria-selected="false">Payment Record</a>
+                </li>
+                @if($count >= 1)
                   @for($i=1; $i<=$count; $i++)
                     <li class="nav-item">
-                      <a class="nav-link" id="tab-{{ $i }}" data-toggle="tab" href="#tab-content-{{ $i }}" role="tab" aria-controls="tab-content-{{ $i }}" aria-selected="false">{{$totalTimes[$i-1]['receive_no']}}</a>
+                      <a class="nav-link" id="tab-{{ $i }}" data-toggle="tab" href="#tab-content-{{ $i }}" role="tab" aria-controls="tab-content-{{ $i }}" aria-selected="false">{{$receiveTimes[$i-1]['receive_no']}}</a>
+                    </li>
+                  @endfor
+                @endif
+                @if($count2 >= 1)
+                  @for($i=1; $i<=$count2; $i++)
+                    <li class="nav-item">
+                      <a class="nav-link" id="rtab-{{ $i }}" data-toggle="tab" href="#rtab-content-{{ $i }}" role="tab" aria-controls="rtab-content-{{ $i }}" aria-selected="false">{{$returnTimes[$i-1]['return_no']}}</a>
                     </li>
                   @endfor
                 @endif
@@ -58,8 +68,8 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        <th>Material No</th>
+                        <th>Material Name</th>
                         <th>Unit</th>
                         <th>Quantity</th>
                         <th>Rate</th>
@@ -99,11 +109,12 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        <th>Material No</th>
+                        <th>Material Name</th>
                         <th>Units</th>
                         <th>Order Qty</th>
                         <th>Receive Qty</th>
+                        <th>Return Qty</th>
                         <th>Remaining</th>
                         <th>Action</th>
                       </tr>
@@ -123,7 +134,8 @@
                             <td>{{$item->hname}}</td>
                             <td>{{$item->quantity}}</td>
                             <td>{{$item->rqty}}</td>
-                            <td>{{$item->quantity - $item->rqty}}</td>
+                            <td>{{ $item->rqty2 ?? '0' }}</td>
+                            <td>{{$item->quantity - $item->rqty + $item->rqty2}}</td>
                             <td><button type="button" class="btn btn-icon btn-sm btn-info" data-toggle="modal" data-target="#exampleModal{{$item->purchase_item_id}}"><i class="fas fa-info-circle"></i></button></td>
                           </tr>
                         @endforeach
@@ -132,28 +144,70 @@
                     <tfoot>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        <th>Material No</th>
+                        <th>Material Name</th>
                         <th>Units</th>
                         <th>Order Qty</th>
                         <th>Receive Qty</th>
+                        <th>Return Qty</th>
                         <th>Remaining</th>
                         <th>Action</th>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
+                {{-- Paymetnt Record --}}
+                <div class="tab-pane fade" id="payment" role="tabpanel" aria-labelledby="payment-tab">  
+                  <table class="table table-sm table-striped">
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Amount Paid</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @if($transaction->isEmpty())
+                        <tr>
+                          <td valign="top" colspan="7" class="dataTables_empty text-center">No data available in table</td>
+                        </tr>
+                      @endif
+                      @php $total2 = 0; @endphp
+                      @if($transaction->count())
+                        @foreach($transaction as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>{{number_format($item->debit)}}</td>
+                            <td>{{$item->transaction_date}}</td>
+                            <td><a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a></td>
+                          </tr>
+                          @php $total2 += $item->debit ; @endphp
+                        @endforeach
+                      @endif
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th></th>
+                        <th>Total: {{ number_format($total) }} | Paid: {{ number_format($total2) }}</th>
+                        <th>Remaining: {{ number_format($total - $total2) }}</th>
+                        <th></th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
                 {{-- Receive Times --}}
-                @if($count > 1)
+                @if($count >= 1)
                   @for($i=1; $i<=$count; $i++)  
                     @php $loopIndex = 1; @endphp
                     <div class="tab-pane fade" id="tab-content-{{ $i }}" role="tabpanel" aria-labelledby="tab-{{ $i }}">
+                      <a href="{{ route('receive.edit', $receiveTimes[$i-1]['receive_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
                       <table class="table table-sm table-striped">
                         <thead>
                           <tr>
                             <th>Sr.</th>
-                            <th>Code</th>
-                            <th>Material</th>
+                            <th>Material No</th>
+                            <th>Material Name</th>
                             <th>Units</th>
                             <th>Receive Qty</th>
                             <th>Inspection Status</th>
@@ -161,7 +215,7 @@
                         </thead>
                         <tbody>
                           @foreach($receiveAll as $item)
-                            @if($totalTimes[$i-1]['receive_no'] == $item->receive_no)
+                            @if($receiveTimes[$i-1]['receive_no'] == $item->receive_no)
                               <tr>
                                 <td>{{$loopIndex++}}</td>
                                 <td>{{$item->material_no}}</td>
@@ -178,11 +232,56 @@
                         <tfoot>
                           <tr>
                             <th>Sr.</th>
-                            <th>Code</th>
-                            <th>Material</th>
+                            <th>Material No</th>
+                            <th>Material Name</th>
                             <th>Units</th>
                             <th>Receive Qty</th>
                             <th>Inspection Status</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  @endfor
+                @endif
+                {{-- Return Times --}}
+                @if($count2 >= 1)
+                  @for($i=1; $i<=$count2; $i++)  
+                    @php $loopIndex = 1; @endphp
+                    <div class="tab-pane fade" id="rtab-content-{{ $i }}" role="tabpanel" aria-labelledby="rtab-{{ $i }}">
+                      <a href="{{ route('return.edit', $returnTimes[$i-1]['return_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
+                      <table class="table table-sm table-striped">
+                        <thead>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Material No</th>
+                            <th>Material Name</th>
+                            <th>Units</th>
+                            <th>Return Qty</th>
+                            <th>Remarks</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @foreach($returnAll as $item)
+                            @if($returnTimes[$i-1]['return_no'] == $item->return_no)
+                              <tr>
+                                <td>{{$loopIndex++}}</td>
+                                <td>{{$item->material_no}}</td>
+                                <td>{{$item->name}}</td>
+                                <td>{{$item->hname}}</td>
+                                <td>{{$item->rqty}}</td>
+                                <td>{{$item->remarks}}</td>
+                              </tr>
+                            @endif
+                          @endforeach
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Material No</th>
+                            <th>Material Name</th>
+                            <th>Units</th>
+                            <th>Return Qty</th>
+                            <th>Remarks</th>
                           </tr>
                         </tfoot>
                       </table>
@@ -225,7 +324,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @php $sr = 1; $total = 0; @endphp
+                  @php $sr = 1; $total = 0; $total2 = 0; @endphp
                   @foreach($receiveAll as $receive)
                     @if($purchase->purchase_item_id == $receive->purchase_item_id)
                     <tr>
@@ -237,17 +336,30 @@
                     </tr>
                     @endif
                   @endforeach
+                  @foreach($returnAll as $return)
+                    @if($purchase->purchase_item_id == $return->purchase_item_id)
+                    <tr>
+                      <td>{{$sr++}}</td>
+                      <td>{{$return->return_no}}</td>
+                      <td>{{$return->rqty}}</td>
+                      <td>{{ date('Y-m-d', strtotime($return->created_at)) }}</td>
+                      @php $total2 += $return->rqty @endphp
+                    </tr>
+                    @endif
+                  @endforeach
                 </tbody>
                 <tfoot>
                   <tr>
                     <th></th>
                     <th>Order Qty: {{$purchase->quantity}}</th>
-                    <th>Received: {{$total}}</th>
-                    <th>Remaining: {{$purchase->quantity - $total}}</th>
+                    <th>Received: {{$total}} <br>
+                        Returned: {{$total2}}</th>
+                    <th>Remaining: {{$purchase->quantity - $total + $total2}}</th>
                   </tr>
                   <tr>
                     <th colspan="4">
-                      <button class="btn btn-primary btn-print float-right" onclick="printPModal('exampleModal{{$purchase->purchase_item_id}}')">Print Disables Other Page Btn After</button>
+                      <button class="btn btn-primary btn-print float-right" onclick="printPModal('exampleModal{{$purchase->purchase_item_id}}')">Print</button>
+
                     </th>
                   </tr>
                 </tfoot>

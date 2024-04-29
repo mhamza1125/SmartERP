@@ -11,6 +11,7 @@
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('customer.edit', $customer['customer_id']) }}" class="btn btn-primary">Edit</a>
+                <a href="{{ route('customer.detail', $customer['customer_id']) }}" class="btn btn-primary">Record</a>
               </div>
             </div>
           </div>

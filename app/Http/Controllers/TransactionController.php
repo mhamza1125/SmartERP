@@ -10,6 +10,7 @@ use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\VendorRepository;
+use App\Repositories\PurchaseRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmployeeRepository;
 use App\Http\Requests\TransactionRequest;
@@ -23,6 +24,7 @@ class TransactionController extends Controller
     protected $headRepository;
     protected $imageRepository;
     protected $vendorRepository;
+    protected $purchaseRepository;
     protected $employeeRepository;
     protected $transactionRepository;
 
@@ -33,6 +35,7 @@ class TransactionController extends Controller
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         VendorRepository $vendorRepository,
+        PurchaseRepository $purchaseRepository,
         EmployeeRepository $employeeRepository,
         TransactionRepository $transactionRepository,
     ){
@@ -43,6 +46,7 @@ class TransactionController extends Controller
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
         $this->vendorRepository = $vendorRepository;
+        $this->purchaseRepository = $purchaseRepository;
         $this->employeeRepository = $employeeRepository;
         $this->transactionRepository = $transactionRepository;
     }
@@ -159,6 +163,13 @@ class TransactionController extends Controller
         $customerId = $request->input('customerId');
         $order = $this->orderRepository->getOrder($customerId);
         return response()->json(['data' => $order]);
+    }
+
+    public function ajaxPurchase(Request $request){
+        $tableId = $request->input('vendorId');
+        error_log("Vendor ID: " . $tableId);
+        $purchase = $this->purchaseRepository->getPurchase($tableId);
+        return response()->json(['data' => $purchase]);
     }
 
     public function store(TransactionRequest $request){

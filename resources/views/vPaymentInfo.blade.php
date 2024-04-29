@@ -34,9 +34,10 @@
             <div class="col-md-5">
               <table class="table table-sm">
                 <tbody>
-                  <tr><td><b>Employee:</b> {{$transaction['vendor_no']}} - {{$transaction['fname']}}</td></tr>
+                  <tr><td><b>Vendor:</b> {{$transaction['vendor_no']}} - {{$transaction['fname']}}</td></tr>
                   <tr><td><b>Pay Date:</b> {{$transaction['transaction_date']}}</td></tr>
                   <tr><td><b>Payment Type:</b> {{ucfirst($transaction['transaction_type'])}}</td></tr>
+                  <tr><td><b>Purchase No:</b> {{$transaction['purchase_no']}}</td></tr>
                     @if($transaction['payee_bank_id'])
                     <tr>
                       <tr><td><b>Received By:</b> {{$transaction['rname']}}</td></tr>

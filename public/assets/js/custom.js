@@ -426,8 +426,22 @@ $(document).ready(function() {
 // End - Order Script
 
 // Start - Product Material Script
-$(document).ready(function() { // This is Updated No Need of JS
+$(document).ready(function() {
     if (typeof isPMPage !== 'undefined') {
+        var bqtyInput = document.getElementById('bqty');
+        var mqtyInput = document.getElementById('mqty');
+
+        bqtyInput.addEventListener('input', function() {
+            var bqtyValue = parseFloat(bqtyInput.value);
+            if (!isNaN(bqtyValue) && bqtyValue !== 0) {
+                var result = 1 / bqtyValue;
+                mqtyInput.value = result.toFixed(20);
+            } else {
+                mqtyInput.value = '';
+            }
+        });
+    }
+    if (typeof isPMPageOld !== 'undefined') { // This is Updated No Need of JS
         var tableRowCount = 1;
         updateSrNumbers();
 
@@ -542,25 +556,29 @@ $(document).ready(function() { // This is Updated No Need of JS
 // Start - Receive Material Script
 document.addEventListener('input', function(event) {
     if (event.target.classList.contains('receive-qty')) {
-      var row = event.target.closest('tr');
-      var received = parseInt(row.querySelector('.received').innerText, 10) || 0;
-      var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
-      var enteredQuantity = parseInt(event.target.value, 10) || 0;
-      var remaining = total - received - enteredQuantity;
+        var row = event.target.closest('tr');
+        var received = parseInt(row.querySelector('.received').innerText, 10) || 0;
+        var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
+        var enteredQuantity = parseInt(event.target.value, 10) || 0;
+        var remaining = total - received - enteredQuantity;
 
-      // Ensure the entered quantity does not exceed the remaining quantity
-      var maxQuantity = total - received;
-      event.target.setAttribute('max', maxQuantity);
+        // Ensure the entered quantity does not exceed the remaining quantity
+        var maxQuantity = total - received;
+        event.target.setAttribute('max', maxQuantity);
 
-      // Update the remaining input value
-      var remainingInput = row.querySelector('.remaining');
-      remainingInput.value = remaining >= 0 ? remaining : 0;
+        // Update the remaining input value
+        var remainingInput = row.querySelector('.remaining');
+        remainingInput.value = remaining >= 0 ? remaining : 0;
+        // remainingInput.value = remaining;
 
-      // If the entered quantity exceeds the max, adjust it to the max
-      if (enteredQuantity > maxQuantity) {
-        event.target.value = maxQuantity;
-        remainingInput.value = 0;
-      }
+        // If the entered quantity exceeds the max, adjust it to the max
+        if (enteredQuantity > maxQuantity) {
+            event.target.value = maxQuantity;
+            remainingInput.value = 0;
+            // event.target.classList.add('exceeded');
+        } else {
+            // event.target.classList.remove('exceeded');
+        }
     }
 });
 // End - Receive Material Script
@@ -1281,7 +1299,6 @@ $(document).ready(function() {
             // Re-initialize Select2 for visible select elements
             $('.select2:visible').select2();
         }
-
         
         // Edit Bank Detail using Modal
         toggleSections();
@@ -1334,6 +1351,27 @@ $(document).ready(function () {
                 },
             });
         });
+
+        $('#payee_id').on('change', function() {
+            var vendorId = $(this).val();
+            $.ajax({
+                url: ajaxPurchaseUrl,
+                type: "GET",
+                data: {vendorId: vendorId},
+                dataType: "json",
+                success: function(response) {
+                    var purchaseSelect = $('#order_id');
+                    purchaseSelect.empty().append('<option value="" selected disabled>Select Purchase</option>');
+                    // Populate options dynamically based on the response
+                    $.each(response.data, function(index, item) {
+                        var optionText = item.purchase_no + (item.job_no ? ' - ' + item.job_no : ' - Default Purchase');
+                        purchaseSelect.append(new Option(optionText, item.purchase_id));
+                    });                    
+                    purchaseSelect.trigger('change');
+                },
+            });
+        });
+
         $('#payee_id').trigger('change');
     }
 });

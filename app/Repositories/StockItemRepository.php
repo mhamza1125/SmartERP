@@ -150,6 +150,24 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function orderStatus($id){
+        // Order Current Status
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('order_items', 'order_items.product_type_id', '=', 'product_types.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+        ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->where('order_items.order_id', $id)
+        ->where('stock_items.material_id', '=', 0)
+        ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+        ->get();
+    }
+
     public function pStockGet($id){
         // Product Stock AjaxPM
         return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id')

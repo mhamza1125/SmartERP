@@ -29,6 +29,20 @@ class PurchaseItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function estimate($id){
+        // Material Purchase Against Order
+        return PurchaseItem::where('purchases.order_id', $id)
+            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+            ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('*', 'materials.material_id', 'heads.name as hname', 'materials.name', 'vendors.fname', 'vendor_no')
+            ->selectRaw('CEIL(SUM(CEIL(purchase_items.quantity))) as total_qty')
+            ->orderBy('materials.vendor_id')->orderBy('materials.material_id')
+            ->groupBy('materials.material_id')
+            ->get();
+    }
+
     public function editReceive($pid, $rid){
         return PurchaseItem::where('purchase_id', $pid)
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')

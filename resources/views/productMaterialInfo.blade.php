@@ -18,26 +18,29 @@
             <h6>Product Packing</h6>
             <table class="table table-sm">
               <tbody>
-                <tr>
-                  <td><b>Article No: </b> {{$productType['article_no']}} - Size {{$productType['hname']}}</td>
-                  <td><b>Quantity in Box: </b> {{$productBox['quantity']}} {{$productType['uname']}}</td>
-                  <td><b>Box: </b> {{$productBox['box_no']}} - {{$productBox['name']}}</td>
-                </tr>
-                <tr>
-                  <td><b>Box Type: </b> {{$productBox['hname']}}</td>
-                  <td><b>Box Dimension: </b> {{$productBox['length']}} x {{$productBox['width']}} x {{$productBox['height']}} cms</td>
-                  <td><b>Box Weight: </b> {{$productBox['weight']}} Grams</td>
-                </tr>
-                <tr>
-                  <td colspan="3">
-                    <div class="row">
-                      <div class="col-md-1"><b>Details: </b></div>
-                      <div class="col-md-11">
-                        @php echo $productBox['description'] @endphp
+                @php $item = $productMaterial->firstWhere('material_type_id', '61'); @endphp
+                @if($item)
+                  <tr>
+                    <td><b>Article No: </b> {{$productType['article_no']}}</td>
+                    <td><b>Product Name: </b> {{$productType['name']}}</td>
+                    <td><b>Size: </b> {{$productType['hname']}}</td>
+                  </tr>
+                  <tr>
+                    <td><b>Box No: </b> {{$item->material_no}}</td>
+                    <td><b>Box Name: </b> {{$item->name}}</td>
+                    <td><b>Quantity in Box: </b> {{1/$item->quantity}} {{$item->hname}}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3">
+                      <div class="row">
+                        <div class="col-md-1"><b>Details: </b></div>
+                        <div class="col-md-11">
+                          @php echo $item->description @endphp
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                @endif
               </tbody>
             </table>
             
@@ -46,6 +49,7 @@
               <thead>
                 <tr>
                   <th>Sr.</th>
+                  <th>Material No</th>
                   <th>Material</th>
                   <th>Quantity</th>
                   <th>Unit</th>
@@ -57,15 +61,19 @@
                   <th>Article No: &nbsp {{$productType['article_no']}}</th>
                   <th>Size: &nbsp {{$productType['hname']}}</th>
                   <th></th>
+                  <th></th>
                 </tr>
                 @if($productMaterial->count())
                   @foreach($productMaterial as $item)
-                  <tr>
-                    <td>{{$loop->index + 1}}</td>
-                    <td>{{$item->name}}</td>
-                    <td>{{$item->quantity}}</td>
-                    <td>{{$item->hname}}</td>
-                  </tr>
+                    @unless($item->material_type_id == '61')
+                      <tr>
+                        <td>{{$loop->index + 1}}</td>
+                        <td>{{$item->material_no}}</td>
+                        <td>{{$item->name}}</td>
+                        <td>{{$item->quantity}}</td>
+                        <td>{{$item->hname}}</td>
+                      </tr>
+                    @endunless
                   @endforeach
                 @endif
               </tbody>

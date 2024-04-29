@@ -80,7 +80,7 @@
                               <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
                             </td>
                             <td class="form-group">
-                              <input type="number" class="qty form-control" name="quantity[]" placeholder="0" value="{{$qty}}">
+                              <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0" value="{{$qty}}">
                             </td>
                             <td class="form-group">
                               <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received - $qty}}" readonly>

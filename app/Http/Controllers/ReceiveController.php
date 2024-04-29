@@ -32,8 +32,10 @@ class ReceiveController extends Controller
     }
 
     public function index(){
+        $purchase = $this->purchaseRepository->all();
         $receive = $this->receiveRepository->all();
         return view('receive', [
+            'purchase' => $purchase,
             'receive' => $receive,
         ]); 
     }

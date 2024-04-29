@@ -24,6 +24,7 @@ class PurchaseRequest extends FormRequest
         return [
             'purchase_no' => 'required|max:255',
             'vendor_id' => 'required',
+            'order_id' => 'required',
             'description' => '',
             'purchase_date' => 'required',
             'require_date' => 'required',

@@ -56,7 +56,11 @@
                       <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
                       <td>
                         @if(isset($item->transaction_type))
-                          <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                          @if($item->transaction_type == 'openingBalance')
+                            <a href="#" class="btn btn-info btn-sm">View</a>
+                          @else
+                            <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                          @endif
                         @elseif(isset($item->return_no))
                         <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
                         @elseif(isset($item->purchase_no))

@@ -35,6 +35,37 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
+                    <label>Payment Type</label>
+                    <select class="form-control" name="transaction_type" required id="transaction_type">
+                      <option value="payment" {{ old('transaction_type') == 'payment' ? 'selected' : '' }}>Payment</option>
+                      <option value="wages" {{ old('transaction_type') == 'wages' ? 'selected' : '' }}>Wages</option>
+                      <option value="advance" {{ old('transaction_type') == 'advance' ? 'selected' : '' }}>Advance</option>
+                      <option value="receiveAdvance" {{ old('transaction_type') == 'receiveAdvance' ? 'selected' : '' }}>Receive Advance</option>
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6" id="display1">
+                  <div class="form-group">
+                    <label>Purchases</label>
+                    <select class="form-control select2" name="order_id" id="order_id" required>
+                      <option value="" disabled>Select Purchase</option>
+                      {{-- Ajax Orders --}}
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Purchase</div>
+                  </div>
+                </div>
+                <div class="col-md-6" id="display2">
+                  <div class="form-group">
+                    <label>Purchases</label>
+                    <input type="text" readonly class="form-control" value="Not for Purchase">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
                     <label>Receiver Cash / Bank (if any)</label>
                     <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
                       <option value="0" selected>Cash Payment</option>
@@ -61,19 +92,7 @@
                     <div class="invalid-feedback">Select Cash / Bank</div>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Payment Type</label>
-                    <select class="form-control" name="transaction_type" required>
-                      <option value="payment" {{ old('transaction_type') == 'payment' ? 'selected' : '' }}>Payment</option>
-                      <option value="wages" {{ old('transaction_type') == 'wages' ? 'selected' : '' }}>Wages</option>
-                      <option value="advance" {{ old('transaction_type') == 'advance' ? 'selected' : '' }}>Advance</option>
-                      <option value="receiveAdvance" {{ old('transaction_type') == 'receiveAdvance' ? 'selected' : '' }}>Receive Advance</option>
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Pay Date</label>
                     <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
@@ -122,8 +141,23 @@
     </div>
   </div>
 </section>
+
 <script>
+  document.addEventListener('DOMContentLoaded', function () {
+      var transactionTypeSelect = document.getElementById('transaction_type');
+
+      // Event listener for change event on transaction type select
+      transactionTypeSelect.addEventListener('change', function () {
+          document.getElementById('display1').style.display = transactionTypeSelect.value === 'payment' ? 'block' : 'none';
+          document.getElementById('display2').style.display = transactionTypeSelect.value === 'payment' ? 'none' : 'block';
+      });
+
+      // Initial call to trigger the event listener and set initial display
+      transactionTypeSelect.dispatchEvent(new Event('change'));
+  });
+
   var isPayPage = false;
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
+  var ajaxPurchaseUrl = "{{ route('ajaxPurchase') }}";
 </script>
 @endsection

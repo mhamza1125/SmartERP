@@ -42,6 +42,7 @@ class TransactionRepository implements GlobalInterface {
 
     public function cashTransaction(){
         return Transaction::where('transactions.bank_id', '0')
+        ->where('transaction_type', '!=', 'openingBalance')
         ->orderBy('created_at', 'desc')
         ->get();
     }
@@ -57,6 +58,7 @@ class TransactionRepository implements GlobalInterface {
         ->select('*', 
             DB::raw('SUM(transactions.debit) AS tdebit'),         
             DB::raw('SUM(transactions.credit) AS tcredit'))
+        ->where('transaction_type', '!=', 'openingBalance')
         ->groupBy('transactions.bank_id')
         ->first();
 
@@ -86,7 +88,7 @@ class TransactionRepository implements GlobalInterface {
        ->first();
     }
 
-    public function getEPayment($id){
+    public function getEPayment($id){ // Employee Payment
         return Transaction::where('transaction_id', $id)
         ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
         ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
@@ -97,18 +99,19 @@ class TransactionRepository implements GlobalInterface {
        ->first();
     }
 
-    public function getVPayment($id){
+    public function getVPayment($id){ // Vendor Payment
         return Transaction::where('transaction_id', $id)
         ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
         ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
         ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
         ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
         ->join('vendors', 'vendors.vendor_id', 'transactions.payee_id')
+        ->leftJoin('purchases', 'purchases.purchase_id', 'transactions.order_id')
         ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
        ->first();
     }
     
-    public function getOPayment($id){
+    public function getOPayment($id){ // Order Payment
         return Transaction::where('transaction_id', $id)
         ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
         ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
@@ -118,6 +121,10 @@ class TransactionRepository implements GlobalInterface {
         ->join('orders', 'orders.order_id', 'transactions.order_id')
         ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
        ->first();
+    }
+    
+    public function getPPayment($id){ // Purchase Payment
+        return Transaction::where('order_id', $id)->get();
     }
     
     public function vDetail($id){
@@ -146,7 +153,7 @@ class TransactionRepository implements GlobalInterface {
             ->get();
             
         $return = $purchases->concat($purchaseReturns)->concat($transactions);
-        $sorted = $return->sortByDesc('timestamp');
+        $sorted = $return->sortByAsc('timestamp');
         return $sorted;
     }
 
@@ -187,7 +194,21 @@ class TransactionRepository implements GlobalInterface {
     public function update($id, array $data) {
         $update = Transaction::findOrFail($id);
         $update->update($data);
-        return $update->product_id;
+        return $update->transaction_id;
+    }
+
+    public function updateOB($id, $tto, array $data) {
+        $update = Transaction::where('payee_id', $id)
+            ->where('transaction_type', 'openingBalance')
+            ->where('transaction_to', $tto)->first();
+        if($update){
+            $update->update($data);
+            return $update->transaction_id;
+        }else{
+            $data['created_by'] = auth()->id();
+            $store = Transaction::create($data);
+            return $store->transaction_id;
+        }
     }
 
     public function delete($id){}

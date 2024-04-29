@@ -10,7 +10,9 @@ use App\Http\Requests\PurchaseRequest;
 use App\Repositories\VendorRepository;
 use App\Repositories\MaterialRepository;
 use App\Repositories\PurchaseRepository;
+use App\Repositories\TransactionRepository;
 use App\Repositories\PurchaseItemRepository;
+use App\Repositories\ReturnMaterialRepository;
 use App\Repositories\ReceiveMaterialRepository;
 
 class PurchaseController extends Controller
@@ -19,14 +21,19 @@ class PurchaseController extends Controller
     protected $vendorRepository;
     protected $purchaseRepository;
     protected $materialRepository;
+    protected $transactionRepository;
     protected $purchaseItemRepository;
+    protected $returnMaterialRepository;
+    protected $receiveMaterialRepository;
 
     public function __construct(
         OrderRepository $orderRepository,
         VendorRepository $vendorRepository, 
         PurchaseRepository $purchaseRepository, 
         MaterialRepository $materialRepository, 
+        TransactionRepository $transactionRepository, 
         PurchaseItemRepository $purchaseItemRepository, 
+        ReturnMaterialRepository $returnMaterialRepository, 
         ReceiveMaterialRepository $receiveMaterialRepository, 
     ){
         $this->middleware(['auth', 'all']);
@@ -34,7 +41,9 @@ class PurchaseController extends Controller
         $this->vendorRepository = $vendorRepository;
         $this->purchaseRepository = $purchaseRepository;
         $this->materialRepository = $materialRepository;
+        $this->transactionRepository = $transactionRepository;
         $this->purchaseItemRepository = $purchaseItemRepository;
+        $this->returnMaterialRepository = $returnMaterialRepository;
         $this->receiveMaterialRepository = $receiveMaterialRepository;
     }
 
@@ -76,14 +85,21 @@ class PurchaseController extends Controller
         $purchaseItem = $this->purchaseItemRepository->get($id);
         $receiveSum = $this->receiveMaterialRepository->rSum($id);
         $receiveAll = $this->receiveMaterialRepository->rAll($id);
-        $totalTimes = $this->receiveMaterialRepository->times($id);
+        $receiveTimes = $this->receiveMaterialRepository->times($id);
+        $returnAll = $this->returnMaterialRepository->rAll($id);
+        $returnTimes = $this->returnMaterialRepository->times($id);
+        $transaction = $this->transactionRepository->getPPayment($id);
         return view('purchaseInfo', [
             'purchase' => $purchase,
+            'transaction' => $transaction,
             'purchaseItem' => $purchaseItem,
             'receiveSum' => $receiveSum,
             'receiveAll' => $receiveAll,
-            'totalTimes' => $totalTimes,
-            'count' => $totalTimes->count(),
+            'receiveTimes' => $receiveTimes,
+            'count' => $receiveTimes->count(),
+            'returnAll' => $returnAll,
+            'returnTimes' => $returnTimes,
+            'count2' => $returnTimes->count(),
         ]);
     }
     

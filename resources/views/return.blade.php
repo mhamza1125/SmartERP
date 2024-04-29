@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Return Table</h4>
             <div class="card-header-action">
-              {{-- <a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Purchase</a> --}}
+              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Return</a>
             </div>
           </div>
           <div class="card-body">
@@ -62,4 +62,44 @@
     </div>
   </div>
 </section>
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="formModal">Add Return</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ route('return.add', 0) }}" method="POST" class="needs-validation" novalidate="" id="return"> @csrf
+          <div class="card-body">
+            <div class="form-group">
+              <label>Select Receiving</label>
+              <select class="form-control select2" name="receive_id" id="receive_id" required style="width: 100%">
+                <option value="" selected disabled>Select Receiving</option>
+                @if($receive->count())
+                  @foreach($receive as $item)
+                    <option value="{{$item->receive_id}}">{{$item->receive_no}} - {{($item->job_no)? $item->job_no:'Default Purchase'}}</option>
+                  @endforeach
+                @endif
+              </select>
+            </div>
+            <div class="form-group text-right">
+              <button class="btn btn-primary" onclick="updateFormAction()">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function updateFormAction() {
+        var getId = document.getElementById('receive_id').value;
+        document.getElementById('return').action = "{{ route('return.add', ':getId') }}".replace(':getId', getId);
+        document.getElementById('return').submit();
+    }
+</script>
 @endsection

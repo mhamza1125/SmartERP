@@ -56,6 +56,16 @@
 .div.dataTables_wrapper div.dataTables_length select {
     width: 100px !important;
 }
+/* Used by Receive / Return Purchase */
+.exceeded {
+    border-color: red;
+}
+/* Used in Purchase Info */
+.pbtn{ 
+    position: absolute;
+    right:15px;
+    top: 52px;
+}
 /* =========================================================================================
 ======================================== Custom CSS ========================================
 ========================================================================================= */

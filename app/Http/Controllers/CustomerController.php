@@ -57,6 +57,21 @@ class CustomerController extends Controller
                 $this->storeImage($file, 'customer', 'customers', $getId);        
             }
         }
+        if ($request->input('balance_type') == 'debit') {
+            $debit = $request->input('credit');
+            $request->merge(['debit' => $debit, 'credit' => null]);
+        }
+        $transaction = [
+            'transaction_to' => 'customer',
+            'transaction_type' => 'openingBalance',
+            'bank_id' => '0',
+            'payee_id' => $getId,
+            'debit' => $request->input('debit') ?? null,
+            'credit' => $request->input('credit') ?? null,
+            'transaction_date' => date('Y-m-d'),
+            'payee_bank_id' => '0',
+        ];
+        $this->transactionRepository->store($transaction);
         return redirect()->route('customer.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
@@ -98,7 +113,22 @@ class CustomerController extends Controller
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'customer', 'customers', $getId);        
             }
-        }    
+        }
+        if ($request->input('balance_type') == 'debit') {
+            $debit = $request->input('credit');
+            $request->merge(['debit' => $debit, 'credit' => null]);
+        }
+        $transaction = [
+            'transaction_to' => 'customer',
+            'transaction_type' => 'openingBalance',
+            'bank_id' => '0',
+            'payee_id' => $getId,
+            'debit' => $request->input('debit') ?? null,
+            'credit' => $request->input('credit') ?? null,
+            'transaction_date' => date('Y-m-d'),
+            'payee_bank_id' => '0',
+        ];
+        $this->transactionRepository->updateOB($getId, 'customer', $transaction);
         return redirect()->route('customer.show', $id)->with('success', 'Record Updated Successfully');    
     }
     

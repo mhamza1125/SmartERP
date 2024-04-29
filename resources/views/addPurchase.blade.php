@@ -81,7 +81,7 @@
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
-                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->name}}</option>
+                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>

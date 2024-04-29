@@ -26,18 +26,21 @@
                 </thead>
                 <tbody>
                   @if($transaction->count())
+                  @php $index = 1 @endphp
                     @foreach($transaction as $item)
-                    <tr>
-                      <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->vendor_no}} - {{$item->fname}}</td>
-                      <td>{{ucfirst($item->transaction_type)}}</td>
-                      <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>                  
-                      <td>{{$item->transaction_date}}</td>
-                      <td>
-                        <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('transaction.editVPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                      </td>
-                    </tr>
+                      @unless($item->transaction_type == 'openingBalance')
+                        <tr>
+                          <td>{{$index++}}</td>
+                          <td>{{$item->vendor_no}} - {{$item->fname}}</td>
+                          <td>{{ucfirst($item->transaction_type)}}</td>
+                          <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>                  
+                          <td>{{$item->transaction_date}}</td>
+                          <td>
+                            <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                            <a href="{{ route('transaction.editVPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                          </td>
+                        </tr>
+                      @endunless
                     @endforeach
                   @endif
                 </tbody>

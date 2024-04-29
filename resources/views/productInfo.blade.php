@@ -63,7 +63,6 @@
                       <thead>
                         <tr>
                           <th>Sr.</th>
-                          <th>Material Type</th>
                           <th>Material No</th>
                           <th>Material Name</th>
                           <th>Unit</th>
@@ -72,13 +71,12 @@
                       <tbody>
                         @if($material->count())
                           @foreach($material as $item)
-                          <tr>
-                            <td>{{$loop->index + 1}}</td>
-                            <td>{{$item->mtname}}</td>
-                            <td>{{$item->material_no}}</td>
-                            <td>{{$item->name}}</td>                      
-                            <td>{{$item->uname}}</td>
-                          </tr>
+                            <tr>
+                              <td>{{$loop->index + 1}}</td>
+                              <td>{{$item->material_no}}</td>
+                              <td>{{$item->name}}</td>                      
+                              <td>{{$item->uname}}</td>
+                            </tr>
                           @endforeach
                         @endif
                       </tbody>
@@ -156,41 +154,48 @@
                           @for($i=1; $i<=$countMaterial; $i++)
                           @php $loopIndex = 1; @endphp
                             <div class="tab-pane fade {{($i==1)? 'show active':''}}" id="tab-contentm-{{ $i }}" role="tabpanel" aria-labelledby="tabm-{{ $i }}">
-                              <h6 class="mt-2">Product Packing</h6>
-                              @foreach($productBox as $item)
+                              @foreach($totalMaterial as $item)
                                 @if(($totalMaterial[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
+                                <h5 class="mt-2">Product Packing
+                                  <a href="{{ route('productMaterial.edit', $item->product_type_id) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Edit</a>
+                                </h5>
                                 <table class="table table-sm">
                                   <tbody>
-                                    <tr>
-                                      <td><b>Box: </b> {{$item->box_no}} - {{$item->name}}</td>
-                                      <td><b>Box Type: </b> {{$item->hname}}</td>
-                                      <td><b>Quantity in Box: </b> {{$item->quantity}} {{$product['hname']}}</td>
-                                    </tr>
-                                    <tr>
-                                      <td><b>Box Dimension: </b> {{$item->length}} x {{$item->width}} x {{$item->height}} cms</td>
-                                      <td><b>Box Weight: </b> {{$item->weight}} Grams</td>
-                                    </tr>
-                                    <tr>
-                                      <td colspan="3">
-                                        <div class="row">
-                                          <div class="col-md-1"><b>Details: </b></div>
-                                          <div class="col-md-11">
-                                            @php echo $item->description @endphp
+                                    @php $item2 = $getMaterial->where('material_type_id', '61')->where('product_type_id', $totalMaterial[$i-1]['product_type_id'])->first(); @endphp
+                                    @if($item2)
+                                      <tr>
+                                        <td><b>Article No: </b> {{$item->article_no}}</td>
+                                        <td><b>Product Name: </b> {{$item->pname}}</td>
+                                        <td><b>Size: </b> {{$item->name}}</td>
+                                      </tr>
+                                      <tr>
+                                        <td><b>Box No: </b> {{$item2->material_no}}</td>
+                                        <td><b>Box Name: </b> {{$item2->name}}</td>
+                                        <td><b>Quantity in Box: </b> {{1/$item2->quantity}} {{$item2->hname}}</td>
+                                      </tr>
+                                      <tr>
+                                        <td colspan="3">
+                                          <div class="row">
+                                            <div class="col-md-1"><b>Details: </b></div>
+                                            <div class="col-md-11">
+                                              @php echo $item->description @endphp
+                                            </div>
                                           </div>
-                                        </div>
-                                      </td>
-                                    </tr>
+                                        </td>
+                                      </tr>
+                                    @endif
                                   </tbody>
                                 </table>
                                 @endif
                               @endforeach
                               
-                              <h6>Product Packing / Material</h6>
+                              <h5>Product Material</h5>
                               <table class="table table-sm table-striped">
                                 <thead>
                                   <tr>
                                     <th>Sr.</th>
-                                    <th>Material</th>
+                                    <th>Material No</th>
+                                    <th>Material Name</th>
                                     <th>Quantity</th>
                                     <th>Units</th>
                                   </tr>
@@ -198,19 +203,23 @@
                                 <tbody>
                                   @foreach($getMaterial as $item)
                                     @if(($totalMaterial[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
-                                      <tr>
-                                        <td>{{$loopIndex++}}</td>
-                                        <td>{{$item->name}}</td>
-                                        <td>{{$item->quantity}}</td>
-                                        <td>{{$item->hname}}</td>
-                                      </tr>
-                                    @endif
+                                      @unless($item->material_type_id == '61')
+                                        <tr>
+                                            <td>{{$loopIndex++}}</td>
+                                            <td>{{$item->material_no}}</td>
+                                            <td>{{$item->name}}</td>
+                                            <td>{{$item->quantity}}</td>
+                                            <td>{{$item->hname}}</td>
+                                          </tr>
+                                        @endunless
+                                      @endif
                                   @endforeach
                                 </tbody>
                                 <tfoot>
                                   <tr>
                                     <th>Sr.</th>
-                                    <th>Material</th>
+                                    <th>Material No</th>
+                                    <th>Material Name</th>
                                     <th>Quantity</th>
                                     <th>Units</th>
                                   </tr>
@@ -228,6 +237,9 @@
                 <div class="tab-pane fade" id="productCosting" role="tabpanel" aria-labelledby="product-costing-tab">
                   <div class="row">
                     <div class="col-md-12">
+                      <h5 class="mt-2">Product Costing
+                        <a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Edit</a>
+                      </h5>
                       <table class="table table-sm table-striped">
                         <thead>
                           <tr>

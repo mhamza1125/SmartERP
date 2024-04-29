@@ -11,7 +11,6 @@ use App\Repositories\ImageRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\MaterialRepository;
-use App\Repositories\ProductBoxRepository;
 use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductTypeRepository;
 use App\Repositories\ProductMaterialRepository;
@@ -23,7 +22,6 @@ class ProductController extends Controller
     protected $productRepository;
     protected $categoryRepository;
     protected $materialRepository;
-    protected $productBoxRepository;
     protected $productTypeRepository;
     protected $productCostRepository;
     protected $productMaterialRepository;
@@ -34,7 +32,6 @@ class ProductController extends Controller
         ProductRepository $productRepository, 
         CategoryRepository $categoryRepository, 
         MaterialRepository $materialRepository, 
-        ProductBoxRepository $productBoxRepository, 
         ProductTypeRepository $productTypeRepository, 
         ProductCostRepository $productCostRepository, 
         ProductMaterialRepository $productMaterialRepository, 
@@ -45,7 +42,6 @@ class ProductController extends Controller
         $this->productRepository = $productRepository;
         $this->categoryRepository = $categoryRepository;
         $this->materialRepository = $materialRepository;
-        $this->productBoxRepository = $productBoxRepository;
         $this->productTypeRepository = $productTypeRepository;
         $this->productCostRepository = $productCostRepository;
         $this->productMaterialRepository = $productMaterialRepository;
@@ -102,7 +98,7 @@ class ProductController extends Controller
         $pcost = $this->productCostRepository->get($id);
         $totalMaterial = $this->productMaterialRepository->times($id);
         $getMaterial = $this->productMaterialRepository->getAll($id);
-        $productBox = $this->productBoxRepository->getAll($id);
+        // $productBox = $this->productBoxRepository->getAll($id);
         $material = $this->materialRepository->getMaterial($product['material_id']);
         return view('productInfo', [
             'product' => $product,
@@ -113,7 +109,7 @@ class ProductController extends Controller
             'totalMaterial' => $totalMaterial,
             'countMaterial' => $totalMaterial->count(),
             'getMaterial' => $getMaterial,
-            'productBox' => $productBox,
+            // 'productBox' => $productBox,
             'material' => $material,
         ]);
     }

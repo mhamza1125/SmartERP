@@ -11,6 +11,7 @@ use App\Repositories\ProductRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
+use App\Repositories\PurchaseItemRepository;
 
 class OrderController extends Controller
 {
@@ -19,6 +20,7 @@ class OrderController extends Controller
     protected $customerRepository;
     protected $orderItemRepository;
     protected $stockItemRepository;
+    protected $purchaseItemRepository;
 
     public function __construct(
         OrderRepository $orderRepository,
@@ -26,6 +28,7 @@ class OrderController extends Controller
         CustomerRepository $customerRepository,
         OrderItemRepository $orderItemRepository, 
         StockItemRepository $stockItemRepository, 
+        PurchaseItemRepository $purchaseItemRepository, 
     ){
         $this->middleware(['auth', 'all']);
         $this->orderRepository = $orderRepository;
@@ -33,6 +36,7 @@ class OrderController extends Controller
         $this->customerRepository = $customerRepository;
         $this->orderItemRepository = $orderItemRepository;
         $this->stockItemRepository = $stockItemRepository;
+        $this->purchaseItemRepository = $purchaseItemRepository;
     }
 
     public function index(){
@@ -79,10 +83,22 @@ class OrderController extends Controller
         $stock = $this->stockItemRepository->stock();
         $estimate = $this->orderItemRepository->estimate($id);
         $stockArray = $stock->keyBy('material_id')->toArray();
+        $purchase = $this->purchaseItemRepository->estimate($id);
+        $purchaseArray = $purchase->keyBy('material_id')->toArray();
         return view('orderEstimate', [
             'order' => $order,
             'stock' => $stockArray,
             'estimate' => $estimate,
+            'purchase' => $purchaseArray,
+        ]);
+    }
+
+    public function status($id){
+        $order = $this->orderRepository->get($id);
+        $stock = $this->stockItemRepository->orderStatus($id);
+        return view('orderStatus', [
+            'order' => $order,
+            'stock' => $stock,
         ]);
     }
     

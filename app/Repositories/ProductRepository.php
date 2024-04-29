@@ -38,17 +38,6 @@ class ProductRepository implements GlobalInterface {
         ->select('products.*')
         ->get();
     }
-
-    // public function costOld123(){
-    //     return Product::join('product_types', 'product_types.product_id', 'products.product_id')
-    //     ->leftJoin('product_costs', 'product_costs.product_type_id', 'product_types.product_type_id')
-    //     ->join('heads', 'heads.head_id', 'product_types.size_id')
-    //     ->where('products.product_status', '1')
-    //     ->whereNull('product_costs.product_type_id')
-    //     ->where('product_types.product_type_status', '1')
-    //     ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
-    //     ->get();
-    // }
     
     public function material($id){
         // Used By Product Material
@@ -60,15 +49,6 @@ class ProductRepository implements GlobalInterface {
         ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
         ->get();
     }
-
-    // public function materialOld(){ // Not Used
-    //     return Product::join('product_types', 'product_types.product_id', 'products.product_id')
-    //     ->join('heads', 'heads.head_id', 'product_types.size_id')
-    //     ->leftJoin('product_materials', 'product_materials.product_type_id', '=', 'product_types.product_type_id')
-    //     ->whereNull('product_materials.product_type_id')
-    //     ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
-    //     ->get();
-    // }
 
     public function get($id){
         return Product::where('product_id', $id)

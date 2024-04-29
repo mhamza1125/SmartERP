@@ -20,7 +20,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Product</label>
-                    <input type="text" readonly class="form-control" value="{{$product['article_no']}} - {{$product['name']}}">
+                    <input type="text" readonly class="form-control" value="{{$productType['article_no']}} - {{$productType['name']}}">
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -43,6 +43,8 @@
                     <tbody>
                       @if($productMaterial->count())
                         @foreach($productMaterial as $item)
+                          @unless($item->material_type_id == '61')
+
                           <tr data-item-id="{{ $item->product_type_id }}">
                             <td>{{$loop->index + 1}}</td>
                             <td>{{$item->material_no}} - {{$item->name}}
@@ -51,6 +53,7 @@
                             <td class="form-group"><input type="number" min="0" class="form-control" name="quantity[]" value="{{$item->quantity}}" required>
                             </td>
                           </tr>
+                          @endunless  
                         @endforeach
                       @endif
                     </tbody>
@@ -62,24 +65,31 @@
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Boxes</label>
-                    <select class="form-control select2" name="box_id" required>
+                    <label>Material Boxes</label>
+                    <select class="form-control select2" name="material_id[]" required>
                       <option value="" disabled selected>Select Boxes</option>
-                      @if($box->count())
-                        @foreach($box as $item)
-                          <option value="{{$item->box_id}}" {{ $pbox['box_id'] == $item->box_id ? 'selected' : '' }}>{{$item->box_no}} - {{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
+                      @foreach($mbox as $item)
+                        @php 
+                          $selected = old('material_id') == $item->material_id ? 'selected' : '';
+                          $item2 = $productMaterial->firstWhere('material_type_id', '61'); 
+                          if($item2 && $item2->material_id == $item->material_id) {
+                              $selected = 'selected';}
+                        @endphp
+                        <option value="{{$item->material_id}}" {{ $selected }}>{{$item->material_no}} - {{$item->name}}</option>
+                      @endforeach
+                    </select>                  
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Product Unit in Box</label>
-                    <input type="number" min="0" class="form-control" name="bqty" placeholder="0" value="{{$pbox['quantity']}}" required>
+                      <label>Product Unit in Box</label>
+                      @php $item = $productMaterial->firstWhere('material_type_id', '61'); @endphp
+                      <input type="number" min="0" class="form-control" placeholder="0" value="{{ $item ? 1/$item->quantity : '' }}" required id="bqty">
+                      <input type="hidden" class="form-control" name="quantity[]" placeholder="0" value="{{ $item ? $item->quantity : '' }}" required id="mqty">
                   </div>
                 </div>
               </div>
+              
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
                   <button class="btn btn-primary" type="submit" onclick="return submits()">Submit</button>
@@ -92,5 +102,5 @@
     </div>
   </div>
 </section>
-{{-- <script> var isPMPage = true; </script> --}}
+<script> var isPMPage = true; </script>
 @endsection

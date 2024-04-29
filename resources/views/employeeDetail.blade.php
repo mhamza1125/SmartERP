@@ -50,7 +50,11 @@
                       <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
                       <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
                       <td>
-                        <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                        @if($item->transaction_type == 'openingBalance')
+                          <a href="#" class="btn btn-info btn-sm">View</a>
+                        @else
+                          <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                        @endif
                       </td>
                     </tr>
                     @endforeach

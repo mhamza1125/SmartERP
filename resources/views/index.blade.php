@@ -259,7 +259,6 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
-                <li><a class="nav-link" href="{{ route('box') }}">Boxes</a></li>
                 <li><a class="nav-link" href="{{ route('material') }}">Materials</a></li>
               </ul>
             </li>
@@ -385,7 +384,7 @@
   <script src="{{ URL::asset('assets/js/app.min.js') }}"></script>
   <!-- JS Libraies -->
   <script src="{{ URL::asset('assets/bundles/izitoast/js/iziToast.min.js') }}"></script>
-  <script src="{{ URL::asset('assets/bundles/apexcharts/apexcharts.min.js') }}"></script>
+  {{-- <script src="{{ URL::asset('assets/bundles/apexcharts/apexcharts.min.js') }}"></script> --}}
   <script src="{{ URL::asset('assets/bundles/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/select2/dist/js/select2.full.min.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/summernote/summernote-bs4.js') }}"></script>

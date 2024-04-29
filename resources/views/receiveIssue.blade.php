@@ -78,7 +78,7 @@
                 <option value="" selected disabled>Select Issuance</option>
                 @if($issue->count())
                   @foreach($issue as $item)
-                    <option value="{{$item->stock_id}}">{{$item->stock_no}} - {{($item->job_no)? $item->job_no:'Default issue'}} - {{$item->name}}</option>
+                    <option value="{{$item->stock_id}}">{{$item->stock_no}} - {{($item->job_no)? $item->job_no:'Default Issue'}} - {{$item->name}}</option>
                   @endforeach
                 @endif
               </select>
@@ -94,8 +94,8 @@
 </div>
 <script>
   function updateFormAction() {
-        var stockId = document.getElementById('stock_id').value;
-        document.getElementById('rstock').action = "{{ route('rstock.add', ':stockId') }}".replace(':stockId', stockId);
+        var getId = document.getElementById('stock_id').value;
+        document.getElementById('rstock').action = "{{ route('rstock.add', ':getId') }}".replace(':getId', getId);
         document.getElementById('rstock').submit();
     }
 </script>

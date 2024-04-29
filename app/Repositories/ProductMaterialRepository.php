@@ -25,6 +25,13 @@ class ProductMaterialRepository implements GlobalInterface {
         ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
         ->select('product_materials.*', 'materials.*', 'heads.name as hname')
         ->get();
+
+        return ProductMaterial::where('product_materials.product_type_id', $id)
+        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+        ->select('product_materials.*', 'materials.*', 'heads.name as hname')
+        ->where('materials.material_type_id', '!=', '61') // Not Getting Boxes
+        ->get();
     }
 
     public function getAll($id){
@@ -41,10 +48,11 @@ class ProductMaterialRepository implements GlobalInterface {
         // Used By ProductInfo
         return ProductMaterial::where('product_types.product_id', $id)
         ->join('product_types', 'product_types.product_type_id', '=', 'product_materials.product_type_id')
+        ->join('products', 'products.product_id', 'product_types.product_id')
         ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
+        ->select('heads.name', 'product_materials.product_type_id', 'article_no', 'products.name as pname')
         ->groupBy('product_types.product_type_id')
-        ->orderBy('heads.head_id')
-        ->select('heads.name', 'product_materials.product_type_id')->get();
+        ->orderBy('heads.head_id')->get();
     }
 
     public function store(array $data){

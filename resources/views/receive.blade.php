@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Receive Purchase Table</h4>
             <div class="card-header-action">
-              {{-- <a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Purchase</a> --}}
+              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Receive</a>
             </div>
           </div>
           <div class="card-body">
@@ -77,4 +77,44 @@
     </div>
   </div>
 </section>
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="formModal">Add Receive</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ route('receive.add', 0) }}" method="POST" class="needs-validation" novalidate="" id="receive"> @csrf
+          <div class="card-body">
+            <div class="form-group">
+              <label>Select Purchase</label>
+              <select class="form-control select2" name="purchase_id" id="purchase_id" required style="width: 100%">
+                <option value="" selected disabled>Select Purchase</option>
+                @if($purchase->count())
+                  @foreach($purchase as $item)
+                    <option value="{{$item->purchase_id}}">{{$item->purchase_no}} - {{($item->job_no)? $item->job_no:'Default Purchase'}}</option>
+                  @endforeach
+                @endif
+              </select>
+            </div>
+            <div class="form-group text-right">
+              <button class="btn btn-primary" onclick="updateFormAction()">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function updateFormAction() {
+        var getId = document.getElementById('purchase_id').value;
+        document.getElementById('receive').action = "{{ route('receive.add', ':getId') }}".replace(':getId', getId);
+        document.getElementById('receive').submit();
+    }
+</script>
 @endsection

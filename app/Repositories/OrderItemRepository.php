@@ -25,6 +25,33 @@ class OrderItemRepository implements GlobalInterface {
 
     public function estimate($id){
         return OrderItem::where('order_id', $id)
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('*', 'materials.material_id', 'heads.name as hname', 'materials.name', 'vendors.fname', 'vendor_no')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('materials.material_id')
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->get();
+
+        // Separate Material Required for Each Order Item
+        return OrderItem::where('order_id', $id)
+        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+        ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', 'vendors.fname', 'vendor_no')
+        ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+        ->groupBy('order_items.order_item_id')
+        ->groupBy('product_materials.material_id')
+        ->orderBy('materials.vendor_id')
+        ->orderBy('materials.material_id')
+        ->get();
+    
+        // Old Working Queery (False Record for Boxes)
+        return OrderItem::where('order_id', $id)
         ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
         ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')

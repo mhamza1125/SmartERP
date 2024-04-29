@@ -22,6 +22,14 @@ class PurchaseRepository implements GlobalInterface {
         ->first();
     }
 
+    public function getPurchase($id){
+        return Purchase::where('purchases.vendor_id', $id)
+        ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->select('purchases.*', 'orders.job_no', 'vendors.fname')
+        ->orderBy('purchases.created_at', 'desc')->get();
+    }
+
     public function refNo() {
         $yearMonth = Carbon::now()->format('ym');
         $count = Purchase::whereMonth('purchase_date', Carbon::now()->month)

@@ -21,6 +21,29 @@ class ReturnMaterialRepository implements GlobalInterface {
         ->get();
     }
 
+    public function rAll($id){
+        // Used by PurchaseInfo
+        return ReturnMaterial::where('purchase_items.purchase_id', $id)
+        ->join('returns', 'returns.return_id', '=', 'return_materials.return_id')
+        ->join('receive_materials', 'receive_materials.receive_material_id', 'return_materials.receive_material_id')
+        ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+        ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+        ->join('heads', 'heads.head_id', '=' ,'materials.unit_id')
+        ->select('purchase_items.quantity', 'materials.material_no', 'materials.name',
+            'heads.name as hname', 'return_materials.quantity as rqty', 'return_materials.created_at',
+            'return_material_id', 'returns.return_no', 'purchase_items.purchase_item_id')
+        ->get();
+    }
+
+    public function times($id){
+        // Used By Purchase
+        return ReturnMaterial::where('receives.purchase_id', $id)
+        ->join('returns', 'returns.return_id', '=', 'return_materials.return_id')
+        ->join('receives', 'receives.receive_id', '=', 'returns.receive_id')
+        ->groupBy('returns.return_id')
+        ->select('returns.return_id', 'return_no')->get();
+    }
+
     public function store(array $data){
         $data['created_by'] = auth()->id();
         $store = ReturnMaterial::create($data);

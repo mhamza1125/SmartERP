@@ -65,6 +65,21 @@ class VendorController extends Controller
                 $this->storeImage($file, 'vendor', 'vendors', $getId);        
             }
         }
+        if ($request->input('balance_type') == 'debit') {
+            $debit = $request->input('credit');
+            $request->merge(['debit' => $debit, 'credit' => null]);
+        }
+        $transaction = [
+            'transaction_to' => 'vendor',
+            'transaction_type' => 'openingBalance',
+            'bank_id' => '0',
+            'payee_id' => $getId,
+            'debit' => $request->input('debit') ?? null,
+            'credit' => $request->input('credit') ?? null,
+            'transaction_date' => date('Y-m-d'),
+            'payee_bank_id' => '0',
+        ];
+        $this->transactionRepository->store($transaction);
         return redirect()->route('vendor.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
@@ -110,12 +125,27 @@ class VendorController extends Controller
         $materialIds = $request->input('material_id');
         $materialIds = $materialIds ? implode('|', $materialIds) : "0";
         $request->merge(['material_id' => $materialIds]);
-        $getId = $this->vendorRepository->update($id, $request->input());      
+        $getId = $this->vendorRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'vendor', 'vendors', $getId);        
             }
         }
+        if ($request->input('balance_type') == 'debit') {
+            $debit = $request->input('credit');
+            $request->merge(['debit' => $debit, 'credit' => null]);
+        }
+        $transaction = [
+            'transaction_to' => 'vendor',
+            'transaction_type' => 'openingBalance',
+            'bank_id' => '0',
+            'payee_id' => $getId,
+            'debit' => $request->input('debit') ?? null,
+            'credit' => $request->input('credit') ?? null,
+            'transaction_date' => date('Y-m-d'),
+            'payee_bank_id' => '0',
+        ];
+        $this->transactionRepository->updateOB($getId, 'vendor', $transaction);
         return redirect()->route('vendor.show', $id)->with('success', 'Record Updated Successfully');    
     }
     
