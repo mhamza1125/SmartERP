@@ -13,6 +13,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceiveController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\PurchaseController;
@@ -62,6 +63,7 @@ Route::get('/customer/{id}', [CustomerController::class, 'show'])->name('custome
 Route::get('/editCustomer/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
 Route::post('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
 Route::get('/customerDetail/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
+Route::post('/customerDetail/{id}', [CustomerController::class, 'detail'])->name('customer.filter');
 
 // Employee
 Route::get('/employee', [EmployeeController::class, 'index'])->name('employee');
@@ -71,6 +73,7 @@ Route::get('/employee/{id}', [EmployeeController::class, 'show'])->name('employe
 Route::get('/editEmployee/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
 Route::post('/employee/{id}', [EmployeeController::class, 'update'])->name('employee.update');
 Route::get('/employeeDetail/{id}', [EmployeeController::class, 'detail'])->name('employee.detail');
+Route::post('/employeeDetail/{id}', [EmployeeController::class, 'detail'])->name('employee.filter');
 
 // Vendor
 Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
@@ -80,6 +83,7 @@ Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show
 Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
 Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
 Route::get('/vendorDetail/{id}', [VendorController::class, 'detail'])->name('vendor.detail');
+Route::post('/vendorDetail/{id}', [VendorController::class, 'detail'])->name('vendor.filter');
 
 // Material
 Route::get('/material', [MaterialController::class, 'index'])->name('material');
@@ -107,6 +111,16 @@ Route::get('/orderStatus/{id}', [OrderController::class, 'status'])->name('order
 Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
 Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
 Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
+
+// Delivery
+Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery');
+Route::get('/addDelivery/{id}', [DeliveryController::class, 'create2'])->name('delivery.add');
+Route::post('/addDelivery/{id}', [DeliveryController::class, 'create2'])->name('delivery.add');
+Route::post('/delivery', [DeliveryController::class, 'store'])->name('delivery.store');
+Route::get('/delivery/{id}', [DeliveryController::class, 'show'])->name('delivery.show');
+Route::get('/editDelivery/{id}', [DeliveryController::class, 'edit'])->name('delivery.edit');
+Route::post('/delivery/{id}', [DeliveryController::class, 'update'])->name('delivery.update');
+Route::get('/deliveryStatus/{id}/{status}', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
 
 // Product Material
 Route::get('/productMaterial', [ProductMaterialController::class, 'index'])->name('productMaterial');
@@ -155,6 +169,7 @@ Route::post('/issue/{id}', [StockController::class, 'update'])->name('stock.upda
 Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Product Material
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
 Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
+Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
 
 // Receive Issuance
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
@@ -167,6 +182,7 @@ Route::get('/editReceiveIssue/{id}', [StockController::class, 'rEdit'])->name('r
 // Receive Issuance
 Route::get('/wages', [StockController::class, 'wages'])->name('wages');
 Route::get('/wages/{id}', [StockController::class, 'wShow'])->name('wages.show');
+Route::post('/wages/{id}', [StockController::class, 'wShow'])->name('wages.filter');
 
 // Product Costing
 Route::get('/productCost', [ProductCostController::class, 'index'])->name('productCost');

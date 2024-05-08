@@ -44,7 +44,7 @@
                   <div class="form-group">
                     <label>Purchase For Orders</label>
                     <select class="form-control select2" name="order_id" required>
-                      <option value="0" selected disabled>Default Purchase</option>
+                      <option value="0" selected>Default Purchase</option>
                       @if($order->count())
                         @foreach($order as $item)
                           <option value="{{$item->order_id}}" {{ old('order_id') == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>

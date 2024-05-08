@@ -17,7 +17,7 @@
             <form action="{{ route('stock.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Issuance No</label>
                     <input type="hidden" name="stock_type" required value="2">
@@ -26,6 +26,21 @@
                     <input type="text" class="form-control" name="stock_no" required value="{{$count}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">                    
+                    <label>Issuance For</label>
+                    <select class="form-control select2" name="issue_for" required>
+                      <option value="" selected disabled>Select Stage</option>
+                      @if($stage->count())
+                        @foreach($stage as $item)
+                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Product Stage</div>
                   </div>
                 </div>
                 <div class="col-md-5">
@@ -61,7 +76,8 @@
                   <div class="form-group">
                     <label>Issuance For Orders</label>
                     <select class="form-control select2" name="order_id" id="order_id" required>
-                      <option value="0" selected>Default Issuance</option>
+                      {{-- <option value="0" selected>Default Issuance</option> --}}
+                      <option value="" selected disabled>Select Order</option>
                       @if($order->count())
                         @foreach($order as $item)
                           <option value="{{$item->order_id}}" {{ old('order_id') == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>

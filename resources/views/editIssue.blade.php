@@ -17,7 +17,7 @@
             <form action="{{ route('stock.update', $issue['stock_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Issuance No</label>
                     <input type="hidden" name="stock_type" required value="2">
@@ -25,6 +25,21 @@
                     <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Issuance No</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">                    
+                    <label>Issuance For</label>
+                    <select class="form-control select2" name="issue_for" required>
+                      <option value="" selected disabled>Select Stage</option>
+                      @if($stage->count())
+                        @foreach($stage as $item)
+                          <option value="{{$item->head_id}}" {{ $issue['issue_for'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Product Stage</div>
                   </div>
                 </div>
                 <div class="col-md-5">
@@ -66,7 +81,7 @@
                   <div class="form-group">
                     <label>Issuance For Orders</label>
                     <select class="form-control select2" name="order_id" id="order_id" required>
-                      <option value="0" selected>Default Issuance</option>
+                      <option value="" selected disabled>Select Order</option>
                       @if($order->count())
                         @foreach($order as $item)
                           <option value="{{$item->order_id}}" {{ $issue['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>

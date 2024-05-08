@@ -40,8 +40,6 @@ $(document).ready(function() {
 
         $(tableId).DataTable({
             dom: 'Bfrtip',
-            // lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-            pageLength: 200,
             buttons: [
                 {
                     extend: 'copyHtml5',
@@ -321,55 +319,31 @@ $(document).ready(function() {
         updateGrandTotal();
         // Initially disable the add button
         $('#addBtn').prop('disabled', true);
-        
-        // AJAX call to update product stages based on selected product type
-        $('#product_type_id').on('change', function() {
-            var productId = $(this).val();
-            $.ajax({
-                url: ajaxPSUrl,
-                type: "GET",
-                data: { productId: productId },
-                dataType: "json",
-                success: function(response) {
-                    $('#stage_id').empty().append('<option disabled>Select Product Stage</option>');
-                    response.data.forEach(function(item) {
-                        var optionText = item.name;
-                        $('#stage_id').append(new Option(optionText, item.head_id));
-                    });
-                    // Re-initialize select2 for the updated product cost select element
-                    initializeSelect2();
-                },
-            });
-        });
 
         // Function to check if all three fields have data
         function checkFields() {
             var productId = $('select[name="product_type_id"]').val();
-            var stageId = $('select[name="stage_id"]').val();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
-            return (productId && stageId && quantity && price);
+            return (productId && quantity && price);
         }
 
         // Enable/disable add button based on field values
-        $('select[name="product_type_id"], select[name="stage_id"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
+        $('select[name="product_type_id"], input[name="quantity"], input[name="price"]').on('change keyup', function() {
             $('#addBtn').prop('disabled', !checkFields());
         });
 
         $('#addBtn').on('click', function() {
             var productId = $('select[name="product_type_id"]').val();
             var productName = $('select[name="product_type_id"] option:selected').text();
-            var stageId = $('select[name="stage_id"]').val();
-            var stageName = $('select[name="stage_id"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             var total = quantity * price;
+
             var existingProduct = false;
-            
         $('#items-table tbody tr').each(function(index, row) {
             var existingProductId = $(row).find('input[name="product_type_id[]"]').val();
-            var existingStageId = $(row).find('input[name="product_stage_id[]"]').val();
-            if (existingProductId == productId && existingStageId == stageId) {
+            if (existingProductId == productId) {
                 existingProduct = true;
                 return false; // Exit the loop
             }
@@ -383,7 +357,6 @@ $(document).ready(function() {
             var newRow = '<tr>' +
             '<td>' + tableRowCount + '</td>' +
             '<td>' + productName + '<input type="hidden" name="name[]" value="' + productName + '"><input type="hidden" name="product_type_id[]" value="' + productId + '"></td>' +
-            '<td>' + stageName + '<input type="hidden" name="sname[]" value="' + stageName + '"><input type="hidden" name="product_stage_id[]" value="' + stageId + '"></td>' +
             '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
             '<td>' + price + '<input type="hidden" name="price[]" value="' + price + '"></td>' +
             '<td>' + total + '<input type="hidden" name="total[]" value="' + total + '"></td>' +
@@ -645,181 +618,22 @@ returnQuantityInputs.forEach(function(input) {
 // Start - Delivery Script
 $(document).ready(function() {
     if (typeof isDeliveryPage !== 'undefined') {
-        // Start - Adding Vehicle to Table
-        var tableRowCount = 1;
-        updateSrNumbers();
-        // Initially disable the add button
-        $('#addBtn').prop('disabled', true);
-        
-        // Function to check if both fields have data
-        function checkFields() {
-            var materialId = $('select[name="smaterial_id[]"]').val();
-            var quantity = $('input[name="squantity"]').val();
-            return (materialId && quantity);
-        }
-        
-        // Enable/disable add button based on field values
-        $('select[name="smaterial_id[]"], input[name="squantity"]').on('change keyup', function() {
-            $('#addBtn').prop('disabled', !checkFields());
-        });
-        
-        $('#addBtn').on('click', function() {
-            var materialId = $('select[name="smaterial_id[]"]').val();
-            var materialName = $('select[name="smaterial_id[]"] option:selected').text();
-            var quantity = $('input[name="squantity"]').val();
-        
-            var existingMaterial = false;
-            $('#items-table tbody tr').each(function(index, row) {
-                var existingMaterialId = $(row).find('input[name="material_id[]"]').val();
-                if (existingMaterialId == materialId) {
-                    existingMaterial = true;
-                    return false; // Exit the loop
-                }
-            });
-        
-            if (existingMaterial) {
-                // Material already exists, show an alert or handle the situation
-                alert('Material already exists in the table.');
-            } else {
-                // Material does not exist, add row to table
-                var newRow = '<tr>' +
-                    '<td>' + tableRowCount + '</td>' +
-                    '<td>' + materialName + '<input type="text" name="material_name[]" value="' + materialName + '"><input type="text" name="material_id[]" value="' + materialId + '"><input type="text" name="product_type_id[]" value="0"><input type="text" name="stage_id[]" value="0"></td>' +
-                    '<td>' + quantity + '<input type="text" name="quantity[]" value="' + quantity + '"></td>' +
-                    '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
-                    '</tr>';
-        
-                $('#items-table tbody').append(newRow);
-        
-                tableRowCount++;
-        
-                // Disable Btn & Reset input field
-                $('#addBtn').prop('disabled', true);
-                $('input[name="squantity"]').val('0');
-                $('select[name="smaterial_id[]"]').val('').trigger('change');
-                updateSrNumbers();
-            }
-        });
-        
-        // Delete row when delete button is clicked
-        $(document).on('click', '.deleteRowBtn', function() {
-            $(this).closest('tr').remove();
-            updateSrNumbers();
-        });
-        
-        // Function to update Sr. numbers
-        function updateSrNumbers() {
-            $('#items-table tbody tr').each(function(index) {
-                $(this).find('td:first').text(index + 1);
-            });
-        }
-        
-        $('#submitBtn').on('click', function() {
-            // Gather data from table and submit
-            var tableData = [];
-            $('#items-table tbody tr').each(function(index, row) {
-                var rowData = {
-                    'material_id': $(row).find('input[name="material_id[]"]').val(),
-                    'material_name': $(row).find('input[name="material_name[]"]').val(),
-                    'quantity': $(row).find('input[name="quantity[]"]').val()
-                };
-                tableData.push(rowData);
-            });
-        });
-        // End - Adding Vehicle to Table
-
-        // Start - Adding Expense to Table
-        var expenseRowCount = 1;
-
-        // Function to add a new row to the table
-        function addExpenseRow() {
-            var expense = $('select[name="spayee_id"] option:selected').text();
-            var expenseId = $('select[name="spayee_id"]').val();
-            var paymentType = $('select[name="sbank_id"] option:selected').text();
-            var paymentTypeId = $('select[name="sbank_id"]').val();
-            var amount = $('input[name="sdebit"]').val();
-            var detail = $('textarea[name="sremarks[]"]').val();
-
-            // Add row to the table
-            var newRow = '<tr>' +
-                '<td>' + expenseRowCount + '</td>' +
-                '<td>' + expense + '<input type="text" name="payee_id[]" value="' + expenseId + '"></td>' +
-                '<td>' + paymentType + '<input type="text" name="bank_id[]" value="' + paymentTypeId + '"></td>' +
-                '<td>' + amount + '<input type="text" name="debit[]" value="' + amount + '"></td>' +
-                '<td>' + detail + '<input type="text" name="remarks[]" value="' + detail + '"></td>' +
-                '<td><button class="delete-expense-row btn btn-danger">X</button></td>' +
-                '</tr>';
-            
-            $('#expense-table tbody').append(newRow);
-
-            // Increment row count
-            updateExpenseRowNumbers();
-            // expenseRowCount++;
-
-            // Clear input fields
-            clearExpenseFields();
-        }
-
-        // Event listener for "Add" button
-        $('#addExpenseBtn').on('click', function() {
-            if (checkExpenseFields()) {
-                addExpenseRow();
-            } else {
-                alert('Please fill in all fields.');
+        $('.quantity-input').on('input', function() {
+            var maxVal = parseInt($(this).attr('max'), 10); // Get the max attribute
+            if (parseInt($(this).val(), 10) > maxVal) { // Compare current value with max
+                $(this).val(maxVal); // Set value to max if exceeded
             }
         });
 
-        // Delete row from expense table
-        $(document).on('click', '.delete-expense-row', function() {
-            $(this).closest('tr').remove();
-            updateExpenseRowNumbers();
-        });
-
-        // Function to update row numbers
-        function updateExpenseRowNumbers() {
-            $('#expense-table tbody tr').each(function(index) {
-                $(this).find('td:first').text(index + 1);
-            });
-            expenseRowCount = $('#expense-table tbody tr').length + 1;
-        }
-
-        // Function to check if all fields are filled for expense
-        function checkExpenseFields() {
-            var payeeId = $('select[name="spayee_id"]').val();
-            // var bankId = $('select[name="sbank_id"]').val();
-            var debit = $('input[name="sdebit"]').val();
-            // var remarks = $('textarea[name="sremarks[]"]').val();
-            return (payeeId && debit);
-        }
-
-        // Function to clear expense input fields
-        function clearExpenseFields() {
-            $('select[name="spayee_id"]').val('').trigger('change');
-            $('select[name="sbank_id"]').val('');
-            $('input[name="sdebit"]').val('');
-            $('textarea[name="sremarks[]"]').val('');
-        }
-        // End - Adding Expense to Table
-
-        // Prevent form submission when clicking on the buttons
-        $(document).on('click', '.maxBtn', function(event) {
-            event.preventDefault(); // Prevent default form submission
-            var maxVal = parseInt($(this).closest('tr').find('.quantity-input').attr('max'));
-            $(this).closest('tr').find('.quantity-input').val(maxVal);
-        });
-
-        $(document).on('click', '.zeroBtn', function(event) {
-            event.preventDefault(); // Prevent default form submission
+        // Set quantity to zero
+        $('.btn-warning').click(function() {
             $(this).closest('tr').find('.quantity-input').val(0);
         });
 
-        // Automatically change input value to max if higher value is typed
-        $('.quantity-input').on('input', function() {
-            var maxVal = parseInt($(this).attr('max'), 10); // Get the max attribute
-            var currentVal = parseInt($(this).val(), 10); // Get current value
-            if (currentVal > maxVal) {
-                $(this).val(maxVal); // Set value to max if exceeded
-            }
+        // Set quantity to max
+        $('.btn-success').click(function() {
+            var maxVal = $(this).closest('tr').find('.quantity-input').attr('max');
+            $(this).closest('tr').find('.quantity-input').val(maxVal);
         });
     }
 });
@@ -1282,6 +1096,17 @@ $(document).ready(function() {
             var materialValues = materialText.split('|');
             var materialName = materialValues[0];
             var productName = materialValues[1];
+            // New Code Start
+            var disabledOptionText = $('#material_id option:selected').prevAll('option:disabled:first').text();
+            if (disabledOptionText) {
+                var parts = disabledOptionText.replace(/=+/g, '').trim().split('|');
+                if (parts.length > 1) {
+                    var articleNo = parts[0].trim();
+                    var size = parts[1].trim().split(' ')[1];
+                    var productName = `${articleNo} - Size ${size}`;
+                }
+            }
+            // New Code End
             var quantity = parseInt($('input[name="quantityMaterial"]').val());
             var availableStock = parseInt($('#receiveable_stock').val());
             var stageId = '0';

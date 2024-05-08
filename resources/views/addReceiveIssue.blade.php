@@ -29,9 +29,9 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Purchase For Orders</label>
+                    <label>Issued For Order | Stage</label>
                     <input type="hidden" name="order_id" required value="{{$issue['order_id']}}">
-                    <input type="text" class="form-control" required value="{{$issue['job_no']}}" readonly>
+                    <input type="text" class="form-control" required value="{{$issue['job_no']}} | {{$issue['sname']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -124,14 +124,26 @@
                       @if($issueItem->count())
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
                         @foreach($issueItemUnique as $item)
+                          @php 
+                            $currentKey = $item->article_no . '|' . $item->sname; 
+                            $minAvg = isset($average[$currentKey]['min_avg']) ? $average[$currentKey]['min_avg'] : '0'; 
+                          @endphp
+                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>
+                            {{$item->article_no}} | Size {{$item->sname}} | Avg {{$minAvg}}
+                          </option>
+                        @endforeach
+                      @endif
+                      {{-- @if($issueItem->count())
+                        @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
+                        @foreach($issueItemUnique as $item)
                         @php $currentKey = $item->article_no . '|' . $item->sname; @endphp
                         <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} | Size {{$item->sname}} | Avg {{$average[$currentKey]['min_avg']}}</option>
                         @endforeach
-                      @endif
+                      @endif --}}
                   </select>
                   </div>
                 </div>
-                <div class="col-md-3">
+                {{-- <div class="col-md-3">
                   <div class="form-group">
                     <label>Product Stage</label>
                     <select class="form-control select2" name="stage_id" id="stage_id">
@@ -141,6 +153,17 @@
                           <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div> --}}
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Product Stage</label>
+                    <select class="form-control select2" name="stage_id" id="stage_id">
+                      <!-- Options will be dynamically added here via JavaScript -->
+                      <option value="" disabled>Select Product Stage</option>
+                      <!-- You can keep this option or remove it, depending on your needs -->
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>
@@ -271,5 +294,6 @@
   var isReceiveIssuePage = false;
   var issueItems = @json($issueItem);
   var ajaxPCUrl = "{{ route('ajaxPC') }}";
+  var ajaxPSUrl = "{{ route('ajaxPS') }}";
 </script>
 @endsection

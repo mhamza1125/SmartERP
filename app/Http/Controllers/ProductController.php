@@ -58,10 +58,12 @@ class ProductController extends Controller
         $category = $this->categoryRepository->all();
         $size = $this->headRepository->get('1');
         $unit = $this->headRepository->get('4');
+        $stage = $this->headRepository->get('12');
         $material = $this->materialRepository->all();
         return view('addproduct', [
             'category' => $category,
             'material' => $material,
+            'stage' => $stage,
             'size' => $size,
             'unit' => $unit,
         ]);
@@ -71,6 +73,8 @@ class ProductController extends Controller
         $validatedData = $request->validated();
         $materialIds = $request->input('material_id');
         $validatedData['material_id'] = $materialIds ? implode('|', $materialIds) : "0";
+        $stageIds = $request->input('stage_ids');
+        $validatedData['stage_ids'] = $stageIds ? implode('|', $stageIds) : "0";
         $getId = $this->productRepository->store($validatedData);
         foreach($request->input('size_id') as $size_id){
             $productType = ['product_id' => $getId, 'size_id' => $size_id];
@@ -98,8 +102,8 @@ class ProductController extends Controller
         $pcost = $this->productCostRepository->get($id);
         $totalMaterial = $this->productMaterialRepository->times($id);
         $getMaterial = $this->productMaterialRepository->getAll($id);
-        // $productBox = $this->productBoxRepository->getAll($id);
         $material = $this->materialRepository->getMaterial($product['material_id']);
+        $stage = $this->headRepository->getStage($product['stage_ids']);
         return view('productInfo', [
             'product' => $product,
             'size' => $size,
@@ -109,8 +113,8 @@ class ProductController extends Controller
             'totalMaterial' => $totalMaterial,
             'countMaterial' => $totalMaterial->count(),
             'getMaterial' => $getMaterial,
-            // 'productBox' => $productBox,
             'material' => $material,
+            'stage' => $stage,
         ]);
     }
     
@@ -119,11 +123,15 @@ class ProductController extends Controller
         $productType = $this->productTypeRepository->active($id->product_id);
         $size = $this->headRepository->get('1');
         $unit = $this->headRepository->get('4');
+        $stage = $this->headRepository->get('12');
+        $pstage = $this->headRepository->getStage($id['stage_ids']);
         $material = $this->materialRepository->all();
         $pmaterial = $this->materialRepository->getMaterial($id['material_id']);
         return view('editproduct', [
             'size' => $size,
             'unit' => $unit,
+            'stage' => $stage,
+            'pstage' => $pstage,
             'product' => $id,
             'category' => $category,
             'material' => $material,
@@ -135,7 +143,9 @@ class ProductController extends Controller
     public function update(Request $request, $id){
         $materialIds = $request->input('material_id');
         $materialIds = $materialIds ? implode('|', $materialIds) : "0";
-        $request->merge(['material_id' => $materialIds]);
+        $stageIds = $request->input('stage_ids');
+        $stageIds = $stageIds ? implode('|', $stageIds) : "0";
+        $request->merge(['material_id' => $materialIds, 'stage_ids' => $stageIds]);
         $getId = $this->productRepository->update($id, $request->input());
         $sizes = $request->input('size_id');
         $this->productTypeRepository->update($getId, $sizes);

@@ -182,7 +182,7 @@
       <div class="main-sidebar sidebar-style-2">
         <aside id="sidebar-wrapper">
           <div class="sidebar-brand">
-            <a href="index.html"> <img alt="image" src="{{ URL::asset('assets/img/logo.png') }}" class="header-logo" /> <span
+            <a href="{{ route('dashboard') }}"> <img alt="image" src="{{ URL::asset('assets/img/logo.png') }}" class="header-logo" /> <span
                 class="logo-name">SmartERP</span>
             </a>
           </div>
@@ -225,6 +225,7 @@
                   data-feather="briefcase"></i><span>Order / PO</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
+                <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
                 <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
                 <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
                 <li><a class="nav-link" href="{{ route('return') }}">Return</a></li>
@@ -242,9 +243,6 @@
             <li class="dropdown">
             </li>
             <li class="dropdown">
-              <a href="{{ route('wages') }}" class="nav-link"><i data-feather="briefcase"></i><span>Work Wages</span></a>
-            </li>
-            <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Persons Record</span></a>
               <ul class="dropdown-menu">
@@ -252,6 +250,9 @@
                 <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
                 <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
               </ul>
+            </li>
+            <li class="dropdown">
+              <a href="{{ route('wages') }}" class="nav-link"><i data-feather="briefcase"></i><span>Work Wages</span></a>
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i

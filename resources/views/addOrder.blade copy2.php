@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Edit Purchase</h4>
+            <h4>Add Order</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,71 +14,77 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('purchase.update', $purchase['purchase_id']) }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('order.store') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Purchase No</label>
-                    <input type="text" class="form-control" name="purchase_no" required value="{{$purchase['purchase_no']}}" readonly>
+                    <label>Order No</label>
+                    <input type="text" class="form-control" name="order_no" placeholder="Order No" required value="{{old('order_no')}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Purchase No</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Vendor</label>
-                    <select class="form-control select2" name="vendor_id" required>
-                      <option value="" selected disabled>Select Vendor</option>
-                      @if($vendor->count())
-                        @foreach($vendor as $item)
-                          <option value="{{$item->vendor_id}}" {{ $purchase['vendor_id'] == $item->vendor_id ? 'selected' : '' }}>{{$item->fname}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Vendor</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Purchase For Orders</label>
-                    <select class="form-control select2" name="order_id" required>
-                      <option value="0" selected>Default Purchase</option>
-                      @if($order->count())
-                        @foreach($order as $item)
-                          <option value="{{$item->order_id}}" {{ $purchase['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
-                        @endforeach
-                      @endif
-                    </select>
+                    <div class="invalid-feedback">Enter Order No</div>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Purchase Date</label>
-                    <input type="text" class="form-control datepicker" name="purchase_date" required value="{{$purchase['purchase_date']}}">
+                    <label>Job No</label>
+                    <input type="text" class="form-control" name="job_no" placeholder="Job No" required value="{{old('job_no')}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Job No</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Customer</label>
+                    <select class="form-control select2" name="customer_id" required>
+                      <option value="" selected disabled>Select Customer</option>
+                      @if($customer->count())
+                        @foreach($customer as $item)
+                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Customer</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Order Status</label>
+                    <select class="form-control select2" name="order_status" required>
+                      <option value="" selected disabled>Select Order Status</option>
+                      <option value="1" selected>Pending</option>
+                      <option value="2">Processing</option>
+                      <option value="3">On Hold</option>
+                      <option value="4">Partially Delivered</option>
+                      <option value="5">Delivered</option>
+                      <option value="6">Completed</option>
+                      <option value="7">Cancelled</option>
+                      <option value="8">Returned</option>
+                      <option value="9">Disputed</option>
+                    </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Required Date</label>
-                    <input type="text" class="form-control datepicker" name="require_date" required value="{{$purchase['require_date']}}">
+                    <label>Order Date</label>
+                    <input type="text" class="form-control datepicker" name="order_date" required value="{{old('order_date')}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>
 
-              <h6>Purchase Items</h6>
+              <h6>Order Items</h6>
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
-                    <label>Materials</label>
-                    <select class="form-control select2" name="smaterial_id[]">
-                      <option value="" disabled selected>Select Material</option>
-                      @if($material->count())
-                        @foreach($material as $item)
-                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
+                    <label>Products</label>
+                    <select class="form-control select2" name="product_type_id">
+                      <option value="" disabled selected>Select Product</option>
+                      @if($product->count())
+                        @foreach($product as $item)
+                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -109,7 +115,7 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Item / Material</th>
+                        <th>Item / Product</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
@@ -117,26 +123,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @if($purchaseItem->count())
-                        @foreach($purchaseItem as $item)
-                          <tr data-item-id="{{ $item->purchase_item_id }}">
-                            <td></td>
-                            <td>{{$item->name}}
-                              <input type="hidden" name="material_name[]" value="{{$item->name}}">
-                              <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
-                            </td>
-                            <td>{{$item->quantity}}
-                              <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
-                            </td>
-                            <td>{{$item->price}}
-                              <input type="hidden" name="price[]" value="{{$item->price}}"></td>
-                            <td>{{$item->quantity * $item->price}}
-                              <input type="hidden" name="total[]" value="{{$item->total}}">
-                            </td>
-                            <td><button class="deleteRowBtn btn btn-danger">X</button></td>
-                          </tr>
-                        @endforeach
-                      @endif
+                      <!-- Table rows will be dynamically added here -->
                     </tbody>
                     <tfoot>
                       <tr>
@@ -152,7 +139,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{$purchase['description']}}</textarea>
+                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
                   </div>
                 </div>
               </div>
@@ -168,5 +155,5 @@
     </div>
   </div>
 </section>
-<script> var isPurchasePage = true; </script>
+<script> var isOrderPage = false; </script>
 @endsection

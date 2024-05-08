@@ -92,9 +92,15 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function detail($id){
+    public function detail(Request $request, $id){
         $employee = $this->employeeRepository->get($id);
-        $detail = $this->transactionRepository->eDetail($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        if(!empty($dfrom) && !empty($dto)){
+            $detail = $this->transactionRepository->eDetailFilter($id, $dfrom, $dto);
+        }else{
+            $detail = $this->transactionRepository->eDetail($id);
+        }
         $totalCredit = $detail->where('transaction_type', 'receiveAdvance')->sum('credit');
         $totalDebit = $detail->where('transaction_type', 'advance')->sum('debit');
         $balance = $totalDebit - $totalCredit;
@@ -102,6 +108,8 @@ class EmployeeController extends Controller
             'employee' => $employee,
             'detail' => $detail,
             'balance' => $balance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
         ]);
     }
     

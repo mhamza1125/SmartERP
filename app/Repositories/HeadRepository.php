@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use DB;
 use App\Models\Head;
 
 class HeadRepository implements GlobalInterface {
@@ -21,6 +22,25 @@ class HeadRepository implements GlobalInterface {
     public function get($id){
         return Head::where('heads.head_type_id', $id)
         ->where('heads.head_status', '1')
+        ->get();
+    }
+
+    public function getStage($id){
+        // Product Stages Used by Product Controller
+        $stageIds = explode('|', $id);
+        return Head::whereIn('heads.head_id', $stageIds)
+        ->get();
+    }
+
+    public function getStageAjax($id){
+        // Product Stages Used by Product Controller
+        $product = DB::table('product_types')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->where('product_type_id', $id)
+            ->first();    
+        $product = $product ? (array)$product : [];
+        $stageIds = explode('|', $product['stage_ids']);
+        return Head::whereIn('heads.head_id', $stageIds)
         ->get();
     }
 

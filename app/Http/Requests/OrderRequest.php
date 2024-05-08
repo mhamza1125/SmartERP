@@ -30,6 +30,7 @@ class OrderRequest extends FormRequest
             'order_status' => 'required',
             // Purchase Items
             'product_type_id.*' => 'required',
+            'product_stage_id.*' => 'required',
             'quantity.*' => 'required',
             'price.*' => 'required',
         ];

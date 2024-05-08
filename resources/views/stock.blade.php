@@ -64,7 +64,7 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Prouct</th>
+                        <th>Product</th>
                         <th>Stage</th>
                         <th>Quantity</th>
                       </tr>
@@ -84,7 +84,7 @@
                     <tfoot>
                       <tr>
                         <th>Sr.</th>
-                        <th>Prouct</th>
+                        <th>Product</th>
                         <th>Stage</th>
                         <th>Quantity</th>
                       </tr>

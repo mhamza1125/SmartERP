@@ -28,7 +28,7 @@ class EmployeeRepository implements GlobalInterface {
 
     public function wages(){
         // Wages Type Employees Used in Stock Issuance
-        return Employee::where('employee_type_id', '!=', '40')
+        return Employee::where('employee_type_id', '!=', '39')
         ->join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
         ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
         ->select('employees.*', 'dhead.name as dname', 'chead.name as cname')

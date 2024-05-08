@@ -17,7 +17,8 @@ class OrderItemRepository implements GlobalInterface {
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
         ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname')
+        ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
+        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname', 'shead.name as sname')
         ->orderBy('product_types.product_id')
         ->orderBy('product_types.size_id')
         ->get();
@@ -71,23 +72,26 @@ class OrderItemRepository implements GlobalInterface {
     public function update($id, array $data) {
         $existingItems = OrderItem::where('order_id', $id)->get();
         foreach ($existingItems as $existingItem) {
-            if (!in_array($existingItem->product_type_id, $data['product_type_id'])) {
+            if (!in_array($existingItem->product_type_id, $data['product_type_id']) || !in_array($existingItem->product_stage_id, $data['product_stage_id'])) {
                 $existingItem->delete();
             }
         }
         foreach ($data['quantity'] as $key => $quantity) {
             $product = $data['product_type_id'][$key] ?? null;
+            $stage = $data['product_stage_id'][$key] ?? null;
             $price = $data['price'][$key] ?? null;
             $total = $data['total'][$key] ?? null;
             $orderItem = [
                 'order_id' => $id,
                 'product_type_id' => $product,
+                'product_stage_id' => $stage,
                 'price' => $price,
                 'quantity' => $quantity,
                 'total' => $total,
             ];
             $order = OrderItem::where('order_id', $id)
                 ->where('product_type_id', $product)
+                ->where('product_stage_id', $stage)
                 ->first();
             if ($order) {
                 $order->update($orderItem);

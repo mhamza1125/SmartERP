@@ -19,7 +19,8 @@
                     <th>Sr.</th>
                     <th>Issue No</th>
                     <th>Job No</th>
-                    <th>Employee</th>
+                    <th>Issued Fro</th>
+                    <th>Employee / Vendor</th>
                     <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
@@ -32,7 +33,8 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->stock_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default issue'}}</td>
-                      <td>{{$item->name}}</td>                      
+                      <td>{{$item->sname}}</td>
+                      <td>{{ $item->table_name === 'employee' ? $item->employee_no . ' - ' . $item->name : $item->vendor_no . ' - ' . $item->fname }}</td>                      
                       <td>
                         @if($item->stock_status == 0)
                             <span class="badge badge-danger">Not Received</span>
@@ -57,7 +59,8 @@
                     <th>Sr.</th>
                     <th>Issue No</th>
                     <th>Job No</th>
-                    <th>Employee</th>
+                    <th>Issued Fro</th>
+                    <th>Employee / Vendor</th>
                     <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>

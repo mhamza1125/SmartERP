@@ -61,10 +61,11 @@ class OrderController extends Controller
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $products = $request->input('product_type_id');
+        $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
         $getId = $this->orderRepository->store($validatedData);
-        $this->storeOI($getId, $products, $prices, $quantities);
+        $this->storeOI($getId, $products, $stages, $prices, $quantities);
 
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -131,14 +132,16 @@ class OrderController extends Controller
     
     public function destroy(Purchase $purchase){}
 
-    private function storeOI($getId, $products, $prices, $quantities){
+    private function storeOI($getId, $products, $stages, $prices, $quantities){
         foreach ($prices as $key => $price) {
             $product = $products[$key] ?? null;
+            $stage = $stages[$key] ?? null;
             $quantity = $quantities[$key] ?? null;
             $total = $price * $quantity;
             $orderItem = [
                 'order_id' => $getId,
                 'product_type_id' => $product,
+                'product_stage_id' => $stage,
                 'price' => $price,
                 'quantity' => $quantity,
                 'total' => $total,

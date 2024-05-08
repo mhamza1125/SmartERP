@@ -9,13 +9,12 @@ use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
-use App\Repositories\EmployeeRepository;
 use App\Repositories\VendorRepository;
+use App\Repositories\EmployeeRepository;
 use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductMaterialRepository;
-use App\Repositories\ReceiveMaterialRepository;
 
 class StockController extends Controller
 {
@@ -27,7 +26,6 @@ class StockController extends Controller
     protected $stockItemRepository;
     protected $orderItemRepository;
     protected $productCostRepository;
-    protected $receiveMaterialRepository;
     protected $productMaterialRepository;
 
     public function __construct(
@@ -39,7 +37,6 @@ class StockController extends Controller
         OrderItemRepository $orderItemRepository,  
         StockItemRepository $stockItemRepository,  
         ProductCostRepository $productCostRepository,  
-        ReceiveMaterialRepository $receiveMaterialRepository,  
         ProductMaterialRepository $productMaterialRepository,  
     ){
         $this->middleware(['auth', 'all']);
@@ -51,7 +48,6 @@ class StockController extends Controller
         $this->stockItemRepository = $stockItemRepository;
         $this->orderItemRepository = $orderItemRepository;
         $this->productCostRepository = $productCostRepository;
-        $this->receiveMaterialRepository = $receiveMaterialRepository;
         $this->productMaterialRepository = $productMaterialRepository;
     }
 
@@ -75,14 +71,13 @@ class StockController extends Controller
                 $item = (object)$item;
             }
         }
-
         return view('wages', [
             'employeeWages' => $employeeWages,
             'vendorWages' => $vendorWages,
         ]); 
     }
 
-    public function wShow($id){
+    public function wShowOld($id){
         // Show Wages
         $head = $this->headRepository->get('14');
         $issue = $this->stockRepository->get($id);
@@ -93,6 +88,29 @@ class StockController extends Controller
             'issue' => $issue,
             'wages' => $wages,
             'totalWages' => $totalWages,
+        ]);
+    }
+
+    public function wShow(Request $request, $id){
+        // Show Monthly & Filtered Wages
+        $head = $this->headRepository->get('14');
+        $issue = $this->stockRepository->get($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        if(!empty($dfrom) && !empty($dto)){
+            $wages = $this->stockRepository->wagesInfoFilter($issue, $dfrom, $dto);
+        }else{
+            $wages = $this->stockRepository->wagesInfo($issue);
+        }
+        $totalWages = $wages->sum('total_wages');
+    
+        return view('wagesInfo', [
+            'head' => $head,
+            'issue' => $issue,
+            'wages' => $wages,
+            'totalWages' => $totalWages,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
         ]);
     }
 
@@ -112,6 +130,13 @@ class StockController extends Controller
         $orderId = $request->input('orderId');
         $orderItem = $this->orderItemRepository->get($orderId);
         return response()->json(['data' => $orderItem]);
+    }
+
+    public function ajaxPS(Request $request){
+        // Ajax Product Stage
+        $productId = $request->input('productId');
+        $pstage = $this->headRepository->getStageAjax($productId);
+        return response()->json(['data' => $pstage]);
     }
     
     public function ajaxPC(Request $request){
@@ -141,6 +166,7 @@ class StockController extends Controller
         $pstock = $this->stockItemRepository->pStock();
         $order = $this->orderRepository->active();
         $count = $this->stockRepository->refNo();
+        $stage = $this->headRepository->get('12');
         return view('addIssue', [
             'count' => $count,
             'order' => $order,
@@ -148,6 +174,7 @@ class StockController extends Controller
             'pstock' => $pstock,
             'employee' => $employee,
             'vendor' => $vendor,
+            'stage' => $stage,
         ]);
     }
 
@@ -201,10 +228,12 @@ class StockController extends Controller
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
         $order = $this->orderRepository->active();
+        $stage = $this->headRepository->get('12');
         return view('editIssue', [
             'issue' => $id,
             'issueItem' => $issueItem,
             'order' => $order,
+            'stage' => $stage,
             'stock' => $stock,
             'pstock' => $pstock,
             'employee' => $employee,
@@ -220,7 +249,7 @@ class StockController extends Controller
         $this->stockRepository->update($id, $request->input());
         $issueId = $request->input('issue_id');
         if($request->has('issue_id')){
-            $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+            // $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]); // This seems to be extra
             $this->stockRepository->update($id, ['stock_status' => $request->input('stock_status')]);
         }
         $this->stockItemRepository->update($id, $request->input());

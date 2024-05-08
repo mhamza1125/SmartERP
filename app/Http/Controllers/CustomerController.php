@@ -84,9 +84,15 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function detail($id){
+    public function detail(Request $request, $id){
         $customer = $this->customerRepository->get($id);
-        $detail = $this->transactionRepository->cDetail($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        if(!empty($dfrom) && !empty($dto)){
+            $detail = $this->transactionRepository->cDetailFilter($id, $dfrom, $dto);
+        }else{
+            $detail = $this->transactionRepository->cDetail($id);
+        }
         $totalCredit = $detail->sum('credit');
         $totalDebit = $detail->sum('debit');
         $balance = $totalCredit - $totalDebit;
@@ -94,6 +100,8 @@ class CustomerController extends Controller
             'customer' => $customer,
             'detail' => $detail,
             'balance' => $balance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
         ]);
     }
     

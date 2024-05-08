@@ -107,6 +107,23 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
+                    <label>Product Stages</label>
+                    <select class="form-control select2" name="stage_ids[]" multiple="" required>
+                      <option value="" disabled>Select Stages</option>
+                      @if($stage->count())
+                        @foreach($stage as $item)
+                          @unless($item->material_type_id == '61' || $item->material_type_id == '96')
+                            <option value="{{$item->head_id}}" {{ $pstage->pluck('head_id')->contains($item->head_id) ? 'selected' : '' }}>{{$item->name}}</option>
+                          @endunless
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
                     <label>Product Materials</label>
                     <select class="form-control select2" name="material_id[]" multiple="" required>
                       <option value="" disabled>Select Material</option>

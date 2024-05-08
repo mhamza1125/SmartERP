@@ -107,12 +107,30 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
+                    <label>Product Stages</label>
+                    <select class="form-control select2" name="stage_ids[]" multiple="" required>
+                      <option value="" disabled>Select Stages</option>
+                      @if($stage->count())
+                        @foreach($stage as $item)
+                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
                     <label>Product Materials</label>
                     <select class="form-control select2" name="material_id[]" multiple="" required>
                       <option value="" disabled>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
-                          <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
+                          {{-- Packing Boxes || Delivery Vehicles --}}
+                          @unless($item->material_type_id == '61' || $item->material_type_id == '96')
+                            <option value="{{$item->material_id}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
+                          @endunless
                         @endforeach
                       @endif
                     </select>

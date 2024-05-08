@@ -77,10 +77,10 @@
 
               <h6>Order Items</h6>
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id">
+                    <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
@@ -92,11 +92,22 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
+                    <label>Product Stage</label>
+                    <select class="form-control select2" name="stage_id" id="stage_id">
+                      <!-- Options will be dynamically added here via JavaScript -->
+                      <option value="" disabled>Select Product Stage</option>
+                      <!-- You can keep this option or remove it, depending on your needs -->
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Price</label>
                     <input type="number" min="0" class="form-control" name="price" placeholder="0">
@@ -116,6 +127,7 @@
                       <tr>
                         <th>Sr.</th>
                         <th>Item / Product</th>
+                        <th>Product Stage</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
@@ -128,9 +140,13 @@
                           @foreach($orderItem as $item)
                             <tr data-item-id="{{ $item->order_item_id }}">
                               <td></td>
-                              <td>{{$item->name}} - Size {{$item->hname}}
-                                <input type="hidden" name="name[]" value="{{$item->name}}">
+                              <td>{{$item->article_no}} - Size {{$item->hname}}
+                                <input type="hidden" name="name[]" value="{{$item->article_no}} - Size {{$item->hname}}">
                                 <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
+                              </td>
+                              <td>{{$item->sname}}
+                                <input type="hidden" name="sname[]" value="{{$item->sname}}">
+                                <input type="hidden" name="product_stage_id[]" value="{{$item->product_stage_id}}"></td>
                               </td>
                               <td>{{$item->quantity}}
                                 <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
@@ -176,5 +192,8 @@
     </div>
   </div>
 </section>
-<script> var isOrderPage = true; </script>
+<script>
+  var isOrderPage = true;
+  var ajaxPSUrl = "{{ route('ajaxPS') }}";
+  </script>
 @endsection

@@ -174,6 +174,7 @@ class TransactionController extends Controller
 
     public function store(TransactionRequest $request){
         $validatedData = $request->validated();
+        dd($validatedData);
         if($validatedData['transaction_type'] == 'receiveAdvance'){
             $validatedData['credit'] = $validatedData['debit'];
             $validatedData['debit'] = null;

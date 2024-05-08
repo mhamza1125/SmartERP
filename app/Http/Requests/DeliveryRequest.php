@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StockRequest extends FormRequest
+class DeliveryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,22 +22,32 @@ class StockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'issue_id' => '',
-            'stock_no' => 'required',
-            'issue_for' => '',
+            // Stock Table
+            'stock_no' => 'required|max:255', // Delivery No
+            'stock_date' => 'required', // Delivery Date
             'order_id' => 'required',
             'employee_id' => 'required',
             'table_name' => 'required',
-            'stock_date' => 'required',
             'stock_type' => 'required',
             'stock_status' => 'required',
             'description' => '',
-            // Receive Material
-            'purchase_item_id.*' => 'required',
+            // Delivery Table
+            'tshipping' => '',
+            'fshipping' => '',
+            'tport_no' => '',
+            'fport_no' => '',
+            'delivery_method' => 'required',
+            'delivery_status' => 'required',
+            // Tranaction Table
+            'payee_id.*' => '',
+            'bank_id.*' => '',
+            'debit.*' => '',
+            'remarks.*' => '',
+            // Stock Items Table
+            'product_type_id.*' => 'required',
             'material_id.*' => 'required',
             'quantity.*' => 'required',
-            'stage_id.*' => '',
-            'work_logs.*' => '',
+            'stage_id.*' => 'required',
         ];
     }
 }

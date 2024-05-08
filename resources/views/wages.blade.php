@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Wages - Employee / Vendor</h4>
             <div class="card-header-action">
-              <a href="{{ route('stock.add') }}" class="btn btn-primary">Pay Wages</a>
+              <div class="btn-group">
+                <a href="{{ route('transaction.addEPayment') }}" class="btn btn-primary">Pay Employee</a>
+                <a href="{{ route('transaction.addVPayment') }}" class="btn btn-primary">Pay Vendor</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

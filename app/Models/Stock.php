@@ -14,6 +14,7 @@ class Stock extends Model
     protected $fillable = [
         'issue_id',
         'stock_no', 
+        'issue_for',
         'order_id',
         'table_name',
         'employee_id',

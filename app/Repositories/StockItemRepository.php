@@ -33,6 +33,23 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function delivery($id){
+        // Get Delivery Items
+        return StockItem::where('deliveries.delivery_id', $id)
+        ->join('deliveries', 'deliveries.stock_id', 'stock_items.stock_id')
+        ->leftJoin('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
+        ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->leftjoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->select('*', 'product_types.*', 'products.name', 'products.article_no', 'shead.name as hname', 'uhead.name as uname', 'shead.name as sname', 'puhead.name as puname', 'materials.name as mname')
+        ->orderBy('products.product_id')
+        ->get();
+        
+    }
+
     public function getAvg($id){
         // Showing Product Average Along Matrials in Receive Issuance
         return StockItem::where('stock_items.stock_id', $id)
@@ -110,6 +127,33 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function stockVehicle($id){
+        // Available Material Stock
+        return DB::table(function ($subquery) use ($id) {
+            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname')
+                ->selectRaw('SUM(receive_materials.quantity) as total_received')
+                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
+                ->where('materials.material_type_id', '=', '96')
+                ->from('materials')
+                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
+                ->leftJoin('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
+                ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+                ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+                ->where('purchases.order_id', $id)
+                ->where('receive_materials.inspection_status', '2')
+                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
+        }, 'material_stock')
+        ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
+        ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->select('material_stock.*')
+        ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
+        ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
+        ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
+        ->get();
+    }
+    
     public function stock(){
         // Available Material Stock
         return DB::table(function ($subquery) {
@@ -152,7 +196,7 @@ class StockItemRepository implements GlobalInterface {
 
     public function orderStatus($id){
         // Order Current Status
-        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname')
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
@@ -163,6 +207,28 @@ class StockItemRepository implements GlobalInterface {
         ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
         ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
         ->where('order_items.order_id', $id)
+        ->where('stock_items.material_id', '=', 0)
+        ->orderBy('product_types.product_id')
+        ->orderBy('product_types.size_id')
+        ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+        ->get();
+    }
+
+    public function orderDelivery($id){
+        // Order Delivery with Stage
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'order_items.quantity')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 && stocks.stock_status = 3 THEN stock_items.quantity ELSE 0 END) as stockOut')
+        // ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('order_items', 'order_items.product_type_id', '=', 'product_types.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+        ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->where('order_items.order_id', $id)
+        ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
         ->where('stock_items.material_id', '=', 0)
         ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
         ->get();
@@ -230,8 +296,10 @@ class StockItemRepository implements GlobalInterface {
                 if ($stock) {
                     $stock->update($stockItem);
                 } else {
-                    $stockItem['created_by'] = auth()->id();
-                    StockItem::create($stockItem);
+                    if($quantity > 0){
+                        $stockItem['created_by'] = auth()->id();
+                        StockItem::create($stockItem);
+                    }
                 }
             }
         }

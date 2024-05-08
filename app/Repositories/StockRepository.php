@@ -15,8 +15,18 @@ class StockRepository implements GlobalInterface {
         // All Issuance
         return Stock::where('stocks.stock_type', '2')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date', 'stock_status')
+        // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+        ->leftJoin('employees', function($join) {
+            $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'employee');
+        })
+        ->leftJoin('vendors', function($join) {
+            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'vendor');
+        })
+        ->where('stocks.stock_status', '!=', '3') // This is Delivery Status
+        ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
+        ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
         ->orderBy('stocks.created_at', 'desc')
         ->get();
     }
@@ -56,6 +66,7 @@ class StockRepository implements GlobalInterface {
             })
             ->select('*', 'stocks.employee_id', 'employees.*', 'vendors.*', 'employees.name')
             ->where('work_wages', '!=', '0')
+            ->orderBy('stocks.stock_date', 'desc')
             ->get();
     
         if($stocks->isEmpty()) {
@@ -154,25 +165,36 @@ class StockRepository implements GlobalInterface {
         }
         return $stocks;
     }
-    
-    // public function wagesAll123(){ 
-    //     // Dont know where it is used 
-    //     $stocks = Stock::where('stock_type', '1') // StockIN
-    //         ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
-    //         ->where('work_wages', '!=', '0')
-    //         ->get();
-    //     foreach ($stocks as $stock) {
-    //         $quantity = $stock->quantity;
-    //         $workWages = explode('|', $stock->work_wages);
-    //         $totalWages = 0;
-    //         foreach ($workWages as $wage) {
-    //             $totalWages += (int)$wage * $quantity;
-    //         }
-    //         $stock->total_wages = $totalWages;
-    //     }
-    //     return $stocks;
-    // }
-    
+
+    public function wagesInfoFilter($id, $dfrom, $dto){
+        // For Wagesinfo.blade.php page
+        $stockDate = new \DateTime($id['stock_date']);
+        $stocks = Stock::where('stocks.employee_id', $id['employee_id'])
+            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+            ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+            ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->where('work_wages', '!=', '0')
+            ->whereBetween('stocks.stock_date', [$dfrom, $dto])
+            ->select('*', 'shead.name as sname', 'sthead.name as stage', 'uhead.name as uname')
+            ->get();
+
+        foreach ($stocks as $stock) {   
+            // Calculate total wages for the stock
+            $quantity = $stock->quantity;
+            $workWages = explode('|', $stock->work_wages);
+            $totalWages = 0;
+            foreach ($workWages as $wage) {
+                $totalWages += (int)$wage * $quantity;
+            }
+        
+            // Add total_wages attribute to stock
+            $stock->total_wages = $totalWages;
+        }
+        return $stocks;
+    }
 
     public function get($id){
         return Stock::where('stocks.stock_id', $id)
@@ -187,8 +209,9 @@ class StockRepository implements GlobalInterface {
                     ->where('stocks.table_name', 'vendor');
             })
             ->leftJoin('heads', 'heads.head_id', '=', 'employees.department_id')
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
             ->select(
-                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname'
+                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname'
             )
             ->first();
     }

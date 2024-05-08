@@ -94,9 +94,15 @@ class VendorController extends Controller
         ]);
     }
 
-    public function detail($id){
+    public function detail(Request $request, $id){
         $vendor = $this->vendorRepository->get($id);
-        $detail = $this->transactionRepository->vDetail($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        if(!empty($dfrom) && !empty($dto)){
+            $detail = $this->transactionRepository->vDetailFilter($id, $dfrom, $dto);
+        }else{
+            $detail = $this->transactionRepository->vDetail($id);
+        }
         $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
         $totalDebit = $detail->where('transaction_type', '!=', 'wages')->sum('debit');
         $balance = $totalCredit - $totalDebit;
@@ -104,6 +110,8 @@ class VendorController extends Controller
             'vendor' => $vendor,
             'detail' => $detail,
             'balance' => $balance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
         ]);
     }
     

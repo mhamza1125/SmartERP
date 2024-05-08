@@ -77,10 +77,10 @@
 
               <h6>Order Items</h6>
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Products</label>
-                    <select class="form-control select2" name="product_type_id">
+                    <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
@@ -92,11 +92,22 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
+                    <label>Product Stage</label>
+                    <select class="form-control select2" name="stage_id" id="stage_id">
+                      <!-- Options will be dynamically added here via JavaScript -->
+                      <option value="" disabled>Select Product Stage</option>
+                      <!-- You can keep this option or remove it, depending on your needs -->
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Price</label>
                     <input type="number" min="0" class="form-control" name="price" placeholder="0">
@@ -116,6 +127,7 @@
                       <tr>
                         <th>Sr.</th>
                         <th>Item / Product</th>
+                        <th>Product Stage</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
@@ -128,7 +140,7 @@
                     <tfoot>
                       <tr>
                         <th></th>
-                        <th colspan="3">Grand Total:</th>
+                        <th colspan="4">Grand Total:</th>
                         <th id="grandTotal" colspan="2">00.00</th>
                       </tr>
                     </tfoot>
@@ -155,5 +167,8 @@
     </div>
   </div>
 </section>
-<script> var isOrderPage = false; </script>
+<script>
+  var isOrderPage = false; 
+  var ajaxPSUrl = "{{ route('ajaxPS') }}";
+</script>
 @endsection
