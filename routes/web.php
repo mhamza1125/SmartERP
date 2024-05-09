@@ -161,6 +161,9 @@ Route::post('/return/{id}', [ReturnController::class, 'update'])->name('return.u
 
 // Stock / Issuance
 Route::get('/stock', [StockController::class, 'index'])->name('stock');
+Route::get('/issue', [StockController::class, 'issue'])->name('issue');
+Route::get('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.daily');
+Route::post('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.filter');
 Route::get('/addIssue', [StockController::class, 'create'])->name('stock.add');
 Route::post('/issue', [StockController::class, 'store'])->name('stock.store');
 Route::get('/issue/{id}', [StockController::class, 'show'])->name('stock.show');
@@ -172,14 +175,15 @@ Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Pro
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
 
 // Receive Issuance
-Route::get('/issue', [StockController::class, 'issue'])->name('issue');
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
+Route::get('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.daily');
+Route::post('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.filter');
 Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::post('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
 Route::get('/editReceiveIssue/{id}', [StockController::class, 'rEdit'])->name('rstock.edit');
 
-// Receive Issuance
+// Wages
 Route::get('/wages', [StockController::class, 'wages'])->name('wages');
 Route::get('/wages/{id}', [StockController::class, 'wShow'])->name('wages.show');
 Route::post('/wages/{id}', [StockController::class, 'wShow'])->name('wages.filter');
@@ -214,6 +218,9 @@ Route::get('/expense', [TransactionController::class, 'expense'])->name('expense
 Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name('transaction.addExpense');
 Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name('transaction.showExpense');
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
+// Transaction BRS
+Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
+Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRs');
 // Bank Balance
 Route::get('/bankBalance', [TransactionController::class, 'bankBalance'])->name('bankBalance');
 Route::get('/bankBalance/{id}', [TransactionController::class, 'showBBalance'])->name('transaction.showBBalance');

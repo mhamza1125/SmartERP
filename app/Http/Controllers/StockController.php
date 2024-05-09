@@ -77,20 +77,6 @@ class StockController extends Controller
         ]); 
     }
 
-    public function wShowOld($id){
-        // Show Wages
-        $head = $this->headRepository->get('14');
-        $issue = $this->stockRepository->get($id);
-        $wages = $this->stockRepository->wagesInfo($issue);
-        $totalWages = $wages->sum('total_wages');
-        return view('wagesInfo', [
-            'head' => $head,
-            'issue' => $issue,
-            'wages' => $wages,
-            'totalWages' => $totalWages,
-        ]);
-    }
-
     public function wShow(Request $request, $id){
         // Show Monthly & Filtered Wages
         $head = $this->headRepository->get('14');
@@ -220,6 +206,47 @@ class StockController extends Controller
         ]);
     }
 
+    public function dailyIssue(Request $request){
+        // Daily / Filtered Issuance
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        if(!empty($dfrom) && !empty($dto)){
+            $issueItem = $this->stockItemRepository->dailyIssueFilter($dfrom, $dto);
+        }else{
+            $issueItem = $this->stockItemRepository->dailyIssue();
+        }
+        $average = [];
+        foreach ($issueItem as $item) {
+            if ($item->material_id) {
+                $key = $item->product_type_id . '|' . $item->ifname;
+                $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
+                $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
+            }
+        }
+        return view('dailyIssue', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'average' => $average,
+            'issueItem' => $issueItem,
+        ]);
+    }
+
+    public function dailyReceive(Request $request){
+        // Daily / Filtered Issuance
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        if(!empty($dfrom) && !empty($dto)){
+            $issueItem = $this->stockItemRepository->dailyReceiveFilter($dfrom, $dto);
+        }else{
+            $issueItem = $this->stockItemRepository->dailyReceive();
+        }
+        return view('dailyReceive', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'issueItem' => $issueItem,
+        ]);
+    }
+
     public function edit(Stock $id){
         // Edit Issuance
         $issueItem = $this->stockItemRepository->get($id->stock_id);
@@ -283,7 +310,8 @@ class StockController extends Controller
         $average = [];
         foreach ($issueItem as $item) {
             if ($item->material_id) {
-                $key = $item->article_no . '|' . $item->sname;
+                // $key = $item->article_no . '|' . $item->sname;
+                $key = $item->product_type_id;
                 $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
                 $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
             }
@@ -320,7 +348,8 @@ class StockController extends Controller
         $average = [];
         foreach ($issueItem as $item) {
             if ($item->material_id) {
-                $key = $item->article_no . '|' . $item->sname;
+                // $key = $item->article_no . '|' . $item->sname;
+                $key = $item->product_type_id;
                 $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
                 $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
             }

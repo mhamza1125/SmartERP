@@ -30,6 +30,18 @@
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
                     <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                    <tr><td><b>Order Status:</b> 
+                      @if($order['order_status'] == 1) <span class="badge badge-warning">Pending</span>
+                      @elseif($order['order_status'] == 2) <span class="badge badge-success">Processing</span>
+                      @elseif($order['order_status'] == 3) <span class="badge badge-warning">On Hold</span>
+                      @elseif($order['order_status'] == 4) <span class="badge badge-success">Partially Delivered</span>
+                      @elseif($order['order_status'] == 5) <span class="badge badge-success">Delivered</span>
+                      @elseif($order['order_status'] == 6) <span class="badge badge-success">Completed</span>
+                      @elseif($order['order_status'] == 7) <span class="badge badge-danger">Canceled</span>
+                      @elseif($order['order_status'] == 8) <span class="badge badge-danger">Returned</span>
+                      @elseif($order['delivery_status'] == 9) <span class="badge badge-warning">Disputed</span>
+                      @else @endif
+                    </td></tr>
                   </tbody>
                 </table>
               </div>

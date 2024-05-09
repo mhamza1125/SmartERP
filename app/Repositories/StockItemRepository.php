@@ -69,6 +69,95 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function dailyIssue(){
+        $date = date('Y-m-d');
+        return StockItem::whereDate('stocks.stock_date', $date)
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->leftJoin('product_materials', function($join) {
+            $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
+                ->on('product_materials.material_id', '=', 'stock_items.material_id');
+        })
+        ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->leftJoin('heads as ifhead', 'ifhead.head_id', '=', 'stocks.issue_for')
+        ->select('stock_items.*', 'products.*', 'products.product_id', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty', 'ifhead.name as ifname')
+        ->where('stocks.stock_type', '2')
+        ->orderBy('product_id')
+        ->orderBy('product_types.size_id')
+        ->get();
+    }
+
+    public function dailyIssueFilter($dfrom, $dto){
+        return StockItem::whereBetween('stocks.stock_date', [$dfrom, $dto])
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->leftJoin('product_materials', function($join) {
+            $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
+                ->on('product_materials.material_id', '=', 'stock_items.material_id');
+        })
+        ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->leftJoin('heads as ifhead', 'ifhead.head_id', '=', 'stocks.issue_for')
+        ->select('stock_items.*', 'products.*', 'products.product_id', 'products.name as pname', 'materials.*', 'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty', 'ifhead.name as ifname')
+        ->where('stocks.stock_type', '2')
+        ->orderBy('product_id')
+        ->orderBy('product_types.size_id')
+        ->get();
+    }
+
+    public function dailyReceive(){
+        // Daily Receive Issuance
+        $date = date('Y-m-d');
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+        ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->where('stock_items.material_id', '=', 0)
+        ->whereDate('stocks.stock_date', $date)
+        ->orderBy('product_types.product_id')
+        ->orderBy('product_types.size_id')
+        ->orderBy('stock_items.stage_id')
+        ->where('stocks.stock_type', '1')
+        ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+        ->get();
+    }
+
+    public function dailyReceiveFilter($dfrom, $dto){
+        // Daily Receive Issuance
+        $date = date('Y-m-d');
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+        ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->where('stock_items.material_id', '=', 0)
+        ->whereBetween('stocks.stock_date', [$dfrom, $dto])
+        ->orderBy('product_types.product_id')
+        ->orderBy('product_types.size_id')
+        ->orderBy('stock_items.stage_id')
+        ->where('stocks.stock_type', '1')
+        ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+        ->get();
+    }
+
     public function getAll($id){
         // Used by StockInfo
         return StockItem::where('stocks.issue_id', $id)
@@ -218,7 +307,8 @@ class StockItemRepository implements GlobalInterface {
         // Order Delivery with Stage
         return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'order_items.quantity')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
-        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 && stocks.stock_status = 3 THEN stock_items.quantity ELSE 0 END) as stockOut')
+        ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 && stocks.stock_status = 3 && stocks.order_id = ? THEN stock_items.quantity ELSE 0 END) as stockOut', [$id])
+        // ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 && stocks.stock_status = 3 THEN stock_items.quantity ELSE 0 END) as stockOut')
         // ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
         ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')

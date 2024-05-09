@@ -104,6 +104,13 @@ class TransactionController extends Controller
 
     public function create(){}
 
+    public function createBRS(){
+        $bank = $this->bankRepository->self();
+        return view('addBRS', [
+            'bank' => $bank,
+        ]);
+    }
+    
     public function createEPayment(){
         $bank = $this->bankRepository->self();
         $employee = $this->employeeRepository->all();
@@ -174,8 +181,8 @@ class TransactionController extends Controller
 
     public function store(TransactionRequest $request){
         $validatedData = $request->validated();
-        dd($validatedData);
-        if($validatedData['transaction_type'] == 'receiveAdvance'){
+        if ($validatedData['transaction_type'] == 'receiveAdvance' || 
+            ($request->has('brs_type') && $request->input('brs_type') == 1)) {
             $validatedData['credit'] = $validatedData['debit'];
             $validatedData['debit'] = null;
         }
@@ -191,8 +198,10 @@ class TransactionController extends Controller
             return redirect()->route('transaction.showVPayment', $getId)->with('success', 'Record Inserted Successfully');
         }elseif($request->input('transaction_to') == 'customer'){
             return redirect()->route('transaction.showOPayment', $getId)->with('success', 'Record Inserted Successfully');
-        }else{
+        }elseif($request->input('transaction_to') == 'expense'){
             return redirect()->route('transaction.showExpense', $getId)->with('success', 'Record Inserted Successfully');
+        }else{
+            return redirect()->route('transaction.addBRS')->with('success', 'Record Inserted Successfully');
         }
     }
     
@@ -304,8 +313,10 @@ class TransactionController extends Controller
             return redirect()->route('transaction.showVPayment', $id)->with('success', 'Record Updated Successfully');    
         }elseif($request->input('transaction_to') == 'customer'){
             return redirect()->route('transaction.showOPayment', $id)->with('success', 'Record Updated Successfully');
-        }else{
+        }elseif($request->input('transaction_to') == 'expense'){
             return redirect()->route('transaction.showExpense', $id)->with('success', 'Record Updated Successfully');    
+        }else{
+            return redirect()->route('transaction')->with('success', 'Record Updated Successfully');    
         }
     }
     

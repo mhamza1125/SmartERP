@@ -383,24 +383,5 @@
     </div>
   </div>
 </section>
-
-<script>
-  $(document).ready(function() {
-      // Set max quantity based on selected material
-      $('#materialSelect').change(function() {
-          var available = $(this).find('option:selected').data('available');
-          $('#vehicleQty').attr('max', available);
-      });
-
-      // Automatically set quantity to max if typed value is greater
-      $('#vehicleQty').on('input', function() {
-          var max = parseInt($(this).attr('max'), 10);
-          var currentVal = parseInt($(this).val(), 10);
-          if (currentVal > max) {
-              $(this).val(max);
-          }
-      });
-  });
-</script>
 <script> var isDeliveryPage = false; </script>
 @endsection

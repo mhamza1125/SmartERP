@@ -40,7 +40,9 @@
                           <span class="badge badge-danger">Inactive</span>
                         @endif
                       </td>
-                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->head_id}}">Edit</button></td>
+                      <td>
+                        <button type="button" {{($item->head_id == 61 || $item->head_id == 96)? 'disabled':''}} class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->head_id}}">Edit</button>
+                      </td>
                     </tr>
                     @endforeach
                   @endif

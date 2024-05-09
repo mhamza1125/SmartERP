@@ -8,10 +8,7 @@
           <div class="card-header">
             <h4>Add Delivery</h4>
             <div class="card-header-action">
-              <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                {{-- <a href="{{ route('purchase.add')}}" class="btn btn-primary" target="_blank">Purchase</a> --}}
-              </div>
+              <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
             </div>
           </div>
           <div class="card-body">
@@ -324,24 +321,5 @@
     </div>
   </div>
 </section>
-
-<script>
-  $(document).ready(function() {
-      // Set max quantity based on selected material
-      $('#materialSelect').change(function() {
-          var available = $(this).find('option:selected').data('available');
-          $('#vehicleQty').attr('max', available);
-      });
-
-      // Automatically set quantity to max if typed value is greater
-      $('#vehicleQty').on('input', function() {
-          var max = parseInt($(this).attr('max'), 10);
-          var currentVal = parseInt($(this).val(), 10);
-          if (currentVal > max) {
-              $(this).val(max);
-          }
-      });
-  });
-</script>
 <script> var isDeliveryPage = false; </script>
 @endsection

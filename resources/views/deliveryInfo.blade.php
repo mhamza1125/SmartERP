@@ -46,7 +46,7 @@
                       @if($delivery['delivery_status'] == 1) <span class="badge badge-warning">Pending</span>
                       @elseif($delivery['delivery_status'] == 2) <span class="badge badge-success">Delivered</span>
                       @elseif($delivery['delivery_status'] == 3) <span class="badge badge-danger">Returned</span>
-                      @elseif($delivery['delivery_status'] == 4) <span class="badge badge-warning">Disputed</span>
+                      @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Disputed</span>
                       @else @endif
                     </td></tr>
                   </tbody>

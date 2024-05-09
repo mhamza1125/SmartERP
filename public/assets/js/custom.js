@@ -688,7 +688,6 @@ $(document).ready(function() {
                     '<td>' + quantity + '<input type="text" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
-        
                 $('#items-table tbody').append(newRow);
         
                 tableRowCount++;
@@ -727,6 +726,7 @@ $(document).ready(function() {
             });
         });
         // End - Adding Vehicle to Table
+
 
         // Start - Adding Expense to Table
         var expenseRowCount = 1;
@@ -801,6 +801,22 @@ $(document).ready(function() {
         }
         // End - Adding Expense to Table
 
+
+        // Set max quantity based on selected material
+        $('#materialSelect').change(function() {
+            var available = $(this).find('option:selected').data('available');
+            $('#vehicleQty').attr('max', available);
+        });
+
+        // Automatically set quantity to max if typed value is greater
+        $('#vehicleQty').on('input', function() {
+            var max = parseInt($(this).attr('max'), 10);
+            var currentVal = parseInt($(this).val(), 10);
+            if (currentVal > max) {
+                $(this).val(max);
+            }
+        });
+        
         // Prevent form submission when clicking on the buttons
         $(document).on('click', '.maxBtn', function(event) {
             event.preventDefault(); // Prevent default form submission

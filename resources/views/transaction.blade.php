@@ -46,8 +46,10 @@
                               <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @elseif($item->transaction_to == 'customer')
                               <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                            @elseif($item->transaction_to == 'brs')
+                              <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->transaction_id}}">Edit</button>
                             @else
-                              <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View Else</a>
+                              <a href="#" class="btn btn-info btn-sm">None</a>
                             @endif
                           </td>
                         </tr>
@@ -74,4 +76,45 @@
     </div>
   </div>
 </section>
+
+
+@if($transaction->count())
+@php $index = 1 @endphp
+  @foreach($transaction as $item)
+    @if($item->transaction_to == 'brs')
+    <div class="modal fade" id="exampleModal{{$item->transaction_id}}" tabindex="-1" role="dialog" aria-labelledby="formModal"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="formModal">Edit BRS</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form action="{{ route('transaction.update', $item->transaction_id) }}" method="POST" class="needs-validation" novalidate=""> @csrf
+              <div class="card-body">
+                <div class="form-group">
+                  <label>Amount</label>
+                  @if($item->debit > 0)
+                    <input type="number" min="0" class="form-control" name="debit" value="{{$item->debit}}" required>
+                  @else
+                    <input type="number" min="0" class="form-control" name="debit" value="{{$item->credit}}" required>
+                  @endif
+                  <div class="valid-feedback">Good job!</div>
+                  <div class="invalid-feedback">Enter Amount</div>
+                </div>
+              </div>
+              <div class="card-footer text-right">
+                <button class="btn btn-primary">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    @endif
+  @endforeach
+@endif
 @endsection

@@ -187,7 +187,7 @@
             </a>
           </div>
           <ul class="sidebar-menu">
-            <li class="menu-header">My Work</li>
+            {{-- <li class="menu-header">My Work</li> --}}
             <li class="dropdown active">
               <a href="{{ route('dashboard') }}" class="nav-link"><i data-feather="monitor"></i><span>Dashboard</span></a>
             </li>
@@ -253,6 +253,14 @@
             </li>
             <li class="dropdown">
               <a href="{{ route('wages') }}" class="nav-link"><i data-feather="briefcase"></i><span>Work Wages</span></a>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Reports</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('stock.daily') }}">Daily Issuance</a></li>
+                <li><a class="nav-link" href="{{ route('rstock.daily') }}">Daily Receiving</a></li>
+              </ul>
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i

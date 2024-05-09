@@ -37,14 +37,9 @@
                         <div class="btn-group">
                             <button class="btn <?php 
                                 if($item->delivery_status == 1){ echo 'btn-warning'; $status = 'Pending'; }
-                                elseif($item->delivery_status == 2){ echo 'btn-info'; $status = 'Processing'; }
-                                elseif($item->delivery_status == 3){ echo 'btn-secondary'; $status = 'On Hold'; }
-                                elseif($item->delivery_status == 4){ echo 'btn-primary'; $status = 'Partially Delivered'; }
-                                elseif($item->delivery_status == 5){ echo 'btn-success'; $status = 'Delivered'; }
-                                elseif($item->delivery_status == 6){ echo 'btn-dark'; $status = 'Completed'; }
-                                elseif($item->delivery_status == 7){ echo 'btn-danger'; $status = 'Canceled'; }
-                                elseif($item->delivery_status == 8){ echo 'btn-danger'; $status = 'Returned'; }
-                                elseif($item->delivery_status == 9){ echo 'btn-warning'; $status = 'Disputed'; }
+                                elseif($item->delivery_status == 2){ echo 'btn-success'; $status = 'Delivered'; }
+                                elseif($item->delivery_status == 3){ echo 'btn-danger'; $status = 'Returned'; }
+                                elseif($item->delivery_status == 4){ echo 'btn-danger'; $status = 'Disputed'; }
                                 else{ echo 'btn-danger'; $status = 'Unknown'; }
                                ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                               {{$status}}

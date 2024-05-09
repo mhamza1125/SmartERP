@@ -71,7 +71,8 @@
                       @if($issueItem->count())
                           @foreach($issueItem as $item)
                               @if($item->material_id)
-                                  @php $currentKey = $item->article_no . '|' . $item->sname; @endphp
+                                  {{-- @php $currentKey = $item->article_no . '|' . $item->sname; @endphp --}}
+                                  @php $currentKey = $item->product_type_id; @endphp
                                   @if($lastKey != $currentKey)
                                       <option disabled>========== {{$item->article_no}} | Size {{$item->sname}} | Avg {{$average[$currentKey]['min_avg']}} ==========</option>
                                       @php $lastKey = $currentKey; @endphp
@@ -115,7 +116,8 @@
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
                         @foreach($issueItemUnique as $item)
                           @php 
-                            $currentKey = $item->article_no . '|' . $item->sname; 
+                            // $currentKey = $item->article_no . '|' . $item->sname; 
+                            $currentKey = $item->product_type_id; 
                             $minAvg = isset($average[$currentKey]['min_avg']) ? $average[$currentKey]['min_avg'] : '0'; 
                           @endphp
                           <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>
