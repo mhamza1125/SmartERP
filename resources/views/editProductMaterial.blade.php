@@ -44,13 +44,12 @@
                       @if($productMaterial->count())
                         @foreach($productMaterial as $item)
                           @unless($item->material_type_id == '61')
-
                           <tr data-item-id="{{ $item->product_type_id }}">
                             <td>{{$loop->index + 1}}</td>
                             <td>{{$item->material_no}} - {{$item->name}}
                               <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
                             </td>
-                            <td class="form-group"><input type="number" min="0" class="form-control" name="quantity[]" value="{{$item->quantity}}" required>
+                            <td class="form-group"><input type="number" min="0" step="0.0000000001" class="form-control" name="quantity[]" value="{{$item->quantity}}" required>
                             </td>
                           </tr>
                           @endunless  

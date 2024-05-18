@@ -29,7 +29,11 @@ class ReceiveRequest extends FormRequest
             // Receive Material
             'purchase_item_id.*' => 'required',
             'inspection_status.*' => 'required',
+            'inspection_date.*' => 'required',
             'quantity.*' => 'required',
+            'pending_qty.*' => 'required',
+            'approved_qty.*' => 'required',
+            'rejected_qty.*' => 'required',
         ];
     }
 }

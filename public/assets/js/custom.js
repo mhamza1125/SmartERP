@@ -30,6 +30,17 @@ function submits() {
 }
 // End - Confirm Form Submission
 
+// Start - Shortcut Keys
+$(document).ready(function() {
+    $(document).keydown(function(event) {
+        if (event.altKey && event.key === 's') {
+            event.preventDefault(); // Prevent the default action if any
+            $('#btn-id').focus();
+        }
+    });
+});
+// End - Shortcut Keys
+
 // Start - Remove Header Of Export Table
 $(document).ready(function() {
     // Function to initialize DataTable with export buttons and custom header
@@ -194,6 +205,17 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 // End - Duplicate Attachment Row
+
+// Start - Reporting Page
+$(document).ready(function() {
+    if (typeof isReportPage !== 'undefined') {
+        $('#employee_id').on('change', function() {
+            var tableName = $(this).find('option:selected').data('type');
+            $('#table_name').val(tableName);
+        })        
+    }
+});
+// End - Reporting Page
 
 // Start - Purchase Script
 $(document).ready(function() {
@@ -581,64 +603,112 @@ $(document).ready(function() {
 // End - Product Material Script
 
 // Start - Receive Material Script
-document.addEventListener('input', function(event) {
-    if (event.target.classList.contains('receive-qty')) {
-        var row = event.target.closest('tr');
-        var received = parseInt(row.querySelector('.received').innerText, 10) || 0;
-        var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
-        var enteredQuantity = parseInt(event.target.value, 10) || 0;
-        var remaining = total - received - enteredQuantity;
+$(document).ready(function() {
+    if (typeof isReceivePage !== 'undefined') {
+        document.addEventListener('input', function(event) {
+            if (event.target.classList.contains('receive-qty')) {
+                var row = event.target.closest('tr');
+                var received = parseInt(row.querySelector('.received').innerText, 10) || 0;
+                var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
+                var enteredQuantity = parseInt(event.target.value, 10) || 0;
 
-        // Ensure the entered quantity does not exceed the remaining quantity
-        var maxQuantity = total - received;
-        event.target.setAttribute('max', maxQuantity);
+                // Calculate the remaining quantity
+                var remaining = total - received - enteredQuantity;
 
-        // Update the remaining input value
-        var remainingInput = row.querySelector('.remaining');
-        remainingInput.value = remaining >= 0 ? remaining : 0;
-        // remainingInput.value = remaining;
+                // Ensure the entered quantity does not exceed the remaining quantity
+                var maxQuantity = total - received;
+                event.target.setAttribute('max', maxQuantity);
 
-        // If the entered quantity exceeds the max, adjust it to the max
-        if (enteredQuantity > maxQuantity) {
-            event.target.value = maxQuantity;
-            remainingInput.value = 0;
-            // event.target.classList.add('exceeded');
-        } else {
-            // event.target.classList.remove('exceeded');
-        }
+                // If the entered quantity exceeds the max, adjust it to the max
+                if (enteredQuantity > maxQuantity) {
+                    event.target.value = maxQuantity;
+                    enteredQuantity = maxQuantity;
+                    remaining = 0;
+                } else if (remaining < 0) {
+                    remaining = 0;
+                }
+
+                // Update the remaining input value
+                var remainingInput = row.querySelector('.remaining');
+                remainingInput.value = remaining;
+
+                // Initialize pending_qty with receive-qty
+                var pendingQtyInput = row.querySelector('.pending_qty');
+                pendingQtyInput.value = enteredQuantity;
+
+                // Reset approved and rejected quantities
+                var approvedQtyInput = row.querySelector('.approved_qty');
+                var rejectedQtyInput = row.querySelector('.rejected_qty');
+                approvedQtyInput.value = 0;
+                rejectedQtyInput.value = 0;
+            } else if (event.target.classList.contains('approved_qty') || event.target.classList.contains('rejected_qty')) {
+                var row = event.target.closest('tr');
+                var receiveQty = parseInt(row.querySelector('.receive-qty').value, 10) || 0;
+                var approvedQty = parseInt(row.querySelector('.approved_qty').value, 10) || 0;
+                var rejectedQty = parseInt(row.querySelector('.rejected_qty').value, 10) || 0;
+                
+                // Calculate the total approved and rejected quantity
+                var totalHandledQty = approvedQty + rejectedQty;
+                
+                // Ensure the sum of approved and rejected does not exceed received quantity
+                if (totalHandledQty > receiveQty) {
+                    var excessQty = totalHandledQty - receiveQty;
+                    if (event.target.classList.contains('approved_qty')) {
+                        event.target.value = approvedQty - excessQty;
+                        approvedQty -= excessQty;
+                    } else {
+                        event.target.value = rejectedQty - excessQty;
+                        rejectedQty -= excessQty;
+                    }
+                    totalHandledQty = approvedQty + rejectedQty;
+                }
+
+                // Update pending quantity
+                var pendingQtyInput = row.querySelector('.pending_qty');
+                pendingQtyInput.value = receiveQty - totalHandledQty;
+            }
+        });
     }
 });
 // End - Receive Material Script
 
 // Start - Return Material Script
-var returnQuantityInputs = document.querySelectorAll('.return-qty');
-returnQuantityInputs.forEach(function(input) {
-    var row = input.closest('tr');
-    var receiveQuantityCell = row.querySelector('td:nth-child(5)');
-    var receiveQuantity = parseInt(receiveQuantityCell.textContent.split('/')[1].trim());
-    var returnedQuantity = parseInt(receiveQuantityCell.textContent.split('/')[0].trim()) || 0;
-    var availableToReturn = receiveQuantity - returnedQuantity;
-    input.addEventListener('input', function() {
-        var inputValue = parseInt(this.value.trim()) || 0;
-        if (inputValue > availableToReturn) {
-            this.value = availableToReturn;
-        }
-    });
-    input.setAttribute('max', availableToReturn);
-});
+$(document).ready(function() {
+    if (typeof isReturnPage !== 'undefined') {
+        var returnQuantityInputs = document.querySelectorAll('.return-qty');
+        returnQuantityInputs.forEach(function(input) {
+            var row = input.closest('tr');
+            var receiveQuantityCell = row.querySelector('td:nth-child(5)');
+            var receiveQuantity = parseInt(receiveQuantityCell.textContent.split('/')[1].trim());
+            var returnedQuantity = parseInt(receiveQuantityCell.textContent.split('/')[0].trim()) || 0;
+            var availableToReturn = receiveQuantity - returnedQuantity;
+            
+            input.addEventListener('input', function() {
+                var inputValue = parseInt(this.value.trim()) || 0;
+                if (inputValue > availableToReturn) {
+                    this.value = availableToReturn;
+                }
+            });
+            
+            input.setAttribute('max', availableToReturn);
+        });
 
-var returnQuantityInputs = document.querySelectorAll('.ereturn-qty');
-returnQuantityInputs.forEach(function(input) {
-    var row = input.closest('tr');
-    var receiveQuantityCell = row.querySelector('td:nth-child(5)');
-    var availableToReturn = parseInt(receiveQuantityCell.textContent);
-    input.addEventListener('input', function() {
-        var inputValue = parseInt(this.value.trim()) || 0;
-        if (inputValue > availableToReturn) {
-            this.value = availableToReturn;
-        }
-    });
-    input.setAttribute('max', availableToReturn);
+        var ereturnQuantityInputs = document.querySelectorAll('.ereturn-qty');
+        ereturnQuantityInputs.forEach(function(input) {
+            var row = input.closest('tr');
+            var receiveQuantityCell = row.querySelector('td:nth-child(5)');
+            var availableToReturn = parseInt(receiveQuantityCell.textContent);
+            
+            input.addEventListener('input', function() {
+                var inputValue = parseInt(this.value.trim()) || 0;
+                if (inputValue > availableToReturn) {
+                    this.value = availableToReturn;
+                }
+            });
+            
+            input.setAttribute('max', availableToReturn);
+        });
+    }
 });
 // End - Return Material Script
 
@@ -684,8 +754,8 @@ $(document).ready(function() {
                 // Material does not exist, add row to table
                 var newRow = '<tr>' +
                     '<td>' + tableRowCount + '</td>' +
-                    '<td>' + materialName + '<input type="text" name="material_name[]" value="' + materialName + '"><input type="text" name="material_id[]" value="' + materialId + '"><input type="text" name="product_type_id[]" value="0"><input type="text" name="stage_id[]" value="0"></td>' +
-                    '<td>' + quantity + '<input type="text" name="quantity[]" value="' + quantity + '"></td>' +
+                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"><input type="hidden" name="product_type_id[]" value="0"><input type="hidden" name="stage_id[]" value="0"></td>' +
+                    '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
                 $('#items-table tbody').append(newRow);
@@ -743,10 +813,10 @@ $(document).ready(function() {
             // Add row to the table
             var newRow = '<tr>' +
                 '<td>' + expenseRowCount + '</td>' +
-                '<td>' + expense + '<input type="text" name="payee_id[]" value="' + expenseId + '"></td>' +
-                '<td>' + paymentType + '<input type="text" name="bank_id[]" value="' + paymentTypeId + '"></td>' +
-                '<td>' + amount + '<input type="text" name="debit[]" value="' + amount + '"></td>' +
-                '<td>' + detail + '<input type="text" name="remarks[]" value="' + detail + '"></td>' +
+                '<td>' + expense + '<input type="hidden" name="payee_id[]" value="' + expenseId + '"></td>' +
+                '<td>' + paymentType + '<input type="hidden" name="bank_id[]" value="' + paymentTypeId + '"></td>' +
+                '<td>' + amount + '<input type="hidden" name="debit[]" value="' + amount + '"></td>' +
+                '<td>' + detail + '<input type="hidden" name="remarks[]" value="' + detail + '"></td>' +
                 '<td><button class="delete-expense-row btn btn-danger">X</button></td>' +
                 '</tr>';
             
@@ -888,37 +958,55 @@ $(document).ready(function() {
             if (stockItem) {
                 var availableStock = stockItem.total_received + stockItem.stockIn - stockItem.total_returned - stockItem.stockOut + totalQuantityInTable2 - totalQuantityInTable;
                 $('#available_stock').val(availableStock);
+                // $('#available_stock').val(isFinite(availableStock) ? availableStock : 0);
             } else {
                 // If no stock item found, set available stock to 0
                 $('#available_stock').val(0);
             }
         }
 
-        function updateAvailablePStock(productId, stageId) {
-            var totalQuantityInTable = 0;
-            var totalQuantityInTable2 = 0;
-            $('#items-table tbody tr').each(function() {
-                var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
-                var rowStageId = $(this).find('input[name="stage_id[]"]').val();
-                var rowProductId2 = $(this).find('input[name="hidden_product_type_id[]"]').val();
-                var rowStageId2 = $(this).find('input[name="hidden_stage_id[]"]').val();
-                if (rowProductId === productId && rowStageId == stageId) {
-                    totalQuantityInTable += parseInt($(this).find('input[name="quantity[]"]').val());
-                }if (rowProductId2 === productId && rowStageId2 == stageId) {
-                    totalQuantityInTable2 += parseInt($(this).find('input[name="hidden_quantity[]"]').val());
+        // Function to update available product stock
+        function updateAvailablePStock() {
+            var productId = $('#product_type_id').val();
+            var selectedStageIds = $('#stage_id').val();
+        
+            if (!selectedStageIds || !productId) {
+                $('#available_pstock').val(0);
+                return;
+            }
+        
+            var minAvailableStock = Infinity;
+        
+            selectedStageIds.forEach(function(stageId) {
+                var totalQuantityInTable = 0;
+                var totalQuantityInTable2 = 0;
+        
+                $('#items-table tbody tr').each(function() {
+                    var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
+                    var rowStageId = $(this).find('input[name="stage_id[]"]').val();
+                    var rowProductId2 = $(this).find('input[name="hidden_product_type_id[]"]').val();
+                    var rowStageId2 = $(this).find('input[name="hidden_stage_id[]"]').val();
+        
+                    if (rowProductId === productId && rowStageId === stageId) {
+                        totalQuantityInTable += parseInt($(this).find('input[name="quantity[]"]').val());
+                    }
+        
+                    if (rowProductId2 === productId && rowStageId2 === stageId) {
+                        totalQuantityInTable2 += parseInt($(this).find('input[name="hidden_quantity[]"]').val());
+                    }
+                });
+        
+                var stockItem = pstockData.find(item => item.product_type_id == productId && item.stage_id == stageId);
+        
+                if (stockItem) {
+                    var availableStock = stockItem.stockIn - stockItem.stockOut - totalQuantityInTable + totalQuantityInTable2;
+                    minAvailableStock = Math.min(minAvailableStock, availableStock);
                 }
             });
-
-            // Find the stock item for the selected material
-            var stockItem = pstockData.find(item => item.product_type_id == productId && item.stage_id == stageId);
-            if (stockItem) {
-                var availableStock = stockItem.stockIn - stockItem.stockOut + totalQuantityInTable2 - totalQuantityInTable;
-                $('#available_pstock').val(availableStock);
-                $('#available_stock').val(0);
-            } else {
-                $('#available_pstock').val(0);
-            }
+        
+            $('#available_pstock').val(isFinite(minAvailableStock) ? minAvailableStock : 0);
         }
+        
 
         // Manually trigger AJAX request to load products based on preselected order on page load
         loadProductsBasedOnOrder();
@@ -980,7 +1068,8 @@ $(document).ready(function() {
 
                     // Populate stageSelect and stageStockInfo
                     var stageSelect = $('#stage_id');
-                    stageSelect.empty().append('<option value="" disabled selected>Select Product</option>');
+                    stageSelect.empty();
+                    // stageSelect.empty().append('<option value="" disabled>Select Product</option>');
                     response.stockItems.forEach(function(item) {
                         var optionText = item.article_no + ' - Size ' + item.sname + ' - ' + item.stname;
                         stageSelect.append(new Option(optionText, item.stage_id));
@@ -993,15 +1082,27 @@ $(document).ready(function() {
             });
         });
 
-        // Event listener for change in stage_id dropdown
-        $('#stage_id').on('change', function() {
-            var selectedStageId = $(this).val();
-            if (selectedStageId) {
-                var availableStock = stageStockInfo[selectedStageId];
-                $('#available_stock').val(availableStock);
-            } else {
-                $('#available_stock').val('');
-            }
+        // Event listener for change in material to get the following
+        // Required Material Qty, Issued Qty, Remaining Qty to Issue Against Order 
+        $('#material_id').on('change', function() {
+            var materialId = $(this).val();
+            var orderId = $('#order_id').val();
+            $.ajax({
+                url: ajaxMQtyUrl,
+                type: "GET",
+                data: { materialId: materialId, orderId: orderId },
+                dataType: "json",
+                success: function(response) {
+                    $('#materialQty').val(response.data);
+                    var parts = response.data.split('|');
+                    var val0 = parts[0].trim();
+                    var val1 = parts[1].trim();
+                    var val2 = parts[2].trim();
+                    $('#materialQty0').val(val0);
+                    $('#materialQty1').val(val1);
+                    $('#materialQty2').val(val2);
+                },
+            });
         });
 
         // Event listener for select2:select event on material ID
@@ -1010,11 +1111,9 @@ $(document).ready(function() {
             updateAvailableStock(selectedMaterialId);
         });
 
-        // Event listener for change in stage_id dropdown
+        // Update available product stock when stage_id changes
         $('#stage_id').on('change', function() {
-            var selectedStageId = $(this).val();
-            var productId = $('#product_type_id').val();
-            updateAvailablePStock(productId, selectedStageId);
+            updateAvailablePStock();
         });
 
         // Event listener for click on add button
@@ -1025,7 +1124,8 @@ $(document).ready(function() {
             var productName = $('#product_type_id option:selected').text();
             var quantity = parseInt($('input[name="quantityMaterial"]').val());
             var availableStock = parseInt($('#available_stock').val());
-            var stageId = $('#stage_id').val() || "0"; 
+            // var stageId = $('#stage_id').val() || "0"; 
+            var stageId = "0"; 
 
             if (!materialId || !quantity) return;
 
@@ -1076,53 +1176,63 @@ $(document).ready(function() {
             var materialId = $('#material_id').val()  || "0";
             var productName = $('#product_type_id option:selected').text();
             var quantity = parseInt($('input[name="quantityStage"]').val());
-            var availableStock = parseInt($('#available_pstock').val());
-            var stageId = $('#stage_id').val() || "0"; 
-            var stageName = stageStockInfo[stageId].stname;
-
-            if (!stageId || !quantity) return;
-
-            if (quantity > availableStock) {
-                alert("Quantity cannot be greater than available stock.");
-                return;
-            }
-
-            var isDuplicate = false;
-            $('#items-table tbody tr').each(function() {
-                var existingProductId = $(this).find('input[name="product_type_id[]"]').val();
-                var existingStageId = $(this).find('input[name="stage_id[]"]').val();
-                if (existingProductId === productId && existingStageId === stageId) {
-                    isDuplicate = true;
-                    return false;
+            var stageIds = $('#stage_id').val() || [];
+        
+            if (!stageIds.length || !quantity) return;
+        
+            // Check available stock for each stage
+            for (let i = 0; i < stageIds.length; i++) {
+                var stageId = stageIds[i];
+                var availableStock = parseFloat($('#available_pstock').val());
+        
+                if (isNaN(availableStock) || quantity > availableStock) {
+                    alert("Quantity cannot be greater than available stock.");
+                    return;
                 }
-            });
-
-            if (isDuplicate) {
-                alert("This product stage is already added to the table.");
-                return;
             }
-
-            var updatedStock = availableStock - quantity;
-            $('#available_pstock').val(updatedStock);
-
+        
+            // Check for duplicates
+            for (let i = 0; i < stageIds.length; i++) {
+                var stageId = stageIds[i];
+                var isDuplicate = false;
+        
+                $('#items-table tbody tr').each(function() {
+                    var existingProductId = $(this).find('input[name="product_type_id[]"]').val();
+                    var existingStageId = $(this).find('input[name="stage_id[]"]').val();
+        
+                    if (existingProductId === productId && existingStageId === stageId) {
+                        isDuplicate = true;
+                        return false; // Exit the loop
+                    }
+                });
+        
+                if (isDuplicate) {
+                    alert("One or more selected stages are already added to the table.");
+                    return;
+                }
+            }
+        
+            // Add the product stages to the table
             var srNo = $('#items-table tbody tr').length + 1;
-
-            var markup = `<tr>
-                <td>${srNo}</td>
-                <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="stage_id[]" value="${stageId}"></td>
-                <td>${stageName}<input type="hidden" name="material_id[]" value="${materialId}"></td>
-                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
-                <td><button type="button" class="btn btn-danger deletepRow">X</button></td>
-            </tr>`;
-
-            $('#items-table tbody').append(markup);
-
-            $('#stage_id').val(null).trigger('change');
+            stageIds.forEach(function(stageId) {
+                var stageName = stageStockInfo[stageId].stname;
+                var markup = `<tr>
+                    <td>${srNo}</td>
+                    <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"></td>
+                    <td>${stageName}<input type="hidden" name="stage_id[]" value="${stageId}"><input type="hidden" name="material_id[]" value="${materialId}"></td>
+                    <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
+                    <td><button type="button" class="btn btn-danger deletepRow">X</button></td>
+                </tr>`;
+                $('#items-table tbody').append(markup);
+                srNo++;
+            });
+        
+            $('#stage_id').val('').trigger('change');
             $('input[name="quantityStage"]').val('');
             $('input[name="available_pstock"]').val('');
             updateSerialNumbers();
         });
-
+        
         // Function to update serial numbers
         function updateSerialNumbers() {
             $('#items-table tbody tr:not(#hiddentr)').each(function(index) {
@@ -1131,7 +1241,7 @@ $(document).ready(function() {
         }
 
         // Event listener for click on delete button in table row
-        $('#items-table').on('click', '.deleteRow, .deletepRow', function() {
+        $(document).on('click', '.deleteRow, .deletepRow', function() {
             var quantityToRemove = parseInt($(this).closest('tr').find('input[name="quantity[]"]').val());
             var currentAvailableStock = $(this).hasClass('deleteRow') ? parseInt($('#available_stock').val()) : parseInt($('#available_pstock').val());
             var updatedStock = currentAvailableStock + quantityToRemove;
@@ -1245,16 +1355,21 @@ $(document).ready(function() {
             var quantity = parseInt($('input[name="quantityProduct"]').val());
 
             // Retrieve all selected product costs
-            var selectedProductCosts = $('#pcost_id').val();
+            var selectedOptions = $('#pcost_id').val();
+            var selectedOptionsText = selectedOptions.map(option => $('#pcost_id option[value="' + option + '"]').text());
+            var selectedOptionsString = selectedOptionsText.join(', ');
+            var selectedIds = $('#pcost_id').val();
+            var idsString = selectedIds.join('|') || 0;
 
-            // if (!productId || !quantity || !stageId || selectedProductCosts.length === 0) {
+            // if (!productId || !quantity || !stageId || selectedOptions.length === 0) {
             if (!productId || !quantity || !stageId) {
                 // alert("Please select a product, its cost(s), specify its quantity, and stage.");
                 alert("Please select a product, specify its quantity, and stage.");
                 return;
             }
 
-            if (isProductStageCombinationExists(productId, stageId)) {
+            // if (isProductStageCombinationExists(productId, stageId)) {
+            if (isProductStageCombinationExists(productId, stageId, idsString)) {
                 alert("This product and stage combination already exists in the table.");
                 return;
             }
@@ -1262,15 +1377,9 @@ $(document).ready(function() {
             var srNo = $('#items-table tbody tr').length + 1;
             
             // var pcostInputs = '';
-            // selectedProductCosts.forEach(pcost => {
+            // selectedOptions.forEach(pcost => {
             //     pcostInputs += `<input type="hidden" name="pcost_id[]" value="${productId}|${pcost}">`;
             // });
-
-            var selectedOptions = $('#pcost_id').val();
-            var selectedOptionsText = selectedOptions.map(option => $('#pcost_id option[value="' + option + '"]').text());
-            var selectedOptionsString = selectedOptionsText.join(', ');
-            var selectedIds = $('#pcost_id').val();
-            var idsString = selectedIds.join('|') || 0;
             
             var markup = `<tr>
                 <td>${srNo}</td>
@@ -1357,14 +1466,15 @@ $(document).ready(function() {
         initializeSelect2();
 
         // Function to check if product and stage combination already exists
-        function isProductStageCombinationExists(productId, stageId) {
+        function isProductStageCombinationExists(productId, stageId, productCost) {
             var exists = false;
-            console.log(productId);
-            console.log(stageId);
             $('#items-table tbody tr').each(function() {
+                console.log(productCost);
                 var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
                 var rowStageId = $(this).find('input[name="stage_id[]"]').val();
-                if (rowProductId == productId && rowStageId == stageId) {
+                var rowCostId = $(this).find('input[name="work_logs[]"]').val();
+                // if (rowProductId == productId && rowStageId == stageId) {
+                if (rowProductId == productId && rowStageId == stageId && rowCostId == productCost) {
                     exists = true;
                     return false; // exit loop early
                 }
@@ -1587,7 +1697,7 @@ $(document).ready(function () {
             $.ajax({
                 url: ajaxBankUrl,
                 type: "GET",
-                data: {tableId: tableId, table: table},
+                data: { tableId: tableId, table: table },
                 dataType: "json",
                 success: function(response) {
                     var bankSelect = $('#payee_bank_id');

@@ -132,6 +132,14 @@ class StockController extends Controller
         return response()->json(['data' => $productCost]);
     }
 
+    public function ajaxMQty(Request $request){
+        // Ajax Material Qty against Order
+        $orderId = $request->input('orderId');
+        $materialId = $request->input('materialId');
+        $estimate = $this->orderItemRepository->estimateMaterial($orderId, $materialId);
+        return response()->json(['data' => $estimate]);
+    }
+
     // ==================================================
     // ==================== Issuance ====================
     // ==================================================
@@ -210,8 +218,14 @@ class StockController extends Controller
         // Daily / Filtered Issuance
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
+        $tname = $request->input('table_name');
+        $oid = $request->input('order_id');
+        $tid = $request->input('employee_id');
+        $order = $this->orderRepository->all();
+        $employee = $this->employeeRepository->wages();
+        $vendor = $this->vendorRepository->worker();
         if(!empty($dfrom) && !empty($dto)){
-            $issueItem = $this->stockItemRepository->dailyIssueFilter($dfrom, $dto);
+            $issueItem = $this->stockItemRepository->dailyIssueFilter($dfrom, $dto, $tname, $tid, $oid);
         }else{
             $issueItem = $this->stockItemRepository->dailyIssue();
         }
@@ -226,7 +240,13 @@ class StockController extends Controller
         return view('dailyIssue', [
             'dto' => $dto,
             'dfrom' => $dfrom,
+            'oid' => $oid,
+            'tid' => $tid,
+            'tname' => $tname,
+            'order' => $order,
+            'vendor' => $vendor,
             'average' => $average,
+            'employee' => $employee,
             'issueItem' => $issueItem,
         ]);
     }
@@ -235,14 +255,26 @@ class StockController extends Controller
         // Daily / Filtered Issuance
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
+        $tname = $request->input('table_name');
+        $oid = $request->input('order_id');
+        $tid = $request->input('employee_id');
+        $order = $this->orderRepository->all();
+        $employee = $this->employeeRepository->wages();
+        $vendor = $this->vendorRepository->worker();
         if(!empty($dfrom) && !empty($dto)){
-            $issueItem = $this->stockItemRepository->dailyReceiveFilter($dfrom, $dto);
+            $issueItem = $this->stockItemRepository->dailyReceiveFilter($dfrom, $dto, $tname, $tid, $oid);
         }else{
             $issueItem = $this->stockItemRepository->dailyReceive();
         }
         return view('dailyReceive', [
             'dto' => $dto,
             'dfrom' => $dfrom,
+            'oid' => $oid,
+            'tid' => $tid,
+            'tname' => $tname,
+            'order' => $order,
+            'vendor' => $vendor,
+            'employee' => $employee,
             'issueItem' => $issueItem,
         ]);
     }

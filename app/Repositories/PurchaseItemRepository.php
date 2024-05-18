@@ -23,7 +23,7 @@ class PurchaseItemRepository implements GlobalInterface {
         return PurchaseItem::where('purchase_id', $id)
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
         ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-        ->select('purchase_items.*', 'materials.name')
+        ->select('purchase_items.*', 'materials.name', 'materials.material_no')
         ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received')
         ->groupBy('purchase_items.purchase_item_id')
         ->get();
@@ -50,7 +50,7 @@ class PurchaseItemRepository implements GlobalInterface {
             $join->on('receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
                  ->where('receive_materials.receive_id', '!=', $rid);
         })
-        ->select('purchase_items.*', 'materials.name')
+        ->select('purchase_items.*', 'materials.name', 'materials.material_no')
         ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received')
         ->groupBy('purchase_items.purchase_item_id')
         ->get();

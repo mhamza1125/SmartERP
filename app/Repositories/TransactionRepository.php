@@ -98,7 +98,7 @@ class TransactionRepository implements GlobalInterface {
         ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
         ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
         ->select('*', 'heads.name as hname', 'bhead.name as bname')
-       ->first();
+        ->first();
     }
 
     public function getEPayment($id){ // Employee Payment
@@ -109,7 +109,7 @@ class TransactionRepository implements GlobalInterface {
         ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
         ->join('employees', 'employees.employee_id', 'transactions.payee_id')
         ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
-       ->first();
+        ->first();
     }
 
     public function getVPayment($id){ // Vendor Payment
@@ -121,7 +121,7 @@ class TransactionRepository implements GlobalInterface {
         ->join('vendors', 'vendors.vendor_id', 'transactions.payee_id')
         ->leftJoin('purchases', 'purchases.purchase_id', 'transactions.order_id')
         ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
-       ->first();
+        ->first();
     }
     
     public function getOPayment($id){ // Order Payment
@@ -133,18 +133,34 @@ class TransactionRepository implements GlobalInterface {
         ->join('customers', 'customers.customer_id', 'transactions.payee_id')
         ->join('orders', 'orders.order_id', 'transactions.order_id')
         ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
-       ->first();
+        ->first();
     }
     
     public function getPPayment($id){ // Purchase Payment
         return Transaction::where('order_id', $id)->get();
     }
+
+    public function getBRS($id){
+        return Transaction::where('transaction_id', $id)
+        ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
+        ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
+        ->select('*', 'bhead.name as bname')
+        ->first();
+    }
     
     public function vDetail($id){
         // Vendor Ledger
-        $purchases = \DB::table('purchases')
-            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(purchase_items.total) as credit'))
+        // $purchases = \DB::table('purchases') // Amount of Purchase Items, Regardless of Receiving
+        //     ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(purchase_items.total) as credit'))
+        //     ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+        //     ->where('purchases.vendor_id', $id)
+        //     ->groupBy('purchases.purchase_id')
+        //     ->get();
+
+        $purchases = \DB::table('purchases') // Amount of Received Purchase Items
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+            ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
             ->groupBy('purchases.purchase_id')
             ->get();
@@ -172,11 +188,19 @@ class TransactionRepository implements GlobalInterface {
 
     public function vDetailFilter($id, $dfrom, $dto){
         // Vendor Ledger
-        $purchases = \DB::table('purchases')
-            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(purchase_items.total) as credit'))
+        // $purchases = \DB::table('purchases')
+        //     ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(purchase_items.total) as credit'))
+        //     ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+        //     ->where('purchases.vendor_id', $id)
+        //     ->whereBetween('purchases.purchase_date', [$dfrom, $dto])
+        //     ->groupBy('purchases.purchase_id')
+        //     ->get();
+
+        $purchases = \DB::table('purchases') // Amount of Received Purchase Items
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+            ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
-            ->whereBetween('purchases.purchase_date', [$dfrom, $dto])
             ->groupBy('purchases.purchase_id')
             ->get();
         

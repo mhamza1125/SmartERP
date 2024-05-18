@@ -58,9 +58,13 @@ class ReceiveController extends Controller
         }
         $pid = $request->input('purchase_item_id');
         $quantities = $request->input('quantity');
+        $pending = $request->input('pending_qty');
+        $approved = $request->input('approved_qty');
+        $rejected = $request->input('rejected_qty');
         $inspections = $request->input('inspection_status');
+        $idates = $request->input('inspection_date');
         $getId = $this->receiveRepository->store($validatedData);
-        $this->storeRM($getId, $pid, $quantities, $inspections);
+        $this->storeRM($getId, $pid, $quantities, $inspections, $idates, $pending, $approved, $rejected);
         return redirect()->route('receive.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
@@ -90,11 +94,6 @@ class ReceiveController extends Controller
         }
         $this->receiveRepository->update($id, $request->input());
         $this->receiveMaterialRepository->update($id, $request->input());
-        // $pid = $request->input('purchase_item_id');
-        // $quantities = $request->input('quantity');
-        // $inspections = $request->input('inspection_status');
-        // $this->receiveMaterialRepository->delete($id);
-        // $this->storeRM($id, $pid, $quantities, $inspections);
         return redirect()->route('receive.show', $id)->with('success', 'Record Updated Successfully');
     }
 
@@ -106,15 +105,23 @@ class ReceiveController extends Controller
     
     public function destroy(ReceiveMaterial $receive){}
 
-    private function storeRM($getId, $pids, $quantities, $inspections){
+    private function storeRM($getId, $pids, $quantities, $inspections, $idates, $pending, $approved, $rejected){
         foreach ($quantities as $key => $quantity) {
             $pid = $pids[$key] ?? null;
             $status = $inspections[$key] ?? null;
+            $idate = $idates[$key] ?? null;
+            $pqty = $pending[$key] ?? null;
+            $aqty = $approved[$key] ?? null;
+            $rqty = $rejected[$key] ?? null;
             $receiveMaterial = [
                 'receive_id' => $getId,
                 'purchase_item_id' => $pid,
                 'quantity' => $quantity,
                 'inspection_status' => $status,
+                'inspection_date' => $idate,
+                'pending_qty' => $pqty,
+                'approved_qty' => $aqty,
+                'rejected_qty' => $rqty,
             ];
             $this->receiveMaterialRepository->store($receiveMaterial);
         }

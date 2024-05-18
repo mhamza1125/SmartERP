@@ -120,6 +120,5 @@
     </div>
   </div>
 </section>
-<script>
-</script>
+<script> var isReturnPage = true; </script>
 @endsection

@@ -9,7 +9,7 @@
             <h4>Wages Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('wages') }}" class="btn btn-primary">Back</a>
                 @if($issue['table_name'] == 'employee')
                   <a href="{{ route('transaction.addEPayment') }}" class="btn btn-primary">Pay</a>
                 @else

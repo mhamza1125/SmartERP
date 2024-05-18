@@ -9,7 +9,7 @@
             <h4>Product Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('product') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>
               </div>
             </div>
@@ -204,7 +204,7 @@
                                         <tr>
                                           <td><b>Box No: </b> {{$item2->material_no}}</td>
                                           <td><b>Box Name: </b> {{$item2->name}}</td>
-                                          <td><b>Quantity in Box: </b> {{1/$item2->quantity}} {{$item2->hname}}</td>
+                                          <td><b>Quantity in Box: </b> {{1/$item2->quantity}} {{$product['hname']}}</td>
                                         </tr>
                                         <tr>
                                           <td colspan="3">

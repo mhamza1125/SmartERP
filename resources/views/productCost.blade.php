@@ -33,7 +33,7 @@
                       <td>{{(new DateTime($item->created_at))->format('Y-m-d') }}</td>                      
                       <td>
                         <a href="{{ route('productCost.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('productCost.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{{ route('productCost.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit123</a>
                       </td>
                     </tr>
                     @endforeach

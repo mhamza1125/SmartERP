@@ -15,7 +15,11 @@ class ReceiveMaterial extends Model
         'receive_id',
         'purchase_item_id',
         'quantity',
+        'pending_qty',
+        'approved_qty',
+        'rejected_qty',
         'inspection_status',
+        'inspection_date',
         'created_by',
         'updated_at',
     ];

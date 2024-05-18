@@ -81,7 +81,7 @@
                 <option value="" selected disabled>Select Receiving</option>
                 @if($receive->count())
                   @foreach($receive as $item)
-                    <option value="{{$item->receive_id}}">{{$item->receive_no}} - {{($item->job_no)? $item->job_no:'Default Purchase'}}</option>
+                    <option value="{{$item->receive_id}}">{{$item->receive_no}} - {{($item->job_no)? $item->job_no:'Default Purchase'}} - {{$item->fname}}</option>
                   @endforeach
                 @endif
               </select>

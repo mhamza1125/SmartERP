@@ -260,6 +260,7 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('stock.daily') }}">Daily Issuance</a></li>
                 <li><a class="nav-link" href="{{ route('rstock.daily') }}">Daily Receiving</a></li>
+                <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
               </ul>
             </li>
             <li class="dropdown">

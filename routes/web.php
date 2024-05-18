@@ -92,6 +92,8 @@ Route::post('/material', [MaterialController::class, 'store'])->name('material.s
 Route::get('/material/{id}', [MaterialController::class, 'show'])->name('material.show');
 Route::get('/editMaterial/{id}', [MaterialController::class, 'edit'])->name('material.edit');
 Route::post('/material/{id}', [MaterialController::class, 'update'])->name('material.update');
+Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
+Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
 
 // Product
 Route::get('/product', [ProductController::class, 'index'])->name('product');
@@ -173,6 +175,7 @@ Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Pro
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
 Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
+Route::get('/ajaxMQty', [StockController::class, 'ajaxMQty'])->name('ajaxMQty'); //Material Qty
 
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
@@ -220,7 +223,9 @@ Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
 // Transaction BRS
 Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
-Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRs');
+Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRS');
+Route::get('/BRS/{id}', [TransactionController::class, 'showBRS'])->name('transaction.showBRS');
+Route::get('/editBRS/{id}', [TransactionController::class, 'editBRS'])->name('transaction.editBRS');
 // Bank Balance
 Route::get('/bankBalance', [TransactionController::class, 'bankBalance'])->name('bankBalance');
 Route::get('/bankBalance/{id}', [TransactionController::class, 'showBBalance'])->name('transaction.showBBalance');

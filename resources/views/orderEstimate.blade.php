@@ -78,7 +78,7 @@
                             @foreach($estimate as $item)
                                 @php
                                     $stockItem = $stock[$item->material_id] ?? (object)[
-                                      'total_qty' => 0, 'stockIn' => 0,
+                                      'total_qty' => 0, 'stockIn' => 0, 'total_received' => '0',
                                       'total_returned' => 0, 'stockOut' => 0
                                     ];
                                     $available = $stockItem->total_received + $stockItem->stockIn - $stockItem->total_returned - $stockItem->stockOut;
@@ -118,7 +118,7 @@
                       <table class="table table-sm table-striped">
                         <thead>
                           <tr>
-                            <th>Sr.123</th>
+                            <th>Sr.</th>
                             <th>Code</th>
                             <th>Material Name</th>
                             <th>Current Vendor</th>

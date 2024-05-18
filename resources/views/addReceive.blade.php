@@ -63,34 +63,50 @@
                         <th>Item / Material</th>
                         <th>Received / Total</th>
                         <th>Receive</th>
+                        <th>Pending</th>
+                        <th>Approved</th>
+                        <th>Rejected</th>
                         <th>Remaining</th>
-                        <th>Status</th>
+                        {{-- <th>Status</th> --}}
+                        <th>Inspection Date</th>
                       </tr>
                     </thead>
                     <tbody>
                       @if($purchaseItem->count())
                         @foreach($purchaseItem as $item)
                         <tr>
-                            <td>{{ $loop->index + 1 }}</td>
-                            <td class="form-group">{{$item->name}}
-                              <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
-                            </td>
-                            <td class="form-group">
-                              <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
-                            </td>
-                            <td class="form-group">
-                              <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0">
-                            </td>
-                            <td class="form-group">
-                              <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly>
-                            </td>
-                            <td class="form-group">
-                              <select class="form-control" name="inspection_status[]" required>
-                                <option value="1" selected>Pending</option>
-                                <option value="2">Approved</option>
-                                <option value="3">Rejected</option>
-                              </select>
-                            </td>
+                          <td>{{ $loop->index + 1 }}</td>
+                          <td class="form-group">{{$item->material_no}} - {{$item->name}}
+                            <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
+                          </td>
+                          <td class="form-group">
+                            <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0">
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0">
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0">
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0">
+                          </td>
+                          <td class="form-group">
+                            <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly>
+                          </td>
+                          {{-- <td class="form-group">
+                            <select class="form-control" name="inspection_status[]" required>
+                              <option value="1" selected>Pending</option>
+                              <option value="2">Approved</option>
+                              <option value="3">Rejected</option>
+                            </select>
+                          </td> --}}
+                          <td>
+                            <input type="text" class="form-control datepicker" name="inspection_date[]" required>
+                          </td>
                         </tr>
                         @endforeach
                       @endif
@@ -101,8 +117,12 @@
                         <th>Item / Material</th>
                         <th>Received / Total</th>
                         <th>Receive</th>
+                        <th>Pending</th>
+                        <th>Approved</th>
+                        <th>Rejected</th>
                         <th>Remaining</th>
-                        <th>Status</th>
+                        {{-- <th>Status</th> --}}
+                        <th>Inspection Date</th>
                       </tr>
                     </tfoot>
                   </table>
@@ -128,4 +148,5 @@
     </div>
   </div>
 </section>
+<script> var isReceivePage = false; </script>
 @endsection

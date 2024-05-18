@@ -17,8 +17,9 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Vendor No</th>
+                    <th>Name</th>
                     <th>Vendor Type</th>
-                    <th>Vendor Name</th>
                     <th>Vendor As Worker</th>
                     <th>Action</th>
                   </tr>
@@ -28,8 +29,9 @@
                     @foreach($vendor as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->vtname}}</td>
+                      <td>{{$item->vendor_no}}</td>
                       <td>{{$item->fname}}</td>
+                      <td>{{$item->vtname}}</td>
                       <td><b>@if($item->vendor_type) 
                         <span class="badge badge-success">Active</span> @else 
                         <span class="badge badge-danger">Inactive</span> @endif</td> 
@@ -45,9 +47,11 @@
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
+                      <th>Vendor No</th>
+                      <th>Name</th>
                       <th>Vendor Type</th>
-                      <th>Vendor Name</th>
-                    <th>Action</th>
+                      <th>Vendor As Worker</th>
+                      <th>Action</th>
                   </tr>
                 </tfoot>
               </table>

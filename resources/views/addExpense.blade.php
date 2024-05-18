@@ -62,7 +62,7 @@
                       <option value="0" selected>Cash Payment</option>
                       @if($bank->count())
                         @foreach($bank as $item)
-                          <option value="{{$item->bank_id}}" {{ old('bank_id') == $item->head_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
+                          <option value="{{$item->bank_id}}" {{ old('bank_id') == $item->bank_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
                         @endforeach
                       @endif
                     </select>

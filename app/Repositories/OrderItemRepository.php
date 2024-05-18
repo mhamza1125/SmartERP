@@ -63,6 +63,36 @@ class OrderItemRepository implements GlobalInterface {
         ->orderBy('materials.material_id')->get();
     }
 
+    public function estimateMaterial($orderId, $materialId){
+        // Required Material Against Order
+        $totalQty = OrderItem::where('order_id', $orderId)
+        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('materials.material_id')
+            ->where('materials.material_id', $materialId)
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->first();
+
+        // Already Issued Material 
+        $issuedQty = \DB::table('stock_items')->where('stocks.order_id', $orderId)
+            ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
+            ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
+            ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
+            ->where('stock_items.material_id', $materialId)
+            ->groupBy('stock_items.material_id')
+            ->first();
+        
+        $totalQty = $totalQty->total_qty ?? '0';
+        $issuedQty =  $issuedQty->issued_qty ?? '0';
+        
+        $return = $totalQty . "  |  " . $issuedQty . "  |  " . $totalQty - $issuedQty;
+        return $return;
+    }
+
     public function store(array $data){
         $data['created_by'] = auth()->id();
         $store = OrderItem::create($data);

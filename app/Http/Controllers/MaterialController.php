@@ -81,6 +81,27 @@ class MaterialController extends Controller
         ]);
     }
 
+    public function detail(Request $request){
+        // Materail Ledger
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $mid = $request->input('material_id');
+        $material = $this->materialRepository->all();
+        if(!empty($dfrom) && !empty($dto)){
+            $materialItem = $this->materialRepository->ledgerFilter($dfrom, $dto, $mid);
+        }else{
+            $materialItem = $this->materialRepository->ledger();
+        }
+        // dd($materialItem);
+        return view('materialDetail', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'mid' => $mid,
+            'material' => $material,
+            'materialItem' => $materialItem,
+        ]);
+    }
+
     public function update(Request $request, $id){
         $getId = $this->materialRepository->update($id, $request->input());      
         if ($request->hasFile('image')) {

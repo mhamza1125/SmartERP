@@ -96,7 +96,7 @@
                 <option value="" selected disabled>Select Purchase</option>
                 @if($purchase->count())
                   @foreach($purchase as $item)
-                    <option value="{{$item->purchase_id}}">{{$item->purchase_no}} - {{($item->job_no)? $item->job_no:'Default Purchase'}}</option>
+                    <option value="{{$item->purchase_id}}">{{$item->purchase_no}} - {{($item->job_no)? $item->job_no:'Default Purchase'}} - {{$item->fname}}</option>
                   @endforeach
                 @endif
               </select>

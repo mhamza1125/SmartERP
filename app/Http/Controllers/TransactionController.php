@@ -174,7 +174,7 @@ class TransactionController extends Controller
 
     public function ajaxPurchase(Request $request){
         $tableId = $request->input('vendorId');
-        error_log("Vendor ID: " . $tableId);
+        // error_log("Vendor ID: " . $tableId);
         $purchase = $this->purchaseRepository->getPurchase($tableId);
         return response()->json(['data' => $purchase]);
     }
@@ -200,8 +200,10 @@ class TransactionController extends Controller
             return redirect()->route('transaction.showOPayment', $getId)->with('success', 'Record Inserted Successfully');
         }elseif($request->input('transaction_to') == 'expense'){
             return redirect()->route('transaction.showExpense', $getId)->with('success', 'Record Inserted Successfully');
+        }elseif($request->input('transaction_to') == 'brs'){
+            return redirect()->route('transaction.showBRS', $getId)->with('success', 'Record Inserted Successfully');
         }else{
-            return redirect()->route('transaction.addBRS')->with('success', 'Record Inserted Successfully');
+            return redirect()->route('transaction')->with('success', 'Record Inserted Successfully');
         }
     }
     
@@ -240,6 +242,13 @@ class TransactionController extends Controller
         return view('OPaymentInfo', [
             'transaction' => $transaction,
             'image' => $image,
+        ]);
+    }
+
+    public function showBRS($id){
+        $transaction = $this->transactionRepository->getBRS($id);
+        return view('brsInfo', [
+            'transaction' => $transaction,
         ]);
     }
 
@@ -300,7 +309,20 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function editBRS(Transaction $id){
+        $bank = $this->bankRepository->self();
+        return view('editBRS', [
+            'transaction' => $id,
+            'bank' => $bank,
+        ]);
+    }
+
     public function update(Request $request, $id){
+        if($request->has('brs_type') && $request->input('brs_type') == 1) {
+            $request->merge(['credit' => $request->input('debit'), 'debit' => null]);
+        }elseif($request->has('brs_type') && $request->input('brs_type') == 2) {
+            $request->merge(['credit' => null]);
+        }
         $getId = $this->transactionRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -315,7 +337,10 @@ class TransactionController extends Controller
             return redirect()->route('transaction.showOPayment', $id)->with('success', 'Record Updated Successfully');
         }elseif($request->input('transaction_to') == 'expense'){
             return redirect()->route('transaction.showExpense', $id)->with('success', 'Record Updated Successfully');    
-        }else{
+        }elseif($request->input('transaction_to') == 'brs'){
+            return redirect()->route('transaction.showBRS', $id)->with('success', 'Record Updated Successfully');    
+        }
+        else{
             return redirect()->route('transaction')->with('success', 'Record Updated Successfully');    
         }
     }

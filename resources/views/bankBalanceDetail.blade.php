@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Bank Balance Info</h4>
             <div class="card-header-action">
-              {{-- <a href="{{ route('stock') }}" class="btn btn-primary">BRS</a> --}}
+              <a href="{{ route('brs') }}" class="btn btn-primary">BRS</a>
             </div>
           </div>
           <div class="card-body">

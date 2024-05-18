@@ -41,7 +41,7 @@ class ProductMaterialRepository implements GlobalInterface {
         ->join('product_types', 'product_types.product_type_id', '=', 'product_materials.product_type_id')
         ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
         ->select('product_materials.*', 'materials.*', 'heads.name as hname')
-        ->get();    
+        ->get();
     }
 
     public function times($id){

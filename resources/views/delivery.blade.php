@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Delivery Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('delivery') }}" class="btn btn-primary">Add Delivery</a>
+              {{-- <a href="{{ route('delivery') }}" class="btn btn-primary">Add Delivery</a> --}}
             </div>
           </div>
           <div class="card-body">

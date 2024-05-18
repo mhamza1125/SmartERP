@@ -53,7 +53,7 @@ class ReceiveMaterialRepository implements GlobalInterface {
         ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
         ->join('heads', 'heads.head_id', '=' ,'materials.unit_id')
-        ->select('purchase_items.quantity', 'materials.material_no', 'materials.name',
+        ->select('receive_materials.*', 'purchase_items.quantity', 'materials.material_no', 'materials.name',
             'heads.name as hname', 'receive_materials.quantity as rqty', 'receive_materials.created_at',
             'receive_material_id', 'receives.receive_no', 'purchase_items.purchase_item_id')
         ->get();
@@ -84,12 +84,20 @@ class ReceiveMaterialRepository implements GlobalInterface {
         foreach ($data['quantity'] as $key => $quantity) {
             $pid = $data['purchase_item_id'][$key] ?? null;
             $status = $data['inspection_status'][$key] ?? null;
+            $idate = $data['inspection_date'][$key] ?? null;
+            $pqty = $data['pending_qty'][$key] ?? null;
+            $aqty = $data['approved_qty'][$key] ?? null;
+            $rqty = $data['rejected_qty'][$key] ?? null;
             
             $receiveMaterial = [
                 'receive_id' => $id,
                 'purchase_item_id' => $pid,
                 'quantity' => $quantity,
+                'pending_qty' => $pqty,
+                'approved_qty' => $aqty,
+                'rejected_qty' => $rqty,
                 'inspection_status' => $status,
+                'inspection_date' => $idate,
             ];
             $receive = ReceiveMaterial::where('receive_id', $id)
                 ->where('purchase_item_id', $pid)

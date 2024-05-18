@@ -92,7 +92,7 @@
                     <label>Products</label>
                     <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled selected>Select Product</option>
+                      <option value="" disabled>Select Product</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
                   </select>
                   </div>
@@ -100,7 +100,7 @@
               </div>
 
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Materials</label>
                     <select class="form-control select2" name="material_id" id="material_id">
@@ -110,13 +110,19 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-3">                  
+                <div class="col-md-2">
                   <div class="form-group">
                     <label for="available_stock">Available Stock</label>
                     <input type="text" class="form-control" id="available_stock" name="available_stock" readonly>
                   </div>
-                </div>
+                </div>                
                 <div class="col-md-3">
+                  <div class="form-group">
+                    <label for="available_stock">Total Req &nbsp|&nbsp Issued &nbsp|&nbsp To Issue</label>  
+                    <input type="text" class="form-control" id="materialQty" readonly>
+                  </div>
+                </div>
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantityMaterial" placeholder="0">
@@ -129,14 +135,34 @@
                   </div>
                 </div>
               </div>
-
+              {{-- <div class="row">
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label for="available_stock">Total Required</label>  
+                    <input type="text" class="form-control" id="materialQty0" readonly>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label for="available_stock">Issued</label>  
+                    <input type="text" class="form-control" id="materialQty1" readonly>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label for="available_stock">To Issue</label>  
+                    <input type="text" class="form-control" id="materialQty2" readonly>
+                  </div>
+                </div>
+              </div> --}}
+              
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Product</label>
-                    <select class="form-control select2" name="stage_id" id="stage_id">
+                    <select class="form-control select2" name="stage_id" id="stage_id" multiple>
                       <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled selected>Select Product</option>
+                      <option value="" disabled>Select Product</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
                     </select>
                   </div>
@@ -213,5 +239,6 @@
   var pstockData = @json($pstock);
   var ajaxPTUrl = "{{ route('ajaxPT') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
+  var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";
 </script>
 @endsection

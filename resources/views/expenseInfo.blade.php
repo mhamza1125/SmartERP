@@ -9,7 +9,7 @@
             <h4>Expense Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('expense') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editExpense', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>
             </div>

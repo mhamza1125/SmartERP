@@ -59,7 +59,7 @@
                               <input type="hidden" name="material_id[]" value="{{$item->material_id}}" required>
                             </td>
                             <td class="form-group">
-                                <input type="number" min="0" class="form-control" name="quantity[]" placeholder="0" required>
+                                <input type="number" min="0" step="0.0000000001" class="form-control" name="quantity[]" placeholder="0" required>
                             </td>
                           </tr>
                         @endforeach

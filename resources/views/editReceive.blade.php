@@ -62,8 +62,12 @@
                         <th>Item / Material</th>
                         <th>Received / Total</th>
                         <th>Receive</th>
+                        <th>Pending</th>
+                        <th>Approved</th>
+                        <th>Rejected</th>
                         <th>Remaining</th>
-                        <th>Status</th>
+                        {{-- <th>Status</th> --}}
+                        <th>Inspection Date</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -72,26 +76,38 @@
                         @php if(isset($receiveMaterial[$key]['purchase_item_id']) && $item->purchase_item_id == $receiveMaterial[$key]['purchase_item_id']){
                           $qty = $receiveMaterial[$key]['quantity'];}else{$qty = 0;} @endphp
                         <tr>
-                            <td>{{ $loop->index + 1 }}</td>
-                            <td class="form-group">{{$item->name}}
-                              <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
-                            </td>
-                            <td class="form-group">
-                              <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
-                            </td>
-                            <td class="form-group">
-                              <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0" value="{{$qty}}">
-                            </td>
-                            <td class="form-group">
-                              <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received - $qty}}" readonly>
-                            </td>
-                            <td class="form-group">
-                              <select class="form-control" name="inspection_status[]" required>
-                                <option value="1" {{ $receiveMaterial[$key]['inspection_status'] == '1' ? 'selected' : '' }}>Pending</option>
-                                <option value="2" {{ $receiveMaterial[$key]['inspection_status'] == '2' ? 'selected' : '' }}>Approved</option>
-                                <option value="3" {{ $receiveMaterial[$key]['inspection_status'] == '3' ? 'selected' : '' }}>Rejected</option>
-                              </select>
-                            </td>
+                          <td>{{ $loop->index + 1 }}</td>
+                          <td class="form-group">{{$item->material_no}} - {{$item->name}}
+                            <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
+                          </td>
+                          <td class="form-group">
+                            <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0" value="{{$qty}}">
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0" value="{{$receiveMaterial[$key]['pending_qty']}}">
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0" value="{{$receiveMaterial[$key]['approved_qty']}}">
+                          </td>
+                          <td class="form-group">
+                            <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0" value="{{$receiveMaterial[$key]['rejected_qty']}}">
+                          </td>
+                          <td class="form-group">
+                            <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received - $qty}}" readonly>
+                          </td>
+                          {{-- <td class="form-group">
+                            <select class="form-control" name="inspection_status[]" required>
+                              <option value="1" {{ $receiveMaterial[$key]['inspection_status'] == '1' ? 'selected' : '' }}>Pending</option>
+                              <option value="2" {{ $receiveMaterial[$key]['inspection_status'] == '2' ? 'selected' : '' }}>Approved</option>
+                              <option value="3" {{ $receiveMaterial[$key]['inspection_status'] == '3' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                          </td> --}}
+                          <td>
+                            <input type="text" class="form-control datepicker" name="inspection_date[]" required value="{{$receiveMaterial[$key]['inspection_date']}}">
+                          </td>
                         </tr>
                         @endforeach
                       @endif
@@ -102,8 +118,12 @@
                         <th>Item / Material</th>
                         <th>Received / Total</th>
                         <th>Receive</th>
+                        <th>Pending</th>
+                        <th>Approved</th>
+                        <th>Rejected</th>
                         <th>Remaining</th>
-                        <th>Status</th>
+                        {{-- <th>Status</th> --}}
+                        <th>Inspection Date</th>
                       </tr>
                     </tfoot>
                   </table>
@@ -129,4 +149,5 @@
     </div>
   </div>
 </section>
+<script> var isReceivePage = true; </script>
 @endsection

@@ -9,7 +9,7 @@
             <h4>Purchase Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
                 <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
                 <a href="{{ route('transaction.addVPayment') }}" class="btn btn-primary">Pay</a>
@@ -214,7 +214,11 @@
                               <th>Material Name</th>
                               <th>Units</th>
                               <th>Receive Qty</th>
-                              <th>Inspection Status</th>
+                              <th>Pending</th>
+                              <th>Approved</th>
+                              <th>Rejected</th>
+                              {{-- <th>Inspection Status</th> --}}
+                              <th>Inspection Date</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -226,9 +230,13 @@
                                   <td>{{$item->name}}</td>
                                   <td>{{$item->hname}}</td>
                                   <td>{{$item->rqty}}</td>
-                                  <td>@if($item->inspection_status == 1) Pending
+                                  <td>{{$item->pending_qty}}</td>
+                                  <td>{{$item->approved_qty}}</td>
+                                  <td>{{$item->rejected_qty}}</td>
+                                  {{-- <td>@if($item->inspection_status == 1) Pending
                                     @elseif($item->inspection_status == 2) Approved
-                                    @else Rejected @endif</td>
+                                    @else Rejected @endif</td> --}}
+                                  <td>{{$item->inspection_date}}</td>
                                 </tr>
                               @endif
                             @endforeach
@@ -240,7 +248,11 @@
                               <th>Material Name</th>
                               <th>Units</th>
                               <th>Receive Qty</th>
-                              <th>Inspection Status</th>
+                              <th>Pending</th>
+                              <th>Approved</th>
+                              <th>Rejected</th>
+                              {{-- <th>Inspection Status</th> --}}
+                              <th>Inspection Date</th>
                             </tr>
                           </tfoot>
                         </table>

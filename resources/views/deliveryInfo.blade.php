@@ -9,7 +9,7 @@
             <h4>Delivery Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('delivery') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('delivery.edit', $delivery['delivery_id']) }}" class="btn btn-primary">Edit</a>
               </div>
             </div>
@@ -91,17 +91,17 @@
                     @endif
                   </tbody>
                   <tfoot>
-                    @php $total = $deliveryItem->sum(function($item) {
-                      return $item->quantity * $item->price;
-                    }); @endphp
                     <tr>
-                      <th colspan="4"></th>
-                      <th colspan="2">Grand Total:</th>
-                      <th>{{ number_format($total) }}</th>
+                      <th>Sr.</th>
+                      <th>Article</th>
+                      <th>Item / Product</th>
+                      <th>Product Stage</th>
+                      <th>Size</th>
+                      <th>Unit</th>
+                      <th>Quantity</th>
                     </tr>
                   </tfoot>
                 </table>
-
               </div>
             </div>
 
