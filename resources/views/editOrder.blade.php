@@ -77,7 +77,7 @@
 
               <h6>Order Items</h6>
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Products</label>
                     <select class="form-control select2" name="product_type_id" id="product_type_id">
@@ -90,7 +90,7 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Product Stage</label>
                     <select class="form-control select2" name="stage_id" id="stage_id">
@@ -109,8 +109,14 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Price</label>
+                    <label>Price (Pkr)</label>
                     <input type="number" min="0" class="form-control" name="price" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Price (USD)</label>
+                    <input type="number" min="0" class="form-control" name="price2" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">
@@ -129,7 +135,8 @@
                         <th>Item / Product</th>
                         <th>Product Stage</th>
                         <th>Quantity</th>
-                        <th>Price</th>
+                        <th>Price (Pkr)</th>
+                        <th>Price (USD)</th>
                         <th>Total</th>
                         <th>Action</th>
                       </tr>
@@ -153,6 +160,8 @@
                               </td>
                               <td>{{$item->price}}
                                 <input type="hidden" name="price[]" value="{{$item->price}}"></td>
+                              <td>{{$item->price2}}
+                                <input type="hidden" name="price2[]" value="{{$item->price2}}"></td>
                               <td>{{$item->quantity * $item->price}}
                                 <input type="hidden" name="total[]" value="{{$item->total}}">
                               </td>
@@ -165,7 +174,7 @@
                     <tfoot>
                       <tr>
                         <th></th>
-                        <th colspan="3">Grand Total:</th>
+                        <th colspan="3">Grand Total (Pkr):</th>
                         <th id="grandTotal" colspan="2">00.00</th>
                       </tr>
                     </tfoot>

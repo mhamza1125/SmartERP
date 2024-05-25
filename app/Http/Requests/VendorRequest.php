@@ -29,6 +29,7 @@ class VendorRequest extends FormRequest
             'name' => 'required|max:255',
             'fname' => 'required|max:255',
             'phone1' => 'required|max:255',
+            'cperson' => '',
             'phone2' => '',
             'credit' => 'required|max:255',
             'balance_type' => 'required|max:255',

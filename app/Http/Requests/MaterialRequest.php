@@ -26,7 +26,9 @@ class MaterialRequest extends FormRequest
             'material_type_id' => 'required',
             'vendor_id' => 'required',
             'unit_id' => 'required',
+            'cprice' => 'required',
             'name' => 'required|max:255',
+            'location' => '',
             'description' => '',
         ];
     }

@@ -19,6 +19,9 @@
               <li class="nav-item">
                 <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Product Stock</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" id="machine-tab" data-toggle="tab" href="#machine" role="tab" aria-controls="machine" aria-selected="false">Machine Material</a>
+              </li>
             </ul> 
             
             <div class="tab-content" id="myTabContent">
@@ -36,13 +39,16 @@
                     </thead>
                     <tbody>
                       @if($stock->count())
+                        @php $loopIndex = 1; @endphp
                         @foreach($stock as $item)
-                        <tr>
-                          <td>{{$loop->index + 1}}</td>
-                          <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}</td>
-                          <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>                  
-                        </tr>
+                          @unless($item->material_type_id == 101)
+                          <tr>
+                            <td>{{$loopIndex++}}</td>
+                            <td>{{$item->material_no}}</td>
+                            <td>{{$item->name}}</td>
+                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>                  
+                          </tr>
+                          @endunless
                         @endforeach
                       @endif
                     </tbody>
@@ -64,28 +70,83 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Product</th>
+                        <th>Article No</th>
+                        <th>Item / Product</th>
+                        <th>Size</th>
                         <th>Stage</th>
                         <th>Quantity</th>
                       </tr>
                     </thead>
                     <tbody>
                       @if($pstock->count())
+                        @php $product_id = 0; $size = 0; @endphp
                         @foreach($pstock as $item)
                         <tr>
                           <td>{{$loop->index + 1}}</td>
-                          <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                          @if($item->product_id == $product_id)
+                            <td colspan="2"></td>
+                          @else
+                            <td>{{$item->article_no}}</td>
+                            <td>{{$item->name}}</td>
+                          @endif
+                          @if($item->sname == $size && $item->product_id == $product_id)
+                            <td></td>
+                          @else
+                            <td>{{$item->sname}}</td>
+                          @endif
+                          {{-- <td>{{$item->article_no}} - Size {{$item->sname}}</td> --}}
                           <td>{{$item->stname}}</td>
                           <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
                         </tr>
+                        @php $product_id = $item->product_id; $size = $item->sname @endphp
                         @endforeach
                       @endif
                     </tbody>
                     <tfoot>
                       <tr>
                         <th>Sr.</th>
-                        <th>Product</th>
+                        <th>Article No</th>
+                        <th>Item / Product</th>
+                        <th>Size</th>
                         <th>Stage</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+              {{-- Material Stock --}}
+              <div class="tab-pane fade" id="machine" role="tabpanel" aria-labelledby="machine-tab">      
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped" id="tableExport" style="width:100%;">                    
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Code</th>
+                        <th>Material Name</th>
+                        <th>Quantity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @if($stock->count())
+                        @php $loopIndex = 1; @endphp
+                        @foreach($stock as $item)
+                          @unless($item->material_type_id != 101)
+                          <tr>
+                            <td>{{$loopIndex++}}</td>
+                            <td>{{$item->material_no}}</td>
+                            <td>{{$item->name}}</td>
+                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>                  
+                          </tr>
+                          @endunless
+                        @endforeach
+                      @endif
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Code</th>
+                        <th>Material Name</th>
                         <th>Quantity</th>
                       </tr>
                     </tfoot>

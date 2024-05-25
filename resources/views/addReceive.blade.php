@@ -28,7 +28,8 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Date</label>
-                    <input type="text" class="form-control datepicker" name="receive_date" required value="{{old('receive_date')}}">
+                    {{-- <input type="text" class="form-control datepicker" name="receive_date" required value="{{old('receive_date')}}"> --}}
+                    <input type="date" class="form-control" name="receive_date" required value="{{date('Y-m-d')}}" min="{{$purchase['purchase_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -67,7 +68,6 @@
                         <th>Approved</th>
                         <th>Rejected</th>
                         <th>Remaining</th>
-                        {{-- <th>Status</th> --}}
                         <th>Inspection Date</th>
                       </tr>
                     </thead>
@@ -80,7 +80,8 @@
                             <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
                           </td>
                           <td class="form-group">
-                            <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span>
+                            {{-- <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span> --}}
+                            <span class="received">{{$item->received - $item->returned}}</span> / <span class="total">{{$item->quantity}}</span>
                           </td>
                           <td class="form-group">
                             <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0">
@@ -95,15 +96,9 @@
                             <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0">
                           </td>
                           <td class="form-group">
-                            <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly>
+                            {{-- <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly> --}}
+                            <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received + $item->returned}}" readonly>
                           </td>
-                          {{-- <td class="form-group">
-                            <select class="form-control" name="inspection_status[]" required>
-                              <option value="1" selected>Pending</option>
-                              <option value="2">Approved</option>
-                              <option value="3">Rejected</option>
-                            </select>
-                          </td> --}}
                           <td>
                             <input type="text" class="form-control datepicker" name="inspection_date[]" required>
                           </td>
@@ -121,7 +116,6 @@
                         <th>Approved</th>
                         <th>Rejected</th>
                         <th>Remaining</th>
-                        {{-- <th>Status</th> --}}
                         <th>Inspection Date</th>
                       </tr>
                     </tfoot>

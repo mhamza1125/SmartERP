@@ -48,6 +48,10 @@ class HeadController extends Controller
 
     public function store(HeadRequest $request){
         $validatedData = $request->validated();
+        $duplicate = $this->headRepository->duplicate($validatedData);
+        if($duplicate){
+            return redirect()->route('head.add')->with(['fails' => 'Head name already exists'])->withInput();
+        }
         $this->headRepository->store($validatedData);
         return redirect()->route('head.add')->with('success', 'Record Inserted Successfully');
     }

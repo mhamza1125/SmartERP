@@ -17,6 +17,8 @@ class Material extends Model
         'vendor_id',
         'name',
         'unit_id',
+        'cprice',
+        'location',
         'description',
         'created_by',
         'updated_at',

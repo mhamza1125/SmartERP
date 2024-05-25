@@ -9,7 +9,7 @@
             <h4>Add Head</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                <a href="{{ route('head') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('head.headType') }}" class="btn btn-primary">Head Types</a>
               </div>
             </div>

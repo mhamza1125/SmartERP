@@ -157,6 +157,7 @@
   });
 
   var isPayPage = false;
+  var isPayVendorPage = false;
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
   var ajaxPurchaseUrl = "{{ route('ajaxPurchase') }}";
 </script>

@@ -55,7 +55,8 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Date</label>
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{old('stock_date')}}">
+                    {{-- <input type="text" class="form-control datepicker" name="stock_date" required value="{{old('stock_date')}}"> --}}
+                    <input type="date" class="form-control" name="stock_date" required value="{{date('Y-m-d')}}" min="{{$issue['stock_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>

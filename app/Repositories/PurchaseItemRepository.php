@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PurchaseItem;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseItemRepository implements GlobalInterface {
     
@@ -20,6 +21,16 @@ class PurchaseItemRepository implements GlobalInterface {
 
     public function receive($id){
         // Receive Purchase Items
+        return PurchaseItem::where('purchase_id', $id)
+        ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+        ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+        ->leftJoin('return_materials', 'return_materials.receive_material_id', 'receive_materials.receive_material_id')
+        ->select('purchase_items.*', 'materials.name', 'materials.material_no')
+        ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received, COALESCE(SUM(return_materials.quantity), 0) as returned')
+        ->groupBy('purchase_items.purchase_item_id')
+        ->get();
+        
+        // Receive Purchase Items Without Return Calculation
         return PurchaseItem::where('purchase_id', $id)
         ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
         ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
@@ -41,6 +52,38 @@ class PurchaseItemRepository implements GlobalInterface {
             ->orderBy('materials.vendor_id')->orderBy('materials.material_id')
             ->groupBy('materials.material_id')
             ->get();
+    }
+
+    public function estimateMaterial($orderId, $materialId){
+        // Material Purchase Against Order, Purchase Order
+        $result = DB::table('materials')
+            ->select(
+                DB::raw('GREATEST(0, COALESCE(total.total_qty, 0) - COALESCE(purchase.pqty, 0)) AS balance')
+            )
+            ->leftJoin(DB::raw("
+                (
+                    SELECT
+                        product_materials.material_id,
+                        CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) AS total_qty
+                    FROM order_items
+                    JOIN product_materials ON product_materials.product_type_id = order_items.product_type_id
+                    WHERE order_items.order_id = $orderId AND product_materials.material_id = $materialId
+                    GROUP BY product_materials.material_id
+                ) AS total"), 'materials.material_id', '=', 'total.material_id')
+            ->leftJoin(DB::raw("
+                (
+                    SELECT
+                        purchase_items.material_id,
+                        CEIL(SUM(CEIL(purchase_items.quantity))) AS pqty
+                    FROM purchase_items
+                    JOIN purchases ON purchases.purchase_id = purchase_items.purchase_id
+                    WHERE purchases.order_id = $orderId AND purchase_items.material_id = $materialId
+                    GROUP BY purchase_items.material_id
+                ) AS purchase"), 'materials.material_id', '=', 'purchase.material_id')
+            ->where('materials.material_id', $materialId)
+            ->first();
+
+        return $result ? $result->balance : 0;
     }
 
     public function editReceive($pid, $rid){
@@ -89,6 +132,7 @@ class PurchaseItemRepository implements GlobalInterface {
                 $purchaseItem['created_by'] = auth()->id();
                 $store = PurchaseItem::create($purchaseItem);
             }
+            DB::table('materials')->where('material_id', $material)->update(['cprice' => $price]);
         }
     }
 

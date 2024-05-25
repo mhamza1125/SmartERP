@@ -20,7 +20,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Vendor No</label>
-                    <input type="text" class="form-control" name="vendor_no" required value="{{$count}}">
+                    <input type="text" class="form-control" name="vendor_no" required value="{{$count}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Vendor No</div>
                   </div>
@@ -53,24 +53,17 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Phone No</label>
-                    <input type="text" class="form-control" name="phone2" value="{{old('phone2')}}">
+                    <label>Contact Person</label>
+                    <input type="text" class="form-control" name="cperson" value="{{old('cperson')}}">
                     <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Name</div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>City</label>
-                    <select class="form-control select2" name="city_id" required>
-                      <option value="" selected disabled>Select City</option>
-                      @if($city->count())
-                        @foreach($city as $item)
-                          <option value="{{$item->head_id}}" {{ old('city_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
+                    <label>Phone No</label>
+                    <input type="text" class="form-control" name="phone2" value="{{old('phone2')}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select City</div>
                   </div>
                 </div>
               </div>
@@ -102,13 +95,17 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>File / Images</label>
-                    <div class="custom-file">
-                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
-                      <label class="custom-file-label" for="customFile">Choose file</label>
-                    </div>
-                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
-                    <div class="invalid-feedback" id="fileError"></div>
+                    <label>City</label>
+                    <select class="form-control select2" name="city_id" required>
+                      <option value="" selected disabled>Select City</option>
+                      @if($city->count())
+                        @foreach($city as $item)
+                          <option value="{{$item->head_id}}" {{ old('city_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select City</div>
                   </div>
                 </div>
               </div>
@@ -129,6 +126,17 @@
                       <option value="debit" {{ old('balance_type') == 'debit' ? 'selected' : '' }}>Receiveable</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>File / Images</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
+                      <label class="custom-file-label" for="customFile">Choose file</label>
+                    </div>
+                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
+                    <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
               </div>

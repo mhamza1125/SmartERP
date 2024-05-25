@@ -33,7 +33,11 @@
                       <td>{{$item->receive_no}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{$item->fname}}</td>
-                      <td>
+                      <td>@if($item->pqty == 0) 
+                        <span class="badge badge-success">Checked</span> @else 
+                        <span class="badge badge-danger">Pending</span> @endif
+                      </td>
+                      {{-- <td>
                         <div class="btn-group">
                           <button class="btn <?php 
                               if($item->receive_status == 0){ echo 'btn-warning'; $status = 'Pending'; }
@@ -47,7 +51,7 @@
                             <a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '1']) }}">Checked</a>
                           </div>
                         </div>
-                      </td>
+                      </td> --}}
                       <td>{{$item->receive_date}}</td>                      
                       <td>
                         <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>

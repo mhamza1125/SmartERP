@@ -34,8 +34,10 @@
                   <tbody>
                     <tr><td><b>P.O.#:</b> {{$return['purchase_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($return['job_no'])? $return['job_no']:'Default Purchase'}}</td></tr>
-                    <tr><td><b>Date:</b> {{$return['purchase_date']}}</td></tr>
-                    <tr><td><b>Required Date:</b> {{$return['require_date']}}</td></tr>
+                    <tr><td><b>Received Date:</b> {{$return['receive_date']}}</td></tr>
+                    <tr><td><b>Returned Date:</b> {{$return['return_date']}}</td></tr>
+                    {{-- <tr><td><b>Date:</b> {{$return['purchase_date']}}</td></tr>
+                    <tr><td><b>Required Date:</b> {{$return['require_date']}}</td></tr> --}}
                   </tbody>
                 </table>
               </div>

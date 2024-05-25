@@ -21,19 +21,32 @@ class VendorRepository implements GlobalInterface {
         ->where('vendor_type', '1')->get();
     }
 
+    public function vendor(){
+        return Vendor::join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
+        ->select('vendors.*', 'vthead.name as vtname')
+        ->orderBy('vendors.created_at', 'desc')
+        ->where('vendor_type', '0')->get();
+    }
+
     public function get($id){
         return Vendor::where('vendor_id', $id)
-        ->join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
+        ->leftJoin('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
         ->join('heads as chead', 'chead.head_id', '=', 'Vendors.city_id')
         ->select('vendors.*', 'vthead.name as vtname', 'chead.name as cname')
         ->first();
     }
     
     public function refNo() {
-        $year = Carbon::now()->format('y');
-        $count = Vendor::whereYear('created_at', Carbon::now()->year)->count();
-        $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
-        return 'V' . $year . $threeDigitNumber;
+        $lastVendor = Vendor::all()->sortByDesc(function($vendor) {
+            return intval(substr($vendor->vendor_no, 1));
+        })->first();
+        $lastNumber = $lastVendor ? intval(substr($lastVendor->vendor_no, 1)) : 0;
+        return  'V' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        
+        // $year = Carbon::now()->format('y');
+        // $count = Vendor::whereYear('created_at', Carbon::now()->year)->count();
+        // $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
+        // return 'V' . $year . $threeDigitNumber;
     }
 
     public function store(array $data){

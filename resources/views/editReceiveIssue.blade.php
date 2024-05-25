@@ -20,6 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Issuance No</label>
+                    <input type="hidden" name="table_name" required value="{{$issue['table_name']}}">
                     <input type="hidden" name="stock_type" required value="1">
                     <input type="hidden" name="issue_id" required value="{{$issue['issue_id']}}">
                     <input type="text" class="form-control" name="stock_no" required value="{{$issue['stock_no']}}">
@@ -36,10 +37,9 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Employee</label>
+                    <label>{{ ($issue['table_name'] == 'employee')? 'Employee':'Vendor' }}</label>
                     <input type="hidden" name="employee_id" required value="{{$issue['employee_id']}}">
-                    <input type="hidden" name="table_name" required value="{{$issue['table_name']}}">
-                    <input type="text" class="form-control" required value="{{$issue['employee_no']}} - {{$issue['name']}}" readonly>
+                    <input type="text" class="form-control" required value="{{ $issue['table_name'] === 'employee' ? $issue['employee_no'] . ' - ' . $issue['name'] : $issue['vendor_no'] . ' - ' . $issue['fname'] }}" readonly>
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -55,7 +55,8 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Date</label>
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$issue['stock_date']}}">
+                    {{-- <input type="text" class="form-control datepicker" name="stock_date" required value="{{$issue['stock_date']}}"> --}}
+                    <input type="date" class="form-control" name="stock_date" required value="{{$issue['stock_date']}}" min="{{$date['stock_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>

@@ -34,8 +34,9 @@
                   <tbody>
                     <tr><td><b>P.O.#:</b> {{$receive['purchase_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($receive['job_no'])? $receive['job_no']:'Default Purchase'}}</td></tr>
-                    <tr><td><b>Date:</b> {{$receive['purchase_date']}}</td></tr>
+                    {{-- <tr><td><b>Date:</b> {{$receive['purchase_date']}}</td></tr> --}}
                     <tr><td><b>Required Date:</b> {{$receive['require_date']}}</td></tr>
+                    <tr><td><b>Received Date:</b> {{$receive['receive_date']}}</td></tr>
                   </tbody>
                 </table>
               </div> 

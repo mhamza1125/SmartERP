@@ -20,7 +20,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Material No</label>
-                    <input type="text" class="form-control" name="material_no" required value="{{old('material_no')}}">
+                    <input type="text" class="form-control" name="material_no" required value="{{$refNo}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Material No</div>
                   </div>
@@ -34,18 +34,18 @@
                   </div>
                 </div>
                 <div class="col-md-4">
-                  <div class="form-group">          
-                    <label>Current Vendor</label>
-                    <select class="form-control select2" name="vendor_id" required id="vendor_id">
-                      <option value="" selected disabled>Select Vendor</option>
-                      @if($vendor->count())
-                        @foreach($vendor as $item)
-                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
+                  <div class="form-group">
+                    <label>Unit</label>
+                    <select class="form-control select2" name="unit_id" required>
+                      <option value="" selected disabled>Select Unit</option>
+                      @if($unit->count())
+                        @foreach($unit as $item)
+                          <option value="{{$item->head_id}}" {{ old('unit_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Vendor</div>
+                    <div class="invalid-feedback">Select Unit</div>
                   </div>
                 </div>
               </div>
@@ -66,18 +66,18 @@
                   </div>
                 </div>
                 <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Unit</label>
-                    <select class="form-control select2" name="unit_id" required>
-                      <option value="" selected disabled>Select Unit</option>
-                      @if($unit->count())
-                        @foreach($unit as $item)
-                          <option value="{{$item->head_id}}" {{ old('unit_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                  <div class="form-group">          
+                    <label>Current Vendor</label>
+                    <select class="form-control select2" name="vendor_id" required id="vendor_id">
+                      <option value="" selected disabled>Select Vendor</option>
+                      @if($vendor->count())
+                        @foreach($vendor as $item)
+                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Unit</div>
+                    <div class="invalid-feedback">Select Vendor</div>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -89,6 +89,24 @@
                     </div>
                     <div class="valid-feedback" id="fileSuccess">Good job!</div>
                     <div class="invalid-feedback" id="fileError"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <label>Material Location (In Store)</label>
+                    <input type="text" class="form-control" name="location" value="{{old('location')}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Material Location</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Current Price</label>
+                    <input type="number" step="0.001" class="form-control" name="cprice" required value="0">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Price</div>
                   </div>
                 </div>
               </div>

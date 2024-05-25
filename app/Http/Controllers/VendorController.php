@@ -36,10 +36,25 @@ class VendorController extends Controller
     }
 
     public function index(){
+        // Not Used Gone to Two Separate Pages
         $vendor = $this->vendorRepository->all();
         return view('vendor', [
             'vendor' => $vendor,
-        ]); 
+        ]);
+    }
+
+    public function vendor(){
+        $vendor = $this->vendorRepository->vendor();
+        return view('vendor', [
+            'vendor' => $vendor,
+        ]);
+    }
+
+    public function contractor(){
+        $vendor = $this->vendorRepository->worker();
+        return view('contractor', [
+            'vendor' => $vendor,
+        ]);
     }
 
     public function create(){
@@ -52,6 +67,15 @@ class VendorController extends Controller
             'count' => $count,
             'material' => $material,
             'vendorType' => $vendorType,
+        ]);
+    }
+
+    public function create2(){ // For Contractor
+        $city = $this->headRepository->get('8');
+        $count = $this->vendorRepository->refNo();
+        return view('addContractor', [
+            'city' => $city,
+            'count' => $count,
         ]);
     }
 
@@ -129,6 +153,14 @@ class VendorController extends Controller
         ]);
     }
 
+    public function edit2(Vendor $id){ // For Contractor        
+        $city = $this->headRepository->get('8');
+        return view('editContractor', [
+            'city' => $city,
+            'vendor' => $id,
+        ]);
+    }
+
     public function update(Request $request, $id){
         $materialIds = $request->input('material_id');
         $materialIds = $materialIds ? implode('|', $materialIds) : "0";
@@ -136,7 +168,7 @@ class VendorController extends Controller
         $getId = $this->vendorRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
-                $this->storeImage($file, 'vendor', 'vendors', $getId);        
+                $this->storeImage($file, 'vendor', 'vendors', $getId);
             }
         }
         if ($request->input('balance_type') == 'debit') {

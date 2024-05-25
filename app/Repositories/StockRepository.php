@@ -24,10 +24,22 @@ class StockRepository implements GlobalInterface {
             $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
                 ->where('stocks.table_name', 'vendor');
         })
-        ->where('stocks.stock_status', '!=', '3') // This is Delivery Status
+        ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
         ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
         ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
         ->orderBy('stocks.created_at', 'desc')
+        ->get();
+    }
+
+    public function issueMaterial(){
+        // All Issuance
+        return Stock::where('stocks.stock_type', '2')
+        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+        ->join('machines', 'machines.machine_id', 'stocks.machine_id')
+        ->join('heads', 'heads.head_id', '=', 'machines.machine_type_id')
+        ->where('stocks.stock_status', '=', '4')
+        ->select('stocks.*', 'employees.employee_no', 'employees.name', 'heads.name as hname', 'machine_no')
+        ->orderBy('stocks.created_at', 'desc', 'machine_no')
         ->get();
     }
 
@@ -36,7 +48,7 @@ class StockRepository implements GlobalInterface {
         return Stock::where('stocks.stock_type', '2')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
         ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date', 'stock_status')
+        ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date', 'stock_status', 'issue_for')
         ->where('stocks.stock_status', '!=', '1')
         ->orderBy('stocks.created_at', 'desc')
         ->get();
@@ -44,6 +56,24 @@ class StockRepository implements GlobalInterface {
 
     public function receive(){
         // All Received Issuance
+        return Stock::where('stocks.stock_type', '1')
+        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+        ->leftJoin('stocks as issue', 'issue.stock_id', '=', 'stocks.issue_id')
+        ->leftJoin('employees', function($join) {
+            $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'employee');
+        })
+        ->leftJoin('vendors', function($join) {
+            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'vendor');
+        })
+        // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+        ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
+        ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
+        ->orderBy('stocks.created_at', 'desc')
+        ->get();
+
+        // Without Issue/Received For
         return Stock::where('stocks.stock_type', '1')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
         ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
@@ -208,11 +238,12 @@ class StockRepository implements GlobalInterface {
                 $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'vendor');
             })
+            ->leftJoin('machines', 'machines.machine_id', '=', 'stocks.machine_id')
             ->leftJoin('heads', 'heads.head_id', '=', 'employees.department_id')
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
+            ->leftJoin('heads as mhead', 'mhead.head_id', '=', 'machines.machine_type_id')
             ->select(
-                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname'
-            )
+                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'employees.employee_id')
             ->first();
     }
 

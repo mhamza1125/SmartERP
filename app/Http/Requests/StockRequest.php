@@ -26,6 +26,7 @@ class StockRequest extends FormRequest
             'stock_no' => 'required',
             'issue_for' => '',
             'order_id' => 'required',
+            'machine_id' => '',
             'employee_id' => 'required',
             'table_name' => 'required',
             'stock_date' => 'required',

@@ -11,6 +11,7 @@ class HeadRepository implements GlobalInterface {
         return Head::join('head_types', 'head_types.head_type_id', '=', 'heads.head_type_id')
         ->select('heads.*', 'head_types.name as htname')
         ->orderBy('head_types.name')
+        ->orderBy('heads.name', 'asc')
         ->get();
     }
 
@@ -22,7 +23,14 @@ class HeadRepository implements GlobalInterface {
     public function get($id){
         return Head::where('heads.head_type_id', $id)
         ->where('heads.head_status', '1')
+        ->orderBy('heads.name', 'asc')
         ->get();
+    }
+
+    public function duplicate(array $data){
+        return Head::where('head_type_id', $data['head_type_id'])
+            ->where('name', $data['name'])
+            ->exists();
     }
 
     public function getStage($id){

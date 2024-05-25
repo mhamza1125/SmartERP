@@ -72,7 +72,7 @@
                           <td>{{$item->article_no}}</td>
                           <td>{{$item->name}}</td>
                         @endif
-                        @if($item->sname == $size)
+                        @if($item->sname == $size && $item->product_id == $product_id)
                           <td></td>
                         @else
                           <td>{{$item->sname}}</td>

@@ -54,9 +54,18 @@ class PurchaseController extends Controller
         ]); 
     }
 
+    public function ajaxPMQty(Request $request){
+        // Ajax Material Qty against Order
+        $orderId = $request->input('orderId');
+        $materialId = $request->input('materialId');
+        $estimate = $this->purchaseItemRepository->estimateMaterial($orderId, $materialId);
+        return response()->json(['data' => $estimate]);
+    }
+
     public function create(){
         $order = $this->orderRepository->active();
-        $vendor = $this->vendorRepository->all();
+        // $vendor = $this->vendorRepository->all();
+        $vendor = $this->vendorRepository->vendor();
         $material = $this->materialRepository->all();
         $count = $this->purchaseRepository->refNo();
         return view('addPurchase', [
@@ -141,6 +150,7 @@ class PurchaseController extends Controller
                 'total' => $total,
             ];
             $this->purchaseItemRepository->store($purchaseItem);
+            $this->materialRepository->update($material, ['cprice' => $price]);
         }
     }
 }

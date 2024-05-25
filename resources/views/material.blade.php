@@ -17,8 +17,8 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
-                    <th>Material Type</th>
                     <th>Material No</th>
+                    <th>Material Type</th>
                     <th>Material Name</th>
                     <th>Unit</th>
                     <th>Current Vendor</th>
@@ -30,8 +30,8 @@
                     @foreach($material as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->mtname}}</td>
                       <td>{{$item->material_no}}</td>
+                      <td>{{$item->mtname}}</td>
                       <td>{{$item->name}}</td>                      
                       <td>{{$item->uname}}</td>
                       <td>{{$item->vendor_no}} - {{$item->fname}}</td>
@@ -46,8 +46,8 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
-                    <th>Material Type</th>
                     <th>Material No</th>
+                    <th>Material Type</th>
                     <th>Material Name</th>
                     <th>Unit</th>
                     <th>Current Vendor</th>

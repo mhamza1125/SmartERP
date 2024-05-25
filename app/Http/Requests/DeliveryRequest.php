@@ -48,6 +48,10 @@ class DeliveryRequest extends FormRequest
             'material_id.*' => 'required',
             'quantity.*' => 'required',
             'stage_id.*' => 'required',
+            // Delivery Boxes Table
+            'vehicle_no.*' => '',
+            'rowQty.*' => '',
+            'totalQty.*' => '',
         ];
     }
 }

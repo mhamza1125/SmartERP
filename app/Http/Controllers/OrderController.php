@@ -63,9 +63,10 @@ class OrderController extends Controller
         $products = $request->input('product_type_id');
         $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
+        $prices2 = $request->input('price2');
         $quantities = $request->input('quantity');
         $getId = $this->orderRepository->store($validatedData);
-        $this->storeOI($getId, $products, $stages, $prices, $quantities);
+        $this->storeOI($getId, $products, $stages, $prices, $prices2, $quantities);
 
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -132,17 +133,19 @@ class OrderController extends Controller
     
     public function destroy(Purchase $purchase){}
 
-    private function storeOI($getId, $products, $stages, $prices, $quantities){
+    private function storeOI($getId, $products, $stages, $prices, $prices2, $quantities){
         foreach ($prices as $key => $price) {
             $product = $products[$key] ?? null;
             $stage = $stages[$key] ?? null;
             $quantity = $quantities[$key] ?? null;
+            $price2 = $prices2[$key] ?? null;
             $total = $price * $quantity;
             $orderItem = [
                 'order_id' => $getId,
                 'product_type_id' => $product,
                 'product_stage_id' => $stage,
                 'price' => $price,
+                'price2' => $price2,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

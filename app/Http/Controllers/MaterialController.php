@@ -42,9 +42,11 @@ class MaterialController extends Controller
         $material = $this->headRepository->get('10');
         $unit = $this->headRepository->get('4');
         $vendor = $this->vendorRepository->all();
+        $refNo = $this->materialRepository->refNo();
         return view('addmaterial', [
             'material' => $material,
             'vendor' => $vendor,
+            'refNo' => $refNo,
             'unit' => $unit,
         ]);
     }
@@ -57,7 +59,7 @@ class MaterialController extends Controller
                 $this->storeImage($file, 'material', 'materials', $getId);        
             }
         }
-        return redirect()->route('material.add')->with('success', 'Record Inserted Successfully');
+        return redirect()->route('material.show', $getId)->with('success', 'Record Inserted Successfully');    
     }
     
     public function show($id){
@@ -73,7 +75,7 @@ class MaterialController extends Controller
         $material = $this->headRepository->get('10');
         $unit = $this->headRepository->get('4');
         $vendor = $this->vendorRepository->all();
-        return view('editmaterial', [
+        return view('editMaterial', [
             'material' => $id,
             'materialType' => $material,
             'unit' => $unit,

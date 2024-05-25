@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Add Bank Account</h4>
             <div class="card-header-action">
-              <a href="{{ url()->previous() }}" class="btn btn-primary">
+              <a href="{{ route('bank') }}" class="btn btn-primary">
                 Back
               </a>
             </div>
@@ -29,11 +29,13 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>             
-                <div class="col-md-5" id="admin">                  
+                <div class="col-md-5" id="admin">
                   <div class="form-group">
-                    <label>Admin / Self</label>
-                    <input type="text" class="form-control" readonly value="Admin / Self">
+                    <label>Opening Balance</label>
+                    <input type="number" class="form-control" name="credit" id="credit" value="0">
                     <input type="hidden" name="banker_id" readonly value="0">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Opening Balane</div>
                   </div>
                 </div>
                 <div class="col-md-5" id="employee">

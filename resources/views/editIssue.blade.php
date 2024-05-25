@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Issue Material</h4>
+            <h4>Edit Issue Material</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -71,7 +71,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Issue Date</label>
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$issue['issue_date']}}">
+                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$issue['stock_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>

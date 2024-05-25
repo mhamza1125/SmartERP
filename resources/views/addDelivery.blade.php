@@ -141,6 +141,7 @@
                         <th>Remaining Qty</th>
                         <th>Available Qty</th>
                         <th>Deliver Qty</th>
+                        <th>Box Qty</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -163,7 +164,11 @@
                               <td>{{number_format($item->quantity - $item->stockOut)}}</td>
                               <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>
                               <td class="form-group">
-                                <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}">
+                                {{-- <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}"> --}}
+                                <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
+                              </td>
+                              <td class="form-group">
+                                <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
                               </td>
                               <td>
                                 <button class="btn btn-success btn-sm maxBtn">Max</button>
@@ -172,6 +177,17 @@
                             </tr>
                           @endunless
                         @endforeach
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <th> Total Qty: <span id="totalQuantity">0</span> </th>
+                          <th> Total Boxes: <span id="totalBqty">0</span> </th>
+                          <td></td>
+                        </tr>
                       @endif
                     </tbody>
                     <tfoot>
@@ -183,6 +199,7 @@
                         <th>Remaining Qty</th>
                         <th>Available Qty</th>
                         <th>Deliver Qty</th>
+                        <th>Box Qty</th>
                         <th>Action</th>
                       </tr>
                     </tfoot>
@@ -237,6 +254,102 @@
                 </div>
               </div>
 
+              <h5 class="mt-4">Factory to Container Delivery</h5>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Vehicle No</label>
+                    <input type="text" class="form-control" name="svehicle_no" placeholder="Vehicle No">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 1</label>
+                    <input type="text" class="form-control" name="sQty1[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 2</label>
+                    <input type="text" class="form-control" name="sQty2[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 3</label>
+                    <input type="text" class="form-control" name="sQty3[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 4</label>
+                    <input type="text" class="form-control" name="sQty4[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 5</label>
+                    <input type="text" class="form-control" name="sQty5[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 6</label>
+                    <input type="text" class="form-control" name="sQty6[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 7</label>
+                    <input type="text" class="form-control" name="sQty7[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 8</label>
+                    <input type="text" class="form-control" name="sQty8[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Add</label> <br>
+                    <button type="button" id="addVBtn" class="btn btn-primary">Add</button>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table" id="vehicles-table">
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Vehicle No</th>
+                        <th>Row 1</th>
+                        <th>Row 2</th>
+                        <th>Row 3</th>
+                        <th>Row 4</th>
+                        <th>Row 5</th>
+                        <th>Row 6</th>
+                        <th>Row 7</th>
+                        <th>Row 8</th>
+                        <th>Total Qty</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Table rows will be dynamically added here -->
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th colspan="8"></th>
+                        <th colspan="2">Grand Total:</th>
+                        <th colspan="2"><span id="tQty"></span> Boxes</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
               <h5 class="mt-2">Delivery Expense</h5>
               <div class="row">
                 <div class="col-md-3">
@@ -268,7 +381,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Amount</label>
-                    <input type="text" min="0" class="form-control" name="sdebit">
+                    <input type="number" min="0" class="form-control" name="sdebit">
                   </div>
                 </div>
                 <div class="col-md-3">

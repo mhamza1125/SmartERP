@@ -137,7 +137,7 @@
                             @endphp
                                 <tr>
                                   <td>{{ $loop->index + 1 }}</td>
-                                  <td>{{ $item->material_id }}</td>
+                                  <td>{{ $item->material_no }}</td>
                                   <td>{{ $item->name }}</td>
                                   <td>{{ $item->vendor_no }} - {{ $item->fname }}</td>
                                   <td>{{ number_format($item->total_qty, 2) }}</td>

@@ -18,6 +18,7 @@ class Vendor extends Model
         'material_id',
         'name',
         'fname',
+        'cperson',
         'phone1',
         'phone2',
         'city_id',

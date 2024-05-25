@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Bank Accounts Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('bank.add') }}" class="btn btn-primary">Add bank</a>
+              <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>
             </div>
           </div>
           <div class="card-body">

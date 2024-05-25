@@ -28,7 +28,8 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Return Date</label>
-                    <input type="text" class="form-control datepicker" name="return_date" required value="{{ $return['return_date'] }}">
+                    {{-- <input type="text" class="form-control datepicker" name="return_date" required value="{{ $return['return_date'] }}"> --}}
+                    <input type="date" class="form-control" name="return_date" required value="{{ $return['return_date'] }}" min="{{$date['receive_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>

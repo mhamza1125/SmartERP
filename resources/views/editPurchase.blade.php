@@ -43,7 +43,7 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Purchase For Orders</label>
-                    <select class="form-control select2" name="order_id" required>
+                    <select class="form-control select2" name="order_id" id="order_id" required>
                       <option value="0" selected>Default Purchase</option>
                       @if($order->count())
                         @foreach($order as $item)
@@ -74,7 +74,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
-                    <select class="form-control select2" name="smaterial_id[]">
+                    <select class="form-control select2" name="smaterial_id[]" id="material_id">
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
@@ -84,13 +84,19 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Require Quantity</label>
+                    <input type="text" class="form-control" id="materialQty" value="0" readonly>
+                  </div>
+                </div>
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Price</label>
                     <input type="number" min="0" class="form-control" name="price" placeholder="0">
@@ -168,5 +174,8 @@
     </div>
   </div>
 </section>
-<script> var isPurchasePage = true; </script>
+<script>
+  var isPurchasePage = false;
+  var ajaxPMQtyUrl = "{{ route('ajaxPMQty') }}";
+</script>
 @endsection

@@ -144,7 +144,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Employee Salary (Optional)</label>
-                    <input type="number" min="0" class="form-control" name="salary" value="{{old('salary')}}">
+                    <input type="number" min="0" class="form-control" name="salary" value="0">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Employee Salary</div>
                   </div>

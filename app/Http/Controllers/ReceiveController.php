@@ -79,9 +79,11 @@ class ReceiveController extends Controller
     
     public function edit($id){
         $receive = $this->receiveRepository->get($id);
+        $date = $this->purchaseRepository->get($receive['purchase_id']);
         $receiveMaterial = $this->receiveMaterialRepository->get($id);
         $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
         return view('editReceive', [
+            'date' => $date,
             'receive' => $receive,
             'purchaseItem' => $purchaseItem,
             'receiveMaterial' => $receiveMaterial,
@@ -110,9 +112,9 @@ class ReceiveController extends Controller
             $pid = $pids[$key] ?? null;
             $status = $inspections[$key] ?? null;
             $idate = $idates[$key] ?? null;
-            $pqty = $pending[$key] ?? null;
-            $aqty = $approved[$key] ?? null;
-            $rqty = $rejected[$key] ?? null;
+            $pqty = $pending[$key] ?? 0;
+            $aqty = $approved[$key] ?? 0;
+            $rqty = $rejected[$key] ?? 0;
             $receiveMaterial = [
                 'receive_id' => $getId,
                 'purchase_item_id' => $pid,

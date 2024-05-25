@@ -20,7 +20,7 @@
                     <th>Vendor No</th>
                     <th>Name</th>
                     <th>Vendor Type</th>
-                    <th>Vendor As Worker</th>
+                    {{-- <th>Vendor As Worker</th> --}}
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -32,13 +32,13 @@
                       <td>{{$item->vendor_no}}</td>
                       <td>{{$item->fname}}</td>
                       <td>{{$item->vtname}}</td>
-                      <td><b>@if($item->vendor_type) 
+                      {{-- <td><b>@if($item->vendor_type) 
                         <span class="badge badge-success">Active</span> @else 
-                        <span class="badge badge-danger">Inactive</span> @endif</td> 
+                        <span class="badge badge-danger">Inactive</span> @endif</td>  --}}
                       <td>
                         <a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Record</a>
+                        <a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Ledger</a>
                       </td>
                     </tr>
                     @endforeach
@@ -50,7 +50,7 @@
                       <th>Vendor No</th>
                       <th>Name</th>
                       <th>Vendor Type</th>
-                      <th>Vendor As Worker</th>
+                      {{-- <th>Vendor As Worker</th> --}}
                       <th>Action</th>
                   </tr>
                 </tfoot>

@@ -16,6 +16,7 @@ class Stock extends Model
         'stock_no', 
         'issue_for',
         'order_id',
+        'machine_id',
         'table_name',
         'employee_id',
         'stock_type',

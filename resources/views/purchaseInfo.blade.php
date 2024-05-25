@@ -32,7 +32,7 @@
                   <tbody>
                     <tr><td><b>P.O.#:</b> {{$purchase['purchase_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($purchase['job_no'])? $purchase['job_no']:'Default Purchase'}}</td></tr>
-                    <tr><td><b>Date:</b> {{$purchase['purchase_date']}}</td></tr>
+                    <tr><td><b>Purchase Date:</b> {{$purchase['purchase_date']}}</td></tr>
                     <tr><td><b>Required Date:</b> {{$purchase['require_date']}}</td></tr>
                   </tbody>
                 </table>

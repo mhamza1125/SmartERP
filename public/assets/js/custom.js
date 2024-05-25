@@ -226,6 +226,29 @@ $(document).ready(function() {
         // Initially disable the add button
         $('#addBtn').prop('disabled', true);
 
+        function fetchMaterialQty() {
+            var materialId = $('#material_id').val();
+            var orderId = $('#order_id').val();
+            
+            if (materialId && orderId) {
+                $.ajax({
+                    url: ajaxPMQtyUrl,
+                    type: "GET",
+                    data: { materialId: materialId, orderId: orderId },
+                    dataType: "json",
+                    success: function(response) {
+                        $('#materialQty').val(response.data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("An error occurred: " + error);
+                    }
+                });
+            }
+        }
+    
+        $('#material_id').on('change', fetchMaterialQty);
+        $('#order_id').on('change', fetchMaterialQty);
+
         // Function to check if all three fields have data
         function checkFields() {
             var materialId = $('select[name="smaterial_id[]"]').val();
@@ -385,6 +408,7 @@ $(document).ready(function() {
             var stageName = $('select[name="stage_id"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
+            var price2 = $('input[name="price2"]').val();
             var total = quantity * price;
             var existingProduct = false;
             
@@ -408,6 +432,7 @@ $(document).ready(function() {
             '<td>' + stageName + '<input type="hidden" name="sname[]" value="' + stageName + '"><input type="hidden" name="product_stage_id[]" value="' + stageId + '"></td>' +
             '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
             '<td>' + price + '<input type="hidden" name="price[]" value="' + price + '"></td>' +
+            '<td>' + price2 + '<input type="hidden" name="price2[]" value="' + price2 + '"></td>' +
             '<td>' + total + '<input type="hidden" name="total[]" value="' + total + '"></td>' +
             '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
             '</tr>';
@@ -420,6 +445,7 @@ $(document).ready(function() {
             $('#addBtn').prop('disabled', true); 
             $('input[name="quantity"]').val('0');
             $('input[name="price"]').val('0');
+            $('input[name="price2"]').val('0');
             $('select[name="product_type_id[]"]').val('').trigger('change');
             updateSrNumbers();
             updateGrandTotal();
@@ -465,6 +491,7 @@ $(document).ready(function() {
                 'product_name': $(row).find('input[name="name[]"]').val(),
                 'quantity': $(row).find('input[name="quantity[]"]').val(),
                 'price': $(row).find('input[name="price[]"]').val(),
+                'price': $(row).find('input[name="price2[]"]').val(),
                 'total': $(row).find('input[name="total[]"]').val()
             };
             tableData.push(rowData);
@@ -715,13 +742,128 @@ $(document).ready(function() {
 // Start - Delivery Script
 $(document).ready(function() {
     if (typeof isDeliveryPage !== 'undefined') {
+        // Start - Box Quantity in Delivery
+        function updateTotals() {
+            let totalQuantity = 0;
+            let totalBqty = 0;
+        
+            $('.quantity-input').each(function() {
+              let quantity = parseFloat($(this).val());
+              if (!isNaN(quantity)) {
+                totalQuantity += quantity;
+              }
+            });
+        
+            $('.bqty-input').each(function() {
+              let bqty = parseFloat($(this).val());
+              if (!isNaN(bqty)) {
+                totalBqty += bqty;
+              }
+            });
+        
+            $('#totalQuantity').text(totalQuantity.toFixed(2));
+            $('#totalBqty').text(totalBqty.toFixed(2));
+        }
+
+        // Box Qty in Delivery
+        $(document).on('input', '.quantity-input', function() {
+            let quantity = $(this).val();
+            let bqty = $(this).data('bqty');
+            let calculatedBqty = quantity * bqty;
+            // Round the value to 2 decimal places and handle values like 2.99999 as 3
+            calculatedBqty = Math.round(calculatedBqty * 100) / 100;
+            $(this).closest('tr').find('.bqty-input').val(calculatedBqty.toFixed(2));
+            updateTotals();
+        });
+        
+        // Optional: Max button functionality
+        $(document).on('click', '.maxBtn', function() {
+            let quantityInput = $(this).closest('tr').find('.quantity-input');
+            let maxQuantity = quantityInput.attr('max');
+            quantityInput.val(maxQuantity).trigger('input');
+        });
+        
+        // Optional: Zero button functionality
+        $(document).on('click', '.zeroBtn', function() {
+            let quantityInput = $(this).closest('tr').find('.quantity-input');
+            quantityInput.val(0).trigger('input');
+        });
+        
+        // Initial calculation of totals on page load
+        updateTotals();
+        // End - Box Quantity in Delivery
+
+        // Start - Factory to Container Delivery
+        $('#addVBtn').on('click', function() {
+            var vehicleNo = $('input[name="svehicle_no"]').val();
+            var rowQuantities = [];
+            
+            // Iterate through each input field starting with name "sqty"
+            $('input[name^="sQty"]').each(function() {
+                var qty = $(this).val().trim(); // Trim to remove leading/trailing spaces
+                rowQuantities.push(qty === '' ? '0' : qty); // Replace empty value with '0'
+            });
+        
+            // Calculate total quantity
+            var totalQty = rowQuantities.reduce((a, b) => parseInt(a) + parseInt(b), 0);
+        
+            // Join row quantities with '|' as the joiner
+            var joinedRowQuantities = rowQuantities.join('|');
+        
+            // Create new row for the table
+            var newRow = '<tr>' +
+                '<td>' + ($('#vehicles-table tbody tr').length + 1) + '</td>' +
+                '<td>' + vehicleNo + '<input type="hidden" name="vehicle_no[]" value="' + vehicleNo + '"><input type="hidden" name="rowQty[]" value="' + joinedRowQuantities + '"></td>';
+            
+            // Add individual row quantities
+            for (var i = 0; i < rowQuantities.length; i++) {
+                newRow += '<td>' + rowQuantities[i] + '</td>';
+            }
+            
+            // Add total quantity
+            newRow += '<td>' + totalQty + '<input type="hidden" name="totalQty[]" value="' + totalQty + '"></td>' +
+                '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
+                '</tr>';
+        
+            // Append the new row to the table
+            $('#vehicles-table tbody').append(newRow);
+        
+            // Update the grand total
+            updateGrandTotal();
+        
+            // Reset fields
+            $('input[name="svehicle_no"]').val('');
+            $('input[name^="sQty"]').val('0');
+        });        
+    
+        // Delete row when delete button is clicked
+        $(document).on('click', '.deleteRowBtn', function() {
+            $(this).closest('tr').remove();
+            updateGrandTotal();
+        });
+        
+        // Initial Calculation
+        updateGrandTotal();
+
+        // Function to update grand total
+        function updateGrandTotal() {
+            var grandTotal = 0;
+            $('#vehicles-table tbody tr').each(function(index, row) {
+                grandTotal += parseInt($(row).find('td:last').prev().text());
+            });
+            $('#tQty').text(grandTotal);
+        }
+        
+        // End - Factory to Container Delivery
+
+
         // Start - Adding Vehicle to Table
         var tableRowCount = 1;
         updateSrNumbers();
         // Initially disable the add button
         $('#addBtn').prop('disabled', true);
-        
-        // Function to check if both fields have data
+
+        // Function to check if both fields have data [Delivery Container / Vehicle]
         function checkFields() {
             var materialId = $('select[name="smaterial_id[]"]').val();
             var quantity = $('input[name="squantity"]').val();
@@ -1233,6 +1375,60 @@ $(document).ready(function() {
             updateSerialNumbers();
         });
         
+        // Event listener for click on add button
+        $('#addBtnMM').click(function() {
+            var materialId = $('#material_id').val();
+            var materialText = $('#material_id option:selected').text();
+            var quantity = parseInt($('input[name="quantityMaterial"]').val());
+            var availableStock = parseInt($('#available_stock').val());
+        
+            if (!materialId || !quantity) {
+              alert("Please select a material and enter a valid quantity.");
+              return;
+            }
+        
+            if (quantity > availableStock) {
+              alert("Quantity cannot be greater than available stock.");
+              return;
+            }
+        
+            var isDuplicate = false;
+            $('#items-table tbody tr').each(function() {
+              var existingMaterialId = $(this).find('input[name="material_id[]"]').val();
+              if (existingMaterialId == materialId) {
+                isDuplicate = true;
+                return false;
+              }
+            });
+        
+            if (isDuplicate) {
+              alert("This material is already added to the table.");
+              return;
+            }
+        
+            var updatedStock = availableStock - quantity;
+            $('#available_stock').val(updatedStock);
+        
+            var srNo = $('#items-table tbody tr').length + 1;
+        
+            var markup = `
+              <tr>
+                <td>${srNo}</td>
+                <td>${materialText}<input type="hidden" name="material_id[]" value="${materialId}"></td>
+                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
+                <td><button type="button" class="btn btn-danger deleteRow">X</button></td>
+              </tr>
+            `;
+        
+            $('#items-table tbody').append(markup);
+        
+            $('#material_id').val(null).trigger('change');
+            $('input[name="quantityMaterial"]').val('');
+            $('#available_stock').val('');
+        
+            updateSerialNumbers();
+        });
+
         // Function to update serial numbers
         function updateSerialNumbers() {
             $('#items-table tbody tr:not(#hiddentr)').each(function(index) {
@@ -1469,7 +1665,6 @@ $(document).ready(function() {
         function isProductStageCombinationExists(productId, stageId, productCost) {
             var exists = false;
             $('#items-table tbody tr').each(function() {
-                console.log(productCost);
                 var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
                 var rowStageId = $(this).find('input[name="stage_id[]"]').val();
                 var rowCostId = $(this).find('input[name="work_logs[]"]').val();
@@ -1638,7 +1833,9 @@ $(document).ready(function() {
         function toggleSections() {
             var selected = $('select[name="bank_holder"]').val();
             // Reset selects when not active
-            if (selected != 'employee') {
+            if (selected != 'admin') {
+                $('#credit').val(0);
+            }if (selected != 'employee') {
                 $('#employee select').val('').trigger('change');
             }if (selected != 'vendor') {
                 $('#vendor select').val('').trigger('change');
@@ -1712,6 +1909,14 @@ $(document).ready(function () {
             });
         });
 
+        $('#payee_id').trigger('change');
+    }
+});
+// End - Pay Script
+
+// Start - Pay Vendor Script
+$(document).ready(function () {
+    if (typeof isPayVendorPage !== 'undefined') {
         $('#payee_id').on('change', function() {
             var vendorId = $(this).val();
             $.ajax({
@@ -1735,7 +1940,7 @@ $(document).ready(function () {
         $('#payee_id').trigger('change');
     }
 });
-// End - Pay Script
+// End - Pay Vendor Script
 
 // Start - Pay Order Payment Script
 $(document).ready(function () {

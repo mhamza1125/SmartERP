@@ -69,6 +69,15 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function getMM($id){
+        // Machine Material Issuance
+        return StockItem::where('stock_items.stock_id', $id)
+        ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
+        ->leftJoin('heads', 'heads.head_id', '=', 'materials.unit_id')
+        ->select('stock_items.*', 'materials.*', 'heads.name as hname')   
+        ->get();
+    }
+
     public function dailyIssue(){
         $date = date('Y-m-d');
         return StockItem::whereDate('stocks.stock_date', $date)
@@ -256,7 +265,6 @@ class StockItemRepository implements GlobalInterface {
                 ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
                 ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
                 ->where('purchases.order_id', $id)
-                // ->where('receive_materials.inspection_status', '2')
                 ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
         }, 'material_stock')
         ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
@@ -271,7 +279,7 @@ class StockItemRepository implements GlobalInterface {
     public function stock(){
         // Available Material Stock
         return DB::table(function ($subquery) {
-            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname')
+            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
                 // ->selectRaw('SUM(receive_materials.quantity) as total_received')
                 ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
                 ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
@@ -281,7 +289,6 @@ class StockItemRepository implements GlobalInterface {
                 ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
                 ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
                 ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-                // ->where('receive_materials.inspection_status', '2')
                 ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
         }, 'material_stock')
         ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
@@ -295,7 +302,7 @@ class StockItemRepository implements GlobalInterface {
 
     public function pStock(){
         // Available Product Stock
-        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname')
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
@@ -331,7 +338,7 @@ class StockItemRepository implements GlobalInterface {
 
     public function orderDelivery($id){
         // Order Delivery with Stage
-        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'order_items.quantity')
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'order_items.quantity', 'product_materials.quantity as bqty')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 && stocks.stock_status = 3 && stocks.order_id = ? THEN stock_items.quantity ELSE 0 END) as stockOut', [$id])
         // ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 && stocks.stock_status = 3 THEN stock_items.quantity ELSE 0 END) as stockOut')
@@ -343,6 +350,9 @@ class StockItemRepository implements GlobalInterface {
         ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
         ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+        ->join('product_materials', 'product_materials.product_type_id', 'product_types.product_type_id')
+        ->join('materials', 'materials.material_id', 'product_materials.material_id')
+        ->where('materials.material_type_id', '61') // Box
         ->where('order_items.order_id', $id)
         ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
         ->where('stock_items.material_id', '=', 0)
@@ -386,9 +396,9 @@ class StockItemRepository implements GlobalInterface {
         // Assuming you have an array of product_type_ids and material_ids indexed similarly to quantities
         foreach ($data['quantity'] as $key => $quantity) {
             // Assuming you have these arrays in your $data and they are indexed accordingly
-            $ptid = $data['product_type_id'][$key] ?? null;
-            $mid = $data['material_id'][$key] ?? null;
-            $sid = $data['stage_id'][$key] ?? null;
+            $ptid = $data['product_type_id'][$key] ?? 0;
+            $mid = $data['material_id'][$key] ?? 0;
+            $sid = $data['stage_id'][$key] ?? 0;
             $work = $data['work_logs'][$key] ?? 0;
             $wages = $work ? $this->productCostRepository->wages($ptid, $work, $tid, $tname) : '0';
 

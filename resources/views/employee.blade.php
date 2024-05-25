@@ -21,6 +21,7 @@
                     <th>Name</th>
                     <th>Department</th>
                     <th>City</th>
+                    <th>Employee Type</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -32,11 +33,18 @@
                       <td>{{$item->employee_no}}</td>
                       <td>{{$item->name}}</td>                      
                       <td>{{$item->dname}}</td>                      
-                      <td>{{$item->cname}}</td>                      
+                      <td>{{$item->cname}}</td>
+                      <td><b>@if($item->employee_type_id == 39) 
+                        <span class="badge badge-success">Salary</span> 
+                        @elseif($item->employee_type_id == 40) 
+                        <span class="badge badge-primary">Wages</span>
+                        @else 
+                        <span class="badge badge-secondary">Other</span>
+                        @endif</td>                       
                       <td>
                         <a href="{{ route('employee.show', $item->employee_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('employee.edit', $item->employee_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('employee.detail', $item->employee_id) }}" class="btn btn-success btn-sm">Record</a>
+                        <a href="{{ route('employee.detail', $item->employee_id) }}" class="btn btn-success btn-sm">Ledger</a>
                       </td>
                     </tr>
                     @endforeach
@@ -49,6 +57,7 @@
                     <th>Name</th>
                     <th>Department</th>
                     <th>City</th>
+                    <th>Employee Type</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

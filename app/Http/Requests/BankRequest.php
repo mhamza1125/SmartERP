@@ -28,6 +28,7 @@ class BankRequest extends FormRequest
             'account' => 'required|max:255',
             'head_id' => 'required',
             'banker_id' => 'required|max:255',
+            'credit' => '',
         ];
     }
 }

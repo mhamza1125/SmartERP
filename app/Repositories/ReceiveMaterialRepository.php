@@ -83,7 +83,6 @@ class ReceiveMaterialRepository implements GlobalInterface {
         
         foreach ($data['quantity'] as $key => $quantity) {
             $pid = $data['purchase_item_id'][$key] ?? null;
-            $status = $data['inspection_status'][$key] ?? null;
             $idate = $data['inspection_date'][$key] ?? null;
             $pqty = $data['pending_qty'][$key] ?? null;
             $aqty = $data['approved_qty'][$key] ?? null;
@@ -96,7 +95,6 @@ class ReceiveMaterialRepository implements GlobalInterface {
                 'pending_qty' => $pqty,
                 'approved_qty' => $aqty,
                 'rejected_qty' => $rqty,
-                'inspection_status' => $status,
                 'inspection_date' => $idate,
             ];
             $receive = ReceiveMaterial::where('receive_id', $id)

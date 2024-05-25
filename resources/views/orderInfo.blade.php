@@ -63,8 +63,9 @@
                       <th>Size</th>
                       <th>Unit</th>
                       <th>Quantity</th>
-                      <th>Price</th>
-                      <th>Total</th>
+                      <th>Price (USD)</th>
+                      <th>Price (Pkr)</th>
+                      <th>Total (Pkr)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -83,6 +84,7 @@
                           <td>{{$item->hname}}</td>
                           <td>{{$item->uname}}</td>
                           <td>{{$item->quantity}}</td>
+                          <td>{{$item->price2}}</td>
                           <td>{{$item->price}}</td>
                           <td>{{$item->quantity * $item->price}}</td>
                         </tr>
@@ -95,8 +97,8 @@
                       return $item->quantity * $item->price;
                     }); @endphp
                     <tr>
-                      <th colspan="4"></th>
-                      <th colspan="2">Grand Total:</th>
+                      <th colspan="8"></th>
+                      <th>Grand Total:</th>
                       <th>{{ number_format($total) }}</th>
                     </tr>
                   </tfoot>

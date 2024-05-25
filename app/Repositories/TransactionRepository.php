@@ -80,6 +80,18 @@ class TransactionRepository implements GlobalInterface {
 
     public function bankBalance(){
         // Banks Balance All
+        return DB::table('banks')->where('banks.banker_id', '0')
+        ->leftJoin('transactions', 'banks.bank_id', '=', 'transactions.bank_id')
+        ->join('heads', 'heads.head_id', '=', 'banks.head_id')
+        ->select('banks.*', 'heads.name as hname',
+            DB::raw('SUM(transactions.debit) AS tdebit'),
+            DB::raw('SUM(transactions.credit) AS tcredit'),
+            DB::raw('COALESCE(SUM(transactions.debit - transactions.credit), 0) as balance'))
+        ->groupBy('banks.bank_id')
+        ->havingRaw('balance = 0')
+        ->get();
+
+        // Dosen't show the Banks with 0 Transactions
         return Transaction::where('transactions.bank_id', '>', '0')
         ->join('banks', 'banks.bank_id', '=', 'transactions.bank_id')
         ->join('heads', 'heads.head_id', '=', 'banks.head_id')

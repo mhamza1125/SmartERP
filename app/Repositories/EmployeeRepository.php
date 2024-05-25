@@ -47,10 +47,16 @@ class EmployeeRepository implements GlobalInterface {
     }
     
     public function refNo() {
-        $year = Carbon::now()->format('y');
-        $count = Employee::whereYear('created_at', Carbon::now()->year)->count();
-        $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
-        return 'E' . $year . $threeDigitNumber;
+        $lastEmployee = Employee::all()->sortByDesc(function($employee) {
+            return intval(substr($employee->employee_no, 1));
+        })->first();
+        $lastNumber = $lastEmployee ? intval(substr($lastEmployee->employee_no, 1)) : 0;
+        return  'E' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        
+        // $year = Carbon::now()->format('y');
+        // $count = Employee::whereYear('created_at', Carbon::now()->year)->count();
+        // $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
+        // return 'E' . $year . $threeDigitNumber;
     }
 
     public function store(array $data){

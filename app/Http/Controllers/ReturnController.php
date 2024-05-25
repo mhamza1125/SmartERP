@@ -82,9 +82,11 @@ class ReturnController extends Controller
     
     public function edit($id){
         $return = $this->returnRepository->get($id);
+        $date = $this->receiveRepository->get($return['receive_id']);
         $returnMaterial = $this->returnMaterialRepository->get($id);
         $receiveMaterial = $this->receiveMaterialRepository->get($return['receive_id']);
         return view('editReturn', [
+            'date' => $date,
             'return' => $return,
             'returnMaterial' => $returnMaterial,
             'receiveMaterial' => $receiveMaterial,

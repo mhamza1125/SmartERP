@@ -274,6 +274,125 @@
                 </div>
               </div>
 
+              <h5 class="mt-4">Factory to Container Delivery</h5>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Vehicle No</label>
+                    <input type="text" class="form-control" name="svehicle_no" placeholder="Vehicle No">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 1</label>
+                    <input type="text" class="form-control" name="sQty1[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 2</label>
+                    <input type="text" class="form-control" name="sQty2[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 3</label>
+                    <input type="text" class="form-control" name="sQty3[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 4</label>
+                    <input type="text" class="form-control" name="sQty4[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 5</label>
+                    <input type="text" class="form-control" name="sQty5[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 6</label>
+                    <input type="text" class="form-control" name="sQty6[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 7</label>
+                    <input type="text" class="form-control" name="sQty7[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Row 8</label>
+                    <input type="text" class="form-control" name="sQty8[]" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Add</label> <br>
+                    <button type="button" id="addVBtn" class="btn btn-primary">Add</button>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table" id="vehicles-table">
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Vehicle No</th>
+                        <th>Row 1</th>
+                        <th>Row 2</th>
+                        <th>Row 3</th>
+                        <th>Row 4</th>
+                        <th>Row 5</th>
+                        <th>Row 6</th>
+                        <th>Row 7</th>
+                        <th>Row 8</th>
+                        <th>Total Qty</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @if($deliveryBox->count())
+                        @php $total = 0; @endphp
+                        @foreach($deliveryBox as $item)
+                          @php
+                            $rowQtys = explode('|', $item->rowQty);
+                            $total += $item->totalQty
+                          @endphp
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>{{$item->vehicle_no}}
+                              <input type="hidden" name="vehicle_no[]" value="{{$item->vehicle_no}}">
+                              <input type="hidden" name="rowQty[]" value="{{$item->rowQty}}">
+                            </td>
+                            @foreach($rowQtys as $qty)
+                              <td>{{$qty}}</td>
+                            @endforeach
+                            <td>{{$item->totalQty}}
+                              <input type="hidden" name="totalQty[]" value="{{$item->totalQty}}">
+                            </td>
+                            <td><button class="deleteRowBtn btn btn-danger">X</button></td>
+                          </tr>
+                        @endforeach
+                      @endif
+                      <!-- Table rows will be dynamically added here -->
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th colspan="8"></th>
+                        <th colspan="2">Grand Total:</th>
+                        <th colspan="2"><span id="tQty"></span> Boxes</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
               <h5 class="mt-2">Delivery Expense</h5>
               <div class="row">
                 <div class="col-md-3">
@@ -305,7 +424,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Amount</label>
-                    <input type="text" min="0" class="form-control" name="sdebit">
+                    <input type="number" min="0" class="form-control" name="sdebit">
                   </div>
                 </div>
                 <div class="col-md-3">

@@ -7,9 +7,12 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StockRequest;
 use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
+use App\Repositories\ImageRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
 use App\Repositories\VendorRepository;
+use App\Repositories\MachineRepository;
+use App\Repositories\MaterialRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
@@ -18,10 +21,13 @@ use App\Repositories\ProductMaterialRepository;
 
 class StockController extends Controller
 {
+    protected $headRepository;
+    protected $imageRepository;
     protected $orderRepository;
     protected $stockRepository;
-    protected $headRepository;
     protected $vendorRepository;
+    protected $machineRepository;
+    protected $materialRepository;
     protected $employeeRepository;
     protected $stockItemRepository;
     protected $orderItemRepository;
@@ -29,11 +35,14 @@ class StockController extends Controller
     protected $productMaterialRepository;
 
     public function __construct(
-        HeadRepository $headRepository,  
-        OrderRepository $orderRepository,  
+        HeadRepository $headRepository,
+        ImageRepository $imageRepository,
         StockRepository $stockRepository,  
-        EmployeeRepository $employeeRepository,  
+        OrderRepository $orderRepository,  
         VendorRepository $vendorRepository,  
+        MachineRepository $machineRepository,  
+        MaterialRepository $materialRepository,
+        EmployeeRepository $employeeRepository,
         OrderItemRepository $orderItemRepository,  
         StockItemRepository $stockItemRepository,  
         ProductCostRepository $productCostRepository,  
@@ -41,10 +50,13 @@ class StockController extends Controller
     ){
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
+        $this->imageRepository = $imageRepository;
         $this->orderRepository = $orderRepository;
         $this->stockRepository = $stockRepository;
-        $this->employeeRepository = $employeeRepository;
         $this->vendorRepository = $vendorRepository;
+        $this->machineRepository = $machineRepository;
+        $this->materialRepository = $materialRepository;
+        $this->employeeRepository = $employeeRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->orderItemRepository = $orderItemRepository;
         $this->productCostRepository = $productCostRepository;
@@ -151,6 +163,14 @@ class StockController extends Controller
             'issue' => $issue,
         ]); 
     }
+
+    public function issue2(){
+        // All Issuance
+        $issue = $this->stockRepository->issueMaterial();
+        return view('issueMaterial', [
+            'issue' => $issue,
+        ]); 
+    }
     
     public function create(){
         // Add Issuance
@@ -172,6 +192,26 @@ class StockController extends Controller
         ]);
     }
 
+    public function create2(){
+        // Add Machine Material Issuance
+        $employee = $this->employeeRepository->wages();
+        // $vendor = $this->vendorRepository->worker();
+        $material = $this->materialRepository->machine();
+        $stock = $this->stockItemRepository->stock();
+        $pstock = $this->stockItemRepository->pStock();
+        $machine = $this->machineRepository->all();
+        $count = $this->stockRepository->refNo();
+        return view('addIMM', [
+            'count' => $count,
+            'machine' => $machine,
+            'material' => $material,
+            'stock' => $stock,
+            'pstock' => $pstock,
+            'employee' => $employee,
+            // 'vendor' => $vendor,
+        ]);
+    }
+
     public function store(StockRequest $request){
         // Store Issuance
         $validatedData = $request->validated();
@@ -188,7 +228,14 @@ class StockController extends Controller
         }
         $getId = $this->stockRepository->store($validatedData);
         $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $request->input());
-        if(!$request->has('issue_id')){
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'issuance', 'stocks', $getId);        
+            }
+        }
+        if ($request->has('machine_id')){
+            return redirect()->route('mstock.show', $getId)->with('success', 'Record Inserted Successfully');
+        } elseif (!$request->has('issue_id')){
             return redirect()->route('stock.show', $getId)->with('success', 'Record Inserted Successfully');
         } else {
             return redirect()->route('rstock.show', $getId)->with('success', 'Record Inserted Successfully');
@@ -211,6 +258,18 @@ class StockController extends Controller
             'issueSum' => $issueSum,
             'totalTimes' => $totalTimes,
             'count' => $totalTimes->count(),
+        ]);
+    }
+
+    public function show2($id){
+        // Show Machine Material Issuance
+        $issue = $this->stockRepository->get($id);
+        $issueItem = $this->stockItemRepository->getMM($id);
+        $image = $this->imageRepository->image('stocks', $id);
+        return view('issueMMInfo', [
+            'image' => $image,
+            'issue' => $issue,
+            'issueItem' => $issueItem,
         ]);
     }
 
@@ -299,6 +358,27 @@ class StockController extends Controller
             'vendor' => $vendor,
         ]);
     }
+
+    public function edit2(Stock $id){
+        // Edit Machine Material Issuance
+        $issueItem = $this->stockItemRepository->getMM($id->stock_id);
+        $employee = $this->employeeRepository->wages();
+        // $vendor = $this->vendorRepository->worker();
+        $stock = $this->stockItemRepository->stock();
+        $pstock = $this->stockItemRepository->pStock();
+        $material = $this->materialRepository->machine();
+        $machine = $this->machineRepository->all();
+        return view('editIMM', [
+            'issue' => $id,
+            'issueItem' => $issueItem,
+            'machine' => $machine,
+            'material' => $material,
+            'stock' => $stock,
+            'pstock' => $pstock,
+            'employee' => $employee,
+            // 'vendor' => $vendor,
+        ]);
+    }
     
     public function update(Request $request, $id){
         // Update Issuance
@@ -308,11 +388,17 @@ class StockController extends Controller
         $this->stockRepository->update($id, $request->input());
         $issueId = $request->input('issue_id');
         if($request->has('issue_id')){
-            // $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]); // This seems to be extra
             $this->stockRepository->update($id, ['stock_status' => $request->input('stock_status')]);
         }
+        if ($request->hasFile('image')) {
+            foreach ($request->file('image') as $file) {
+                $this->storeImage($file, 'issuance', 'stocks', $id);        
+            }
+        }
         $this->stockItemRepository->update($id, $request->input());
-        if(!$request->has('issue_id')){
+        if ($request->has('machine_id')){
+            return redirect()->route('mstock.show', $id)->with('success', 'Record Updated Successfully');
+        } elseif (!$request->has('issue_id')){
             return redirect()->route('stock.show', $id)->with('success', 'Record Updated Successfully');
         } else {
             return redirect()->route('rstock.show', $id)->with('success', 'Record Updated Successfully');
@@ -325,9 +411,11 @@ class StockController extends Controller
 
     public function rIssue(){
         // All Receive Issuance
+        $head = $this->headRepository->get('12');
         $receive = $this->stockRepository->receive();
         $issue = $this->stockRepository->receiveIssue();
         return view('receiveIssue', [
+            'head' => $head,
             'issue' => $issue,
             'receive' => $receive,
         ]); 
@@ -374,6 +462,7 @@ class StockController extends Controller
         // Edit Receive Issuance
         $head = $this->headRepository->get('12');
         $issue = $this->stockRepository->get($id);
+        $date = $this->stockRepository->get($issue['issue_id']);
         $issueItem = $this->stockItemRepository->getAvg($issue['issue_id']);
         $receiveItem = $this->stockItemRepository->get($id);
         $workLog = $this->stockItemRepository->workLog($id);
@@ -388,6 +477,7 @@ class StockController extends Controller
         }
         return view('editReceiveIssue', [
             'head' => $head,
+            'date' => $date,
             'issue' => $issue,
             'average' => $average,
             'issueItem' => $issueItem,
@@ -404,9 +494,9 @@ class StockController extends Controller
         $tid = $all['employee_id'];
         $tname = $all['table_name'];
         foreach ($quantities as $key => $quantity) {
-            $ptid = $ptids[$key] ?? null;
-            $mid = $mids[$key] ?? null;
-            $stage = $stages[$key] ?? null;
+            $ptid = $ptids[$key] ?? 0;
+            $mid = $mids[$key] ?? 0;
+            $stage = $stages[$key] ?? 0;
             $work = $works[$key] ?? 0;
             $wages = $work ? $this->productCostRepository->wages($ptid, $work, $tid, $tname) : '0';
             $stockItem = [

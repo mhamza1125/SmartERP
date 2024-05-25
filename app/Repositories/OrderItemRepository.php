@@ -64,7 +64,7 @@ class OrderItemRepository implements GlobalInterface {
     }
 
     public function estimateMaterial($orderId, $materialId){
-        // Required Material Against Order
+        // Required Material Against Order, Issuance
         $totalQty = OrderItem::where('order_id', $orderId)
         ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
         ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
@@ -110,12 +110,14 @@ class OrderItemRepository implements GlobalInterface {
             $product = $data['product_type_id'][$key] ?? null;
             $stage = $data['product_stage_id'][$key] ?? null;
             $price = $data['price'][$key] ?? null;
+            $price2 = $data['price2'][$key] ?? null;
             $total = $data['total'][$key] ?? null;
             $orderItem = [
                 'order_id' => $id,
                 'product_type_id' => $product,
                 'product_stage_id' => $stage,
                 'price' => $price,
+                'price2' => $price2,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

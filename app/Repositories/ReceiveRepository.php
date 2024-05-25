@@ -10,6 +10,15 @@ class ReceiveRepository implements GlobalInterface {
     public function all(){
         return Receive::join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->join('receive_materials', 'receive_materials.receive_id', 'receives.receive_id')
+        ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
+        ->groupBy('receive_materials.receive_id')
+        ->selectRaw('SUM(receive_materials.pending_qty) as pqty')
+        ->orderBy('receives.created_at', 'desc')->get();
+
+        // Without Status of Pending / Checked etc
+        return Receive::join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
         ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
         ->orderBy('receives.created_at', 'desc')->get();
     }

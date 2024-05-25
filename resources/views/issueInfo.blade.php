@@ -38,7 +38,7 @@
                     <tr><td><b>Issuance.#:</b> {{$issue['stock_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($issue['job_no'])? $issue['job_no']:'Default Purchase'}}</td></tr>
                     <tr><td><b>Issued For:</b> {{$issue['sname']}}</td></tr>
-                    <tr><td><b>Date:</b> {{$issue['stock_date']}}</td></tr>
+                    {{-- <tr><td><b>Date:</b> {{$issue['stock_date']}}</td></tr> --}}
                   </tbody>
                 </table>
               </div> 
@@ -83,7 +83,8 @@
                               <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                               <td>{{($item->name)? $item->name:$item->stage}}</td>
                               <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
-                              <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }} Units</td>
+                              <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : $item->quantity }} {{$item->puname}}</td>
+                              {{-- <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }} Units</td> --}}
                             </tr>
                             @endif
                           @endforeach

@@ -249,6 +249,15 @@
                 <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
                 <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
                 <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Working</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('machine') }}">Machine</a></li>
+                <li><a class="nav-link" href="{{ route('missue') }}">MM Issue</a></li>
               </ul>
             </li>
             <li class="dropdown">

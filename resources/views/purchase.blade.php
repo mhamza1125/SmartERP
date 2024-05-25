@@ -20,6 +20,7 @@
                     <th>Purchase No</th>
                     <th>Job No</th>
                     <th>Vendor</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>
@@ -31,7 +32,11 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>
-                      <td>{{$item->fname}}</td>
+                      <td>{{$item->vendor_no}} - {{$item->fname}}</td>
+                      <td>@if($item->has_received) 
+                        <span class="badge badge-success">Received</span> @else 
+                        <span class="badge badge-danger">To Receive</span> @endif
+                      </td>
                       <td>{{$item->purchase_date}}</td>                      
                       <td>
                         <a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
@@ -48,6 +53,7 @@
                     <th>Purchase No</th>
                     <th>Job No</th>
                     <th>Vendor</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>

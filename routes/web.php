@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\ReturnController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\MachineController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceiveController;
 use App\Http\Controllers\CategoryController;
@@ -76,11 +77,15 @@ Route::get('/employeeDetail/{id}', [EmployeeController::class, 'detail'])->name(
 Route::post('/employeeDetail/{id}', [EmployeeController::class, 'detail'])->name('employee.filter');
 
 // Vendor
-Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
+// Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
+Route::get('/vendor', [VendorController::class, 'vendor'])->name('vendor');
+Route::get('/contractor', [VendorController::class, 'contractor'])->name('contractor');
 Route::get('/addVendor', [VendorController::class, 'create'])->name('vendor.add');
+Route::get('/addContractor', [VendorController::class, 'create2'])->name('vendor.add2');
 Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
 Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show');
 Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
+Route::get('/editContractor/{id}', [VendorController::class, 'edit2'])->name('vendor.edit2');
 Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
 Route::get('/vendorDetail/{id}', [VendorController::class, 'detail'])->name('vendor.detail');
 Route::post('/vendorDetail/{id}', [VendorController::class, 'detail'])->name('vendor.filter');
@@ -94,6 +99,14 @@ Route::get('/editMaterial/{id}', [MaterialController::class, 'edit'])->name('mat
 Route::post('/material/{id}', [MaterialController::class, 'update'])->name('material.update');
 Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
 Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
+
+// Machine
+Route::get('/machine', [MachineController::class, 'index'])->name('machine');
+Route::get('/addMachine', [MachineController::class, 'create'])->name('machine.add');
+Route::post('/machine', [MachineController::class, 'store'])->name('machine.store');
+Route::get('/machine/{id}', [MachineController::class, 'show'])->name('machine.show');
+Route::get('/editMachine/{id}', [MachineController::class, 'edit'])->name('machine.edit');
+Route::post('/machine/{id}', [MachineController::class, 'update'])->name('machine.update');
 
 // Product
 Route::get('/product', [ProductController::class, 'index'])->name('product');
@@ -141,6 +154,7 @@ Route::post('/purchase', [PurchaseController::class, 'store'])->name('purchase.s
 Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchase.show');
 Route::get('/editPurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
+Route::get('/ajaxPMQty', [PurchaseController::class, 'ajaxPMQty'])->name('ajaxPMQty'); //Material Qty
 
 // Purchase Receive
 Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
@@ -176,6 +190,12 @@ Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Pro
 Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
 Route::get('/ajaxMQty', [StockController::class, 'ajaxMQty'])->name('ajaxMQty'); //Material Qty
+
+// Machine Material Issuance
+Route::get('/issueMM', [StockController::class, 'issue2'])->name('missue');
+Route::get('/addIMM', [StockController::class, 'create2'])->name('mstock.add');
+Route::get('/issueMM/{id}', [StockController::class, 'show2'])->name('mstock.show');
+Route::get('/editIMM/{id}', [StockController::class, 'edit2'])->name('mstock.edit');
 
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');

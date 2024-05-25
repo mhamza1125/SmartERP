@@ -16,6 +16,17 @@ class MaterialRepository implements GlobalInterface {
         ->get();
     }
 
+    public function machine(){
+        // Machine Material
+        return Material::join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+        ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname', 'vendors.fname', 'vendor_no')
+        ->where('materials.material_type_id', '=', '101')
+        ->orderBy('materials.created_at', 'desc')
+        ->get();
+    }
+
     public function get($id){
         return Material::where('materials.material_id', $id)
         ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
@@ -25,6 +36,15 @@ class MaterialRepository implements GlobalInterface {
         ->first();
     }
 
+    public function refNo() {
+        $lastMaterial = Material::all()->sortByDesc(function($material) {
+            return intval(substr($material->material_no, 1));
+        })->first();
+    
+        $lastNumber = $lastMaterial ? intval(substr($lastMaterial->material_no, 1)) : 0;
+        return 'M' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+    }
+    
     public function getMaterial($id){
         // Vendor Selling  & Product Raw Materials
         $materialIds = explode('|', $id);
@@ -55,7 +75,6 @@ class MaterialRepository implements GlobalInterface {
             // ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
             ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            // ->where('receive_materials.inspection_status', '2')
             ->select('*', 'mthead.name as mtname', 'uhead.name as uname',
                 'receive_materials.created_at as timestamp', 'materials.name')
             ->selectRaw('SUM(receive_materials.quantity) as total_received')
@@ -70,7 +89,6 @@ class MaterialRepository implements GlobalInterface {
             ->join('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
             ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            // ->where('receive_materials.inspection_status', '2')
             ->where('return_materials.quantity', '!=', '0')
             ->select('*', 'mthead.name as mtname', 'uhead.name as uname',
                 'receive_materials.created_at as timestamp', 'materials.name')
@@ -102,7 +120,6 @@ class MaterialRepository implements GlobalInterface {
             // ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
             ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            // ->where('receive_materials.inspection_status', '2')
             ->whereBetween('purchases.purchase_date', [$dfrom, $dto])
             ->select('*', 'mthead.name as mtname', 'uhead.name as uname',
                 'receive_materials.created_at as timestamp', 'materials.name')
@@ -119,7 +136,6 @@ class MaterialRepository implements GlobalInterface {
             ->join('returns', 'returns.return_id', '=', 'return_materials.return_id')
             ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            // ->where('receive_materials.inspection_status', '2')
             ->whereBetween('returns.return_date', [$dfrom, $dto])
             ->where('return_materials.quantity', '!=', '0')
             ->select('*', 'mthead.name as mtname', 'uhead.name as uname',

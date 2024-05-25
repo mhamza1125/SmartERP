@@ -28,7 +28,8 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Receiving Date</label>
-                    <input type="text" class="form-control datepicker" name="receive_date" required value="{{ $receive['receive_date'] }}">
+                    {{-- <input type="text" class="form-control datepicker" name="receive_date" required value="{{ $receive['receive_date'] }}"> --}}
+                    <input type="date" class="form-control" name="receive_date" required value="{{ $receive['receive_date'] }}" min="{{$date['purchase_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -66,7 +67,6 @@
                         <th>Approved</th>
                         <th>Rejected</th>
                         <th>Remaining</th>
-                        {{-- <th>Status</th> --}}
                         <th>Inspection Date</th>
                       </tr>
                     </thead>
@@ -98,13 +98,6 @@
                           <td class="form-group">
                             <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received - $qty}}" readonly>
                           </td>
-                          {{-- <td class="form-group">
-                            <select class="form-control" name="inspection_status[]" required>
-                              <option value="1" {{ $receiveMaterial[$key]['inspection_status'] == '1' ? 'selected' : '' }}>Pending</option>
-                              <option value="2" {{ $receiveMaterial[$key]['inspection_status'] == '2' ? 'selected' : '' }}>Approved</option>
-                              <option value="3" {{ $receiveMaterial[$key]['inspection_status'] == '3' ? 'selected' : '' }}>Rejected</option>
-                            </select>
-                          </td> --}}
                           <td>
                             <input type="text" class="form-control datepicker" name="inspection_date[]" required value="{{$receiveMaterial[$key]['inspection_date']}}">
                           </td>
@@ -122,7 +115,6 @@
                         <th>Approved</th>
                         <th>Rejected</th>
                         <th>Remaining</th>
-                        {{-- <th>Status</th> --}}
                         <th>Inspection Date</th>
                       </tr>
                     </tfoot>

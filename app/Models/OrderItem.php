@@ -17,6 +17,7 @@ class OrderItem extends Model
         'product_stage_id',
         'quantity',
         'price',
+        'price2',
         'total',
         'updated_at',
     ];

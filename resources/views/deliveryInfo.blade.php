@@ -105,6 +105,59 @@
               </div>
             </div>
 
+            <h5>Delivery to Container</h5>
+            @if($deliveryBox->count())
+            <div class="row">
+              <div class="col-md-12 mt-2">
+                <table class="table table-sm table-striped">
+                  <thead>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Vehicle No</th>
+                      <th>Row 1</th>
+                      <th>Row 2</th>
+                      <th>Row 3</th>
+                      <th>Row 4</th>
+                      <th>Row 5</th>
+                      <th>Row 6</th>
+                      <th>Row 7</th>
+                      <th>Row 8</th>
+                      <th>Total Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @if($deliveryBox->count())
+                      @php $total = 0; @endphp
+                      @foreach($deliveryBox as $item)
+                        @php
+                           $rowQtys = explode('|', $item->rowQty);
+                           $total += $item->totalQty
+                        @endphp
+                        <tr>
+                          <td>{{$loop->index + 1}}</td>
+                          <td>{{$item->vehicle_no}}</td>
+                          @foreach($rowQtys as $qty)
+                            <td>{{$qty}}</td>
+                          @endforeach
+                          <td>{{$item->totalQty}}</td>
+                        </tr>
+                      @endforeach
+                    @endif
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th colspan="7"></th>
+                      <th colspan="2">Grand Total:</th>
+                      <th colspan="2">{{$total}} Boxes</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            @else
+              <blockquote> No Delivery to Container Record </blockquote>
+            @endif
+
             <h5>Delivery Container / Vehicle</h5>
             @if($deliveryItem->where('product_type_id', 0)->count())
             <div class="row">

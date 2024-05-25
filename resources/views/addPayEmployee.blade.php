@@ -18,15 +18,14 @@
               @csrf
               <div class="row">
                 <div class="col-md-6">
-                  <div class="form-group">          
+                  <div class="form-group">
                     <input type="hidden" name="transaction_to" required value="employee" id="transaction_to">
                     <label>Employee</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Employee</option>
                       @if($employee->count())
                         @foreach($employee as $item)
-                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{($item->salary > 0)? ' - [ Salary: '.$item->salary.' ]':'Wages Employee'}}
-                          </option>
+                          <option value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} {{($item->salary > 0)? ' | Salary: '.$item->salary : ' | Wages Employee'}}</option>
                         @endforeach
                       @endif
                     </select>

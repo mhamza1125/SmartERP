@@ -12,6 +12,7 @@ use App\Repositories\StockRepository;
 use App\Http\Requests\DeliveryRequest;
 use App\Repositories\DeliveryRepository;
 use App\Repositories\StockItemRepository;
+use App\Repositories\DeliveryBoxRepository;
 use App\Repositories\TransactionRepository;
 
 class DeliveryController extends Controller
@@ -22,6 +23,7 @@ class DeliveryController extends Controller
     protected $stockRepository;
     protected $deliveryRepository;
     protected $stockItemRepository;
+    protected $deliveryBoxRepository;
     protected $transactionRepository;
 
     public function __construct(
@@ -31,6 +33,7 @@ class DeliveryController extends Controller
         StockRepository $stockRepository,
         DeliveryRepository $deliveryRepository,
         StockItemRepository $stockItemRepository, 
+        DeliveryBoxRepository $deliveryBoxRepository,
         TransactionRepository $transactionRepository,
     ){
         $this->middleware(['auth', 'all']);
@@ -40,6 +43,7 @@ class DeliveryController extends Controller
         $this->stockRepository = $stockRepository;
         $this->deliveryRepository = $deliveryRepository;
         $this->stockItemRepository = $stockItemRepository;
+        $this->deliveryBoxRepository = $deliveryBoxRepository;
         $this->transactionRepository = $transactionRepository;
     }
 
@@ -72,7 +76,7 @@ class DeliveryController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        // Stock Items
+        // Stock Items / Delivery Items / Container Vehicles
         $ptid = $request->input('product_type_id');
         $quantities = $request->input('quantity');
         $mid = $request->input('material_id');
@@ -84,12 +88,19 @@ class DeliveryController extends Controller
         $banks = $request->input('bank_id');
         $debits = $request->input('debit');
         $remarks = $request->input('remarks');
+        // Delivery Boxes / Vehicles
+        $vehicles = $request->input('vehicle_no');
+        $rowQtys = $request->input('rowQty');
+        $totalQtys = $request->input('totalQty');
+        // Order Status
         $orderStatus = ['order_status' => $request->input('order_status')];
+        // Insertion to DB
         $get = $this->deliveryRepository->store($validatedData);
         $validatedData['delivery_id'] = $get;
         $this->orderRepository->update($request->input('order_id'), $orderStatus);
-        $this->storeSI($getId, $ptid, $mid, $quantities, $stages);
-        $this->storeEI($validatedData, $heads, $banks, $debits, $remarks);
+        $this->storeSI($getId, $ptid, $mid, $quantities, $stages); // Delivery Items
+        $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
+        $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
         return redirect()->route('delivery.show', $get)->with('success', 'Record Inserted Successfully');
     }
     
@@ -97,8 +108,10 @@ class DeliveryController extends Controller
         $delivery = $this->deliveryRepository->get($id);
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $transaction = $this->transactionRepository->delivery($id);
+        $deliveryBox = $this->deliveryBoxRepository->get($id);
         return view('deliveryInfo', [
             'delivery' => $delivery,
+            'deliveryBox' => $deliveryBox,
             'transaction' => $transaction,
             'deliveryItem' => $deliveryItem,
         ]);
@@ -111,6 +124,7 @@ class DeliveryController extends Controller
         $bank = $this->bankRepository->self();
         $expense = $this->headRepository->get('7');
         $deliveryItem = $this->stockItemRepository->delivery($id);
+        $deliveryBox = $this->deliveryBoxRepository->get($id);
         $transaction = $this->transactionRepository->delivery($id);
         return view('editDelivery', [
             'bank' => $bank,
@@ -118,6 +132,7 @@ class DeliveryController extends Controller
             'order' => $order,
             'stock' => $stock,
             'vehicle' => $vehicle,
+            'deliveryBox' => $deliveryBox,
             'deliveryItem' => $deliveryItem,
             'transaction' => $transaction,
         ]); 
@@ -132,6 +147,9 @@ class DeliveryController extends Controller
         $this->deliveryRepository->update($id, $request->input());
         $orderStatus = ['order_status' => $request->input('order_status')];
         $this->orderRepository->update($request->input('order_id'), $orderStatus);
+        $this->deliveryBoxRepository->delete($id);
+        $this->storeDB($id, $request->input('vehicle_no'),
+                $request->input('rowQty'), $request->input('totalQty'));
         $this->stockItemRepository->update($request->input('stock_id'), $request->input());
         return redirect()->route('delivery.show', $id)->with('success', 'Record Updated Successfully');
     }
@@ -186,5 +204,22 @@ class DeliveryController extends Controller
                 $this->transactionRepository->store($transaction);
             }
         }        
+    }
+
+    private function storeDB($validatedData, $vehicles, $rowQtys, $totalQtys){
+        // Store Delivery Boxes
+        if(!empty($rowQtys)){
+            foreach ($rowQtys as $key => $rowQty) {
+                $totalQty = $totalQtys[$key] ?? null;
+                $vehicle = $vehicles[$key] ?? null;
+                $dBoxes = [
+                    'delivery_id' => $validatedData['delivery_id'] ?? $validatedData,
+                    'vehicle_no' => $vehicle,
+                    'rowQty' => $rowQty,
+                    'totalQty' => $totalQty,
+                ];
+                $this->deliveryBoxRepository->store($dBoxes);
+            }
+        }
     }
 }
