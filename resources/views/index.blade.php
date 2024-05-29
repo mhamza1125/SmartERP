@@ -31,21 +31,10 @@
       <nav class="navbar navbar-expand-lg main-navbar sticky">
         <div class="form-inline mr-auto">
           <ul class="navbar-nav mr-3">
-            <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg
-                                    collapse-btn"> <i data-feather="align-justify"></i></a></li>
+            <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg collapse-btn"> <i data-feather="align-justify"></i></a></li>
             <li><a href="#" class="nav-link nav-link-lg fullscreen-btn">
                 <i data-feather="maximize"></i>
               </a></li>
-            <li>
-              <form class="form-inline mr-auto">
-                <div class="search-element">
-                  <input class="form-control" type="search" placeholder="Search" aria-label="Search" data-width="200">
-                  <button class="btn" type="submit">
-                    <i class="fas fa-search"></i>
-                  </button>
-                </div>
-              </form>
-            </li>
           </ul>
         </div>
         <ul class="navbar-nav navbar-right">
@@ -121,33 +110,25 @@
               </div>
               <div class="dropdown-list-content dropdown-list-icons">
                 <a href="#" class="dropdown-item dropdown-item-unread"> <span
-                    class="dropdown-item-icon bg-primary text-white"> <i class="fas
-                                                fa-code"></i>
+                    class="dropdown-item-icon bg-primary text-white"> <i class="fas fa-code"></i>
                   </span> <span class="dropdown-item-desc"> Template update is
                     available now! <span class="time">2 Min
                       Ago</span>
                   </span>
-                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-info text-white"> <i class="far
-                                                fa-user"></i>
+                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-info text-white"> <i class="far fa-user"></i>
                   </span> <span class="dropdown-item-desc"> <b>You</b> and <b>Dedik
                       Sugiharto</b> are now friends <span class="time">10 Hours
                       Ago</span>
                   </span>
-                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-success text-white"> <i
-                      class="fas
-                                                fa-check"></i>
+                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-success text-white"> <i class="fas fa-check"></i>
                   </span> <span class="dropdown-item-desc"> <b>Kusnaedi</b> has
-                    moved task <b>Fix bug header</b> to <b>Done</b> <span class="time">12
-                      Hours
-                      Ago</span>
+                    moved task <b>Fix bug header</b> to <b>Done</b> <span class="time">12 Hours Ago</span>
                   </span>
-                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-danger text-white"> <i
-                      class="fas fa-exclamation-triangle"></i>
+                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-danger text-white"> <i class="fas fa-exclamation-triangle"></i>
                   </span> <span class="dropdown-item-desc"> Low disk space. Let's
                     clean it! <span class="time">17 Hours Ago</span>
                   </span>
-                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-info text-white"> <i class="fas
-                                                fa-bell"></i>
+                </a> <a href="#" class="dropdown-item"> <span class="dropdown-item-icon bg-info text-white"> <i class="fas fa-bell"></i>
                   </span> <span class="dropdown-item-desc"> Welcome to SmartERP
                     template! <span class="time">Yesterday</span>
                   </span>
@@ -163,8 +144,7 @@
                 class="user-img-radious-style"> <span class="d-sm-none d-lg-inline-block"></span></a>
             <div class="dropdown-menu dropdown-menu-right pullDown">
               <div class="dropdown-title">Hello Sarah Smith</div>
-              <a href="profile.html" class="dropdown-item has-icon"> <i class="far
-                                        fa-user"></i> Profile
+              <a href="profile.html" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile
               </a> <a href="timeline.html" class="dropdown-item has-icon"> <i class="fas fa-bolt"></i>
                 Activities
               </a> <a href="#" class="dropdown-item has-icon"> <i class="fas fa-cog"></i>
@@ -201,13 +181,22 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Purchase Orders</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
+                <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
+                <li><a class="nav-link" href="{{ route('return') }}">Return</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Transactions</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
                 <li><a class="nav-link" href="{{ route('ePayment') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor / Contractor</a></li>
                 <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
-                <li><a class="nav-link" href="{{ route('oPayment') }}">Order</a></li>
+                <li><a class="nav-link" href="{{ route('oPayment') }}">Customer Order</a></li>
               </ul>
             </li>
             <li class="dropdown">
@@ -221,13 +210,28 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Order / PO</span></a>
+                  data-feather="briefcase"></i><span>Machines</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('machine') }}">Machine</a></li>
+                <li><a class="nav-link" href="{{ route('missue') }}">Material Issuance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Customer Orders</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
                 <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
-                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
-                <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
-                <li><a class="nav-link" href="{{ route('return') }}">Return</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>People Management</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
+                <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
+                <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
               </ul>
             </li>
             <li class="dropdown">
@@ -240,33 +244,18 @@
               </ul>
             </li>
             <li class="dropdown">
-            </li>
-            <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Persons Record</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
-                <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
-                <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
+                data-feather="briefcase"></i><span>Materials</span></a>
+                <ul class="dropdown-menu">
+                  <li><a class="nav-link" href="{{ route('material') }}">Materials</a></li>
+                  <li><a class="nav-link" href="{{ route('mprocess') }}">Material Processing</a></li>
               </ul>
-            </li>
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Working</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('machine') }}">Machine</a></li>
-                <li><a class="nav-link" href="{{ route('missue') }}">MM Issuance</a></li>
-                <li><a class="nav-link" href="{{ route('mprocess.add') }}">Material Processing</a></li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a href="{{ route('wages') }}" class="nav-link"><i data-feather="briefcase"></i><span>Work Wages</span></a>
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Reports</span></a>
               <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('wages') }}">Work Wages</a></li>
                 <li><a class="nav-link" href="{{ route('stock.daily') }}">Daily Issuance</a></li>
                 <li><a class="nav-link" href="{{ route('rstock.daily') }}">Daily Receiving</a></li>
                 <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
@@ -276,9 +265,8 @@
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Settings</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
-                <li><a class="nav-link" href="{{ route('material') }}">Materials</a></li>
+                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
               </ul>
             </li>
             

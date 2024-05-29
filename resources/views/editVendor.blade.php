@@ -20,6 +20,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Vendor No</label>
+                    <input type="hidden" name="vendor_type" value="0" required>
                     <input type="text" class="form-control" name="vendor_no" required value="{{$vendor['vendor_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Vendor No</div>
@@ -85,27 +86,6 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Vendor as Worker</label>
-                    <select class="form-control" name="vendor_type" required>
-                      <option value="0" {{ $vendor['vendor_type'] == '0' ? 'selected' : '' }}>Inactive</option>
-                      <option value="1" {{ $vendor['vendor_type'] == '1' ? 'selected' : '' }}>Active</option>
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>File / Images</label>
-                    <div class="custom-file">
-                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
-                      <label class="custom-file-label" for="customFile">Choose file</label>
-                    </div>
-                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
-                    <div class="invalid-feedback" id="fileError"></div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
                     <label>City</label>
                     <select class="form-control select2" name="city_id" required>
                       <option value="" selected disabled>Select City</option>
@@ -117,6 +97,17 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select City</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>File / Images</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
+                      <label class="custom-file-label" for="customFile">Choose file</label>
+                    </div>
+                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
+                    <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
               </div>
@@ -139,6 +130,16 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
+                {{-- <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Vendor as Worker</label>
+                    <select class="form-control" name="vendor_type" required>
+                      <option value="0" {{ $vendor['vendor_type'] == '0' ? 'selected' : '' }}>Inactive</option>
+                      <option value="1" {{ $vendor['vendor_type'] == '1' ? 'selected' : '' }}>Active</option>
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div> --}}
               </div>
               <div class="row">
                 <div class="col-md-12">

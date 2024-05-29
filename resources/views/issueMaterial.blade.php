@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Issuance Material Table</h4>
+            <h4>Issuance Material Material Table</h4>
             <div class="card-header-action">
               <a href="{{ route('mstock.add') }}" class="btn btn-primary">Add Issue</a>
             </div>

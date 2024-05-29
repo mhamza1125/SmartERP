@@ -21,7 +21,7 @@
                   <div class="form-group">
                     <label>Contractor No</label>
                     <input type="hidden" name="vendor_type" value="1" required>
-                    <input type="hidden" name="vendor_type_id" value="10" required>
+                    <input type="hidden" name="vendor_type_id" value="0" required>
                     <input type="text" class="form-control" name="vendor_no" required value="{{$count}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Contractor No</div>

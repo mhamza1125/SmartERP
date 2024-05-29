@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Contractor Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('vendor.add') }}" class="btn btn-primary">Add Contractor</a>
+              <a href="{{ route('vendor.add2') }}" class="btn btn-primary">Add Contractor</a>
             </div>
           </div>
           <div class="card-body">
@@ -31,7 +31,7 @@
                       <td>{{$item->fname}}</td>
                       <td>
                         <a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{{ route('vendor.edit2', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>
                         <a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Ledger</a>
                       </td>
                     </tr>

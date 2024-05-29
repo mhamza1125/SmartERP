@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Issuance Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('stock.add') }}" class="btn btn-primary">Add Issue</a>
+              <div class="btn-group">
+                <a href="{{ route('stock.add') }}" class="btn btn-primary">Add Issuance</a>
+                <a href="{{ route('stock.gadd') }}" class="btn btn-primary">Add Group Issuance</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

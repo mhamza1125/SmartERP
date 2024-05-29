@@ -74,8 +74,10 @@ class TransactionRepository implements GlobalInterface {
         ->where('transaction_type', '!=', 'openingBalance')
         ->groupBy('transactions.bank_id')
         ->first();
+        $tcredit = $transaction->tcredit ?? 0;
+        $tdebit = $transaction->tdebit ?? 0;
 
-        return $transaction->tcredit - $transaction->tdebit;
+        return $tcredit - $tdebit;
     }
 
     public function bankBalance(){
