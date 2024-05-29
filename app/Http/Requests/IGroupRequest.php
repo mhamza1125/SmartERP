@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class PurchaseRequest extends FormRequest
+class IGroupRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,20 +22,16 @@ class PurchaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'purchase_no' => 'required|max:255',
-            'vendor_id' => 'required',
+            'igroup_no' => 'required',
             'order_id' => 'required',
+            'igroup_date' => 'required',
+            'igroup_status' => '',
             'description' => '',
-            'purchase_date' => 'required',
-            'require_date' => 'required',
-            // Purchase Items
+            // Issuance Group Items
+            'product_type_id.*' => 'required',
             'material_id.*' => 'required',
             'quantity.*' => 'required',
-            'amaterial_id.*' => 'required',
-            'aquantity.*' => 'required',
-            'bmaterial_id.*' => 'required',
-            'bquantity.*' => 'required',
-            'price.*' => 'required',
+            'stage_id.*' => '',
         ];
     }
 }

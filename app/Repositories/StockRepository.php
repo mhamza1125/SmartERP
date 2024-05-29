@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use Carbon\Carbon;
 use App\Models\Stock;
+use Illuminate\Support\Facades\DB;
 
 class StockRepository implements GlobalInterface {
     
@@ -82,8 +83,111 @@ class StockRepository implements GlobalInterface {
         ->get();
     }
 
-    public function wages(){
-        // For Wages.blade.php page
+    public function wagesAll(){
+        // Grouped Wages Single record for each person
+        $stocks = Stock::where('stock_type', '1') // StockIN
+            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->leftJoin('employees', function($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->select(
+                'stocks.stock_id', 'stocks.table_name', 'stocks.employee_id',
+                'employees.employee_no', 'employees.name', 'vendors.vendor_no', 'vendors.fname',
+                'stock_items.quantity', 'stock_items.work_wages'
+            )
+            ->where('work_wages', '!=', '0')
+            ->orderBy('stocks.stock_date', 'desc')
+            ->get();
+    
+        if($stocks->isEmpty()) {
+            return ['employees' => [], 'vendors' => []];
+        }
+    
+        $groupedWages = [];
+    
+        foreach ($stocks as $stock) {
+            $groupKey = $stock->table_name . '_' . $stock->employee_id;
+    
+            // Initialize the grouped record if not set
+            if (!isset($groupedWages[$groupKey])) {
+                $groupedWages[$groupKey] = [
+                    'stock_id' => $stock->stock_id,
+                    'table_name' => $stock->table_name,
+                    'employee_id' => $stock->employee_id,
+                    'employee_no' => $stock->employee_no ?? null,
+                    'name' => $stock->name ?? null,
+                    'vendor_no' => $stock->vendor_no ?? null,
+                    'fname' => $stock->fname ?? null,
+                    'total_wages' => 0,
+                    'wagesDebit' => 0,
+                    'advanceDebit' => 0,
+                    'radvanceCredit' => 0,
+                    'obDebit' => 0,
+                    'obCredit' => 0,
+                ];
+            }
+    
+            // Calculate total wages for the stock
+            $quantity = $stock->quantity;
+            $workWages = explode('|', $stock->work_wages);
+            $totalWages = 0;
+            foreach ($workWages as $wage) {
+                $totalWages += (int)$wage * $quantity;
+            }
+    
+            // Add the total wages to the corresponding grouped record
+            $groupedWages[$groupKey]['total_wages'] += $totalWages;
+        }
+    
+        // Retrieve transactions for each person and add to grouped record
+        foreach ($groupedWages as &$group) {
+            $transactions = DB::table('transactions')
+                ->where('transactions.payee_id', $group['employee_id'])
+                ->where('transactions.transaction_to', $group['table_name'])
+                ->select(
+                    DB::raw('SUM(CASE WHEN transactions.transaction_type = "wages" THEN transactions.debit ELSE 0 END) AS wagesDebit'),
+                    DB::raw('SUM(CASE WHEN transactions.transaction_type = "advance" THEN transactions.debit ELSE 0 END) AS advanceDebit'),
+                    DB::raw('SUM(CASE WHEN transactions.transaction_type = "receiveAdvance" THEN transactions.credit ELSE 0 END) AS radvanceCredit'),
+                    DB::raw('SUM(CASE WHEN transactions.transaction_type = "openingBalance" THEN transactions.debit ELSE 0 END) AS obDebit'),
+                    DB::raw('SUM(CASE WHEN transactions.transaction_type = "openingBalance" THEN transactions.credit ELSE 0 END) AS obCredit')
+                )
+                ->first();
+    
+            $group['wagesDebit'] = $transactions->wagesDebit;
+            $group['advanceDebit'] = $transactions->advanceDebit;
+            $group['radvanceCredit'] = $transactions->radvanceCredit;
+            $group['obDebit'] = $transactions->obDebit;
+            $group['obCredit'] = $transactions->obCredit;
+        }
+    
+        // Separate employee and vendor wages
+        $employeeWages = array_filter($groupedWages, function($wage) {
+            return $wage['table_name'] === 'employee';
+        });
+    
+        $vendorWages = array_filter($groupedWages, function($wage) {
+            return $wage['table_name'] === 'vendor';
+        });
+    
+        // Reindex the arrays to start with 0
+        $employeeWages = array_values($employeeWages);
+        $vendorWages = array_values($vendorWages);
+    
+        return [
+            'employees' => $employeeWages,
+            'vendors' => $vendorWages,
+        ];
+    }
+    
+      
+
+    public function wagesNotUsed(){
+        // For Wages.blade.php page Monthly Wages
         $stocks = Stock::where('stock_type', '1') // StockIN
             ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->leftJoin('employees', function($join) {
@@ -176,11 +280,11 @@ class StockRepository implements GlobalInterface {
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
             ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
             ->where('work_wages', '!=', '0')
+            ->where('stocks.table_name', $id['table_name'])
             ->whereYear('stocks.stock_date', '=', $stockDate->format('Y'))
             ->whereMonth('stocks.stock_date', '=', $stockDate->format('m'))
             ->select('*', 'shead.name as sname', 'sthead.name as stage', 'uhead.name as uname')
             ->get();
-
         foreach ($stocks as $stock) {   
             // Calculate total wages for the stock
             $quantity = $stock->quantity;
@@ -207,6 +311,7 @@ class StockRepository implements GlobalInterface {
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
             ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
             ->where('work_wages', '!=', '0')
+            ->where('stocks.table_name', $id['table_name'])
             ->whereBetween('stocks.stock_date', [$dfrom, $dto])
             ->select('*', 'shead.name as sname', 'sthead.name as stage', 'uhead.name as uname')
             ->get();
@@ -243,7 +348,7 @@ class StockRepository implements GlobalInterface {
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
             ->leftJoin('heads as mhead', 'mhead.head_id', '=', 'machines.machine_type_id')
             ->select(
-                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'employees.employee_id')
+                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id')
             ->first();
     }
 

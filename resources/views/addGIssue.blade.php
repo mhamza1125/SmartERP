@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Issue Material</h4>
+            <h4>Issue Group Material</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('stock.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('stock.gstore') }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
                 <div class="col-md-2">
@@ -72,7 +72,7 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Issuance For Orders</label>
                     <select class="form-control select2" name="order_id" id="order_id" required>
@@ -87,39 +87,20 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-7">
-                  <div class="form-group">
-                    <label>Products</label>
-                    <select class="form-control select2" name="product_type_id" id="product_type_id">
-                      <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled>Select Product</option>
-                      <!-- You can keep this option or remove it, depending on your needs -->
-                  </select>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Materials</label>
-                    <select class="form-control select2" name="material_id" id="material_id">
+                    <label>Issuance Groups</label>
+                    <select class="form-control select2" name="igroup_id" id="igroup_id">
                       <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled selected>Select Material</option>
+                      <option value="" disabled>Select Group</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
-                    </select>
+                  </select>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
                     <label for="available_stock">Available Stock</label>
-                    <input type="text" class="form-control" id="available_stock" name="available_stock" readonly>
-                  </div>
-                </div>                
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label for="available_stock">Total Req &nbsp|&nbsp Issued &nbsp|&nbsp To Issue</label>  
-                    <input type="text" class="form-control" id="materialQty" readonly>
+                    <input type="text" class="form-control" id="available_gstock" name="available_gstock" readonly>
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -131,58 +112,7 @@
                 <div class="col-md-1">
                   <div class="form-group">
                     <label>Add</label> <br>
-                    <button type="button" id="addBtnMaterial" class="btn btn-primary">Add</button>
-                  </div>
-                </div>
-              </div>
-              {{-- <div class="row">
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="available_stock">Total Required</label>  
-                    <input type="text" class="form-control" id="materialQty0" readonly>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="available_stock">Issued</label>  
-                    <input type="text" class="form-control" id="materialQty1" readonly>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="available_stock">To Issue</label>  
-                    <input type="text" class="form-control" id="materialQty2" readonly>
-                  </div>
-                </div>
-              </div> --}}
-              
-              <div class="row">
-                <div class="col-md-5">
-                  <div class="form-group">
-                    <label>Product</label>
-                    <select class="form-control select2" name="stage_id" id="stage_id" multiple>
-                      <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled>Select Product</option>
-                      <!-- You can keep this option or remove it, depending on your needs -->
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-3">                  
-                  <div class="form-group">
-                    <label for="available_pstock">Available Stock</label>
-                    <input type="text" class="form-control" id="available_pstock" name="available_pstock" readonly>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantityStage" placeholder="0">
-                  </div>
-                </div>
-                <div class="col-md-1">
-                  <div class="form-group">
-                    <label>Add</label> <br>
-                    <button type="button" id="addBtnStage" class="btn btn-primary">Add</button>
+                    <button type="button" id="addBtnIGroup" class="btn btn-primary">Add</button>
                   </div>
                 </div>
               </div>
@@ -193,8 +123,7 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Item / Product</th>
-                        <th>Material / Stage</th>
+                        <th>Group No</th>
                         <th>Quantity</th>
                         <th>Action</th>
                       </tr>
@@ -205,8 +134,7 @@
                     <tfoot>
                       <tr>
                         <th>Sr.</th>
-                        <th>Item / Product</th>
-                        <th>Material / Stage</th>
+                        <th>Group No</th>
                         <th>Quantity</th>
                         <th>Action</th>
                       </tr>
@@ -238,6 +166,8 @@
   var isIssuePage = false;
   var stockData = @json($stock);
   var pstockData = @json($pstock);
+  var gstockData = @json($gstock);
+  var ajaxIGUrl = "{{ route('ajaxIG') }}";
   var ajaxPTUrl = "{{ route('ajaxPT') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";

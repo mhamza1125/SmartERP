@@ -26,7 +26,7 @@
                       @else
                         <tr><td><b>Paid By:</b> Cash Payment</td></tr>
                       @endif
-                      <tr><td><b>Amount:</b> {{number_format($transaction['debit'])}}</td></tr>
+                      <tr><td><b>Amount:</b> {{number_format($transaction['debit'] ?? $transaction['credit'])}}</td></tr>
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif
                   </tbody>
@@ -38,7 +38,9 @@
                     <tr><td><b>Vendor:</b> {{$transaction['vendor_no']}} - {{$transaction['fname']}}</td></tr>
                     <tr><td><b>Pay Date:</b> {{$transaction['transaction_date']}}</td></tr>
                     <tr><td><b>Payment Type:</b> {{ucfirst($transaction['transaction_type'])}}</td></tr>
-                    <tr><td><b>Purchase No:</b> {{$transaction['purchase_no']}}</td></tr>
+                    @if($transaction['purchase_no'])<tr>
+                      <td><b>Purchase No:</b> {{$transaction['purchase_no']}}</td>
+                    </tr>@endif
                       @if($transaction['payee_bank_id'])
                       <tr>
                         <tr><td><b>Received By:</b> {{$transaction['rname']}}</td></tr>

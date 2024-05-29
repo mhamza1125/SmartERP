@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 18, 2024 at 10:00 PM
+-- Generation Time: May 25, 2024 at 08:27 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -50,7 +50,9 @@ INSERT INTO `banks` (`bank_id`, `bank_holder`, `banker_id`, `head_id`, `account_
 (4, 'employee', 5, 36, 'Bashir', '06710109744865', 1, '2024-04-02 14:49:04', '2024-04-02 14:49:04'),
 (6, 'vendor', 6, 36, 'Shehzad Ahmed', '02714109764865', 1, '2024-04-04 03:25:37', '2024-04-04 03:25:37'),
 (7, 'customer', 6, 36, 'Muhammad Hamza', '06711209764865', 1, '2024-04-19 08:16:35', '2024-04-19 08:16:35'),
-(8, 'customer', 5, 37, 'Samad Ali', '06710109744123', 1, '2024-04-19 08:32:47', '2024-04-19 08:32:47');
+(8, 'customer', 5, 37, 'Samad Ali', '06710109744123', 1, '2024-04-19 08:32:47', '2024-04-19 08:32:47'),
+(9, 'admin', 0, 35, 'Admin', '0459334895765', 1, '2024-05-23 13:17:53', '2024-05-23 13:19:47'),
+(10, 'admin', 0, 37, 'Admin', '0682139347634', 1, '2024-05-23 13:26:53', '2024-05-23 13:28:52');
 
 -- --------------------------------------------------------
 
@@ -161,7 +163,35 @@ INSERT INTO `deliveries` (`delivery_id`, `stock_id`, `fshipping`, `tshipping`, `
 (9, 117, 'Pakistan 123', 'Canada 123', '123 123', '123123', 2, 2, 1, '2024-05-08 14:04:20', '2024-05-08 14:25:26'),
 (10, 118, 'Pakistan', 'Canada', '123', '123', 1, 1, 1, '2024-05-08 14:06:40', '2024-05-08 14:06:40'),
 (11, 119, 'Pakistan', '123', '123', '123', 1, 1, 1, '2024-05-08 14:09:36', '2024-05-08 14:09:36'),
-(12, 123, 'Pakistan', 'France', '2340', '23432', 1, 2, 1, '2024-05-09 13:52:55', '2024-05-09 13:52:55');
+(12, 123, 'Pakistan', 'France', '2340', '23432', 1, 2, 1, '2024-05-09 13:52:55', '2024-05-09 13:52:55'),
+(13, 138, 'Pakistan', 'Canada', '1010', '2020', 1, 2, 1, '2024-05-25 12:46:09', '2024-05-25 12:46:09'),
+(14, 139, 'Pakistan', 'Canada', '1010', '2020', 1, 1, 1, '2024-05-25 12:49:28', '2024-05-25 12:49:28'),
+(15, 140, 'Pakistan', 'Canada', '1010', '2020', 1, 2, 1, '2024-05-25 13:22:48', '2024-05-25 13:22:48'),
+(16, 141, '123', '123', '123', '123', 2, 1, 1, '2024-05-25 13:26:16', '2024-05-25 13:26:16');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `delivery_boxes`
+--
+
+CREATE TABLE `delivery_boxes` (
+  `dbox_id` bigint(20) UNSIGNED NOT NULL,
+  `delivery_id` bigint(20) UNSIGNED NOT NULL,
+  `vehicle_no` varchar(255) NOT NULL,
+  `rowQty` varchar(255) NOT NULL,
+  `totalQty` double UNSIGNED NOT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `delivery_boxes`
+--
+
+INSERT INTO `delivery_boxes` (`dbox_id`, `delivery_id`, `vehicle_no`, `rowQty`, `totalQty`, `created_by`, `created_at`, `updated_at`) VALUES
+(3, 14, 'Veh 101', '10|10|10|10|10|0|0|0', 50, 1, '2024-05-25 13:20:24', '2024-05-25 13:20:24');
 
 -- --------------------------------------------------------
 
@@ -196,13 +226,13 @@ CREATE TABLE `employees` (
 --
 
 INSERT INTO `employees` (`employee_id`, `employee_no`, `department_id`, `employee_type_id`, `name`, `fname`, `sname`, `cnic`, `phone1`, `phone2`, `city_id`, `address`, `salary`, `description`, `joining_date`, `employee_status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'E24001', 6, 39, 'Zohaib Khalid', 'Khalid', 'Zohaib', '3460389902345', '03001122334', NULL, 44, 'Address of Zohaib', 32000, '<p><span style=\"font-weight: bolder;\">Employee form Lahore, \"</span>Placed in Admin Department<span style=\"font-weight: bolder;\">\"</span><br></p>', '2024-02-18', 1, 1, '2024-02-18 13:04:22', '2024-04-20 04:46:27'),
-(5, 'E24002', 7, 40, 'Bashir Malik', 'Manoor', 'Basihr', '3460389902345', '03001122334', '03001122334', 43, 'Address of Bashir', 35000, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, voluptatibus. Laudantium corporis animi assumenda reprehenderit ipsum velit reiciendis nostrum esse id quod quisquam quasi veniam vel aliquid officia, voluptate debitis.</div>', '2024-02-25', 1, 1, '2024-02-25 13:56:59', '2024-04-30 07:55:57'),
-(6, 'E24003', 8, 40, 'Adil Nawaz', 'Adil Nawaz', 'Adil', '3460389902345', '03001122334', '03001122334', 44, 'Address of Adil Nawaz', 0, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-25', 1, 1, '2024-02-25 14:02:20', '2024-02-25 14:02:20'),
-(7, 'E24004', 9, 39, 'Haider Ali', 'Abdullah', 'Haider', '3460389902345', '03001122334', '03001122334', 45, 'Address of Haider', 20000, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-26', 1, 1, '2024-02-25 14:03:32', '2024-04-20 07:54:31'),
-(8, 'E24005', 9, 39, 'Uzair Aslam', 'Aslam', 'Uzair', '3460389902345', '03001122334', '03001122334', 46, 'Address of Uzair', 16000, '<p>Desc</p>', '2024-04-20', 1, 1, '2024-04-20 04:54:15', '2024-04-20 07:51:49'),
-(11, 'E24006', 8, 39, 'Mubashir', 'Saleem', 'Bashir', '3460389902345', '03001122334', '03001122334', 44, 'Address', 12020, NULL, '2024-04-29', 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04'),
-(12, 'E24007', 6, 40, 'Kashif ali', 'Manzoor', 'Kashif', '3460389902345', '03001122334', '03001122334', 43, 'Sialkot', 0, NULL, '2024-04-30', 1, 1, '2024-04-30 07:51:22', '2024-05-01 02:56:17');
+(1, 'E0001', 6, 39, 'Zohaib Khalid', 'Khalid', 'Zohaib', '3460389902345', '03001122334', NULL, 44, 'Address of Zohaib', 32000, '<p><span style=\"font-weight: bolder;\">Employee form Lahore, \"</span>Placed in Admin Department<span style=\"font-weight: bolder;\">\"</span><br></p>', '2024-02-18', 1, 1, '2024-02-18 13:04:22', '2024-04-20 04:46:27'),
+(5, 'E0002', 7, 40, 'Bashir Malik', 'Manoor', 'Basihr', '3460389902345', '03001122334', '03001122334', 43, 'Address of Bashir', 35000, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, voluptatibus. Laudantium corporis animi assumenda reprehenderit ipsum velit reiciendis nostrum esse id quod quisquam quasi veniam vel aliquid officia, voluptate debitis.</div>', '2024-02-25', 1, 1, '2024-02-25 13:56:59', '2024-04-30 07:55:57'),
+(6, 'E0003', 8, 40, 'Adil Nawaz', 'Adil Nawaz', 'Adil', '3460389902345', '03001122334', '03001122334', 44, 'Address of Adil Nawaz', 0, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-25', 1, 1, '2024-02-25 14:02:20', '2024-02-25 14:02:20'),
+(7, 'E0004', 9, 39, 'Haider Ali', 'Abdullah', 'Haider', '3460389902345', '03001122334', '03001122334', 45, 'Address of Haider', 20000, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-26', 1, 1, '2024-02-25 14:03:32', '2024-04-20 07:54:31'),
+(8, 'E0005', 9, 39, 'Uzair Aslam', 'Aslam', 'Uzair', '3460389902345', '03001122334', '03001122334', 46, 'Address of Uzair', 16000, '<p>Desc</p>', '2024-04-20', 1, 1, '2024-04-20 04:54:15', '2024-04-20 07:51:49'),
+(11, 'E0006', 8, 39, 'Mubashir', 'Saleem', 'Bashir', '3460389902345', '03001122334', '03001122334', 44, 'Address', 12020, NULL, '2024-04-29', 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04'),
+(12, 'E0007', 6, 40, 'Kashif ali', 'Manzoor', 'Kashif', '3460389902345', '03001122334', '03001122334', 43, 'Sialkot', 0, NULL, '2024-04-30', 1, 1, '2024-04-30 07:51:22', '2024-05-01 02:56:17');
 
 -- --------------------------------------------------------
 
@@ -231,6 +261,7 @@ CREATE TABLE `heads` (
   `head_type_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `head_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
+  `action` bigint(20) UNSIGNED NOT NULL DEFAULT 0 COMMENT '1 - No Deletion',
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -240,79 +271,82 @@ CREATE TABLE `heads` (
 -- Dumping data for table `heads`
 --
 
-INSERT INTO `heads` (`head_id`, `head_type_id`, `name`, `head_status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 'S', 1, 1, '2024-02-16 15:42:10', '2024-02-16 15:42:10'),
-(2, 1, 'M', 1, 1, '2024-02-16 15:48:44', '2024-02-16 15:48:44'),
-(3, 1, 'L', 1, 1, '2024-02-17 00:35:01', '2024-02-17 00:35:01'),
-(4, 1, 'XL', 1, 1, '2024-02-17 00:35:31', '2024-02-17 00:35:31'),
-(5, 1, 'XXL', 1, 1, '2024-02-17 00:35:40', '2024-02-17 00:35:40'),
-(6, 3, 'Admin', 1, 1, '2024-02-17 00:38:59', '2024-02-17 00:38:59'),
-(7, 3, 'Cutting', 1, 1, '2024-02-17 00:40:17', '2024-02-17 00:40:17'),
-(8, 3, 'Stitching', 1, 1, '2024-02-17 00:44:53', '2024-02-17 00:44:53'),
-(9, 3, 'Quality Checking', 1, 1, '2024-02-17 00:46:03', '2024-02-17 00:46:03'),
-(10, 3, 'Ironing', 1, 1, '2024-02-17 00:48:36', '2024-02-17 00:48:36'),
-(32, 6, 'HBL Bank', 1, 1, '2024-02-18 09:05:28', '2024-02-18 09:05:28'),
-(34, 5, 'Store Main', 1, 1, '2024-02-18 09:05:31', '2024-02-18 09:05:31'),
-(35, 6, 'UBL Bank', 1, 1, '2024-02-18 09:05:38', '2024-02-18 09:05:38'),
-(36, 6, 'Allied Bank', 1, 1, '2024-02-18 09:05:46', '2024-02-18 09:05:46'),
-(37, 6, 'MCB Bank', 1, 1, '2024-02-18 09:05:51', '2024-02-18 09:05:51'),
-(38, 7, 'Miscelenious', 1, 1, '2024-02-18 09:06:05', '2024-02-18 09:06:05'),
-(39, 9, 'Salary', 1, 1, '2024-02-18 09:06:12', '2024-02-18 09:06:12'),
-(40, 9, 'Wages', 1, 1, '2024-02-18 09:06:19', '2024-02-18 09:06:19'),
-(41, 7, 'Vehicle Rent', 1, 1, '2024-02-18 09:08:28', '2024-02-18 09:08:28'),
-(42, 7, 'Electric Expense', 1, 1, '2024-02-18 09:08:45', '2024-02-18 09:08:45'),
-(43, 8, 'Sialkot', 1, 1, '2024-02-18 12:40:56', '2024-02-18 12:40:56'),
-(44, 8, 'Lahore', 1, 1, '2024-02-18 12:41:05', '2024-02-18 12:41:05'),
-(45, 8, 'Kingra', 1, 1, '2024-02-18 12:41:11', '2024-02-18 12:41:11'),
-(46, 8, 'Pasrur', 1, 1, '2024-02-18 12:41:24', '2024-02-18 12:41:24'),
-(47, 4, 'Pairs', 1, 1, '2024-02-19 07:21:21', '2024-02-19 07:21:21'),
-(48, 4, 'Pieces', 1, 1, '2024-02-19 07:21:26', '2024-02-19 07:21:26'),
-(49, 4, 'Feets', 1, 1, '2024-02-19 07:21:29', '2024-02-19 07:21:29'),
-(50, 4, 'Meters', 1, 1, '2024-02-19 07:21:34', '2024-02-19 07:21:34'),
-(51, 4, 'Liters', 1, 1, '2024-02-19 07:23:12', '2024-02-19 07:23:12'),
-(52, 4, 'Boxes', 1, 1, '2024-02-19 07:23:26', '2024-02-19 07:23:26'),
-(53, 7, 'Services', 1, 1, '2024-02-19 07:24:09', '2024-02-19 07:24:09'),
-(54, 10, 'Leather', 1, 1, '2024-02-19 07:24:51', '2024-02-19 07:24:51'),
-(55, 10, 'PU Leather', 1, 1, '2024-02-19 07:24:58', '2024-02-19 07:24:58'),
-(56, 10, 'Zip', 1, 1, '2024-02-19 07:25:03', '2024-02-19 07:25:03'),
-(57, 11, 'Leather Vendor', 1, 1, '2024-02-20 07:14:29', '2024-02-20 07:14:29'),
-(58, 11, 'Zip Vendor', 1, 1, '2024-02-20 07:14:34', '2024-02-20 07:14:34'),
-(59, 11, 'Latex Solution Vendor', 1, 1, '2024-02-20 07:14:53', '2024-02-20 07:14:53'),
-(60, 11, 'Thread Vendor', 1, 1, '2024-02-20 07:15:06', '2024-02-20 07:15:06'),
-(61, 10, 'Packing Boxes', 1, 1, '2024-02-24 11:51:44', '2024-04-27 06:38:48'),
-(62, 10, 'Thread', 1, 1, '2024-02-25 13:22:16', '2024-02-25 13:22:16'),
-(63, 10, 'Liquid Items', 1, 1, '2024-02-25 13:22:26', '2024-02-25 13:22:26'),
-(64, 10, 'Rubber Items', 1, 1, '2024-02-25 13:22:41', '2024-02-25 13:22:41'),
-(65, 10, 'Cloths', 1, 1, '2024-02-25 13:23:03', '2024-02-25 13:23:03'),
-(66, 10, 'Other Items', 1, 1, '2024-02-25 13:25:04', '2024-02-25 13:25:04'),
-(67, 11, 'Boxes', 1, 1, '2024-02-25 14:07:27', '2024-02-25 14:07:27'),
-(68, 11, 'Liquid Vendor', 1, 1, '2024-02-25 14:07:55', '2024-02-25 14:07:55'),
-(69, 11, 'Other', 1, 1, '2024-02-25 14:08:08', '2024-02-25 14:08:08'),
-(70, 8, 'Islamabad', 1, 1, '2024-02-26 00:39:51', '2024-02-26 00:39:51'),
-(72, 12, 'Cutting', 1, 1, '2024-03-03 13:05:00', '2024-03-03 13:05:00'),
-(73, 12, 'Stitched', 1, 1, '2024-03-03 13:05:15', '2024-03-03 13:05:15'),
-(74, 12, 'Finished', 1, 1, '2024-03-03 13:05:20', '2024-03-03 13:05:20'),
-(78, 14, 'Cutting', 1, 1, '2024-03-19 12:58:13', '2024-03-19 12:58:13'),
-(79, 14, 'Fingers Stitching', 1, 1, '2024-03-19 12:58:25', '2024-03-19 12:58:25'),
-(80, 14, 'Palm Stiching', 1, 1, '2024-03-19 12:58:46', '2024-03-19 12:58:46'),
-(81, 14, 'Lining', 1, 1, '2024-03-19 12:59:56', '2024-03-19 12:59:56'),
-(82, 14, 'Adding Grips', 1, 1, '2024-03-19 13:00:08', '2024-03-19 13:00:08'),
-(83, 14, 'Fitting & Adjustments', 1, 1, '2024-03-19 13:00:28', '2024-03-19 13:00:28'),
-(84, 14, 'Complete Cost', 1, 1, '2024-03-19 13:00:44', '2024-03-19 13:00:44'),
-(85, 15, 'Pakistan', 1, 1, '2024-03-30 12:49:41', '2024-03-30 12:49:41'),
-(86, 15, 'United States', 1, 1, '2024-03-30 12:50:24', '2024-03-30 12:50:24'),
-(87, 15, 'Canada', 1, 1, '2024-03-30 12:50:37', '2024-03-30 12:50:37'),
-(88, 15, 'Japan', 1, 1, '2024-03-30 12:50:45', '2024-03-30 12:50:45'),
-(89, 15, 'Germany', 1, 1, '2024-03-30 12:50:49', '2024-03-30 12:50:49'),
-(90, 15, 'France', 1, 1, '2024-03-30 12:50:53', '2024-03-30 12:50:53'),
-(91, 15, 'China', 1, 1, '2024-03-30 12:50:56', '2024-03-30 12:50:56'),
-(92, 16, 'Pakistani Rupee', 1, 1, '2024-03-30 12:51:51', '2024-03-30 12:51:51'),
-(93, 16, 'Dollar', 1, 1, '2024-03-30 12:52:11', '2024-03-30 12:52:11'),
-(94, 16, 'Denaar', 1, 1, '2024-03-30 12:52:16', '2024-03-30 12:52:16'),
-(95, 16, 'Riyaal', 1, 1, '2024-03-30 12:52:22', '2024-03-30 12:52:22'),
-(96, 10, 'Shipping / Delivery Vehicles', 1, 1, '2024-04-30 08:43:20', '2024-04-30 08:43:49'),
-(97, 4, 'Units', 1, 1, '2024-04-30 08:48:40', '2024-04-30 08:48:40'),
-(98, 7, 'Tax Charges', 1, 1, '2024-05-10 08:16:44', '2024-05-10 08:16:44');
+INSERT INTO `heads` (`head_id`, `head_type_id`, `name`, `head_status`, `action`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, 'S', 1, 0, 1, '2024-02-16 15:42:10', '2024-02-16 15:42:10'),
+(2, 1, 'M', 1, 0, 1, '2024-02-16 15:48:44', '2024-02-16 15:48:44'),
+(3, 1, 'L', 1, 0, 1, '2024-02-17 00:35:01', '2024-02-17 00:35:01'),
+(4, 1, 'XL', 1, 0, 1, '2024-02-17 00:35:31', '2024-02-17 00:35:31'),
+(5, 1, 'XXL', 1, 0, 1, '2024-02-17 00:35:40', '2024-02-17 00:35:40'),
+(6, 3, 'Admin', 1, 0, 1, '2024-02-17 00:38:59', '2024-02-17 00:38:59'),
+(7, 3, 'Cutting', 1, 0, 1, '2024-02-17 00:40:17', '2024-02-17 00:40:17'),
+(8, 3, 'Stitching', 1, 0, 1, '2024-02-17 00:44:53', '2024-02-17 00:44:53'),
+(9, 3, 'Quality Checking', 1, 0, 1, '2024-02-17 00:46:03', '2024-02-17 00:46:03'),
+(10, 3, 'Ironing', 1, 0, 1, '2024-02-17 00:48:36', '2024-02-17 00:48:36'),
+(32, 6, 'HBL Bank', 1, 0, 1, '2024-02-18 09:05:28', '2024-02-18 09:05:28'),
+(34, 5, 'Store Main', 1, 0, 1, '2024-02-18 09:05:31', '2024-02-18 09:05:31'),
+(35, 6, 'UBL Bank', 1, 0, 1, '2024-02-18 09:05:38', '2024-02-18 09:05:38'),
+(36, 6, 'Allied Bank', 1, 0, 1, '2024-02-18 09:05:46', '2024-02-18 09:05:46'),
+(37, 6, 'MCB Bank', 1, 0, 1, '2024-02-18 09:05:51', '2024-02-18 09:05:51'),
+(38, 7, 'Miscelenious', 1, 0, 1, '2024-02-18 09:06:05', '2024-02-18 09:06:05'),
+(39, 9, 'Salary', 1, 1, 1, '2024-02-18 09:06:12', '2024-02-18 09:06:12'),
+(40, 9, 'Wages', 1, 1, 1, '2024-02-18 09:06:19', '2024-02-18 09:06:19'),
+(41, 7, 'Vehicle Rent', 1, 0, 1, '2024-02-18 09:08:28', '2024-02-18 09:08:28'),
+(42, 7, 'Electric Expense', 1, 0, 1, '2024-02-18 09:08:45', '2024-02-18 09:08:45'),
+(43, 8, 'Sialkot', 1, 0, 1, '2024-02-18 12:40:56', '2024-02-18 12:40:56'),
+(44, 8, 'Lahore', 1, 0, 1, '2024-02-18 12:41:05', '2024-02-18 12:41:05'),
+(45, 8, 'Kingra', 1, 0, 1, '2024-02-18 12:41:11', '2024-02-18 12:41:11'),
+(46, 8, 'Pasrur', 1, 0, 1, '2024-02-18 12:41:24', '2024-02-18 12:41:24'),
+(47, 4, 'Pairs', 1, 0, 1, '2024-02-19 07:21:21', '2024-02-19 07:21:21'),
+(48, 4, 'Pieces', 1, 0, 1, '2024-02-19 07:21:26', '2024-02-19 07:21:26'),
+(49, 4, 'Feets', 1, 0, 1, '2024-02-19 07:21:29', '2024-02-19 07:21:29'),
+(50, 4, 'Meters', 1, 0, 1, '2024-02-19 07:21:34', '2024-02-19 07:21:34'),
+(51, 4, 'Liters', 1, 0, 1, '2024-02-19 07:23:12', '2024-02-19 07:23:12'),
+(52, 4, 'Boxes', 1, 0, 1, '2024-02-19 07:23:26', '2024-02-19 07:23:26'),
+(53, 7, 'Services', 1, 0, 1, '2024-02-19 07:24:09', '2024-02-19 07:24:09'),
+(54, 10, 'Leather', 1, 0, 1, '2024-02-19 07:24:51', '2024-02-19 07:24:51'),
+(55, 10, 'PU Leather', 1, 0, 1, '2024-02-19 07:24:58', '2024-02-19 07:24:58'),
+(56, 10, 'Zip', 1, 0, 1, '2024-02-19 07:25:03', '2024-02-19 07:25:03'),
+(57, 11, 'Leather', 1, 0, 1, '2024-02-20 07:14:29', '2024-05-23 13:52:07'),
+(58, 11, 'Material', 1, 0, 1, '2024-02-20 07:14:34', '2024-05-23 13:53:02'),
+(60, 11, 'Vehicle', 1, 0, 1, '2024-02-20 07:15:06', '2024-05-23 13:53:13'),
+(61, 10, 'Packing Boxes', 1, 1, 1, '2024-02-24 11:51:44', '2024-04-27 06:38:48'),
+(62, 10, 'Thread', 1, 0, 1, '2024-02-25 13:22:16', '2024-02-25 13:22:16'),
+(63, 10, 'Liquid Items', 1, 0, 1, '2024-02-25 13:22:26', '2024-02-25 13:22:26'),
+(64, 10, 'Rubber Items', 1, 0, 1, '2024-02-25 13:22:41', '2024-02-25 13:22:41'),
+(65, 10, 'Cloths', 1, 0, 1, '2024-02-25 13:23:03', '2024-02-25 13:23:03'),
+(66, 10, 'Other Items', 1, 0, 1, '2024-02-25 13:25:04', '2024-02-25 13:25:04'),
+(67, 11, 'Boxes', 1, 0, 1, '2024-02-25 14:07:27', '2024-02-25 14:07:27'),
+(68, 11, 'Liquid Items', 1, 0, 1, '2024-02-25 14:07:55', '2024-05-23 13:52:37'),
+(69, 11, 'Other', 1, 0, 1, '2024-02-25 14:08:08', '2024-02-25 14:08:08'),
+(70, 8, 'Islamabad', 1, 0, 1, '2024-02-26 00:39:51', '2024-02-26 00:39:51'),
+(72, 12, 'Cutting', 1, 0, 1, '2024-03-03 13:05:00', '2024-03-03 13:05:00'),
+(73, 12, 'Stitched', 1, 0, 1, '2024-03-03 13:05:15', '2024-03-03 13:05:15'),
+(74, 12, 'Finished', 1, 0, 1, '2024-03-03 13:05:20', '2024-03-03 13:05:20'),
+(78, 14, 'Cutting', 1, 0, 1, '2024-03-19 12:58:13', '2024-03-19 12:58:13'),
+(79, 14, 'Fingers Stitching', 1, 0, 1, '2024-03-19 12:58:25', '2024-03-19 12:58:25'),
+(80, 14, 'Palm Stiching', 1, 0, 1, '2024-03-19 12:58:46', '2024-03-19 12:58:46'),
+(81, 14, 'Lining', 1, 0, 1, '2024-03-19 12:59:56', '2024-03-19 12:59:56'),
+(82, 14, 'Adding Grips', 1, 0, 1, '2024-03-19 13:00:08', '2024-03-19 13:00:08'),
+(83, 14, 'Fitting & Adjustments', 1, 0, 1, '2024-03-19 13:00:28', '2024-03-19 13:00:28'),
+(84, 14, 'Complete Cost', 1, 0, 1, '2024-03-19 13:00:44', '2024-03-19 13:00:44'),
+(85, 15, 'Pakistan', 1, 0, 1, '2024-03-30 12:49:41', '2024-03-30 12:49:41'),
+(86, 15, 'United States', 1, 0, 1, '2024-03-30 12:50:24', '2024-03-30 12:50:24'),
+(87, 15, 'Canada', 1, 0, 1, '2024-03-30 12:50:37', '2024-03-30 12:50:37'),
+(88, 15, 'Japan', 1, 0, 1, '2024-03-30 12:50:45', '2024-03-30 12:50:45'),
+(89, 15, 'Germany', 1, 0, 1, '2024-03-30 12:50:49', '2024-03-30 12:50:49'),
+(90, 15, 'France', 1, 0, 1, '2024-03-30 12:50:53', '2024-03-30 12:50:53'),
+(91, 15, 'China', 1, 0, 1, '2024-03-30 12:50:56', '2024-03-30 12:50:56'),
+(92, 16, 'Pakistani Rupee', 1, 0, 1, '2024-03-30 12:51:51', '2024-03-30 12:51:51'),
+(93, 16, 'Dollar', 1, 0, 1, '2024-03-30 12:52:11', '2024-03-30 12:52:11'),
+(94, 16, 'Denaar', 1, 0, 1, '2024-03-30 12:52:16', '2024-03-30 12:52:16'),
+(95, 16, 'Riyaal', 1, 0, 1, '2024-03-30 12:52:22', '2024-03-30 12:52:22'),
+(96, 10, 'Shipping / Delivery Vehicles', 1, 1, 1, '2024-04-30 08:43:20', '2024-04-30 08:43:49'),
+(97, 4, 'Units', 1, 0, 1, '2024-04-30 08:48:40', '2024-04-30 08:48:40'),
+(98, 7, 'Tax Charges', 1, 0, 1, '2024-05-10 08:16:44', '2024-05-10 08:16:44'),
+(101, 10, 'Machine Material', 1, 1, 1, '2024-05-24 08:51:09', '2024-05-24 08:51:09'),
+(102, 19, 'Joki Stitching', 1, 0, 1, '2024-05-24 11:19:21', '2024-05-24 11:19:21'),
+(103, 19, 'Maghzi', 1, 0, 1, '2024-05-24 11:19:42', '2024-05-24 11:19:42'),
+(104, 19, 'Embroidery', 1, 0, 1, '2024-05-24 11:20:01', '2024-05-24 11:20:01');
 
 -- --------------------------------------------------------
 
@@ -345,7 +379,8 @@ INSERT INTO `head_types` (`head_type_id`, `name`, `description`, `created_at`, `
 (12, 'Product Stages', 'Cutting, Stitching, Packed etc', '2024-03-03 18:04:18', '2024-03-03 18:04:18'),
 (14, 'Product Costing', 'Cutting, Stitching, Ironing etc', '2024-03-19 17:57:16', '2024-03-19 17:57:16'),
 (15, 'Country / State', 'Pakistan, Canada, England etc', '2024-03-30 17:49:21', '2024-03-30 17:49:21'),
-(16, 'Currency', 'Pkr, Dollor, Riyal etc', '2024-03-30 17:49:21', '2024-03-30 17:49:21');
+(16, 'Currency', 'Pkr, Dollor, Riyal etc', '2024-03-30 17:49:21', '2024-03-30 17:49:21'),
+(19, 'Machine Types', 'Joki, Maghzi, Embroidery etc', '2024-05-24 16:18:56', '2024-05-24 16:18:56');
 
 -- --------------------------------------------------------
 
@@ -462,7 +497,34 @@ INSERT INTO `images` (`image_id`, `table_name`, `table_id`, `image`, `file_title
 (135, 'products', 24, 'laravel 02_1714063441.jpeg', NULL, NULL, 1, '2024-04-25 11:44:01', '2024-04-25 11:44:01'),
 (136, 'products', 24, 'laravel 03_1714063441.jpeg', NULL, NULL, 1, '2024-04-25 11:44:01', '2024-04-25 11:44:01'),
 (137, 'products', 24, 'laravel 04_1714063441.jpg', NULL, NULL, 1, '2024-04-25 11:44:01', '2024-04-25 11:44:01'),
-(138, 'products', 24, 'Admin - SmartERP_1714063441.xlsx', 'Title', '1', 1, '2024-04-25 11:44:01', '2024-04-25 11:44:01');
+(138, 'products', 24, 'Admin - SmartERP_1714063441.xlsx', 'Title', '1', 1, '2024-04-25 11:44:01', '2024-04-25 11:44:01'),
+(142, 'stocks', 131, 'laravel 01_1716634521.jpeg', NULL, NULL, 1, '2024-05-25 05:55:21', '2024-05-25 05:55:21');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `machines`
+--
+
+CREATE TABLE `machines` (
+  `machine_id` bigint(20) UNSIGNED NOT NULL,
+  `machine_no` varchar(255) NOT NULL,
+  `machine_type_id` bigint(20) UNSIGNED NOT NULL,
+  `employee_id` bigint(20) UNSIGNED NOT NULL,
+  `location` varchar(255) DEFAULT NULL,
+  `description` longtext DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `machines`
+--
+
+INSERT INTO `machines` (`machine_id`, `machine_no`, `machine_type_id`, `employee_id`, `location`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'M0001', 102, 0, '2nd Hall 1st Floor', NULL, 1, '2024-05-24 11:39:33', '2024-05-24 11:39:33'),
+(2, 'M0002', 103, 12, 'Ground Floor Stitching Room', NULL, 1, '2024-05-24 11:40:06', '2024-05-24 12:51:09');
 
 -- --------------------------------------------------------
 
@@ -477,6 +539,8 @@ CREATE TABLE `materials` (
   `vendor_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `unit_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
+  `cprice` double UNSIGNED NOT NULL,
+  `location` varchar(255) DEFAULT NULL,
   `description` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -487,25 +551,31 @@ CREATE TABLE `materials` (
 -- Dumping data for table `materials`
 --
 
-INSERT INTO `materials` (`material_id`, `material_no`, `material_type_id`, `vendor_id`, `name`, `unit_id`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'L-5010', 54, 4, 'Black Sheep Leather', 49, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-19 11:57:34', '2024-04-25 03:50:00'),
-(2, 'Zip 101', 56, 5, 'Zip', 50, NULL, 1, '2024-02-19 12:04:39', '2024-04-25 03:49:54'),
-(3, 'L-5020', 54, 6, 'Cow Leather', 49, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:09:33', '2024-04-25 03:49:49'),
-(4, 'PU-6010', 55, 1, 'Crocodile Leather', 49, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:10:06', '2024-02-25 13:10:06'),
-(5, 'PU-6060', 55, 3, 'Printed Black PU Leather', 49, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:10:31', '2024-04-25 03:49:42'),
-(6, 'Z-3001', 56, 4, 'Double sided A Quality Zip', 50, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:11:20', '2024-04-25 03:49:37'),
-(7, 'Z-3015', 56, 5, 'Single Sided Zip', 50, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:11:37', '2024-04-25 03:49:31'),
-(8, 'B-101', 61, 6, 'Box #1 5KG', 52, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:12', '2024-04-27 10:31:31'),
-(9, 'B-102', 61, 1, 'Box #2 7KG', 52, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:55', '2024-04-27 10:30:52'),
-(10, 'B-1030', 61, 3, 'Box #3 10KG', 52, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:13:14', '2024-04-27 10:30:48'),
-(11, 'Lycra - 2020', 63, 4, 'Hyviz Yellow Lycra', 51, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</div>', 1, '2024-02-25 13:24:00', '2024-04-25 03:49:05'),
-(12, 'Sooter - 1929', 66, 5, 'Sooter # 18', 48, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</div>', 1, '2024-02-25 13:24:45', '2024-04-25 03:48:59'),
-(13, 'Hook - 4010', 66, 6, 'Hooks', 48, '<p><span style=\"color: rgb(0, 0, 0);\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</span><br></p>', 1, '2024-02-25 13:26:04', '2024-04-25 03:48:53'),
-(14, 'Velcro - 505', 66, 4, 'Velcro Black', 50, NULL, 1, '2024-04-25 03:26:29', '2024-04-25 03:41:36'),
-(15, 'VC-0001', 96, 1, 'Vehicle Conatiner 0001', 97, '<p>Delivery Container</p>', 1, '2024-04-30 08:49:33', '2024-04-30 08:49:33'),
-(16, 'Material - 331', 54, 11, 'Material 331', 49, NULL, 1, '2024-05-15 12:27:30', '2024-05-15 12:27:30'),
-(17, 'Material - 332', 54, 11, 'Material 332', 49, NULL, 1, '2024-05-15 12:27:37', '2024-05-15 12:27:37'),
-(18, 'Material - 333', 54, 11, 'Material 333', 49, '<p>&nbsp;&nbsp;&nbsp;&nbsp;<br></p>', 1, '2024-05-15 12:27:46', '2024-05-15 12:27:46');
+INSERT INTO `materials` (`material_id`, `material_no`, `material_type_id`, `vendor_id`, `name`, `unit_id`, `cprice`, `location`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'M0001', 54, 4, 'Black Sheep Leather', 49, 100, 'Rack # 1', '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-19 11:57:34', '2024-05-25 07:06:48'),
+(2, 'M0002', 56, 5, 'Zip', 50, 100, NULL, NULL, 1, '2024-02-19 12:04:39', '2024-05-25 07:06:48'),
+(3, 'M0003', 54, 6, 'Cow Leather', 49, 1100, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:09:33', '2024-05-25 07:06:48'),
+(4, 'M0004', 55, 1, 'Crocodile Leather', 49, 0, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:10:06', '2024-02-25 13:10:06'),
+(5, 'M0005', 55, 3, 'Printed Black PU Leather', 49, 100, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:10:31', '2024-05-25 07:06:48'),
+(6, 'M0006', 56, 4, 'Double sided A Quality Zip', 50, 100, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:11:20', '2024-05-25 07:06:48'),
+(7, 'M0007', 56, 5, 'Single Sided Zip', 50, 100, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:11:37', '2024-05-25 07:06:48'),
+(8, 'M0008', 61, 6, 'Box #1 5KG', 52, 0, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:12', '2024-04-27 10:31:31'),
+(9, 'M0009', 61, 1, 'Box #2 7KG', 52, 0, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:12:55', '2024-04-27 10:30:52'),
+(10, 'M0010', 61, 3, 'Box #3 10KG', 52, 0, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Temporibus vel rem quis ratione suscipit reiciendis possimus mollitia laboriosam, iste cumque, eaque provident totam quaerat minima nulla nisi vero delectus quia.</div>', 1, '2024-02-25 13:13:14', '2024-04-27 10:30:48'),
+(11, 'M0011', 63, 4, 'Hyviz Yellow Lycra', 51, 10, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</div>', 1, '2024-02-25 13:24:00', '2024-05-25 07:06:48'),
+(12, 'M0012', 66, 5, 'Sooter # 18', 48, 100, NULL, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</div>', 1, '2024-02-25 13:24:45', '2024-05-25 07:06:48'),
+(13, 'M0013', 66, 6, 'Hooks', 48, 100, NULL, '<p><span style=\"color: rgb(0, 0, 0);\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, commodi deleniti, ea modi saepe aliquam consequatur dolorum error vel repudiandae, omnis soluta consectetur ipsa beatae architecto quidem fuga hic nisi!</span><br></p>', 1, '2024-02-25 13:26:04', '2024-05-25 07:06:48'),
+(14, 'M0014', 66, 4, 'Velcro Black', 50, 100, NULL, NULL, 1, '2024-04-25 03:26:29', '2024-05-25 07:06:48'),
+(15, 'M0015', 96, 1, 'Vehicle Conatiner 0001', 97, 0, NULL, '<p>Delivery Container</p>', 1, '2024-04-30 08:49:33', '2024-04-30 08:49:33'),
+(16, 'M0016', 54, 11, 'Material 331', 49, 100, NULL, NULL, 1, '2024-05-15 12:27:30', '2024-05-25 07:06:48'),
+(17, 'M0017', 54, 11, 'Material 332', 49, 100, NULL, NULL, 1, '2024-05-15 12:27:37', '2024-05-25 07:06:48'),
+(18, 'M0018', 54, 11, 'Material 333', 49, 10, NULL, '<p>&nbsp;&nbsp;&nbsp;&nbsp;<br></p>', 1, '2024-05-15 12:27:46', '2024-05-25 07:06:48'),
+(19, 'M0019', 54, 11, 'New Material M0001', 47, 100, NULL, '<p>Desc</p>', 1, '2024-05-22 13:45:34', '2024-05-25 06:30:20'),
+(20, 'M0020', 54, 12, 'Check 2222', 47, 100, 'Rack 4', NULL, 1, '2024-05-23 08:20:13', '2024-05-23 08:20:13'),
+(21, 'M0021', 54, 12, 'Check 333', 47, 100, 'Rack 5', NULL, 1, '2024-05-23 08:21:16', '2024-05-25 07:06:48'),
+(22, 'M0022', 101, 12, 'Firki', 48, 10, 'Office', NULL, 1, '2024-05-24 08:56:29', '2024-05-24 08:57:20'),
+(23, 'M0023', 101, 12, 'Needle', 48, 10, 'Office', NULL, 1, '2024-05-24 08:57:09', '2024-05-24 08:57:09'),
+(24, 'M0024', 101, 12, 'Machine Belt', 48, 150, 'Office', '<p>&nbsp;&nbsp;&nbsp;&nbsp;<br></p>', 1, '2024-05-24 08:59:01', '2024-05-24 08:59:01');
 
 -- --------------------------------------------------------
 
@@ -556,9 +626,10 @@ CREATE TABLE `orders` (
 INSERT INTO `orders` (`order_id`, `order_no`, `job_no`, `customer_id`, `order_status`, `order_date`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
 (16, 'Order 101', 'Job 101', 6, 4, '2024-04-26', '<p>Order 101</p>', 1, '2024-04-26 13:36:18', '2024-05-08 14:25:26'),
 (17, 'Order 202', 'Job 202', 5, 1, '2024-04-27', NULL, 1, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
-(18, 'AS 101', 'ASJ 101', 6, 1, '2024-05-01', '<p>This is dummy order by Asad&nbsp;</p>', 1, '2024-05-01 02:41:22', '2024-05-01 02:47:16'),
+(18, 'AS 101', 'ASJ 101', 6, 1, '2024-05-01', '<p>This is dummy order by Asad&nbsp;</p>', 1, '2024-05-01 02:41:22', '2024-05-25 13:26:16'),
 (19, 'C101', 'J101', 6, 2, '2024-05-02', NULL, 1, '2024-05-02 05:56:39', '2024-05-09 13:36:16'),
-(23, 'Order with Stage', 'Order with Stage', 6, 4, '2024-05-05', NULL, 1, '2024-05-05 00:46:18', '2024-05-09 13:52:55');
+(23, 'Order with Stage', 'Order with Stage', 6, 4, '2024-05-05', NULL, 1, '2024-05-05 00:46:18', '2024-05-09 13:52:55'),
+(24, 'OrderMay23', 'JobMay23', 6, 1, '2024-05-23', NULL, 1, '2024-05-23 08:52:22', '2024-05-23 08:52:22');
 
 -- --------------------------------------------------------
 
@@ -573,6 +644,7 @@ CREATE TABLE `order_items` (
   `product_stage_id` bigint(20) UNSIGNED NOT NULL,
   `quantity` double UNSIGNED NOT NULL,
   `price` double UNSIGNED DEFAULT NULL,
+  `price2` double UNSIGNED DEFAULT NULL,
   `total` double UNSIGNED NOT NULL COMMENT 'Quantity * Price',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -582,24 +654,27 @@ CREATE TABLE `order_items` (
 -- Dumping data for table `order_items`
 --
 
-INSERT INTO `order_items` (`order_item_id`, `order_id`, `product_type_id`, `product_stage_id`, `quantity`, `price`, `total`, `created_at`, `updated_at`) VALUES
-(59, 16, 49, 74, 1000, 0, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
-(60, 16, 50, 74, 1000, 0, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
-(61, 16, 51, 74, 1000, 0, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
-(62, 16, 52, 74, 1000, 0, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
-(63, 16, 53, 74, 1000, 0, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
-(64, 16, 54, 74, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
-(65, 16, 55, 74, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
-(66, 16, 56, 74, 100, 0, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
-(67, 17, 92, 74, 100, 1000, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
-(68, 17, 93, 74, 100, 1000, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
-(69, 17, 94, 74, 100, 1000, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
-(70, 18, 51, 74, 100, 1500, 150000, '2024-05-01 02:41:22', '2024-05-01 02:41:22'),
-(71, 18, 52, 74, 100, 1800, 180000, '2024-05-01 02:41:22', '2024-05-01 02:41:22'),
-(72, 19, 50, 74, 6000, 0, 0, '2024-05-02 05:56:39', '2024-05-02 05:56:39'),
-(73, 23, 49, 74, 20, 20, 400, '2024-05-05 00:46:18', '2024-05-05 00:46:18'),
-(75, 23, 70, 74, 20, 20, 400, '2024-05-05 00:46:18', '2024-05-05 00:46:18'),
-(76, 23, 52, 74, 12, 12, 144, '2024-05-05 01:04:28', '2024-05-05 01:04:28');
+INSERT INTO `order_items` (`order_item_id`, `order_id`, `product_type_id`, `product_stage_id`, `quantity`, `price`, `price2`, `total`, `created_at`, `updated_at`) VALUES
+(59, 16, 49, 74, 1000, 0, NULL, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
+(60, 16, 50, 74, 1000, 0, NULL, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
+(61, 16, 51, 74, 1000, 0, NULL, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
+(62, 16, 52, 74, 1000, 0, NULL, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
+(63, 16, 53, 74, 1000, 0, NULL, 0, '2024-04-26 13:36:18', '2024-04-26 13:36:18'),
+(64, 16, 54, 74, 100, 0, NULL, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
+(65, 16, 55, 74, 100, 0, NULL, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
+(66, 16, 56, 74, 100, 0, NULL, 0, '2024-04-26 13:36:51', '2024-04-26 13:36:51'),
+(67, 17, 92, 74, 100, 1000, NULL, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
+(68, 17, 93, 74, 100, 1000, NULL, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
+(69, 17, 94, 74, 100, 1000, NULL, 100000, '2024-04-27 10:32:56', '2024-04-27 10:32:56'),
+(70, 18, 51, 74, 100, 1500, NULL, 150000, '2024-05-01 02:41:22', '2024-05-01 02:41:22'),
+(71, 18, 52, 74, 100, 1800, NULL, 180000, '2024-05-01 02:41:22', '2024-05-01 02:41:22'),
+(72, 19, 50, 74, 6000, 0, NULL, 0, '2024-05-02 05:56:39', '2024-05-02 05:56:39'),
+(73, 23, 49, 74, 20, 20, NULL, 400, '2024-05-05 00:46:18', '2024-05-05 00:46:18'),
+(75, 23, 70, 74, 20, 20, NULL, 400, '2024-05-05 00:46:18', '2024-05-05 00:46:18'),
+(76, 23, 52, 74, 12, 12, NULL, 144, '2024-05-05 01:04:28', '2024-05-05 01:04:28'),
+(77, 24, 68, 74, 120, 1200, 5, 144000, '2024-05-23 08:52:22', '2024-05-23 08:58:24'),
+(78, 24, 69, 74, 120, 1200, 5, 144000, '2024-05-23 08:52:22', '2024-05-23 08:58:24'),
+(79, 24, 70, 74, 120, 1200, 5, 144000, '2024-05-23 08:52:22', '2024-05-23 08:57:41');
 
 -- --------------------------------------------------------
 
@@ -996,7 +1071,11 @@ INSERT INTO `purchases` (`purchase_id`, `purchase_no`, `order_id`, `vendor_id`, 
 (31, 'P2405002', 16, 11, NULL, '2024-05-10', '2024-05-10', 1, '2024-05-10 08:04:38', '2024-05-10 08:04:38'),
 (32, 'P2405003', 0, 7, NULL, '2024-05-10', '2024-05-10', 1, '2024-05-10 13:32:47', '2024-05-10 13:32:47'),
 (33, 'P2405004', 0, 11, NULL, '2024-05-15', '2024-05-15', 1, '2024-05-15 12:28:36', '2024-05-15 12:28:36'),
-(34, 'P2405005', 0, 11, '<p>Desc</p>', '2024-05-16', '2024-05-16', 1, '2024-05-16 10:46:47', '2024-05-16 10:46:47');
+(34, 'P2405005', 0, 11, '<p>Desc</p>', '2024-05-16', '2024-05-16', 1, '2024-05-16 10:46:47', '2024-05-16 10:46:47'),
+(35, 'P2405006', 0, 11, '<p>Desc</p>', '2024-05-23', '2024-05-23', 1, '2024-05-22 14:12:41', '2024-05-22 14:12:41'),
+(36, 'P2405007', 0, 12, NULL, '2024-05-24', '2024-05-24', 1, '2024-05-24 09:06:00', '2024-05-24 09:06:00'),
+(37, 'P2405008', 24, 4, NULL, '2024-05-25', '2024-05-25', 1, '2024-05-25 06:30:20', '2024-05-25 06:30:20'),
+(38, 'P2405009', 16, 11, NULL, '2024-05-25', '2024-05-25', 1, '2024-05-25 07:06:48', '2024-05-25 07:06:48');
 
 -- --------------------------------------------------------
 
@@ -1008,7 +1087,7 @@ CREATE TABLE `purchase_items` (
   `purchase_item_id` bigint(20) UNSIGNED NOT NULL,
   `purchase_id` bigint(20) UNSIGNED NOT NULL,
   `material_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` double NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `price` double UNSIGNED NOT NULL,
   `total` double UNSIGNED NOT NULL COMMENT 'Quantity * Price',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1059,7 +1138,28 @@ INSERT INTO `purchase_items` (`purchase_item_id`, `purchase_id`, `material_id`, 
 (409, 33, 16, 1000, 100, 100000, '2024-05-15 12:28:36', '2024-05-15 12:28:36'),
 (410, 33, 17, 1000, 100, 100000, '2024-05-15 12:28:36', '2024-05-15 12:28:36'),
 (411, 33, 18, 1000, 100, 100000, '2024-05-15 12:28:36', '2024-05-15 12:28:36'),
-(412, 34, 4, 1000, 100, 100000, '2024-05-16 10:46:47', '2024-05-16 10:46:47');
+(412, 34, 4, 1000, 100, 100000, '2024-05-16 10:46:47', '2024-05-16 10:46:47'),
+(413, 35, 12, 200, 150, 30000, '2024-05-22 14:12:41', '2024-05-22 14:17:41'),
+(414, 36, 24, 20, 150, 3000, '2024-05-24 09:06:00', '2024-05-24 09:06:00'),
+(415, 36, 22, 20, 10, 200, '2024-05-24 09:06:00', '2024-05-24 09:06:00'),
+(416, 36, 23, 100, 10, 1000, '2024-05-24 09:06:00', '2024-05-24 09:06:00'),
+(417, 37, 19, 100, 100, 10000, '2024-05-25 06:30:20', '2024-05-25 06:30:20'),
+(418, 38, 11, 1000, 10, 10000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(419, 38, 12, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(420, 38, 1, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(421, 38, 7, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(422, 38, 3, 1000, 1100, 1100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(423, 38, 2, 100, 100, 10000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(424, 38, 5, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(425, 38, 6, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(426, 38, 13, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(427, 38, 14, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(428, 38, 19, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(429, 38, 18, 1000, 10, 10000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(430, 38, 17, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(431, 38, 16, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(432, 38, 21, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48'),
+(433, 38, 20, 1000, 100, 100000, '2024-05-25 07:06:48', '2024-05-25 07:06:48');
 
 -- --------------------------------------------------------
 
@@ -1103,7 +1203,14 @@ INSERT INTO `receives` (`receive_id`, `receive_no`, `purchase_id`, `receive_date
 (55, 'R4-P2405004', 33, '2024-05-18', 0, NULL, 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
 (57, 'R4-P2405005', 34, '2024-05-18', 0, NULL, 1, '2024-05-18 13:58:12', '2024-05-18 13:58:12'),
 (60, 'R5-P2405005', 34, '2024-05-18', 0, NULL, 1, '2024-05-18 13:59:52', '2024-05-18 13:59:52'),
-(62, 'R1-P2404004', 27, '2024-05-19', 0, NULL, 1, '2024-05-18 14:46:01', '2024-05-18 14:46:01');
+(62, 'R1-P2404004', 27, '2024-05-19', 0, NULL, 1, '2024-05-18 14:46:01', '2024-05-18 14:46:01'),
+(63, 'R6-P2405005', 34, '2024-05-20', 0, NULL, 1, '2024-05-20 12:04:12', '2024-05-20 12:04:12'),
+(64, 'R7-P2405005', 34, '2024-05-20', 0, NULL, 1, '2024-05-20 12:05:36', '2024-05-20 12:05:36'),
+(65, 'R1-P2405007', 36, '2024-05-24', 0, NULL, 1, '2024-05-24 09:06:53', '2024-05-24 09:06:53'),
+(66, 'R1-P2405008', 37, '2024-05-25', 0, NULL, 1, '2024-05-25 06:32:04', '2024-05-25 06:32:04'),
+(67, 'R2-P2405008', 37, '2024-05-25', 0, NULL, 1, '2024-05-25 06:32:43', '2024-05-25 06:32:43'),
+(68, 'R3-P2405008', 37, '2024-05-25', 0, NULL, 1, '2024-05-25 06:35:57', '2024-05-25 06:35:57'),
+(69, 'R1-P2405009', 38, '2024-05-25', 0, NULL, 1, '2024-05-25 07:08:24', '2024-05-25 07:08:24');
 
 -- --------------------------------------------------------
 
@@ -1115,11 +1222,10 @@ CREATE TABLE `receive_materials` (
   `receive_material_id` bigint(20) UNSIGNED NOT NULL,
   `receive_id` bigint(20) UNSIGNED NOT NULL,
   `purchase_item_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` double NOT NULL,
-  `pending_qty` double NOT NULL,
-  `approved_qty` double NOT NULL,
-  `rejected_qty` double NOT NULL,
-  `inspection_status` bigint(20) UNSIGNED DEFAULT 2 COMMENT '1 Pending, 2 Approved, 3 Rejected',
+  `quantity` double UNSIGNED NOT NULL,
+  `pending_qty` double UNSIGNED NOT NULL,
+  `approved_qty` double UNSIGNED NOT NULL,
+  `rejected_qty` double UNSIGNED NOT NULL,
   `inspection_date` date NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1130,69 +1236,93 @@ CREATE TABLE `receive_materials` (
 -- Dumping data for table `receive_materials`
 --
 
-INSERT INTO `receive_materials` (`receive_material_id`, `receive_id`, `purchase_item_id`, `quantity`, `pending_qty`, `approved_qty`, `rejected_qty`, `inspection_status`, `inspection_date`, `created_by`, `created_at`, `updated_at`) VALUES
-(188, 38, 373, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(189, 38, 374, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(190, 38, 375, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(191, 38, 376, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(192, 38, 377, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(193, 38, 378, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(194, 38, 379, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(195, 38, 380, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(196, 38, 381, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(197, 38, 382, 900, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
-(198, 39, 383, 12, 0, 0, 0, 1, '2024-05-18', 1, '2024-04-26 11:46:50', '2024-04-26 11:46:50'),
-(199, 40, 384, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(200, 40, 385, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(201, 40, 386, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(202, 40, 387, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(203, 40, 388, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(204, 40, 389, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(205, 40, 390, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(206, 40, 391, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(207, 40, 392, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(208, 40, 393, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(209, 40, 394, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(210, 40, 395, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(211, 40, 396, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(212, 40, 397, 1000, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
-(213, 41, 373, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(214, 41, 374, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(215, 41, 375, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(216, 41, 376, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(217, 41, 377, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(218, 41, 378, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(219, 41, 379, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(220, 41, 380, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(221, 41, 381, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(222, 41, 382, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
-(223, 42, 373, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(224, 42, 374, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(225, 42, 375, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(226, 42, 376, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(227, 42, 377, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(228, 42, 378, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(229, 42, 379, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(230, 42, 380, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(231, 42, 381, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(232, 42, 382, 20, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
-(233, 43, 401, 1, 0, 0, 0, 2, '2024-05-18', 1, '2024-04-30 10:04:12', '2024-04-30 10:04:59'),
-(234, 44, 402, 2, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-06 03:51:13', '2024-05-06 03:51:27'),
-(235, 45, 403, 50, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-10 08:05:19', '2024-05-10 08:05:19'),
-(236, 45, 404, 0, 0, 0, 0, 1, '2024-05-18', 1, '2024-05-10 08:05:19', '2024-05-10 08:05:19'),
-(237, 45, 405, 0, 0, 0, 0, 1, '2024-05-18', 1, '2024-05-10 08:05:19', '2024-05-10 08:05:19'),
-(238, 46, 406, 100, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-10 13:40:26', '2024-05-10 13:42:36'),
-(239, 46, 407, 100, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-10 13:40:26', '2024-05-10 13:40:56'),
-(240, 46, 408, 100, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-10 13:40:26', '2024-05-10 13:42:36'),
-(241, 47, 409, 500, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-15 12:29:24', '2024-05-15 12:29:24'),
-(242, 47, 410, 500, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-15 12:29:24', '2024-05-15 12:29:24'),
-(243, 47, 411, 500, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-15 12:29:24', '2024-05-15 12:29:24'),
-(244, 48, 412, 700, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-16 10:47:26', '2024-05-16 10:47:26'),
-(245, 55, 409, 12, 0, 0, 0, 1, '2024-05-18', 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
-(246, 55, 410, 10, 0, 0, 0, 2, '2024-05-18', 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
-(247, 55, 411, 0, 0, 0, 0, 1, '2024-05-18', 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
-(248, 60, 412, 100, 0, 70, 30, 1, '2024-05-18', 1, '2024-05-18 13:59:52', '2024-05-18 14:35:53'),
-(249, 62, 398, 100, 15, 80, 5, NULL, '2024-05-19', 1, '2024-05-18 14:46:01', '2024-05-18 14:46:36');
+INSERT INTO `receive_materials` (`receive_material_id`, `receive_id`, `purchase_item_id`, `quantity`, `pending_qty`, `approved_qty`, `rejected_qty`, `inspection_date`, `created_by`, `created_at`, `updated_at`) VALUES
+(188, 38, 373, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(189, 38, 374, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(190, 38, 375, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(191, 38, 376, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(192, 38, 377, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(193, 38, 378, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(194, 38, 379, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(195, 38, 380, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(196, 38, 381, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(197, 38, 382, 900, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:33:16', '2024-04-26 11:33:16'),
+(198, 39, 383, 12, 0, 0, 0, '2024-05-18', 1, '2024-04-26 11:46:50', '2024-04-26 11:46:50'),
+(199, 40, 384, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(200, 40, 385, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(201, 40, 386, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(202, 40, 387, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(203, 40, 388, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(204, 40, 389, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(205, 40, 390, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(206, 40, 391, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(207, 40, 392, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(208, 40, 393, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(209, 40, 394, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(210, 40, 395, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(211, 40, 396, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(212, 40, 397, 1000, 0, 0, 0, '2024-05-18', 1, '2024-04-27 10:38:16', '2024-04-27 10:38:16'),
+(213, 41, 373, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(214, 41, 374, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(215, 41, 375, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(216, 41, 376, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(217, 41, 377, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(218, 41, 378, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(219, 41, 379, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(220, 41, 380, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(221, 41, 381, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(222, 41, 382, 50, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:14:21', '2024-04-27 13:14:21'),
+(223, 42, 373, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(224, 42, 374, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(225, 42, 375, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(226, 42, 376, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(227, 42, 377, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(228, 42, 378, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(229, 42, 379, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(230, 42, 380, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(231, 42, 381, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(232, 42, 382, 20, 0, 0, 0, '2024-05-18', 1, '2024-04-27 13:15:00', '2024-04-27 13:15:00'),
+(233, 43, 401, 1, 0, 0, 0, '2024-05-18', 1, '2024-04-30 10:04:12', '2024-04-30 10:04:59'),
+(234, 44, 402, 2, 0, 0, 0, '2024-05-18', 1, '2024-05-06 03:51:13', '2024-05-06 03:51:27'),
+(235, 45, 403, 50, 0, 0, 0, '2024-05-18', 1, '2024-05-10 08:05:19', '2024-05-10 08:05:19'),
+(236, 45, 404, 0, 0, 0, 0, '2024-05-18', 1, '2024-05-10 08:05:19', '2024-05-10 08:05:19'),
+(237, 45, 405, 0, 0, 0, 0, '2024-05-18', 1, '2024-05-10 08:05:19', '2024-05-10 08:05:19'),
+(238, 46, 406, 100, 0, 0, 0, '2024-05-18', 1, '2024-05-10 13:40:26', '2024-05-10 13:42:36'),
+(239, 46, 407, 100, 0, 0, 0, '2024-05-18', 1, '2024-05-10 13:40:26', '2024-05-10 13:40:56'),
+(240, 46, 408, 100, 0, 0, 0, '2024-05-18', 1, '2024-05-10 13:40:26', '2024-05-10 13:42:36'),
+(241, 47, 409, 500, 0, 0, 0, '2024-05-18', 1, '2024-05-15 12:29:24', '2024-05-15 12:29:24'),
+(242, 47, 410, 500, 0, 0, 0, '2024-05-18', 1, '2024-05-15 12:29:24', '2024-05-15 12:29:24'),
+(243, 47, 411, 500, 0, 0, 0, '2024-05-18', 1, '2024-05-15 12:29:24', '2024-05-15 12:29:24'),
+(244, 48, 412, 700, 0, 0, 0, '2024-05-18', 1, '2024-05-16 10:47:26', '2024-05-16 10:47:26'),
+(245, 55, 409, 12, 0, 0, 0, '2024-05-18', 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
+(246, 55, 410, 10, 0, 0, 0, '2024-05-18', 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
+(247, 55, 411, 0, 0, 0, 0, '2024-05-18', 1, '2024-05-18 13:26:50', '2024-05-18 13:26:50'),
+(248, 60, 412, 100, 0, 70, 30, '2024-05-18', 1, '2024-05-18 13:59:52', '2024-05-18 14:35:53'),
+(249, 62, 398, 100, 15, 80, 5, '2024-05-19', 1, '2024-05-18 14:46:01', '2024-05-18 14:46:36'),
+(250, 63, 412, 300, 20, 250, 30, '2024-05-20', 1, '2024-05-20 12:04:12', '2024-05-20 12:04:12'),
+(251, 64, 412, 50, 30, 10, 10, '2024-05-20', 1, '2024-05-20 12:05:36', '2024-05-20 12:06:00'),
+(252, 65, 414, 20, 0, 20, 0, '2024-05-24', 1, '2024-05-24 09:06:53', '2024-05-24 09:06:53'),
+(253, 65, 415, 20, 0, 20, 0, '2024-05-24', 1, '2024-05-24 09:06:53', '2024-05-24 09:06:53'),
+(254, 65, 416, 100, 0, 100, 0, '2024-05-24', 1, '2024-05-24 09:06:53', '2024-05-24 09:06:53'),
+(255, 66, 417, 50, 0, 50, 0, '2024-05-25', 1, '2024-05-25 06:32:04', '2024-05-25 06:33:54'),
+(256, 67, 417, 50, 0, 50, 0, '2024-05-25', 1, '2024-05-25 06:32:43', '2024-05-25 06:32:43'),
+(257, 68, 417, 10, 0, 10, 0, '2024-05-25', 1, '2024-05-25 06:35:57', '2024-05-25 06:35:57'),
+(258, 69, 418, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:24', '2024-05-25 07:08:24'),
+(259, 69, 419, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(260, 69, 420, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(261, 69, 421, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(262, 69, 422, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(263, 69, 423, 100, 0, 100, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(264, 69, 424, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(265, 69, 425, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(266, 69, 426, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(267, 69, 427, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(268, 69, 428, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(269, 69, 429, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(270, 69, 430, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(271, 69, 431, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(272, 69, 432, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25'),
+(273, 69, 433, 1000, 0, 1000, 0, '2024-05-25', 1, '2024-05-25 07:08:25', '2024-05-25 07:08:25');
 
 -- --------------------------------------------------------
 
@@ -1221,7 +1351,8 @@ INSERT INTO `returns` (`return_id`, `receive_id`, `return_no`, `return_date`, `d
 (35, 42, 'Return2-R3-P2404001', '2024-04-27', NULL, 1, '2024-04-27 13:16:20', '2024-04-27 13:16:20'),
 (36, 46, 'Return1-R1-P2405003', '2024-05-10', '<p>Material of Amount 15k Returned</p>', 1, '2024-05-10 13:43:11', '2024-05-10 13:43:11'),
 (37, 47, 'Return1-R1-P2405004', '2024-05-15', NULL, 1, '2024-05-15 12:29:58', '2024-05-15 12:29:58'),
-(38, 48, 'Return1-R1-P2405005', '2024-05-16', NULL, 1, '2024-05-16 10:50:51', '2024-05-16 10:50:51');
+(38, 48, 'Return1-R1-P2405005', '2024-05-16', NULL, 1, '2024-05-16 10:50:51', '2024-05-16 10:50:51'),
+(39, 66, 'Return1-R1-P2405008', '2024-05-25', NULL, 1, '2024-05-25 06:35:15', '2024-05-25 06:35:15');
 
 -- --------------------------------------------------------
 
@@ -1233,7 +1364,7 @@ CREATE TABLE `return_materials` (
   `return_material_id` bigint(20) UNSIGNED NOT NULL,
   `return_id` bigint(20) UNSIGNED NOT NULL,
   `receive_material_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` double NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `remarks` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1272,7 +1403,8 @@ INSERT INTO `return_materials` (`return_material_id`, `return_id`, `receive_mate
 (135, 37, 241, 100, 'Dummy Return', 1, '2024-05-15 12:29:58', '2024-05-15 12:29:58'),
 (136, 37, 242, 100, 'Dummy Return', 1, '2024-05-15 12:29:58', '2024-05-15 12:29:58'),
 (137, 37, 243, 0, NULL, 1, '2024-05-15 12:29:58', '2024-05-15 12:29:58'),
-(138, 38, 244, 200, 'Check', 1, '2024-05-16 10:50:51', '2024-05-16 10:50:51');
+(138, 38, 244, 200, 'Check', 1, '2024-05-16 10:50:51', '2024-05-16 10:50:51'),
+(139, 39, 255, 10, 'Check', 1, '2024-05-25 06:35:15', '2024-05-25 06:35:42');
 
 -- --------------------------------------------------------
 
@@ -1327,11 +1459,12 @@ CREATE TABLE `stocks` (
   `issue_for` bigint(20) UNSIGNED DEFAULT NULL,
   `stock_no` varchar(255) NOT NULL,
   `order_id` bigint(20) UNSIGNED NOT NULL,
+  `machine_id` bigint(20) UNSIGNED DEFAULT NULL,
   `table_name` varchar(255) NOT NULL,
   `employee_id` bigint(20) UNSIGNED NOT NULL,
   `stock_type` bigint(20) UNSIGNED NOT NULL DEFAULT 2 COMMENT 'Stock In/Out',
   `stock_date` date NOT NULL,
-  `stock_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Delivery#3',
+  `stock_status` bigint(20) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'CReceived#1, PReceived#2, Delivery#3, MMaterial#4',
   `description` longtext DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1342,40 +1475,43 @@ CREATE TABLE `stocks` (
 -- Dumping data for table `stocks`
 --
 
-INSERT INTO `stocks` (`stock_id`, `issue_id`, `issue_for`, `stock_no`, `order_id`, `table_name`, `employee_id`, `stock_type`, `stock_date`, `stock_status`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
-(82, NULL, 74, 'I24040001', 16, 'vendor', 6, 2, '2024-05-09', 2, NULL, 1, '2024-04-26 14:05:16', '2024-05-09 08:39:30'),
-(83, 82, 0, 'R1-I24040001', 16, 'vendor', 6, 1, '2024-04-27', 2, NULL, 1, '2024-04-26 14:18:45', '2024-04-26 14:18:45'),
-(84, 82, 0, 'R2-I24040001', 16, 'vendor', 6, 1, '2024-04-27', 1, NULL, 1, '2024-04-26 14:33:56', '2024-04-26 14:33:56'),
-(85, NULL, 73, 'I24040002', 17, 'employee', 5, 2, '2024-05-09', 1, NULL, 1, '2024-04-27 10:53:46', '2024-05-09 08:39:24'),
-(86, 85, 0, 'R1-I24040002', 17, 'employee', 5, 1, '2024-04-27', 1, NULL, 1, '2024-04-27 11:42:38', '2024-04-27 11:42:38'),
-(87, NULL, 72, 'I24040003', 16, 'employee', 12, 2, '2024-05-09', 1, '<p>Stitching of L Size is issued for Packing</p>', 1, '2024-04-30 08:09:17', '2024-05-09 08:39:17'),
-(88, 87, 0, 'R1-I24040003', 16, 'employee', 12, 1, '2024-04-30', 1, NULL, 1, '2024-04-30 08:13:20', '2024-04-30 08:13:20'),
-(89, NULL, 74, 'I24050001', 18, 'employee', 6, 2, '2024-05-09', 1, NULL, 1, '2024-05-01 02:50:47', '2024-05-09 08:39:09'),
-(90, NULL, 73, 'I24050002', 18, 'vendor', 6, 2, '2024-05-09', 2, NULL, 1, '2024-05-01 02:53:26', '2024-05-09 08:38:59'),
-(91, 90, 0, 'R1-I24050002', 18, 'vendor', 6, 1, '2024-05-01', 2, NULL, 1, '2024-05-01 03:08:01', '2024-05-01 03:08:01'),
-(92, 89, 0, 'R1-I24050001', 18, 'employee', 6, 1, '2024-05-01', 2, NULL, 1, '2024-05-01 03:10:23', '2024-05-01 03:10:23'),
-(93, NULL, 72, 'I24050003', 19, 'employee', 12, 2, '2024-05-04', 1, '<p>Desc of Issuance for Cutting</p>', 1, '2024-05-04 12:29:42', '2024-05-04 13:15:49'),
-(94, 93, NULL, 'R1-I24050003', 19, 'employee', 12, 1, '2024-05-04', 1, NULL, 1, '2024-05-04 13:15:49', '2024-05-04 13:15:49'),
-(95, 89, NULL, 'R2-I24050001', 18, 'employee', 6, 1, '2024-05-05', 1, NULL, 1, '2024-05-04 14:38:39', '2024-05-04 14:38:39'),
-(109, NULL, NULL, 'Order 16 Delivery', 16, 'delivery', 0, 2, '2024-05-07', 3, '<p>Desc to Store in Delivery Table</p>', 1, '2024-05-07 04:26:42', '2024-05-08 13:50:13'),
-(110, NULL, 73, 'I24050005', 16, 'employee', 5, 2, '2024-05-09', 2, '<p>Issuance of Some materials for All Order Items</p>', 1, '2024-05-07 11:12:06', '2024-05-09 08:38:49'),
-(111, 110, NULL, 'R1-I24050005', 16, 'employee', 5, 1, '2024-05-07', 2, '<p>Dummy Receiving of Order 101 All items Qty 100</p>', 1, '2024-05-07 11:15:08', '2024-05-07 11:15:08'),
-(112, NULL, NULL, 'Order 16 Delivery 2', 16, 'delivery', 0, 2, '2024-05-07', 3, '<p>Desc</p>', 1, '2024-05-07 12:55:09', '2024-05-07 12:55:09'),
-(113, NULL, NULL, 'Order 16 Delivery 3', 16, 'delivery', 0, 2, '2024-05-07', 3, '<p>Desc</p>', 1, '2024-05-07 13:43:20', '2024-05-07 13:43:20'),
-(114, NULL, 74, 'I24050008', 16, 'employee', 5, 2, '2024-05-07', 0, '<p>Desc</p>', 1, '2024-05-07 13:49:24', '2024-05-07 13:49:24'),
-(117, NULL, NULL, 'Check Expense Updated 123', 16, 'delivery', 0, 2, '2024-05-09', 3, 'Description of Delivery', 1, '2024-05-08 14:04:20', '2024-05-08 14:25:26'),
-(118, NULL, NULL, 'Check Expense 213', 16, 'delivery', 0, 2, '2024-05-09', 3, NULL, 1, '2024-05-08 14:06:40', '2024-05-08 14:06:40'),
-(119, NULL, NULL, 'Check 123', 16, 'delivery', 0, 2, '2024-05-09', 3, NULL, 1, '2024-05-08 14:09:36', '2024-05-08 14:09:36'),
-(120, NULL, 74, 'I24050012', 17, 'employee', 6, 2, '2024-05-09', 0, NULL, 1, '2024-05-09 04:33:02', '2024-05-09 04:33:02'),
-(121, NULL, 72, 'I24050016', 17, 'employee', 6, 2, '2024-05-11', 0, NULL, 1, '2024-05-09 08:53:31', '2024-05-11 05:31:02'),
-(122, 82, NULL, 'R3-I24040001', 16, 'vendor', 6, 1, '2024-05-09', 2, NULL, 1, '2024-05-09 13:08:17', '2024-05-09 13:08:17'),
-(123, NULL, NULL, 'Order 23 Delivery 1', 23, 'delivery', 0, 2, '2024-05-09', 3, NULL, 1, '2024-05-09 13:52:55', '2024-05-09 13:52:55'),
-(124, NULL, 72, 'I24050018', 16, 'employee', 6, 2, '2024-05-10', 1, NULL, 1, '2024-05-10 08:28:09', '2024-05-10 08:29:11'),
-(125, 124, NULL, 'R1-I24050018', 16, 'employee', 6, 1, '2024-05-10', 1, NULL, 1, '2024-05-10 08:29:11', '2024-05-10 08:29:11'),
-(126, NULL, 72, 'I24050019', 16, 'employee', 12, 2, '2024-05-14', 0, NULL, 1, '2024-05-14 08:07:42', '2024-05-14 08:07:42'),
-(127, NULL, 73, 'I24050020', 17, 'employee', 12, 2, '2024-05-14', 0, NULL, 1, '2024-05-14 08:10:38', '2024-05-14 08:10:38'),
-(128, NULL, 72, 'I24050021', 16, 'employee', 12, 2, '2024-05-17', 0, NULL, 1, '2024-05-17 06:05:40', '2024-05-17 06:05:40'),
-(129, NULL, 72, 'I24050022', 16, 'vendor', 6, 2, '2024-05-17', 0, NULL, 1, '2024-05-17 06:13:37', '2024-05-17 06:13:37');
+INSERT INTO `stocks` (`stock_id`, `issue_id`, `issue_for`, `stock_no`, `order_id`, `machine_id`, `table_name`, `employee_id`, `stock_type`, `stock_date`, `stock_status`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
+(82, NULL, 74, 'I24040001', 16, NULL, 'vendor', 6, 2, '2024-05-09', 2, NULL, 1, '2024-04-26 14:05:16', '2024-05-09 08:39:30'),
+(83, 82, 0, 'R1-I24040001', 16, NULL, 'vendor', 6, 1, '2024-04-27', 2, NULL, 1, '2024-04-26 14:18:45', '2024-04-26 14:18:45'),
+(84, 82, 0, 'R2-I24040001', 16, NULL, 'vendor', 6, 1, '2024-04-27', 1, NULL, 1, '2024-04-26 14:33:56', '2024-04-26 14:33:56'),
+(85, NULL, 73, 'I24040002', 17, NULL, 'employee', 5, 2, '2024-05-09', 1, NULL, 1, '2024-04-27 10:53:46', '2024-05-09 08:39:24'),
+(86, 85, 0, 'R1-I24040002', 17, NULL, 'employee', 5, 1, '2024-04-27', 1, NULL, 1, '2024-04-27 11:42:38', '2024-04-27 11:42:38'),
+(87, NULL, 72, 'I24040003', 16, NULL, 'employee', 12, 2, '2024-05-09', 1, '<p>Stitching of L Size is issued for Packing</p>', 1, '2024-04-30 08:09:17', '2024-05-09 08:39:17'),
+(88, 87, 0, 'R1-I24040003', 16, NULL, 'employee', 12, 1, '2024-04-30', 1, NULL, 1, '2024-04-30 08:13:20', '2024-04-30 08:13:20'),
+(89, NULL, 74, 'I24050001', 18, NULL, 'employee', 6, 2, '2024-05-09', 1, NULL, 1, '2024-05-01 02:50:47', '2024-05-09 08:39:09'),
+(90, NULL, 73, 'I24050002', 18, NULL, 'vendor', 6, 2, '2024-05-09', 2, NULL, 1, '2024-05-01 02:53:26', '2024-05-09 08:38:59'),
+(91, 90, 0, 'R1-I24050002', 18, NULL, 'vendor', 6, 1, '2024-05-01', 2, NULL, 1, '2024-05-01 03:08:01', '2024-05-01 03:08:01'),
+(92, 89, 0, 'R1-I24050001', 18, NULL, 'employee', 6, 1, '2024-05-01', 2, NULL, 1, '2024-05-01 03:10:23', '2024-05-01 03:10:23'),
+(93, NULL, 72, 'I24050003', 19, NULL, 'employee', 12, 2, '2024-05-04', 1, '<p>Desc of Issuance for Cutting</p>', 1, '2024-05-04 12:29:42', '2024-05-04 13:15:49'),
+(94, 93, NULL, 'R1-I24050003', 19, NULL, 'employee', 12, 1, '2024-05-04', 1, NULL, 1, '2024-05-04 13:15:49', '2024-05-04 13:15:49'),
+(95, 89, NULL, 'R2-I24050001', 18, NULL, 'employee', 6, 1, '2024-05-05', 1, NULL, 1, '2024-05-04 14:38:39', '2024-05-04 14:38:39'),
+(109, NULL, NULL, 'Order 16 Delivery', 16, NULL, 'delivery', 0, 2, '2024-05-07', 3, '<p>Desc to Store in Delivery Table</p>', 1, '2024-05-07 04:26:42', '2024-05-08 13:50:13'),
+(110, NULL, 73, 'I24050005', 16, NULL, 'employee', 5, 2, '2024-05-09', 2, '<p>Issuance of Some materials for All Order Items</p>', 1, '2024-05-07 11:12:06', '2024-05-09 08:38:49'),
+(111, 110, NULL, 'R1-I24050005', 16, NULL, 'employee', 5, 1, '2024-05-07', 2, '<p>Dummy Receiving of Order 101 All items Qty 100</p>', 1, '2024-05-07 11:15:08', '2024-05-07 11:15:08'),
+(112, NULL, NULL, 'Order 16 Delivery 2', 16, NULL, 'delivery', 0, 2, '2024-05-07', 3, '<p>Desc</p>', 1, '2024-05-07 12:55:09', '2024-05-07 12:55:09'),
+(113, NULL, NULL, 'Order 16 Delivery 3', 16, NULL, 'delivery', 0, 2, '2024-05-07', 3, '<p>Desc</p>', 1, '2024-05-07 13:43:20', '2024-05-07 13:43:20'),
+(114, NULL, 74, 'I24050008', 16, NULL, 'employee', 5, 2, '2024-05-07', 0, '<p>Desc</p>', 1, '2024-05-07 13:49:24', '2024-05-07 13:49:24'),
+(117, NULL, NULL, 'Check Expense Updated 123', 16, NULL, 'delivery', 0, 2, '2024-05-09', 3, 'Description of Delivery', 1, '2024-05-08 14:04:20', '2024-05-08 14:25:26'),
+(118, NULL, NULL, 'Check Expense 213', 16, NULL, 'delivery', 0, 2, '2024-05-09', 3, NULL, 1, '2024-05-08 14:06:40', '2024-05-08 14:06:40'),
+(119, NULL, NULL, 'Check 123', 16, NULL, 'delivery', 0, 2, '2024-05-09', 3, NULL, 1, '2024-05-08 14:09:36', '2024-05-08 14:09:36'),
+(120, NULL, 74, 'I24050012', 17, NULL, 'employee', 6, 2, '2024-05-09', 0, NULL, 1, '2024-05-09 04:33:02', '2024-05-09 04:33:02'),
+(121, NULL, 72, 'I24050016', 17, NULL, 'employee', 6, 2, '2024-05-11', 0, NULL, 1, '2024-05-09 08:53:31', '2024-05-11 05:31:02'),
+(122, 82, NULL, 'R3-I24040001', 16, NULL, 'vendor', 6, 1, '2024-05-09', 2, NULL, 1, '2024-05-09 13:08:17', '2024-05-09 13:08:17'),
+(123, NULL, NULL, 'Order 23 Delivery 1', 23, NULL, 'delivery', 0, 2, '2024-05-09', 3, NULL, 1, '2024-05-09 13:52:55', '2024-05-09 13:52:55'),
+(124, NULL, 72, 'I24050018', 16, NULL, 'employee', 6, 2, '2024-05-10', 1, NULL, 1, '2024-05-10 08:28:09', '2024-05-10 08:29:11'),
+(125, 124, NULL, 'R1-I24050018', 16, NULL, 'employee', 6, 1, '2024-05-10', 1, NULL, 1, '2024-05-10 08:29:11', '2024-05-10 08:29:11'),
+(126, NULL, 72, 'I24050019', 16, NULL, 'employee', 12, 2, '2024-05-14', 0, NULL, 1, '2024-05-14 08:07:42', '2024-05-14 08:07:42'),
+(127, NULL, 73, 'I24050020', 17, NULL, 'employee', 12, 2, '2024-05-14', 0, NULL, 1, '2024-05-14 08:10:38', '2024-05-14 08:10:38'),
+(135, NULL, 73, 'I24050021', 16, NULL, 'employee', 5, 2, '2024-05-25', 1, NULL, 1, '2024-05-25 06:48:13', '2024-05-25 06:54:07'),
+(136, 135, NULL, 'R1-I24050021', 16, 0, 'employee', 5, 1, '2024-05-25', 1, NULL, 1, '2024-05-25 06:54:07', '2024-05-25 06:54:07'),
+(137, NULL, 0, 'I24050022', 0, 2, 'employee', 12, 2, '2024-05-25', 4, NULL, 1, '2024-05-25 07:10:24', '2024-05-25 07:10:24'),
+(139, NULL, NULL, 'Delivery 18-01', 18, NULL, 'delivery', 0, 2, '2024-05-25', 3, NULL, 1, '2024-05-25 12:49:28', '2024-05-25 12:49:28'),
+(141, NULL, NULL, 'Delivery 18-02', 18, NULL, 'delivery', 0, 2, '2024-05-25', 3, '<p>Desc</p>', 1, '2024-05-25 13:26:16', '2024-05-25 13:26:16');
 
 -- --------------------------------------------------------
 
@@ -1388,7 +1524,7 @@ CREATE TABLE `stock_items` (
   `stock_id` bigint(20) UNSIGNED NOT NULL,
   `product_type_id` bigint(20) UNSIGNED NOT NULL,
   `material_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` double NOT NULL,
+  `quantity` double UNSIGNED NOT NULL,
   `stage_id` bigint(20) UNSIGNED NOT NULL,
   `work_logs` varchar(255) NOT NULL,
   `work_wages` varchar(255) DEFAULT '0',
@@ -1513,8 +1649,15 @@ INSERT INTO `stock_items` (`stock_item_id`, `stock_id`, `product_type_id`, `mate
 (273, 121, 92, 10, 1, 0, '0', '0', 1, '2024-05-11 05:31:02', '2024-05-11 05:31:02'),
 (274, 126, 50, 11, 40, 0, '0', '0', 1, '2024-05-14 08:07:42', '2024-05-14 08:07:42'),
 (275, 127, 92, 12, 18, 0, '0', '0', 1, '2024-05-14 08:10:38', '2024-05-14 08:10:38'),
-(276, 129, 54, 7, 12, 0, '0', '0', 1, '2024-05-17 06:13:37', '2024-05-17 06:13:37'),
-(277, 129, 54, 0, 1, 72, '0', '0', 1, '2024-05-17 06:13:37', '2024-05-17 06:13:37');
+(282, 135, 49, 12, 7, 72, '0', '0', 1, '2024-05-25 06:48:13', '2024-05-25 06:48:13'),
+(283, 136, 49, 0, 20, 73, '78|79', '12|12', 1, '2024-05-25 06:54:07', '2024-05-25 06:54:07'),
+(284, 137, 0, 24, 2, 0, '0', '0', 1, '2024-05-25 07:10:24', '2024-05-25 07:10:24'),
+(287, 139, 51, 0, 5, 74, '0', '0', 1, '2024-05-25 12:49:28', '2024-05-25 12:49:28'),
+(288, 139, 52, 0, 5, 74, '0', '0', 1, '2024-05-25 12:49:28', '2024-05-25 12:49:28'),
+(289, 140, 51, 0, 5, 74, '0', '0', 1, '2024-05-25 13:22:48', '2024-05-25 13:22:48'),
+(290, 140, 52, 0, 5, 74, '0', '0', 1, '2024-05-25 13:22:48', '2024-05-25 13:22:48'),
+(291, 141, 51, 0, 5, 74, '0', '0', 1, '2024-05-25 13:26:16', '2024-05-25 13:26:16'),
+(292, 141, 52, 0, 5, 74, '0', '0', 1, '2024-05-25 13:26:16', '2024-05-25 13:26:16');
 
 -- --------------------------------------------------------
 
@@ -1544,9 +1687,7 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`transaction_id`, `transaction_to`, `transaction_type`, `bank_id`, `order_id`, `payee_id`, `payee_bank_id`, `debit`, `credit`, `transaction_date`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
-(12, 'customer', 'orderPayment', 0, 16, 6, 0, NULL, 5000000, '2024-04-27', '<p>Five Million Payment Received As Cash Payment</p>', 1, '2024-04-27 03:02:08', '2024-04-27 03:09:04'),
 (13, 'expense', 'expense', 0, NULL, 42, 0, 500, NULL, '2024-04-27', '<p>Electrician Charges&nbsp;</p>', 1, '2024-04-27 03:04:24', '2024-04-27 03:04:24'),
-(14, 'customer', 'orderPayment', 1, 16, 6, 0, NULL, 250000, '2024-04-27', NULL, 1, '2024-04-27 03:08:11', '2024-04-27 03:08:11'),
 (15, 'employee', 'salaryAdvance', 0, NULL, 8, 0, 6000, NULL, '2024-04-27', '<p><br></p>', 1, '2024-04-27 03:18:30', '2024-04-27 03:20:04'),
 (16, 'employee', 'receiveAdvance', 0, NULL, 7, 0, NULL, 5000, '2024-04-27', '<p>123</p>', 1, '2024-04-27 03:30:58', '2024-04-27 03:30:58'),
 (17, 'vendor', 'wages', 0, NULL, 6, 0, 2000, NULL, '2024-04-27', NULL, 1, '2024-04-27 04:24:11', '2024-04-27 04:24:11'),
@@ -1570,9 +1711,16 @@ INSERT INTO `transactions` (`transaction_id`, `transaction_to`, `transaction_typ
 (38, 'expense', 'deliveryExpense', 0, 11, 42, 0, 123, NULL, '2024-05-09', '123 Desc', 1, '2024-05-08 14:09:36', '2024-05-08 14:09:36'),
 (40, 'expense', 'deliveryExpense', 0, 5, 42, 0, 1212, NULL, '2024-05-07', '1212 Desc', 1, '2024-05-08 14:22:04', '2024-05-08 14:22:04'),
 (41, 'expense', 'deliveryExpense', 0, 9, 38, 0, 12, NULL, '2024-05-09', 'Desc of 12 Rupee', 1, '2024-05-08 14:25:26', '2024-05-08 14:30:18'),
-(42, 'brs', 'brs', 0, NULL, NULL, 0, NULL, 76859, '2024-05-10', '<p>Increasing Cash Balance&nbsp;76859</p>', 1, '2024-05-09 14:18:38', '2024-05-14 00:51:30'),
-(43, 'brs', 'brs', 0, NULL, NULL, 0, 6000, NULL, '2024-05-10', '<p>Reason</p>', 1, '2024-05-10 08:15:29', '2024-05-14 03:54:14'),
-(44, 'vendor', 'payment', 0, 31, 11, 0, 20000, NULL, '2024-05-10', '<p><br></p>', 1, '2024-05-10 13:11:11', '2024-05-10 13:15:32');
+(42, 'brs', 'brs', 0, NULL, 0, 0, NULL, 76859, '2024-05-10', '<p>Increasing Cash Balance&nbsp;76859</p>', 1, '2024-05-09 14:18:38', '2024-05-14 00:51:30'),
+(43, 'brs', 'brs', 0, NULL, 0, 0, 6000, NULL, '2024-05-10', '<p>Reason</p>', 1, '2024-05-10 08:15:29', '2024-05-14 03:54:14'),
+(44, 'vendor', 'payment', 0, 31, 11, 0, 20000, NULL, '2024-05-10', '<p><br></p>', 1, '2024-05-10 13:11:11', '2024-05-10 13:15:32'),
+(47, 'vendor', 'openingBalance', 0, NULL, 12, 0, NULL, 0, '2024-05-22', NULL, 1, '2024-05-22 14:30:32', '2024-05-22 14:30:32'),
+(48, 'admin', 'openingBalance', 9, NULL, NULL, 0, NULL, 2580000, '2024-05-23', NULL, 1, '2024-05-23 13:19:09', '2024-05-23 13:19:09'),
+(49, 'vendor', 'openingBalance', 0, NULL, 13, 0, NULL, 0, '2024-05-23', NULL, 1, '2024-05-23 14:16:32', '2024-05-23 14:16:32'),
+(50, 'vendor', 'openingBalance', 0, NULL, 14, 0, NULL, 0, '2024-05-23', NULL, 1, '2024-05-23 14:36:14', '2024-05-23 14:36:14'),
+(51, 'expense', 'deliveryExpense', 0, 14, 42, 0, 10, NULL, '2024-05-25', 'Detail', 1, '2024-05-25 12:49:28', '2024-05-25 12:49:28'),
+(52, 'expense', 'deliveryExpense', 0, 15, 42, 0, 100, NULL, '2024-05-25', '100 Rs', 1, '2024-05-25 13:22:48', '2024-05-25 13:22:48'),
+(53, 'expense', 'deliveryExpense', 0, 16, 42, 0, 12, NULL, '2024-05-25', '12', 1, '2024-05-25 13:26:16', '2024-05-25 13:26:16');
 
 -- --------------------------------------------------------
 
@@ -1613,6 +1761,7 @@ CREATE TABLE `vendors` (
   `material_id` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `fname` varchar(255) NOT NULL,
+  `cperson` varchar(255) DEFAULT NULL,
   `phone1` varchar(255) NOT NULL,
   `phone2` varchar(255) DEFAULT NULL,
   `city_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
@@ -1627,14 +1776,16 @@ CREATE TABLE `vendors` (
 -- Dumping data for table `vendors`
 --
 
-INSERT INTO `vendors` (`vendor_id`, `vendor_type_id`, `vendor_no`, `vendor_type`, `material_id`, `name`, `fname`, `phone1`, `phone2`, `city_id`, `address`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 69, 'V24001', 1, '0', 'Sarfraz', 'Sarfraz Salman', '03001122334', '03001122334', 44, 'Address of vendor', '<p>New Desc</p>', 1, '2024-02-20 07:35:03', '2024-04-26 11:12:19'),
-(3, 57, 'V24002', 0, '0', 'Huzaifa', 'Huzaifa Shafeeq', '03001122334', '03001122334', 46, 'Address of Leather Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:05:38', '2024-04-26 11:11:45'),
-(4, 67, 'V24003', 0, '0', 'Rouf', 'Abdul Rouf', '03001122334', '03001122334', 46, 'Address of Box Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:09:18', '2024-04-26 11:11:22'),
-(5, 68, 'V24004', 0, '11', 'Arslan', 'Arslan Cheema', '03001122334', '03001122334', 43, 'Address of Liquid Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:10:00', '2024-04-26 11:10:13'),
-(6, 60, 'V24005', 1, '0', 'Shehzad', 'Shehzad Ahmed Stitcher', '03001122334', '03001122334', 43, 'Address of Vendor V24005', '<p>Desc</p>', 1, '2024-03-28 13:37:11', '2024-04-26 11:09:18'),
-(7, 69, 'V24006', 0, '14|13|12|11|10|9|8|7|3', 'Abdulrehman', 'Abdulrehman Tahir', '03001122334', '03001122334', 45, 'Addresss', '<p><br></p>', 1, '2024-04-25 06:24:36', '2024-04-26 11:07:45'),
-(11, 69, 'V24007', 0, '0', 'Umer', 'Umer Malik', '03001122334', '03001122334', 44, 'Address of Vendor Umer Malik', NULL, 1, '2024-04-29 10:10:04', '2024-04-29 10:10:04');
+INSERT INTO `vendors` (`vendor_id`, `vendor_type_id`, `vendor_no`, `vendor_type`, `material_id`, `name`, `fname`, `cperson`, `phone1`, `phone2`, `city_id`, `address`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 69, 'V0001', 1, '0', 'Sarfraz', 'Sarfraz Salman', 'Ali', '03001122334', '03001122334', 44, 'Address of vendor', '<p>New Desc</p>', 1, '2024-02-20 07:35:03', '2024-04-26 11:12:19'),
+(3, 57, 'V0002', 0, '0', 'Huzaifa', 'Huzaifa Shafeeq', 'Ali', '03001122334', '03001122334', 46, 'Address of Leather Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:05:38', '2024-04-26 11:11:45'),
+(4, 67, 'V0003', 0, '0', 'Rouf', 'Abdul Rouf', 'Ali', '03001122334', '03001122334', 46, 'Address of Box Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:09:18', '2024-04-26 11:11:22'),
+(5, 68, 'V0004', 0, '11', 'Arslan', 'Arslan Cheema', 'Ali', '03001122334', '03001122334', 43, 'Address of Liquid Vendor', '<p><span style=\"color: rgb(0, 0, 0);\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</span><br></p>', 1, '2024-02-25 14:10:00', '2024-04-26 11:10:13'),
+(6, 60, 'V0005', 1, '0', 'Shehzad', 'Shehzad Ahmed Stitcher', 'Ali', '03001122334', '03001122334', 43, 'Address of Vendor V24005', '<p>Desc</p>', 1, '2024-03-28 13:37:11', '2024-04-26 11:09:18'),
+(7, 69, 'V0006', 0, '14|13|12|11|10|9|8|7|3', 'Abdulrehman', 'Abdulrehman Tahir', 'Ali', '03001122334', '03001122334', 45, 'Addresss', '<p><br></p>', 1, '2024-04-25 06:24:36', '2024-04-26 11:07:45'),
+(11, 69, 'V0007', 0, '0', 'Umer', 'Umer Malik', 'Ali', '03001122334', '03001122334', 44, 'Address of Vendor Umer Malik', NULL, 1, '2024-04-29 10:10:04', '2024-04-29 10:10:04'),
+(12, 57, 'V0008', 0, '0', 'Check 123', 'Check', 'Ali', '123123213', '1232132131', 43, 'Sialkot', '<p>&nbsp;&nbsp;&nbsp;&nbsp;<br></p>', 1, '2024-05-22 14:30:32', '2024-05-22 14:30:49'),
+(13, 0, 'V0009', 1, '0', 'Ansab', 'Ansab Sheikh', NULL, '03001122334', '03001122334', 70, 'Address', NULL, 1, '2024-05-23 14:16:32', '2024-05-23 14:39:09');
 
 --
 -- Indexes for dumped tables
@@ -1675,6 +1826,12 @@ ALTER TABLE `deliveries`
   ADD PRIMARY KEY (`delivery_id`);
 
 --
+-- Indexes for table `delivery_boxes`
+--
+ALTER TABLE `delivery_boxes`
+  ADD PRIMARY KEY (`dbox_id`);
+
+--
 -- Indexes for table `employees`
 --
 ALTER TABLE `employees`
@@ -1706,6 +1863,12 @@ ALTER TABLE `head_types`
 --
 ALTER TABLE `images`
   ADD PRIMARY KEY (`image_id`);
+
+--
+-- Indexes for table `machines`
+--
+ALTER TABLE `machines`
+  ADD PRIMARY KEY (`machine_id`);
 
 --
 -- Indexes for table `materials`
@@ -1864,7 +2027,7 @@ ALTER TABLE `vendors`
 -- AUTO_INCREMENT for table `banks`
 --
 ALTER TABLE `banks`
-  MODIFY `bank_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `bank_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -1888,7 +2051,13 @@ ALTER TABLE `customers`
 -- AUTO_INCREMENT for table `deliveries`
 --
 ALTER TABLE `deliveries`
-  MODIFY `delivery_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `delivery_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `delivery_boxes`
+--
+ALTER TABLE `delivery_boxes`
+  MODIFY `dbox_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `employees`
@@ -1906,25 +2075,31 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `heads`
 --
 ALTER TABLE `heads`
-  MODIFY `head_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `head_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
 
 --
 -- AUTO_INCREMENT for table `head_types`
 --
 ALTER TABLE `head_types`
-  MODIFY `head_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `head_type_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `images`
 --
 ALTER TABLE `images`
-  MODIFY `image_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=139;
+  MODIFY `image_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
+
+--
+-- AUTO_INCREMENT for table `machines`
+--
+ALTER TABLE `machines`
+  MODIFY `machine_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -1936,13 +2111,13 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `order_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `order_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `order_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
@@ -1978,37 +2153,37 @@ ALTER TABLE `product_types`
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `purchase_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `purchase_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `purchase_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=413;
+  MODIFY `purchase_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=434;
 
 --
 -- AUTO_INCREMENT for table `receives`
 --
 ALTER TABLE `receives`
-  MODIFY `receive_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `receive_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `receive_materials`
 --
 ALTER TABLE `receive_materials`
-  MODIFY `receive_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=250;
+  MODIFY `receive_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=274;
 
 --
 -- AUTO_INCREMENT for table `returns`
 --
 ALTER TABLE `returns`
-  MODIFY `return_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `return_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `return_materials`
 --
 ALTER TABLE `return_materials`
-  MODIFY `return_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=139;
+  MODIFY `return_material_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -2026,19 +2201,19 @@ ALTER TABLE `salaries`
 -- AUTO_INCREMENT for table `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `stock_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
+  MODIFY `stock_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=142;
 
 --
 -- AUTO_INCREMENT for table `stock_items`
 --
 ALTER TABLE `stock_items`
-  MODIFY `stock_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=278;
+  MODIFY `stock_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=293;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `transaction_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `transaction_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -2050,7 +2225,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `vendors`
 --
 ALTER TABLE `vendors`
-  MODIFY `vendor_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `vendor_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

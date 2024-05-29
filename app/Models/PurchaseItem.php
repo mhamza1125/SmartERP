@@ -17,6 +17,7 @@ class PurchaseItem extends Model
         'quantity',
         'price',
         'total',
+        'created_by',
         'updated_at',
     ];
 }

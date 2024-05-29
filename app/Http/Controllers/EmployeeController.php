@@ -96,18 +96,33 @@ class EmployeeController extends Controller
         $employee = $this->employeeRepository->get($id);
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
+        $oRBalance = 0; // Opening Receiveables
+        $cRBalance = 0; // Closing Receiveables
         if(!empty($dfrom) && !empty($dto)){
-            $detail = $this->transactionRepository->eDetailFilter($id, $dfrom, $dto);
+            $all = $this->transactionRepository->eDetailFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
+            $oRBalance = $all['opening_Rbalance'];
+            $cRBalance = $all['closing_Rbalance'];
         }else{
             $detail = $this->transactionRepository->eDetail($id);
         }
-        $totalCredit = $detail->where('transaction_type', 'receiveAdvance')->sum('credit');
-        $totalDebit = $detail->where('transaction_type', 'advance')->sum('debit');
-        $balance = $totalDebit - $totalCredit;
+
+        $totalCredit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
+        $totalDebit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('debit');
+        $balance = $totalCredit - $totalDebit + $oRBalance + $cRBalance;
+
+
+        // dd($detail);
         return view('employeeDetail', [
             'employee' => $employee,
             'detail' => $detail,
             'balance' => $balance,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
             'dfrom' => $dfrom,
             'dto' => $dto,
         ]);

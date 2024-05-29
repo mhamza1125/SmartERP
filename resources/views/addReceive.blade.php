@@ -35,15 +35,15 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Purchase No</label>
+                    <label>Purchase / Processing No</label>
                     <input type="text" name="purchase_id" hidden value="{{ $purchase['purchase_id'] }}">
                     <input type="text" class="form-control" readonly value="{{ $purchase['purchase_no'] }}">
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Purchase For Orders</label>
-                    <input type="text" class="form-control" readonly value="{{( $purchase['job_no'])? $purchase['job_no'] : 'Default Purchase' }}">
+                    <label>Purchase / Processing For Order</label>
+                    <input type="text" class="form-control" readonly value="{{( $purchase['job_no'])? $purchase['job_no'] : 'Default Purchase / Processing' }}">
                   </div>
                 </div>
                 <div class="col-md-3">
@@ -84,20 +84,20 @@
                             <span class="received">{{$item->received - $item->returned}}</span> / <span class="total">{{$item->quantity}}</span>
                           </td>
                           <td class="form-group">
-                            <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0">
+                            <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0" style="width:100px">
                           </td>
                           <td class="form-group">
-                            <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0">
+                            <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0" style="width:100px">
                           </td>
                           <td class="form-group">
-                            <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0">
+                            <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0" style="width:100px">
                           </td>
                           <td class="form-group">
-                            <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0">
+                            <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0" style="width:100px">
                           </td>
                           <td class="form-group">
                             {{-- <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly> --}}
-                            <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received + $item->returned}}" readonly>
+                            <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received + $item->returned}}" style="width:100px" readonly>
                           </td>
                           <td>
                             <input type="text" class="form-control datepicker" name="inspection_date[]" required>

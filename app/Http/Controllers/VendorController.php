@@ -44,7 +44,7 @@ class VendorController extends Controller
     }
 
     public function vendor(){
-        $vendor = $this->vendorRepository->vendor();
+        $vendor = $this->vendorRepository->vendorWithBalance();
         return view('vendor', [
             'vendor' => $vendor,
         ]);
@@ -122,18 +122,25 @@ class VendorController extends Controller
         $vendor = $this->vendorRepository->get($id);
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
         if(!empty($dfrom) && !empty($dto)){
-            $detail = $this->transactionRepository->vDetailFilter($id, $dfrom, $dto);
+            $all = $this->transactionRepository->vDetailFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
         }else{
             $detail = $this->transactionRepository->vDetail($id);
         }
         $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
         $totalDebit = $detail->where('transaction_type', '!=', 'wages')->sum('debit');
-        $balance = $totalCredit - $totalDebit;
+        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
         return view('vendorDetail', [
             'vendor' => $vendor,
             'detail' => $detail,
             'balance' => $balance,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
             'dfrom' => $dfrom,
             'dto' => $dto,
         ]);

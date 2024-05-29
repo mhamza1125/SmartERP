@@ -103,7 +103,8 @@
                   </div>
   
                   {{-- Receive All --}}
-                  <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
+                  <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab"> 
+                    @if($count == 1) <a href="{{ route('rstock.edit', $totalTimes[0]['stock_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a> @endif
                     <table class="table table-sm table-striped">
                       <thead>
                         <tr>
@@ -120,7 +121,7 @@
                               <td>{{$loop->index + 1}}</td>
                               <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                               <td>{{($item->name)? $item->name:$item->stage}}</td>
-                              <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}    </td>
+                              <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                             </tr>
                           @endforeach
                         @else
@@ -145,6 +146,7 @@
                     @for($i=1; $i<=$count; $i++)  
                       @php $loopIndex = 1; @endphp
                       <div class="tab-pane fade" id="tab-content-{{ $i }}" role="tabpanel" aria-labelledby="tab-{{ $i }}">
+                        <a href="{{ route('rstock.edit', $totalTimes[$i-1]['stock_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
                         <table class="table table-sm table-striped">
                           <thead>
                             <tr>

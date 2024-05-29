@@ -26,7 +26,7 @@
                       @else
                         <tr><td><b>Paid By:</b> Cash Payment</td></tr>
                       @endif
-                      <tr><td><b>Amount:</b> {{number_format($transaction['debit'])}}</td></tr>
+                      <tr><td><b>Amount:</b> {{number_format($transaction['debit'] ?? $transaction['credit'])}}</td></tr>
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif
                   </tbody>

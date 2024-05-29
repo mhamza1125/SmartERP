@@ -20,6 +20,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <input type="hidden" name="transaction_to" required value="employee" id="transaction_to">
+                    <input type="hidden" name="credit" required value="0">
                     <label>Employee</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Employee</option>

@@ -228,7 +228,7 @@ class StockItemRepository implements GlobalInterface {
         return StockItem::where('stocks.issue_id', $id)
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
         ->groupBy('stocks.stock_id')
-        ->select('stock_no')->get();
+        ->select('stocks.stock_id', 'stock_no')->get();
     }
 
     public function workLog($id){
@@ -302,7 +302,7 @@ class StockItemRepository implements GlobalInterface {
 
     public function pStock(){
         // Available Product Stock
-        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
+        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'sthead.head_id as sthead_id', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
         ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
         ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
@@ -315,6 +315,127 @@ class StockItemRepository implements GlobalInterface {
         ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
         ->get();
     }
+
+    public function gStock() {
+        // Fetch igroup_items for the given order
+        $igroupItems = DB::table('igroup_items')
+            ->join('igroups', 'igroups.igroup_id', '=', 'igroup_items.igroup_id')
+            ->select('igroup_items.*', 'igroup_items.stage_id as igstage_id')
+            ->get();
+    
+        // Fetch available material stock
+        $materialStock = DB::table(function ($subquery) {
+            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
+                ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
+                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
+                ->from('materials')
+                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
+                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
+                ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+                ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
+        }, 'material_stock')
+        ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
+        ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->select('material_stock.*')
+        ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
+        ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
+        ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
+        ->get()
+        ->keyBy('material_id');
+    
+        // Fetch available product stock with stage_id check
+        $productStock = StockItem::select('stock_items.product_type_id', 'stock_items.stage_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.head_id as sthead_id', 'sthead.name as stname', 'uhead.name as uname', 'products.product_id')
+            ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
+            ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+            ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+            ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->where('stock_items.material_id', '=', 0)
+            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+            ->get()
+            ->keyBy(function($item) {
+                return $item->product_type_id . '_' . $item->stage_id;
+            });
+    
+        $results = [];
+    
+        // Calculate max issuable groups based on available stock
+        foreach ($igroupItems as $item) {
+            $materialId = $item->material_id;
+            $productTypeId = $item->product_type_id;
+            $quantity = $item->quantity;
+            $stageId = $item->igstage_id; // Assuming stage_id is a column in igroup_items
+    
+            if ($materialId > 0) {
+                // Check material stock
+                $stockIn = max(0, $materialStock[$materialId]->stockIn);
+                $stockOut = max(0, $materialStock[$materialId]->stockOut);
+                $stockReceived = max(0, $materialStock[$materialId]->total_received);
+                $stockReturned = max(0, $materialStock[$materialId]->total_returned);
+                $availableStock = $stockIn - $stockOut + $stockReceived - $stockReturned;
+                $maxIssuable = $availableStock > 0 ? intval($availableStock / $quantity) : 0;
+            } else {
+                // Check product stock with stage_id
+                $stockIn = 0; 
+                $stockOut = 0;
+                foreach ($productStock as $stockItem) {
+                    if ($stockItem->product_type_id == $productTypeId && $stockItem->sthead_id == $stageId) {
+                        $stockIn += max(0, $stockItem->stockIn);
+                        $stockOut += max(0, $stockItem->stockOut);
+                    }
+                }
+                $availableStock = $stockIn - $stockOut;
+                $maxIssuable = $availableStock > 0 ? intval($availableStock / $quantity) : 0;
+            }
+    
+            if (isset($results[$item->igroup_id])) {
+                // Choose min max_issuable or any other logic
+                $results[$item->igroup_id]['max_issuable'] = min($results[$item->igroup_id]['max_issuable'], $maxIssuable);
+            } else {
+                $results[$item->igroup_id] = [
+                    'igroup_id' => $item->igroup_id,
+                    'material_id' => $materialId,
+                    'product_type_id' => $productTypeId,
+                    'stage_id' => $stageId,
+                    'max_issuable' => $maxIssuable,
+                ];
+            }
+        }
+    
+        return $results;
+    }
+    
+
+    public function rstock($id){
+        // Receiveable Stock Based on Early Receiving & Null
+        return StockItem::join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->leftJoin('stocks as rstocks', 'rstocks.issue_id', '=', 'stocks.stock_id')
+            ->leftJoin('product_materials', function($join) {
+                $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
+                    ->where('stock_items.material_id', '=', 0);
+            })
+            ->where('stocks.issue_id', $id)
+            ->select(
+                'stock_items.product_type_id',
+                DB::raw('CASE
+                            WHEN stock_items.material_id != 0 THEN stock_items.material_id
+                            ELSE product_materials.material_id
+                        END AS material_id'),
+                DB::raw('SUM(
+                    CASE
+                        WHEN product_materials.material_id IS NOT NULL THEN stock_items.quantity * product_materials.quantity
+                        ELSE stock_items.quantity
+                    END
+                ) AS rqty')
+            )   
+            ->groupBy('material_id')
+            ->get();
+    }    
 
     public function orderStatus($id){
         // Order Current Status

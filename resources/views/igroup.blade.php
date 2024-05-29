@@ -6,9 +6,9 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Customer Table</h4>
+            <h4>Issuance Groups Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('customer.add') }}" class="btn btn-primary">Add Customer</a>
+              <a href="{{ route('igroup.add') }}" class="btn btn-primary">Add Group</a>
             </div>
           </div>
           <div class="card-body">
@@ -17,22 +17,21 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
-                    <th>Customer No</th>
-                    <th>Name</th>
+                    <th>Group No</th>
+                    <th>Order No</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @if($customer->count())
-                    @foreach($customer as $item)
+                  @if($igroup->count())
+                    @foreach($igroup as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->customer_no}}</td>
-                      <td>{{$item->fname}} {{$item->lname}}</td>
+                      <td>{{$item->igroup_no}}</td>
+                      <td>{{$item->job_no}}</td>
                       <td>
-                        <a href="{{ route('customer.show', $item->customer_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('customer.edit', $item->customer_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('customer.detail', $item->customer_id) }}" class="btn btn-success btn-sm">Ledger</a>
+                        <a href="{{ route('igroup.show', $item->igroup_id) }}" class="btn btn-info btn-sm">View</a>
+                        <a href="{{ route('igroup.edit', $item->igroup_id) }}" class="btn btn-primary btn-sm">Edit</a>
                       </td>
                     </tr>
                     @endforeach
@@ -41,8 +40,8 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
-                    <th>Customer No</th>
-                    <th>Name</th>
+                    <th>Group No</th>
+                    <th>Order No</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

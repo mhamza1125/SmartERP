@@ -19,6 +19,7 @@ class OrderItem extends Model
         'price',
         'price2',
         'total',
+        'created_by',
         'updated_at',
     ];
 }

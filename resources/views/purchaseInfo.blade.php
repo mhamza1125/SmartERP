@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Purchase Info</h4>
+            <h4>{{ isset($process) ? 'Process Material' : 'Purchase' }} Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>
@@ -32,7 +32,7 @@
                   <tbody>
                     <tr><td><b>P.O.#:</b> {{$purchase['purchase_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($purchase['job_no'])? $purchase['job_no']:'Default Purchase'}}</td></tr>
-                    <tr><td><b>Purchase Date:</b> {{$purchase['purchase_date']}}</td></tr>
+                    <tr><td><b>{{ isset($process) ? 'Processing' : 'Purchase' }} Date:</b> {{$purchase['purchase_date']}}</td></tr>
                     <tr><td><b>Required Date:</b> {{$purchase['require_date']}}</td></tr>
                   </tbody>
                 </table>
@@ -68,6 +68,7 @@
                 <div class="tab-content" id="myTabContent">
                   {{-- Purchase --}}
                   <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
+                    @if(!isset($process))
                     <table class="table table-sm table-striped">
                       <thead>
                         <tr>
@@ -106,6 +107,46 @@
                         </tr>
                       </tfoot>
                     </table>
+                    @else
+                    <table class="table table-sm table-striped">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Material A</th>
+                          <th>Material B</th>
+                          <th>Quantity A</th>
+                          <th>Quantity B</th>
+                          <th>Rate</th>
+                          <th>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if($purchaseItem->count())
+                          @foreach($purchaseItem as $item)
+                            <tr>
+                              <td>{{$loop->index + 1}}</td>
+                              <td>{{$item->material_no}} - {{$item->name}}</td>
+                              <td>{{$item->pmaterial_no}} - {{$item->pname}}</td>
+                              <td>{{number_format($item->before_qty)}} {{$item->hname}}</td>
+                              <td>{{number_format($item->quantity)}} {{$item->phname}}</td>
+                              <td>{{number_format($item->price)}}</td>
+                              <td>{{number_format($item->quantity * $item->price)}}</td>
+                            </tr>
+                          @endforeach
+                        @endif
+                      </tbody>
+                      <tfoot>
+                        @php $total = $purchaseItem->sum(function($item) {
+                          return $item->quantity * $item->price;
+                        }); @endphp
+                        <tr>
+                          <th colspan="3"></th>
+                          <th colspan="2" class="text-center">Grand Total:</th>
+                          <th>{{ number_format($total) }}</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    @endif
                   </div>
                   {{-- Receive All --}}
                   <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
@@ -126,7 +167,7 @@
                       <tbody>
                         @if($receiveSum->isEmpty())
                           <tr>
-                            <td valign="top" colspan="7" class="dataTables_empty text-center">No data available in table</td>
+                            <td valign="top" colspan="9" class="dataTables_empty text-center">No data available in table</td>
                           </tr>
                         @endif
                         @if($receiveSum->count())
@@ -174,7 +215,7 @@
                       <tbody>
                         @if($transaction->isEmpty())
                           <tr>
-                            <td valign="top" colspan="7" class="dataTables_empty text-center">No data available in table</td>
+                            <td valign="top" colspan="4" class="dataTables_empty text-center">No data available in table</td>
                           </tr>
                         @endif
                         @php $total2 = 0; @endphp
@@ -324,7 +365,7 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="formModal">Purchase Item Detail</h5>
+            <h5 class="modal-title" id="formModal">{{ isset($process) ? 'Process Material' : 'Purchase Item' }} Detail</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>

@@ -18,6 +18,7 @@ class Company extends Model
         'email',
         'website',
         'logo',
+        'created_by',
         'updated_at',
     ];
 }

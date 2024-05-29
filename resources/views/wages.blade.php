@@ -34,7 +34,7 @@
                         <th>Sr.</th>
                         <th>Employee</th>
                         <th>Wages (Pkr)</th>
-                        <th>Month</th>
+                        <th>Advance (Pkr)</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -44,8 +44,8 @@
                         <tr>
                           <td>{{$loop->index + 1}}</td>
                           <td>{{$item->employee_no}} - {{$item->name}}</td>
-                          <td>{{ number_format($item->total_wages) }}</td>
-                          <td>{{$item->month_year}}</td>
+                          <td>{{ number_format($item->total_wages - $item->wagesDebit) }}</td>
+                          <td>{{ number_format($item->obCredit + $item->obDebit + $item->advanceDebit - $item->radvanceCredit) }}</td>
                           <td><a href="{{ route('wages.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a></td>     
                         </tr>
                         @endforeach
@@ -56,7 +56,7 @@
                         <th>Sr.</th>
                         <th>Employee</th>
                         <th>Wages (Pkr)</th>
-                        <th>Month</th>
+                        <th>Advance (Pkr)</th>
                         <th>Action</th>
                       </tr>
                     </tfoot>
@@ -72,7 +72,7 @@
                         <th>Sr.</th>
                         <th>Vendor</th>
                         <th>Wages (Pkr)</th>
-                        <th>Month</th>
+                        <th>Advance (Pkr)</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -82,8 +82,8 @@
                         <tr>
                           <td>{{$loop->index + 1}}</td>
                           <td>{{$item->vendor_no}} - {{$item->fname}}</td>
-                          <td>{{ number_format($item->total_wages) }}</td>
-                          <td>{{$item->month_year}}</td>
+                          <td>{{ number_format($item->total_wages - $item->wagesDebit) }}</td>
+                          <td>{{ number_format($item->obCredit + $item->obDebit + $item->advanceDebit - $item->radvanceCredit) }}</td>
                           <td><a href="{{ route('wages.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a></td>            
                         </tr>
                         @endforeach
@@ -94,7 +94,7 @@
                         <th>Sr.</th>
                         <th>Employee</th>
                         <th>Wages (Pkr)</th>
-                        <th>Month</th>
+                        <th>Advance (Pkr)</th>
                         <th>Action</th>
                       </tr>
                     </tfoot>

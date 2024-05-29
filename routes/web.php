@@ -7,6 +7,7 @@ use App\Http\Controllers\HeadController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\IGroupController;
 use App\Http\Controllers\ReturnController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\MachineController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\MProcessController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminController;
@@ -63,8 +65,8 @@ Route::post('/customer', [CustomerController::class, 'store'])->name('customer.s
 Route::get('/customer/{id}', [CustomerController::class, 'show'])->name('customer.show');
 Route::get('/editCustomer/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
 Route::post('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
-Route::get('/customerDetail/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
-Route::post('/customerDetail/{id}', [CustomerController::class, 'detail'])->name('customer.filter');
+Route::get('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
+Route::post('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.filter');
 
 // Employee
 Route::get('/employee', [EmployeeController::class, 'index'])->name('employee');
@@ -73,8 +75,8 @@ Route::post('/employee', [EmployeeController::class, 'store'])->name('employee.s
 Route::get('/employee/{id}', [EmployeeController::class, 'show'])->name('employee.show');
 Route::get('/editEmployee/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
 Route::post('/employee/{id}', [EmployeeController::class, 'update'])->name('employee.update');
-Route::get('/employeeDetail/{id}', [EmployeeController::class, 'detail'])->name('employee.detail');
-Route::post('/employeeDetail/{id}', [EmployeeController::class, 'detail'])->name('employee.filter');
+Route::get('/eLedger/{id}', [EmployeeController::class, 'detail'])->name('employee.detail');
+Route::post('/eLedger/{id}', [EmployeeController::class, 'detail'])->name('employee.filter');
 
 // Vendor
 // Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
@@ -87,8 +89,8 @@ Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show
 Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
 Route::get('/editContractor/{id}', [VendorController::class, 'edit2'])->name('vendor.edit2');
 Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
-Route::get('/vendorDetail/{id}', [VendorController::class, 'detail'])->name('vendor.detail');
-Route::post('/vendorDetail/{id}', [VendorController::class, 'detail'])->name('vendor.filter');
+Route::get('/vLedger/{id}', [VendorController::class, 'detail'])->name('vendor.detail');
+Route::post('/vLedger/{id}', [VendorController::class, 'detail'])->name('vendor.filter');
 
 // Material
 Route::get('/material', [MaterialController::class, 'index'])->name('material');
@@ -147,6 +149,14 @@ Route::get('/productMaterial/{id}', [ProductMaterialController::class, 'show'])-
 Route::get('/editProductMaterial/{id}', [ProductMaterialController::class, 'edit'])->name('productMaterial.edit');
 Route::post('/productMaterial/{id}', [ProductMaterialController::class, 'update'])->name('productMaterial.update');
 
+// Material Processing
+Route::get('/mprocess', [MProcessController::class, 'index'])->name('mprocess');
+Route::get('/addMProcess', [MProcessController::class, 'create'])->name('mprocess.add');
+Route::post('/mprocess', [MProcessController::class, 'store'])->name('mprocess.store');
+Route::get('/mprocess/{id}', [MProcessController::class, 'show'])->name('mprocess.show');
+Route::get('/editMProcess/{id}', [MProcessController::class, 'edit'])->name('mprocess.edit');
+Route::post('/mprocess/{id}', [MProcessController::class, 'update'])->name('mprocess.update');
+
 // Purchase
 Route::get('/purchase', [PurchaseController::class, 'index'])->name('purchase');
 Route::get('/addPurchase', [PurchaseController::class, 'create'])->name('purchase.add');
@@ -175,12 +185,22 @@ Route::get('/return/{id}', [ReturnController::class, 'show'])->name('return.show
 Route::get('/editReturn/{id}', [ReturnController::class, 'edit'])->name('return.edit');
 Route::post('/return/{id}', [ReturnController::class, 'update'])->name('return.update');
 
+// Issuance Group
+Route::get('/igroup', [IGroupController::class, 'index'])->name('igroup');
+Route::get('/addIGroup', [IGroupController::class, 'create'])->name('igroup.add');
+Route::post('/igroup', [IGroupController::class, 'store'])->name('igroup.store');
+Route::get('/igroup/{id}', [IGroupController::class, 'show'])->name('igroup.show');
+Route::get('/editIGroup/{id}', [IGroupController::class, 'edit'])->name('igroup.edit');
+Route::post('/igroup/{id}', [IGroupController::class, 'update'])->name('igroup.update');
+
 // Stock / Issuance
 Route::get('/stock', [StockController::class, 'index'])->name('stock');
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
 Route::get('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.daily');
 Route::post('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.filter');
 Route::get('/addIssue', [StockController::class, 'create'])->name('stock.add');
+Route::get('/addGIssue', [StockController::class, 'gcreate'])->name('stock.gadd');
+Route::post('/gissue', [StockController::class, 'gstore'])->name('stock.gstore');
 Route::post('/issue', [StockController::class, 'store'])->name('stock.store');
 Route::get('/issue/{id}', [StockController::class, 'show'])->name('stock.show');
 Route::get('/editIssue/{id}', [StockController::class, 'edit'])->name('stock.edit');
@@ -189,6 +209,7 @@ Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Pro
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
 Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
+Route::get('/ajaxIG', [StockController::class, 'ajaxIG'])->name('ajaxIG'); //Issuance Group
 Route::get('/ajaxMQty', [StockController::class, 'ajaxMQty'])->name('ajaxMQty'); //Material Qty
 
 // Machine Material Issuance
@@ -242,7 +263,7 @@ Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name
 Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name('transaction.showExpense');
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
 // Transaction BRS
-Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
+// Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
 Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRS');
 Route::get('/BRS/{id}', [TransactionController::class, 'showBRS'])->name('transaction.showBRS');
 Route::get('/editBRS/{id}', [TransactionController::class, 'editBRS'])->name('transaction.editBRS');

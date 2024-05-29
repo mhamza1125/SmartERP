@@ -14,7 +14,7 @@ class OrderRepository implements GlobalInterface {
     public function active(){
         // Adding / Editing Purchases
         return Order::where('order_status', '<', '6')
-        ->get();
+        ->orderBy('orders.created_at', 'desc')->get();
     }
 
     public function get($id){
@@ -29,6 +29,7 @@ class OrderRepository implements GlobalInterface {
         return Order::where('orders.customer_id', $id)
         ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
         ->select('orders.*', 'customers.*')
+        ->orderBy('orders.created_at', 'desc')
         ->get();
     }
     

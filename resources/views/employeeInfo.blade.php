@@ -11,7 +11,7 @@
               <div class="btn-group">
                 <a href="{{ route('employee') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('employee.detail', $employee['employee_id']) }}" class="btn btn-primary">Record</a>               
+                <a href="{{ route('employee.detail', $employee['employee_id']) }}" class="btn btn-primary">Ledger</a>               
               </div>
             </div>
           </div>

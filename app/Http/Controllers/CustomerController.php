@@ -88,18 +88,25 @@ class CustomerController extends Controller
         $customer = $this->customerRepository->get($id);
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
         if(!empty($dfrom) && !empty($dto)){
-            $detail = $this->transactionRepository->cDetailFilter($id, $dfrom, $dto);
+            $all = $this->transactionRepository->cDetailFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
         }else{
             $detail = $this->transactionRepository->cDetail($id);
         }
         $totalCredit = $detail->sum('credit');
         $totalDebit = $detail->sum('debit');
-        $balance = $totalCredit - $totalDebit;
+        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
         return view('customerDetail', [
             'customer' => $customer,
             'detail' => $detail,
             'balance' => $balance,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
             'dfrom' => $dfrom,
             'dto' => $dto,
         ]);

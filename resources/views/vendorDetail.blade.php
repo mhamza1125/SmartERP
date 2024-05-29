@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Vendor Detail</h4>
+            <h4>{{ $vendor['vendor_type'] == 0 ? 'Vendor':'Contractor'}} Detail</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
@@ -37,7 +37,7 @@
                 <table class="table table-sm">
                   <tbody>
                     <tr>
-                      <td><b>Vendor:</b> {{$vendor['vendor_no']}} - {{$vendor['fname']}}</td>
+                      <td><b>{{ $vendor['vendor_type'] == 0 ? 'Vendor':'Contractor'}}:</b> {{$vendor['vendor_no']}} - {{$vendor['fname']}}</td>
                       {{-- <td><b>Vendor Type:</b> {{$vendor['vtname']}}</td> --}}
                       {{-- <td><b>Contact:</b> {{$vendor['phone1']}}</td> --}}
                       @if(!empty($dfrom) && !empty($dto))
@@ -65,6 +65,16 @@
                     </tr>
                   </thead>
                   <tbody>
+                    @if($oBalance != 0)
+                      <tr>
+                        <td>#</td>
+                        <td>Opening Balance</td>
+                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    @endif
                     @if($detail->count())
                       @foreach($detail as $item)
                       <tr>
@@ -77,7 +87,7 @@
                         </td>
                         <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
                         <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
-                        <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
+                        <td>{{ isset($item->return_date) ? $item->return_date : (isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '')) }}</td>
                         <td>
                           @if(isset($item->transaction_type))
                             @if($item->transaction_type == 'openingBalance')
@@ -93,6 +103,16 @@
                         </td>
                       </tr>
                       @endforeach
+                    @endif
+                    @if($cBalance != 0)
+                      <tr>
+                        <td>#</td>
+                        <td>Closing Balance</td>
+                        <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>
+                        <td>{{ $cBalance > 0 ? number_format(abs($cBalance)) : '' }}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
                     @endif
                   </tbody>
                   <tfoot>

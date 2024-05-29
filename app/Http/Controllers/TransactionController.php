@@ -186,12 +186,25 @@ class TransactionController extends Controller
             $validatedData['credit'] = $validatedData['debit'];
             $validatedData['debit'] = null;
         }
+
+        if($validatedData['bank_id'] != '0' && $validatedData['credit'] == '0'){
+            $transaction = $this->transactionRepository->bankBalance2($validatedData['bank_id']);
+            $balance = $transaction->tcredit - $transaction->tdebit;
+        }else{
+            $balance = $this->transactionRepository->cashBalance();
+        }
+
+        if($balance < $validatedData['debit'] && $validatedData['credit'] == '0'){
+            return redirect()->back()->with(['fails' => 'Insufficient Balance Available'])->withInput();
+        }
+
         $getId = $this->transactionRepository->store($validatedData);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'transaction', 'transactions', $getId);        
             }
         }
+
         if($request->input('transaction_to') == 'employee'){
             return redirect()->route('transaction.showEPayment', $getId)->with('success', 'Record Inserted Successfully');
         }elseif($request->input('transaction_to') == 'vendor'){

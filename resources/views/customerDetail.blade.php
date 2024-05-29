@@ -63,6 +63,16 @@
                     </tr>
                   </thead>
                   <tbody>
+                    @if($oBalance != 0)
+                      <tr>
+                        <td>#</td>
+                        <td>Opening Balance</td>
+                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    @endif
                     @if($detail->count())
                       @foreach($detail as $item)
                       <tr>
@@ -88,6 +98,16 @@
                         </td>
                       </tr>
                       @endforeach
+                    @endif
+                    @if($cBalance != 0)
+                      <tr>
+                        <td>#</td>
+                        <td>Closing Balance</td>
+                        <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>
+                        <td>{{ $cBalance > 0 ? number_format(abs($cBalance)) : '' }}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
                     @endif
                   </tbody>
                   <tfoot>

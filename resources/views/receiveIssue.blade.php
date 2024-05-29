@@ -8,10 +8,36 @@
           <div class="card-header">
             <h4>Received Issuance Table</h4>
             <div class="card-header-action">
-              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Receive Issuance</a>
+              {{-- <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Receive Issuance</a> --}}
             </div>
           </div>
           <div class="card-body">
+            <form action="{{ route('rstock.add', 0) }}" method="POST" class="needs-validation" novalidate="" id="rstock">@csrf
+              <div class="row">
+                <div class="form-group col-md-5">
+                  <label>Issuance For</label>
+                  <select class="form-control select2" name="head_id" id="head_id" required style="width: 100%">
+                    <option value="" selected disabled>Select Issuance Type</option>
+                    <option value="0">All</option>
+                    @foreach($head as $item)
+                      <option value="{{$item->head_id}}">{{$item->name}}</option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="form-group col-md-5">
+                  <label>Select Issuance</label>
+                  <select class="form-control select2" name="stock_id" id="stock_id" required style="width: 100%">
+                    <option value="" selected disabled>Select Issuance</option>
+                    @foreach($issue as $item)
+                      <option value="{{$item->stock_id}}" data-type="{{$item->issue_for}}">{{$item->stock_no}} - {{($item->job_no) ? $item->job_no : 'Default Issue'}} - {{$item->name}}</option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="form-group col-md-2 mt-4">     
+                  <button type="button" class="btn btn-primary mt-2" onclick="updateFormAction()">Receive Issuance</button>
+                </div>
+              </div>
+            </form>
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>
@@ -63,8 +89,8 @@
   </div>
 </section>
 
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
+{{-- <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="formModal">Add Receive Issuance</h5>
@@ -103,7 +129,7 @@
       </div>
     </div>
   </div>
-</div>
+</div> --}}
 <script>
   $(document).ready(function() {
     $('#head_id').change(function() {

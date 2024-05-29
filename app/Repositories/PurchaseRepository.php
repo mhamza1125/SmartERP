@@ -12,6 +12,18 @@ class PurchaseRepository implements GlobalInterface {
         return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
         ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
         ->leftJoin('receives', 'receives.purchase_id', '=', 'purchases.purchase_id')
+        ->leftJoin('mprocess', 'mprocess.purchase_id', '=', 'purchases.purchase_id')
+        ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendor_no',
+            DB::raw('CASE WHEN receives.purchase_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
+        ->whereNull('mprocess.purchase_id')
+        ->groupBy('purchases.purchase_id')
+        ->orderBy('purchases.created_at', 'desc')
+        ->get();
+
+        // All Purchases with Status Check
+        return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+        ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->leftJoin('receives', 'receives.purchase_id', '=', 'purchases.purchase_id')
         ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendor_no',
             DB::raw('CASE WHEN receives.purchase_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
         ->groupBy('purchases.purchase_id')
@@ -23,6 +35,30 @@ class PurchaseRepository implements GlobalInterface {
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
         ->select('purchases.*', 'orders.job_no', 'vendors.fname')
         ->orderBy('purchases.created_at', 'desc')->get();
+    }
+
+    public function mprocess(){
+        return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+        ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->leftJoin('receives', 'receives.purchase_id', '=', 'purchases.purchase_id')
+        ->leftJoin('mprocess', 'mprocess.purchase_id', '=', 'purchases.purchase_id')
+        ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.vendor_no',
+            DB::raw('CASE WHEN receives.purchase_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
+        ->whereNotNull('mprocess.purchase_id')
+        ->orderBy('purchases.created_at', 'desc')
+        ->groupBy('purchases.purchase_id')
+        ->get();    
+        
+        return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+        ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->leftJoin('receives', 'receives.purchase_id', '=', 'purchases.purchase_id')
+        ->leftJoin('mprocess', 'mprocess.purchase_id', '=', 'purchases.purchase_id')
+        ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendor_no',
+            DB::raw('CASE WHEN receives.purchase_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
+        ->whereNotNull('mprocess.purchase_id')
+        ->groupBy('purchases.purchase_id', 'orders.job_no', 'vendors.fname', 'vendor_no', 'receives.purchase_id')
+        ->orderBy('purchases.created_at', 'desc')
+        ->get();
     }
 
     public function get($id){

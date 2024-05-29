@@ -10,11 +10,13 @@ use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
+use App\Repositories\IGroupRepository;
 use App\Repositories\VendorRepository;
 use App\Repositories\MachineRepository;
 use App\Repositories\MaterialRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\OrderItemRepository;
+use App\Repositories\IGroupItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductMaterialRepository;
@@ -25,12 +27,14 @@ class StockController extends Controller
     protected $imageRepository;
     protected $orderRepository;
     protected $stockRepository;
+    protected $igroupRepository;
     protected $vendorRepository;
     protected $machineRepository;
     protected $materialRepository;
     protected $employeeRepository;
     protected $stockItemRepository;
     protected $orderItemRepository;
+    protected $igroupItemRepository;
     protected $productCostRepository;
     protected $productMaterialRepository;
 
@@ -38,12 +42,14 @@ class StockController extends Controller
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         StockRepository $stockRepository,  
+        IGroupRepository $igroupRepository,  
         OrderRepository $orderRepository,  
         VendorRepository $vendorRepository,  
         MachineRepository $machineRepository,  
         MaterialRepository $materialRepository,
         EmployeeRepository $employeeRepository,
         OrderItemRepository $orderItemRepository,  
+        IGroupItemRepository $igroupItemRepository,  
         StockItemRepository $stockItemRepository,  
         ProductCostRepository $productCostRepository,  
         ProductMaterialRepository $productMaterialRepository,  
@@ -53,12 +59,14 @@ class StockController extends Controller
         $this->imageRepository = $imageRepository;
         $this->orderRepository = $orderRepository;
         $this->stockRepository = $stockRepository;
+        $this->igroupRepository = $igroupRepository;
         $this->vendorRepository = $vendorRepository;
         $this->machineRepository = $machineRepository;
         $this->materialRepository = $materialRepository;
         $this->employeeRepository = $employeeRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->orderItemRepository = $orderItemRepository;
+        $this->igroupItemRepository = $igroupItemRepository;
         $this->productCostRepository = $productCostRepository;
         $this->productMaterialRepository = $productMaterialRepository;
     }
@@ -75,7 +83,7 @@ class StockController extends Controller
 
     public function wages(){
         // Employee / Vendor Wages
-        $wages = $this->stockRepository->wages();
+        $wages = $this->stockRepository->wagesAll();
         $employeeWages = $wages['employees'];
         $vendorWages = $wages['vendors'];
         foreach (['employeeWages', 'vendorWages'] as $key) {
@@ -128,6 +136,14 @@ class StockController extends Controller
         $orderId = $request->input('orderId');
         $orderItem = $this->orderItemRepository->get($orderId);
         return response()->json(['data' => $orderItem]);
+    }
+
+    public function ajaxIG(Request $request){
+        // Ajax Issuance Group
+        $orderId = $request->input('orderId');
+        // $orderId = '16';
+        $igroup = $this->igroupRepository->igroups($orderId);
+        return response()->json(['data' => $igroup]);
     }
 
     public function ajaxPS(Request $request){
@@ -192,6 +208,28 @@ class StockController extends Controller
         ]);
     }
 
+    public function gcreate(){
+        // Add Group Issuance
+        $employee = $this->employeeRepository->wages();
+        $vendor = $this->vendorRepository->worker();
+        $stock = $this->stockItemRepository->stock();
+        $pstock = $this->stockItemRepository->pStock();
+        $order = $this->orderRepository->active();
+        $count = $this->stockRepository->refNo();
+        $stage = $this->headRepository->get('12');
+        $gstock = $this->stockItemRepository->gstock();
+        return view('addGIssue', [
+            'count' => $count,
+            'order' => $order,
+            'stock' => $stock,
+            'pstock' => $pstock,
+            'gstock' => $gstock,
+            'employee' => $employee,
+            'vendor' => $vendor,
+            'stage' => $stage,
+        ]);
+    }
+
     public function create2(){
         // Add Machine Material Issuance
         $employee = $this->employeeRepository->wages();
@@ -240,6 +278,19 @@ class StockController extends Controller
         } else {
             return redirect()->route('rstock.show', $getId)->with('success', 'Record Inserted Successfully');
         }
+    }
+
+    public function gstore(StockRequest $request){
+        // Store IGroup Issuance
+        $validatedData = $request->validated();
+        if (array_sum($request->input('quantity', [])) == 0) {
+            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
+        }
+        $getId = $this->stockRepository->store($validatedData);
+        $igroups = $request->input('igroup_id');
+        $quantities = $request->input('quantity');
+        $this->storeIGroup($getId, $igroups, $quantities);
+        return redirect()->route('stock.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
     public function show($id){
@@ -427,6 +478,7 @@ class StockController extends Controller
         $issue = $this->stockRepository->get($id);
         $issueItem = $this->stockItemRepository->getAvg($id);
         $count = $this->stockRepository->refNo2($id);
+        $rstock = $this->stockItemRepository->rstock($id);
         $average = [];
         foreach ($issueItem as $item) {
             if ($item->material_id) {
@@ -440,6 +492,7 @@ class StockController extends Controller
             'count' => $count,
             'head' => $head,
             'issue' => $issue,
+            'rstock' => $rstock,
             'average' => $average,
             'issueItem' => $issueItem,
             'issueItemUnique' => $issueItem,
@@ -464,6 +517,7 @@ class StockController extends Controller
         $issue = $this->stockRepository->get($id);
         $date = $this->stockRepository->get($issue['issue_id']);
         $issueItem = $this->stockItemRepository->getAvg($issue['issue_id']);
+        $rstock = $this->stockItemRepository->rstock($issue['issue_id']);
         $receiveItem = $this->stockItemRepository->get($id);
         $workLog = $this->stockItemRepository->workLog($id);
         $average = [];
@@ -479,6 +533,7 @@ class StockController extends Controller
             'head' => $head,
             'date' => $date,
             'issue' => $issue,
+            'rstock' => $rstock,
             'average' => $average,
             'issueItem' => $issueItem,
             'receiveItem' => $receiveItem,
@@ -509,6 +564,29 @@ class StockController extends Controller
                 'work_wages' => $wages,
             ];
             $this->stockItemRepository->store($stockItem);
+        }
+    }
+
+    private function storeIGroup($getId, $igroups, $quantities){
+        // Store Issuance Items
+        foreach($igroups as $key => $igroup){
+            $igroupItem = $this->igroupItemRepository->get($igroup);
+            foreach($igroupItem as $item){
+                $quantity = $quantities[$key] * $item->quantity ?? 0;
+                $ptid = $item->product_type_id ?? 0;
+                $mid = $item->material_id ?? 0;
+                $stage = $item->stage_id ?? 0;
+                $stockItem = [
+                    'stock_id' => $getId,
+                    'product_type_id' => $ptid,
+                    'material_id' => $mid,
+                    'quantity' => $quantity,
+                    'stage_id' => $stage,
+                    'work_logs' => '0',
+                    'work_wages' => '0',
+                ];
+                $this->stockItemRepository->store($stockItem);
+            }
         }
     }
 }

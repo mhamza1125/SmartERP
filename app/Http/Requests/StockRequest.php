@@ -33,10 +33,11 @@ class StockRequest extends FormRequest
             'stock_type' => 'required',
             'stock_status' => 'required',
             'description' => '',
-            // Receive Material
-            'purchase_item_id.*' => 'required',
+            // Stock Items
+            'product_type_id.*' => 'required',
             'material_id.*' => 'required',
             'quantity.*' => 'required',
+            'igroup_id.*' => '',
             'stage_id.*' => '',
             'work_logs.*' => '',
         ];

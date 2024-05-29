@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Edit Pay Vendor</h4>
+            <h4>Edit Pay Vendor / Contractor</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -20,9 +20,10 @@
                 <div class="col-md-6">
                   <div class="form-group">          
                     <input type="hidden" name="transaction_to" required value="vendor" id="transaction_to">
-                    <label>Vendor</label>
+                    <input type="hidden" name="credit" required value="0">
+                    <label>Vendor / Contractor</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
-                      <option value="" selected disabled>Select Vendor</option>
+                      <option value="" selected disabled>Select Vendor / Contractor</option>
                       @if($vendor->count())
                         @foreach($vendor as $item)
                           <option value="{{$item->vendor_id}}" {{ $transaction['payee_id'] == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
@@ -30,7 +31,7 @@
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Vendor</div>
+                    <div class="invalid-feedback">Select Vendor / Contractor</div>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -49,19 +50,19 @@
               <div class="row">
                 <div class="col-md-6" id="display1">
                   <div class="form-group">
-                    <label>Purchases</label>
-                    <select class="form-control select2" name="order_id" id="order_id" required>
-                      <option value="" disabled>Select Purchase</option>
+                    <label>Purchases / Processing</label>
+                    <select class="form-control select2" name="order_id" id="order_id">
+                      <option value="" disabled>Select Purchase / Processing</option>
                       {{-- Ajax Orders --}}
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Purchase</div>
+                    <div class="invalid-feedback">Select Purchase / Processing</div>
                   </div>
                 </div>
                 <div class="col-md-6" id="display2">
                   <div class="form-group">
                     <label>Purchases</label>
-                    <input type="text" readonly class="form-control" value="Not for Purchase">
+                    <input type="text" readonly class="form-control" value="Not for Purchase / Processing">
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -143,16 +144,25 @@
 </section>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-        var transactionTypeSelect = document.getElementById('transaction_type');
+      var transactionTypeSelect = document.getElementById('transaction_type');
+      var orderIdSelect = document.getElementById('order_id');
+      var display1 = document.getElementById('display1');
+      var display2 = document.getElementById('display2');
 
-        // Event listener for change event on transaction type select
-        transactionTypeSelect.addEventListener('change', function () {
-            document.getElementById('display1').style.display = transactionTypeSelect.value === 'payment' ? 'block' : 'none';
-            document.getElementById('display2').style.display = transactionTypeSelect.value === 'payment' ? 'none' : 'block';
-        });
-
-        // Initial call to trigger the event listener and set initial display
-        transactionTypeSelect.dispatchEvent(new Event('change'));
+      // Function to update the display and required attribute
+      function updateDisplay() {
+          if (transactionTypeSelect.value === 'payment') {
+              display1.style.display = 'block';
+              display2.style.display = 'none';
+              orderIdSelect.setAttribute('required', 'required');
+          } else {
+              display1.style.display = 'none';
+              display2.style.display = 'block';
+              orderIdSelect.removeAttribute('required');
+          }
+      }
+      transactionTypeSelect.addEventListener('change', updateDisplay);
+      updateDisplay();
   });
 
   var isPayPage = false;

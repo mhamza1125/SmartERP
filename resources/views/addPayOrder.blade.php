@@ -20,6 +20,7 @@
               <div class="row">
                 <input type="hidden" name="transaction_to" required value="customer" id="transaction_to">
                 <input type="hidden" name="transaction_type" required value="orderPayment">
+                <input type="hidden" name="debit" required value="0">
                 <div class="col-md-6">
                   <div class="form-group">          
                     <label>Customer</label>

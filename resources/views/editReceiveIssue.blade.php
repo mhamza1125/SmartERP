@@ -294,6 +294,7 @@
 <script>
   var isReceiveIssuePage = true;
   var issueItems = @json($issueItem);
+  var rstock = {!! $rstock->toJson() !!};
   var ajaxPCUrl = "{{ route('ajaxPC') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
 </script>

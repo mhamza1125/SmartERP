@@ -5,17 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductType extends Model
+class IGroupItem extends Model
 {
     use HasFactory;
     
-    protected $primaryKey = 'product_type_id';
+    protected $table = 'igroup_items';
+    protected $primaryKey = 'igroup_item_id';
 
     protected $fillable = [
-        'product_id',
-        'size_id',
-        'color_id',
-        'product_type_status',
+        'igroup_id',
+        'product_type_id',
+        'material_id',
+        'quantity',
+        'stage_id',
         'created_by',
         'updated_at',
     ];

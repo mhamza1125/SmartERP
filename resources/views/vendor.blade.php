@@ -20,6 +20,7 @@
                     <th>Vendor No</th>
                     <th>Name</th>
                     <th>Vendor Type</th>
+                    <th>Balance</th>
                     {{-- <th>Vendor As Worker</th> --}}
                     <th>Action</th>
                   </tr>
@@ -32,6 +33,7 @@
                       <td>{{$item->vendor_no}}</td>
                       <td>{{$item->fname}}</td>
                       <td>{{$item->vtname}}</td>
+                      <td>{{number_format($item->balance)}}</td>
                       {{-- <td><b>@if($item->vendor_type) 
                         <span class="badge badge-success">Active</span> @else 
                         <span class="badge badge-danger">Inactive</span> @endif</td>  --}}
@@ -42,16 +44,17 @@
                       </td>
                     </tr>
                     @endforeach
-                    @endif
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <th>Sr.</th>
-                      <th>Vendor No</th>
-                      <th>Name</th>
-                      <th>Vendor Type</th>
-                      {{-- <th>Vendor As Worker</th> --}}
-                      <th>Action</th>
+                  @endif
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th>Sr.</th>
+                    <th>Vendor No</th>
+                    <th>Name</th>
+                    <th>Vendor Type</th>
+                    <th>Balance</th>
+                    {{-- <th>Vendor As Worker</th> --}}
+                    <th>Action</th>
                   </tr>
                 </tfoot>
               </table>

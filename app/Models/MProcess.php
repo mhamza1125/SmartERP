@@ -5,17 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductType extends Model
+class MProcess extends Model
 {
     use HasFactory;
     
-    protected $primaryKey = 'product_type_id';
+    protected $table = 'mprocess';
+    protected $primaryKey = 'mprocess_id';
 
     protected $fillable = [
-        'product_id',
-        'size_id',
-        'color_id',
-        'product_type_status',
+        'purchase_id',
+        'purchase_item_id',
+        'stock_item_id',
+        'before_mid',
+        'before_qty',
         'created_by',
         'updated_at',
     ];

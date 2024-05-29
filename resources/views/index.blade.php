@@ -61,8 +61,7 @@
                 </div>
               </div>
               <div class="dropdown-list-content dropdown-list-message">
-                <a href="#" class="dropdown-item"> <span class="dropdown-item-avatar
-                                            text-white"> <img alt="image" src="{{ URL::asset('assets/img/users/user-1.png') }}" class="rounded-circle">
+                <a href="#" class="dropdown-item"> <span class="dropdown-item-avatar text-white"> <img alt="image" src="{{ URL::asset('assets/img/users/user-1.png') }}" class="rounded-circle">
                   </span> <span class="dropdown-item-desc"> <span class="message-user">John
                       Deo</span>
                     <span class="time messege-text">Please check your mail !!</span>
@@ -257,7 +256,8 @@
                   data-feather="briefcase"></i><span>Working</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('machine') }}">Machine</a></li>
-                <li><a class="nav-link" href="{{ route('missue') }}">MM Issue</a></li>
+                <li><a class="nav-link" href="{{ route('missue') }}">MM Issuance</a></li>
+                <li><a class="nav-link" href="{{ route('mprocess.add') }}">Material Processing</a></li>
               </ul>
             </li>
             <li class="dropdown">

@@ -15,7 +15,7 @@
                 @else
                   <a href="{{ route('vendor.edit2', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>
                 @endif
-                <a href="{{ route('vendor.detail', $vendor['vendor_id']) }}" class="btn btn-primary">Record</a>
+                <a href="{{ route('vendor.detail', $vendor['vendor_id']) }}" class="btn btn-primary">Ledger</a>
               </div>
             </div>
           </div>
