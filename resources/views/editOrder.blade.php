@@ -77,7 +77,7 @@
 
               <h6>Order Items</h6>
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Products</label>
                     <select class="form-control select2" name="product_type_id" id="product_type_id">
@@ -90,7 +90,7 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Product Stage</label>
                     <select class="form-control select2" name="stage_id" id="stage_id">
@@ -107,22 +107,41 @@
                     <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label>Price (Pkr)</label>
-                    <input type="number" min="0" class="form-control" name="price" placeholder="0">
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label>Price (USD)</label>
-                    <input type="number" min="0" class="form-control" name="price2" placeholder="0">
-                  </div>
-                </div>
                 <div class="col-md-1">
                   <div class="form-group">
                     <label>Add</label> <br>
                     <button type="button" id="addBtn" class="btn btn-primary">Add</button>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">                    
+                    <label>Currency</label>
+                    <select class="form-control select2" name="head_id" required>
+                      <option value="" selected disabled>Select Currency</option>
+                      @if($head->count())
+                        @foreach($head as $item)
+                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Price (Currency)</label>
+                    <input type="number" min="0" class="form-control" name="price2" id="price2" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Exchange Rate (Pkr)</label>
+                    <input type="number" min="0" class="form-control" name="exchange" id="exchange" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Price (Pkr)</label>
+                    <input type="number" min="0" class="form-control" name="price" id="price" placeholder="0">
                   </div>
                 </div>
               </div>
@@ -136,7 +155,8 @@
                         <th>Product Stage</th>
                         <th>Quantity</th>
                         <th>Price (Pkr)</th>
-                        <th>Price (USD)</th>
+                        <th>Exchange (Pkr)</th>
+                        <th>Price (Currency)</th>
                         <th>Total</th>
                         <th>Action</th>
                       </tr>
@@ -160,8 +180,11 @@
                               </td>
                               <td>{{$item->price}}
                                 <input type="hidden" name="price[]" value="{{$item->price}}"></td>
-                              <td>{{$item->price2}}
-                                <input type="hidden" name="price2[]" value="{{$item->price2}}"></td>
+                              <td>{{$item->exchange}}
+                                <input type="hidden" name="exchange[]" value="{{$item->exchange}}"></td>
+                              <td>{{$item->price2}} {{$item->cname}}
+                                <input type="hidden" name="price2[]" value="{{$item->price2}}">
+                                <input type="hidden" name="head_id[]" value="{{$item->head_id}}"></td>
                               <td>{{$item->quantity * $item->price}}
                                 <input type="hidden" name="total[]" value="{{$item->total}}">
                               </td>

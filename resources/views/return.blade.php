@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Return No</th>
                     <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -30,11 +30,11 @@
                     @foreach($return as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->return_date}}</td>                      
                       <td>{{$item->return_no}}</td>
                       <td>{{$item->receive_no}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{$item->fname}}</td>
-                      <td>{{$item->return_date}}</td>                      
                       <td>
                         <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('return.edit', $item->return_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -46,11 +46,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Return No</th>
                     <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>
@@ -62,7 +62,7 @@
     </div>
   </div>
 </section>
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal"
+{{-- <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="formModal"
   aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -94,12 +94,12 @@
       </div>
     </div>
   </div>
-</div>
-<script>
+</div> --}}
+{{-- <script>
   function updateFormAction() {
         var getId = document.getElementById('receive_id').value;
         document.getElementById('return').action = "{{ route('return.add', ':getId') }}".replace(':getId', getId);
         document.getElementById('return').submit();
     }
-</script>
+</script> --}}
 @endsection

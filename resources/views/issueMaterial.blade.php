@@ -17,10 +17,10 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Machine No</th>
                     <th>Machine Type</th>
                     <th>Employee</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -29,10 +29,10 @@
                     @foreach($issue as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->stock_date}}</td>                      
                       <td>{{$item->machine_no}}</td>
                       <td>{{$item->hname}}</td>
                       <td>{{$item->employee_no}} - {{$item->name}}</td>
-                      <td>{{$item->stock_date}}</td>                      
                       <td>
                         <a href="{{ route('mstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('mstock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -44,10 +44,10 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Machine No</th>
                     <th>Machine Type</th>
                     <th>Employee</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

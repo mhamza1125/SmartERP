@@ -2,7 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Models\ReturnMaterial;
 use App\Models\ReceiveMaterial;
+use Illuminate\Support\Facades\DB;
 
 class ReceiveMaterialRepository implements GlobalInterface {
     
@@ -20,7 +22,31 @@ class ReceiveMaterialRepository implements GlobalInterface {
     }
 
     public function rSum($id){
-        // Used by PurchaseInfo Recieving / Return Sum
+        // Subquery for received quantities
+        $receivedSubquery = ReceiveMaterial::selectRaw('purchase_item_id, SUM(quantity) as total_received')
+        ->groupBy('purchase_item_id');
+
+        // Subquery for returned quantities
+        $returnedSubquery = ReturnMaterial::selectRaw('receive_materials.purchase_item_id, SUM(return_materials.quantity) as total_returned')
+        ->join('receive_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
+        ->groupBy('receive_materials.purchase_item_id');
+
+        // Main query
+        return DB::table('purchase_items')->where('purchase_items.purchase_id', $id)
+        ->joinSub($receivedSubquery, 'received', function($join) {
+            $join->on('purchase_items.purchase_item_id', '=', 'received.purchase_item_id');
+        })
+        ->leftJoinSub($returnedSubquery, 'returned', function($join) {
+            $join->on('purchase_items.purchase_item_id', '=', 'returned.purchase_item_id');
+        })
+        ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+        ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
+        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+        ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+        ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, materials.material_no, materials.name, heads.name as hname, orders.job_no, COALESCE(received.total_received, 0) as rqty, COALESCE(returned.total_returned, 0) as rqty2')
+        ->get();
+
+        // Used by PurchaseInfo Recieving / Return Sum, Working Good but showing error when single receiving have multiple returns
         return ReceiveMaterial::where('purchase_items.purchase_id', $id)
         ->leftJoin('return_materials', 'return_materials.receive_material_id', 'receive_materials.receive_material_id')
         ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')

@@ -33,6 +33,9 @@ class OrderRequest extends FormRequest
             'product_stage_id.*' => 'required',
             'quantity.*' => 'required',
             'price.*' => 'required',
+            // 'price2.*' => 'required',
+            // 'head_id.*' => 'required',
+            // 'exchange.*' => 'required',
         ];
     }
 }

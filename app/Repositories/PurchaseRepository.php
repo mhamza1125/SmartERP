@@ -62,6 +62,17 @@ class PurchaseRepository implements GlobalInterface {
     }
 
     public function get($id){
+        // Checking If it is received or not
+        return Purchase::where('purchases.purchase_id', $id)
+        ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+        ->leftJoin('receives', 'receives.purchase_id', '=', 'purchases.purchase_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+        ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1', 
+            DB::raw('CASE WHEN receives.purchase_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
+        ->groupBy('purchases.purchase_id')
+        ->first();
+
+        // Getting Without Check
         return Purchase::where('purchase_id', $id)
         ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')

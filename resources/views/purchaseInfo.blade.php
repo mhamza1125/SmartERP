@@ -10,7 +10,13 @@
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
+                @if(!$purchase['has_received'])
+                  @if(isset($process))
+                    <a href="{{ route('mprocess.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
+                  @else
+                    <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
+                  @endif
+                @endif
                 <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
                 <a href="{{ route('transaction.addVPayment') }}" class="btn btn-primary">Pay</a>
               </div>
@@ -355,14 +361,10 @@
   </div>
 </section>
 
-<!-- Add this hidden div to hold the modal content for printing -->
-<div id="printModalContent" style="display: none;"></div>
-
 @if($purchaseItem->count())
 @foreach($purchaseItem as $purchase)
-    <div class="modal fade" id="exampleModal{{$purchase->purchase_item_id}}" tabindex="-1" role="dialog" aria-labelledby="formModal"
-      aria-hidden="true">
-      <div class="modal-dialog" role="document">
+    <div class="modal fade" id="exampleModal{{$purchase->purchase_item_id}}" tabindex="-1" role="dialog" aria-labelledby="formModal" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="formModal">{{ isset($process) ? 'Process Material' : 'Purchase Item' }} Detail</h5>
@@ -375,52 +377,75 @@
               <table class="table table-sm">
                 <thead>
                   <tr>
-                    <th colspan="4">{{$purchase->material_no}} - {{$purchase->name}}</th>
+                    <th colspan="6">{{$purchase->material_no}} - {{$purchase->name}} | Order Qty: {{$purchase->quantity}}</th>
                   </tr>
                   <tr>
                     <th>Sr.</th>
-                    <th>Receive No</th>
-                    <th>Quantity</th>
                     <th>Date</th>
+                    <th>Receive No / Return No</th>
+                    <th>Receive Qty</th>
+                    <th>Return Qty</th>
+                    <th>Balance</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @php $sr = 1; $total = 0; $total2 = 0; @endphp
-                  @foreach($receiveAll as $receive)
-                    @if($purchase->purchase_item_id == $receive->purchase_item_id)
+                  @php
+                    $sr = 1;
+                    $balance = $purchase->quantity;
+                    $transactions = collect();
+
+                    foreach ($receiveAll as $receive) {
+                      if ($purchase->purchase_item_id == $receive->purchase_item_id) {
+                        $transactions->push([
+                          'type' => 'receive',
+                          'no' => $receive->receive_no,
+                          'qty' => $receive->rqty,
+                          'created_at' => $receive->created_at
+                        ]);
+                      }
+                    }
+
+                    foreach ($returnAll as $return) {
+                      if ($purchase->purchase_item_id == $return->purchase_item_id) {
+                        $transactions->push([
+                          'type' => 'return',
+                          'no' => $return->return_no,
+                          'qty' => $return->rqty,
+                          'created_at' => $return->created_at
+                        ]);
+                      }
+                    }
+
+                    $sortedTransactions = $transactions->sortBy('created_at');
+                  @endphp
+
+                  @foreach($sortedTransactions as $transaction)
                     <tr>
                       <td>{{$sr++}}</td>
-                      <td>{{$receive->receive_no}}</td>
-                      <td>{{$receive->rqty}}</td>
-                      <td>{{ date('Y-m-d', strtotime($receive->created_at)) }}</td>
-                      @php $total += $receive->rqty @endphp
+                      <td>{{ date('Y-m-d', strtotime($transaction['created_at'])) }}</td>
+                      <td>{{$transaction['no']}}</td>
+                      <td>{{$transaction['type'] == 'receive' ? $transaction['qty'] : ''}}</td>
+                      <td>{{$transaction['type'] == 'return' ? $transaction['qty'] : ''}}</td>
+                      <td>
+                        @php
+                          if ($transaction['type'] == 'receive') {
+                            $balance -= $transaction['qty'];
+                          } else {
+                            $balance += $transaction['qty'];
+                          }
+                        @endphp
+                        {{$balance}}
+                      </td>
                     </tr>
-                    @endif
-                  @endforeach
-                  @foreach($returnAll as $return)
-                    @if($purchase->purchase_item_id == $return->purchase_item_id)
-                    <tr>
-                      <td>{{$sr++}}</td>
-                      <td>{{$return->return_no}}</td>
-                      <td>{{$return->rqty}}</td>
-                      <td>{{ date('Y-m-d', strtotime($return->created_at)) }}</td>
-                      @php $total2 += $return->rqty @endphp
-                    </tr>
-                    @endif
                   @endforeach
                 </tbody>
                 <tfoot>
                   <tr>
                     <th></th>
                     <th>Order Qty: {{$purchase->quantity}}</th>
-                    <th>Received: {{$total}} <br>
-                        Returned: {{$total2}}</th>
-                    <th>Remaining: {{$purchase->quantity - $total + $total2}}</th>
-                  </tr>
-                  <tr>
-                    <th colspan="4">
-                      <button class="btn btn-primary btn-print float-right" onclick="printPModal123('exampleModal{{$purchase->purchase_item_id}}')">Print</button>
-                    </th>
+                    <th>Received: {{$sortedTransactions->where('type', 'receive')->sum('qty')}}</th>
+                    <th>Returned: {{$sortedTransactions->where('type', 'return')->sum('qty')}}</th>
+                    <th>Remaining: {{$balance}}</th>
                   </tr>
                 </tfoot>
               </table>
@@ -429,25 +454,6 @@
         </div>
       </div>
     </div>
-  @endforeach
+@endforeach
 @endif
-
-<script>
-function printPModal(modalId) {
-    // Get the modal content by ID
-    var modalContent = document.getElementById(modalId).innerHTML;
-
-    // Set the modal content to the hidden div
-    document.getElementById('printModalContent').innerHTML = modalContent;
-
-    // Print just the content of the hidden div
-    var printWindow = window.open('', '_blank');
-    printWindow.document.write('<html><head><title>Print</title><link rel="stylesheet" href="' + window.location.origin + '/assets/css/app.min.css' + '"></head><body>');
-    printWindow.document.write(document.getElementById('printModalContent').innerHTML);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-}
-</script>
-  </script>
 @endsection

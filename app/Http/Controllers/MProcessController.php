@@ -67,9 +67,11 @@ class MProcessController extends Controller
         // $vendor = $this->vendorRepository->all();
         $vendor = $this->vendorRepository->vendor();
         $material = $this->materialRepository->all();
+        $stock = $this->stockItemRepository->stock();
         $count = $this->purchaseRepository->refNo();
         return view('addMProcess', [
             'count' => $count,
+            'stock' => $stock,
             'order' => $order,
             'vendor' => $vendor,
             'material' => $material,
@@ -114,11 +116,12 @@ class MProcessController extends Controller
         $order = $this->orderRepository->active();
         $vendor = $this->vendorRepository->all();
         $material = $this->materialRepository->all();
+        $stock = $this->stockItemRepository->stock();
         $purchaseItem = $this->mprocessRepository->get($id->purchase_id);
-
         return view('editMProcess', [
             'purchase' => $id,
             'order' => $order,
+            'stock' => $stock,
             'vendor' => $vendor,
             'material' => $material,
             'purchaseItem' => $purchaseItem,

@@ -57,28 +57,36 @@
                   <thead>
                     <tr>
                       <th>Sr.</th>
+                      <th>Date</th>
                       <th>Transaction Type</th>
                       <th>Debit</th>
                       <th>Credit</th>
-                      <th>Date</th>
+                      <th>Balance</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
+                    @php $index = 1; $balance = $oBalance; @endphp
                     @if($oBalance != 0)
                       <tr>
-                        <td>#</td>
+                        <td>{{$index++}}</td>
+                        <td>{{$dfrom}}</td>
                         <td>Opening Balance</td>
                         <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
-                        <td></td>
+                        <td>{{ number_format($oBalance) }}</td>
                         <td></td>
                       </tr>
                     @endif
                     @if($detail->count())
-                      @foreach($detail as $item)
+                    @foreach($detail as $item)
+                      @php
+                        isset($item->debit) ? $balance -= $item->debit : ''; 
+                        isset($item->credit) ? $balance += $item->credit : ''; 
+                      @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
+                        <td>{{ isset($item->return_date) ? $item->return_date : (isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '')) }}</td>
                         <td>
                           @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
                           @elseif(isset($item->return_no)) Return - ({{$item->return_no}})
@@ -87,7 +95,7 @@
                         </td>
                         <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
                         <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
-                        <td>{{ isset($item->return_date) ? $item->return_date : (isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '')) }}</td>
+                        <td>{{number_format($balance)}}</td>
                         <td>
                           @if(isset($item->transaction_type))
                             @if($item->transaction_type == 'openingBalance')
@@ -106,11 +114,12 @@
                     @endif
                     @if($cBalance != 0)
                       <tr>
-                        <td>#</td>
+                        <td>{{$index++}}</td>
+                        <td>{{$dto}}</td>
                         <td>Closing Balance</td>
                         <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>
                         <td>{{ $cBalance > 0 ? number_format(abs($cBalance)) : '' }}</td>
-                        <td></td>
+                        <td>{{ $balance ? number_format($balance += $cBalance) : number_format($oBalance + $cBalance) }}</td>
                         <td></td>
                       </tr>
                     @endif

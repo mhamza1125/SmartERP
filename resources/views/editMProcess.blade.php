@@ -87,9 +87,15 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label>Quantity B</label>
+                    <label for="available_stock">Available Stock</label>
+                    <input type="text" class="form-control" id="available_stock" name="available_stock" readonly>
+                  </div>
+                </div>  
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Quantity A</label>
                     <input type="number" min="0" class="form-control" name="saquantity" placeholder="0">
                   </div>
                 </div>
@@ -203,5 +209,8 @@
     </div>
   </div>
 </section>
-<script> var isMProcessPage = false; </script>
+<script> 
+  var isMProcessPage = false; 
+  var stockData = @json($stock);
+</script>
 @endsection

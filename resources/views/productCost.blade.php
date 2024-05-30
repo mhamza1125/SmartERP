@@ -19,7 +19,6 @@
                     <th>Sr.</th>
                     <th>Article No</th>
                     <th>Product Name</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -30,7 +29,6 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->article_no}}</td>
                       <td>{{$item->name}}</td>
-                      <td>{{(new DateTime($item->created_at))->format('Y-m-d') }}</td>                      
                       <td>
                         <a href="{{ route('productCost.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('productCost.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -44,7 +42,6 @@
                     <th>Sr.</th>
                     <th>Article No</th>
                     <th>Product Name</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

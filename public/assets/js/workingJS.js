@@ -1407,12 +1407,15 @@ $(document).ready(function() {
                 data: { orderId: orderId },
                 dataType: "json",
                 success: function(response) {
+                    console.log('Response:', response); // Log the response to check data structure
+        
                     var igroupSelect = $('#igroup_id');
                     igroupSelect.empty().append('<option value="" disabled selected>Select Group</option>'); // Corrected here
                     
                     // Check if response data exists and is an array
                     if (response.data && Array.isArray(response.data)) {
                         response.data.forEach(function(item) {
+                            console.log('Item:', item); // Log each item to check its structure
                             var optionText = item.igroup_no;
                             igroupSelect.append(new Option(optionText, item.igroup_id));
                         });
@@ -1569,6 +1572,7 @@ $(document).ready(function() {
         // Event listener for select2:select event on igroup ID
         $('#igroup_id').on('select2:select', function(e) {
             var selectedIGroupId = e.params.data.id;
+            console.log(selectedIGroupId);
             updateAvailableGStock(selectedIGroupId);
         });
 
@@ -1673,7 +1677,7 @@ $(document).ready(function() {
                         return;
                     }
                 }
-            } else { // Issuance Group Page
+            } else {
                 var isDuplicate = false;
                 var stageId = $('#stage_id').val() || "0";
                 $('#items-table tbody tr').each(function() {
@@ -1706,7 +1710,7 @@ $(document).ready(function() {
                     $('#items-table tbody').append(markup);
                     srNo++;
                 });
-            }else{ // Issuance Group Page
+            }else{
                 var stageId = $('#stage_id').val() || "0";
                 var stageName = $('#stage_id option:selected').text();
                 var srNo = $('#items-table tbody tr').length + 1;

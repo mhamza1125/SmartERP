@@ -32,10 +32,10 @@ class ReturnController extends Controller
 
     public function index(){
         $return = $this->returnRepository->all();
-        $receive = $this->receiveRepository->pending();
+        // $receive = $this->receiveRepository->pending();
         return view('return', [
             'return' => $return,
-            'receive' => $receive,
+            // 'receive' => $receive,
         ]); 
     }
 

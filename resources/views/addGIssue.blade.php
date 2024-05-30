@@ -164,6 +164,7 @@
 </section>
 <script>
   var isIssuePage = false;
+  var isIGroupPage = false;
   var stockData = @json($stock);
   var pstockData = @json($pstock);
   var gstockData = @json($gstock);

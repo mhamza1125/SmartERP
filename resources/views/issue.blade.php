@@ -20,12 +20,12 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Issue No</th>
                     <th>Job No</th>
                     <th>Issued For</th>
                     <th>Employee / Vendor</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -34,6 +34,7 @@
                     @foreach($issue as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->stock_date}}</td>                      
                       <td>{{$item->stock_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default issue'}}</td>
                       <td>{{$item->sname}}</td>
@@ -47,10 +48,9 @@
                             <span class="badge badge-warning">Partially Received</span>
                         @endif
                       </td>                  
-                      <td>{{$item->stock_date}}</td>                      
                       <td>
                         <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('stock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(!$item->stock_status) <a href="{{ route('stock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a> @endif
                         <a href="{{ route('rstock.add', $item->stock_id) }}" class="btn btn-success btn-sm">Receive</a>
                       </td>
                     </tr>
@@ -60,12 +60,12 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Issue No</th>
                     <th>Job No</th>
                     <th>Issued For</th>
                     <th>Employee / Vendor</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

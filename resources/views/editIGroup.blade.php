@@ -129,15 +129,15 @@
                           <tr>
                             <td></td>
                             <td>{{$item->article_no}} - Size {{$item->sname}}
-                              <input type="text" name="product_type_id[]" value="{{$item->product_type_id}}">
-                              <input type="text" name="stage_id[]" value="{{$item->stage_id}}">
+                              <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
+                              <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}">
                             </td>
                             <td>@if($item->material_id){{$item->name}}
-                              <input type="text" name="material_id[]" value="{{$item->material_id}}">
-                              @else{{$item->stage}}<input type="text" name="material_id[]" value="0">@endif
+                              <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                              @else{{$item->stage}}<input type="hidden" name="material_id[]" value="0">@endif
                             </td>
                             <td>{{$item->quantity}}
-                              <input type="text" name="quantity[]" value="{{$item->quantity}}"></td>
+                              <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                             </td>
                             <td>@if($item->material_id)
                               <button class="deleteRow btn btn-danger">X</button>
@@ -181,6 +181,7 @@
 <script>
   var isIssuePage = false;
   var isIGroupPage = false;
+  var ajaxIGUrl = "{{ route('ajaxIG') }}";
   var ajaxPTUrl = "{{ route('ajaxPT') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";

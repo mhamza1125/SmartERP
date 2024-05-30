@@ -10,7 +10,9 @@
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ route('issue') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('stock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
+                @if(!$issue['has_received'])
+                  <a href="{{ route('stock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
+                @endif
                 <a href="{{ route('rstock.add', $issue['stock_id']) }}" class="btn btn-primary">Receive</a>
               </div>
             </div>

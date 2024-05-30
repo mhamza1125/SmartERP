@@ -69,12 +69,12 @@
                   <thead>
                     <tr>
                       <th>Sr.</th>
+                      <th>Date</th>
                       <th>Article</th>
                       <th>Product Stage</th>
                       <th>Work Done</th>
                       <th>Quantity</th>
                       <th>Wages</th>
-                      <th>Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -82,6 +82,7 @@
                       @foreach($wages as $item)
                         <tr>
                           <td>{{$loop->index + 1}}</td>
+                          <td>{{$item->stock_date}}</td>
                           <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                           <td>{{$item->stage}}</td>
                           <td>
@@ -97,7 +98,6 @@
                           </td>
                           <td>{{$item->quantity}} {{$item->uname}}</td>
                           <td>{{$item->total_wages}}</td>
-                          <td>{{$item->stock_date}}</td>
                         </tr>
                       @endforeach
                     @endif
@@ -105,12 +105,12 @@
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
+                      <th>Date</th>
                       <th>Article</th>
                       <th>Product Stage</th>
                       <th>Work Done</th>
                       <th>Quantity</th>
                       <th>Wages</th>
-                      <th>Date</th>
                     </tr>
                   </tfoot>
                 </table>

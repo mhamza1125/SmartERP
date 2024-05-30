@@ -17,6 +17,7 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Group No</th>
                     <th>Order No</th>
                     <th>Action</th>
@@ -27,6 +28,7 @@
                     @foreach($igroup as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->igroup_date}}</td>
                       <td>{{$item->igroup_no}}</td>
                       <td>{{$item->job_no}}</td>
                       <td>
@@ -40,6 +42,7 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Group No</th>
                     <th>Order No</th>
                     <th>Action</th>

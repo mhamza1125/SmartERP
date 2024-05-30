@@ -334,6 +334,7 @@ class StockRepository implements GlobalInterface {
     public function get($id){
         return Stock::where('stocks.stock_id', $id)
             ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stocks as rstock', 'rstock.issue_id', '=', 'stocks.stock_id')
             ->leftJoin('stocks as sdate', 'sdate.stock_id', '=', 'stocks.issue_id')
             ->leftJoin('employees', function($join) {
                 $join->on('employees.employee_id', '=', 'stocks.employee_id')
@@ -348,7 +349,8 @@ class StockRepository implements GlobalInterface {
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
             ->leftJoin('heads as mhead', 'mhead.head_id', '=', 'machines.machine_type_id')
             ->select(
-                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id')
+                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id', 
+                DB::raw('CASE WHEN rstock.stock_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
             ->first();
     }
 

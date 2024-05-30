@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Order No</th>
                     <th>Job No</th>
                     <th>Customer</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -74,11 +74,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Order No</th>
                     <th>Job No</th>
                     <th>Customer</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

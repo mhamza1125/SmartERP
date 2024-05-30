@@ -17,10 +17,10 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Vendor</th>
                     <th>Payment Type</th>
                     <th>Amount</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -31,10 +31,10 @@
                       @unless($item->transaction_type == 'openingBalance')
                         <tr>
                           <td>{{$index++}}</td>
+                          <td>{{$item->transaction_date}}</td>
                           <td>{{$item->vendor_no}} - {{$item->fname}}</td>
                           <td>{{ucfirst($item->transaction_type)}}</td>
                           <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>                  
-                          <td>{{$item->transaction_date}}</td>
                           <td>
                             <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             <a href="{{ route('transaction.editVPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -47,10 +47,10 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Vendor</th>
                     <th>Payment Type</th>
                     <th>Amount</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

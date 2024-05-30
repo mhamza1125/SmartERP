@@ -270,7 +270,10 @@ Route::get('/editBRS/{id}', [TransactionController::class, 'editBRS'])->name('tr
 // Bank Balance
 Route::get('/bankBalance', [TransactionController::class, 'bankBalance'])->name('bankBalance');
 Route::get('/bankBalance/{id}', [TransactionController::class, 'showBBalance'])->name('transaction.showBBalance');
+Route::post('/bankBalance/{id}', [TransactionController::class, 'showBBalance'])->name('bankBalance.filter');
 Route::get('/cashBalance', [TransactionController::class, 'cashBalance'])->name('cashBalance');
+Route::post('/cashBalance', [TransactionController::class, 'cashBalance'])->name('cashBalance.filter');
+
 // Order Payment
 Route::get('/oPayment', [TransactionController::class, 'oPayment'])->name('oPayment');
 Route::get('/ajaxOrder', [TransactionController::class, 'ajaxOrder'])->name('ajaxOrder'); //Dynamic Orders

@@ -143,8 +143,10 @@
                         <th>Stage</th>
                         <th>Ordered / Delivered</th>
                         <th>Remaining Qty</th>
-                        <th>Available Qty</th>
+                        <th>Per Box Qty</th>
+                        <th>Available Qty / Boxes</th>
                         <th>Deliver Qty</th>
+                        <th>Box Qty</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -167,14 +169,17 @@
                                 <input type="hidden" name="material_id[]" value="0" required>
                               </td>
                               <td>{{$item->stname}}
-                                <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut - $qty)}}
-                                  <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
-                                </td>
+                                <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
                               </td>
+                              <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut - $qty)}}</td>
                               <td>{{number_format($item->quantity - $item->stockOut + $qty)}}</td>
-                              <td>{{number_format($item->stockIn - $item->stockOut + $qty)}} {{$item->uname}}</td>
+                              <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
+                              <td>{{number_format($item->stockIn - $item->stockOut + $qty)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut + $qty)*$item->bqty, 2)}}</td>
                               <td class="form-group">
-                                <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$item->stockIn - $item->stockOut + $qty}}">
+                                <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$item->stockIn - $item->stockOut + $qty}}" data-bqty="{{$item->bqty}}" style="width:100px">
+                              </td>
+                              <td class="form-group">
+                                <input type="number" class="form-control bqty-input" value="{{number_format($qty * $item->bqty, 2)}}" style="width:100px" readonly>
                               </td>
                               <td>
                                 <button class="btn btn-success btn-sm maxBtn">Max</button>
@@ -192,8 +197,10 @@
                         <th>Stage</th>
                         <th>Ordered / Delivered</th>
                         <th>Remaining Qty</th>
-                        <th>Available Qty</th>
+                        <th>Per Box Qty</th>
+                        <th>Available Qty / Boxes</th>
                         <th>Deliver Qty</th>
+                        <th>Box Qty</th>
                         <th>Action</th>
                       </tr>
                     </tfoot>
@@ -255,13 +262,13 @@
                             <tr>
                               <td>{{$index++}}</td>
                               <td>{{$item->material_no}}
-                                <input type="text" name="material_name[]" value="{{$item->mname}}">
-                                {{-- <input type="text" name="material_id[]" value="{{$item->material_id}}"> --}}
-                                <input type="text" name="product_type_id[]" value="0">
-                                <input type="text" name="stage_id[]" value="0">
+                                <input type="hidden" name="material_name[]" value="{{$item->mname}}">
+                                <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                                <input type="hidden" name="product_type_id[]" value="0">
+                                <input type="hidden" name="stage_id[]" value="0">
                               </td>
                               <td>{{$item->quantity}}
-                                <input type="text" name="quantity[]" value="{{$item->quantity}}">
+                                <input type="hidden" name="quantity[]" value="{{$item->quantity}}">
                               </td>
                               <td><button class="deleteRowBtn btn btn-danger">X</button></td>
                             </tr>
@@ -384,9 +391,10 @@
                     </tbody>
                     <tfoot>
                       <tr>
-                        <th colspan="8"></th>
+                        <th colspan="6"></th>
                         <th colspan="2">Grand Total:</th>
-                        <th colspan="2"><span id="tQty"></span> Boxes</th>
+                        <th colspan="2"><span id="tQty"></span> / <span id="totalBqty2">0</span> Boxes</th>
+                        <th colspan="2"> Remaining: <span id="remBqty">0</span> Boxes</th>
                       </tr>
                     </tfoot>
                   </table>
@@ -457,19 +465,19 @@
                           <tr>
                             <td>{{$loop->index + 1}}</td>
                             <td>{{$item->name}}
-                              <input type="text" name="transaction_id[]" value="{{$item->transaction_id}}">
-                              <input type="text" name="payee_id[]" value="{{$item->payee_id}}">
+                              <input type="hidden" name="transaction_id[]" value="{{$item->transaction_id}}">
+                              <input type="hidden" name="payee_id[]" value="{{$item->payee_id}}">
                             </td>
                             <td>@if(isset($item->bname))
                               {{$item->bname}} - {{$item->account_title}} - {{$item->account}}
                               @else Cash Payment {{$item->bank_id}} @endif
-                              <input type="text" name="bank_id[]" value="{{$item->bank_id ?? 0}}">
+                              <input type="hidden" name="bank_id[]" value="{{$item->bank_id ?? 0}}">
                             </td>
                             <td>{{number_format($item->debit)}}
-                              <input type="text" name="debit[]" value="{{$item->debit}}">
+                              <input type="hidden" name="debit[]" value="{{$item->debit}}">
                             </td>
                             <td>{{$item->description}}
-                              <input type="text" name="remarks[]" value="{{$item->description}}">
+                              <input type="hidden" name="remarks[]" value="{{$item->description}}">
                             </td>
                             <td>
                               <button class="delete-expense-row btn btn-danger">X</button>

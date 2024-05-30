@@ -212,7 +212,7 @@
                               <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
                               <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}">
                             </td>
-                            <td>@if($item->material_id){{$item->name}}
+                            <td>@if($item->material_id){{$item->material_no}} - {{$item->name}}
                               <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
                               @else{{$item->stage}}<input type="hidden" name="material_id[]" value="0">@endif
                             </td>

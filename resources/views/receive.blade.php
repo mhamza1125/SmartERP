@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -30,6 +30,7 @@
                     @foreach($receive as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->receive_date}}</td>
                       <td>{{$item->receive_no}}</td>
                       <td>{{$item->purchase_no}}</td>
                       <td>{{$item->fname}}</td>
@@ -52,7 +53,6 @@
                           </div>
                         </div>
                       </td> --}}
-                      <td>{{$item->receive_date}}</td>                      
                       <td>
                         <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('receive.edit', $item->receive_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -65,11 +65,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Receive No</th>
                     <th>Purchase No</th>
                     <th>Vendor</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

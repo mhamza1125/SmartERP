@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Processing No</th>
                     <th>Job No</th>
                     <th>Vendor</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -30,6 +30,7 @@
                     @foreach($purchase as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->purchase_date}}</td>               
                       <td>{{$item->purchase_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>
                       <td>{{$item->vendor_no}} - {{$item->fname}}</td>
@@ -37,7 +38,6 @@
                         <span class="badge badge-success">Received</span> @else 
                         <span class="badge badge-danger">To Receive</span> @endif
                       </td>
-                      <td>{{$item->purchase_date}}</td>                      
                       <td>
                         <a href="{{ route('mprocess.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
                         @if(!$item->has_received) <a href="{{ route('mprocess.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a> @endif
@@ -50,11 +50,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Purchase No</th>
                     <th>Job No</th>
                     <th>Vendor</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

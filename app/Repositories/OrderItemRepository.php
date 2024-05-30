@@ -17,8 +17,9 @@ class OrderItemRepository implements GlobalInterface {
         ->join('products', 'products.product_id', '=', 'product_types.product_id')
         ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+        ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
         ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
-        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname', 'shead.name as sname')
+        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname', 'shead.name as sname', 'chead.name as cname')
         ->orderBy('product_types.product_id')
         ->orderBy('product_types.size_id')
         ->get();
@@ -111,6 +112,8 @@ class OrderItemRepository implements GlobalInterface {
             $stage = $data['product_stage_id'][$key] ?? null;
             $price = $data['price'][$key] ?? null;
             $price2 = $data['price2'][$key] ?? null;
+            $head_id = $data['head_id'][$key] ?? null;
+            $exchange = $data['exchange'][$key] ?? null;
             $total = $data['total'][$key] ?? null;
             $orderItem = [
                 'order_id' => $id,
@@ -118,6 +121,8 @@ class OrderItemRepository implements GlobalInterface {
                 'product_stage_id' => $stage,
                 'price' => $price,
                 'price2' => $price2,
+                'head_id' => $head_id,
+                'exchange' => $exchange,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

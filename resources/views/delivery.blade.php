@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Delivery No</th>
                     <th>Order No</th>
                     <th>Customer</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -30,6 +30,7 @@
                     @foreach($delivery as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->stock_date}}</td>                      
                       <td>{{$item->stock_no}}</td>
                       <td>{{$item->job_no}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
@@ -52,7 +53,6 @@
                             </div>
                           </div>
                       </td>
-                      <td>{{$item->stock_date}}</td>                      
                       <td>
                         <a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('delivery.edit', $item->delivery_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -64,11 +64,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Order No</th>
                     <th>Job No</th>
                     <th>Customer</th>
                     <th>Status</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

@@ -47,6 +47,7 @@
                   <thead>
                     <tr>
                       <th>Sr.</th>
+                      <th>Inspection Date</th>
                       <th>Code</th>
                       <th>Material</th>
                       <th>Units</th>
@@ -55,7 +56,6 @@
                       <th>Approved</th>
                       <th>Rejected</th>
                       {{-- <th>Inspection Status</th> --}}
-                      <th>Inspection Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -65,6 +65,7 @@
                         @if($item->quantity)
                         <tr>
                           <td>{{$loopIndex++}}</td>
+                          <td>{{$item->inspection_date}}</td>
                           <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}</td>
                           <td>{{$item->hname}}</td>
@@ -75,7 +76,6 @@
                           {{-- <td>@if($item->inspection_status == 1) Pending
                           @elseif($item->inspection_status == 2) Approved
                           @else Rejected @endif</td> --}}
-                          <td>{{$item->inspection_date}}</td>
                         </tr>
                         @endif
                       @endforeach

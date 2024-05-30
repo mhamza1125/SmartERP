@@ -56,15 +56,92 @@ class TransactionRepository implements GlobalInterface {
     public function cashTransaction(){
         return Transaction::where('transactions.bank_id', '0')
         ->where('transaction_type', '!=', 'openingBalance')
-        ->orderBy('created_at', 'desc')
+        ->orderBy('created_at')
         ->get();
+    }
+
+    public function cashTransactionFilter($dfrom, $dto) {
+        // Transactions Before Date From
+        $transactionsBefore = \DB::table('transactions')
+            ->where('transactions.bank_id', '0')
+            ->where('transaction_type', '!=', 'openingBalance')
+            ->where('transaction_date', '<', $dfrom)
+            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
+            ->first();
+    
+        $totalDebitBefore = $transactionsBefore->total_debit ?? 0;
+        $totalCreditBefore = $transactionsBefore->total_credit ?? 0;
+        $openingBalance = $totalCreditBefore - $totalDebitBefore;
+    
+        // Transactions Between Date From and Date To
+        $transactionsBetween = \DB::table('transactions')
+            ->where('transactions.bank_id', '0')
+            ->where('transaction_type', '!=', 'openingBalance')
+            ->whereBetween('transaction_date', [$dfrom, $dto])
+            ->orderBy('created_at')
+            ->get();
+    
+        // Transactions After Date To
+        $transactionsAfter = \DB::table('transactions')
+            ->where('transactions.bank_id', '0')
+            ->where('transaction_type', '!=', 'openingBalance')
+            ->where('transaction_date', '>', $dto)
+            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
+            ->first();
+    
+        $totalDebitAfter = $transactionsAfter->total_debit ?? 0;
+        $totalCreditAfter = $transactionsAfter->total_credit ?? 0;
+        $closingBalance = $totalCreditAfter - $totalDebitAfter;
+    
+        return [
+            'transactions' => $transactionsBetween,
+            'opening_balance' => $openingBalance,
+            'closing_balance' => $closingBalance
+        ];
     }
 
     public function bankTransaction($id){
         return Transaction::where('transactions.bank_id', $id)
-        ->orderBy('created_at', 'desc')
+        ->orderBy('created_at')
         ->get();
     }
+
+    public function bankTransactionFilter($id, $dfrom, $dto) {
+        // Transactions Before Date From
+        $transactionsBefore = \DB::table('transactions')
+            ->where('transactions.bank_id', $id)
+            ->where('transaction_date', '<', $dfrom)
+            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
+            ->first();
+    
+        $totalDebitBefore = $transactionsBefore->total_debit ?? 0;
+        $totalCreditBefore = $transactionsBefore->total_credit ?? 0;
+        $openingBalance = $totalCreditBefore - $totalDebitBefore;
+    
+        // Transactions Between Date From and Date To
+        $transactionsBetween = \DB::table('transactions')
+            ->where('transactions.bank_id', $id)
+            ->whereBetween('transaction_date', [$dfrom, $dto])
+            ->orderBy('created_at')
+            ->get();
+    
+        // Transactions After Date To
+        $transactionsAfter = \DB::table('transactions')
+            ->where('transactions.bank_id', $id)
+            ->where('transaction_date', '>', $dto)
+            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
+            ->first();
+    
+        $totalDebitAfter = $transactionsAfter->total_debit ?? 0;
+        $totalCreditAfter = $transactionsAfter->total_credit ?? 0;
+        $closingBalance = $totalCreditAfter - $totalDebitAfter;
+    
+        return [
+            'transactions' => $transactionsBetween,
+            'opening_balance' => $openingBalance,
+            'closing_balance' => $closingBalance
+        ];
+    }    
 
     public function cashBalance(){
         $transaction = Transaction::where('transactions.bank_id', '0')

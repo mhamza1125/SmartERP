@@ -161,6 +161,7 @@
 <script>
   var isIssuePage = false;
   var isIGroupPage = false;
+  var ajaxIGUrl = "{{ route('ajaxIG') }}";
   var ajaxPTUrl = "{{ route('ajaxPT') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";

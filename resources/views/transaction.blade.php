@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Transaction</th>
                     <th>Transaction Type</th>
                     <th>Debit</th>
                     <th>Credit</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -32,11 +32,11 @@
                       @unless($item->transaction_type == 'openingBalance')
                         <tr>
                           <td>{{$index++}}</td>
+                          <td>{{$item->transaction_date}}</td>
                           <td>{{ucfirst($item->transaction_to)}}</td>
                           <td>{{ucfirst($item->transaction_type)}}</td>
                           <td>{{isset($item->debit) ? number_format($item->debit) : ''}}</td>
                           <td>{{isset($item->credit) ? number_format($item->credit) : ''}}</td>
-                          <td>{{$item->transaction_date}}</td>
                           <td>
                             @if($item->transaction_to == 'employee')
                               <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
@@ -60,11 +60,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Transaction</th>
                     <th>Transaction Type</th>
                     <th>Debit</th>
                     <th>Credit</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

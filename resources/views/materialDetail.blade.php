@@ -64,12 +64,12 @@
                   <thead>
                     <tr>
                       <th>Sr.</th>
+                      <th>Date</th>
                       <th>Material No</th>
                       <th>Material</th>
                       <th>Purchase / Issuance</th>
                       <th>Stock In</th>
                       <th>Stock Out</th>
-                      <th>Date</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -118,19 +118,19 @@
                       @endforeach
                     @else
                       <tr>
-                        <td valign="top" colspan="6" class="dataTables_empty text-center">No data available in table</td>
+                        <td valign="top" colspan="8" class="dataTables_empty text-center">No data available in table</td>
                       </tr>
                     @endif
                   </tbody>
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
+                      <th>Date</th>
                       <th>Material No</th>
                       <th>Material</th>
                       <th>Purchase / Issuance</th>
                       <th>Stock In</th>
                       <th>Stock Out</th>
-                      <th>Date</th>
                       <th>Action</th>
                     </tr>
                   </tfoot>

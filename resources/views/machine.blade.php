@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Machine Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('material.add') }}" class="btn btn-primary">Add Machine</a>
+              <a href="{{ route('machine.add') }}" class="btn btn-primary">Add Machine</a>
             </div>
           </div>
           <div class="card-body">

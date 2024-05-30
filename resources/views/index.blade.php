@@ -177,6 +177,7 @@
                 <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>
                 <li><a class="nav-link" href="{{ route('issue') }}">Issue</a></li>
                 <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
+                <li><a class="nav-link" href="{{ route('igroup') }}">Group / Lot</a></li>
               </ul>
             </li>
             <li class="dropdown">

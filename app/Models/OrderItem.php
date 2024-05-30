@@ -18,6 +18,8 @@ class OrderItem extends Model
         'quantity',
         'price',
         'price2',
+        'head_id',
+        'exchange',
         'total',
         'created_by',
         'updated_at',

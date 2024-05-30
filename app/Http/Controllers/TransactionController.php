@@ -93,10 +93,25 @@ class TransactionController extends Controller
         ]);
     }
     
-    public function cashBalance(){
+    public function cashBalance(Request $request){
         $balance = $this->transactionRepository->cashBalance();
-        $transaction = $this->transactionRepository->cashTransaction();
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
+        if(!empty($dfrom) && !empty($dto)){
+            $all = $this->transactionRepository->cashTransactionFilter($dfrom, $dto);
+            $transaction = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
+        }else{
+            $transaction = $this->transactionRepository->cashTransaction();
+        }
         return view('cashBalance', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
             'cashBalance' => $balance,
             'transaction' => $transaction,
         ]);
@@ -265,13 +280,27 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function showBBalance($id){
+    public function showBBalance(Request $request, $id){
         $bank = $this->bankRepository->get($id);
-        $transaction = $this->transactionRepository->bankTransaction($id);
-        $totalCredit = $transaction->sum('credit');
-        $totalDebit = $transaction->sum('debit');
-        $balance = $totalCredit - $totalDebit;
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
+        if(!empty($dfrom) && !empty($dto)){
+            $all = $this->transactionRepository->bankTransactionFilter($id, $dfrom, $dto);
+            $transaction = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
+        }else{
+            $transaction = $this->transactionRepository->bankTransaction($id);
+        }
+        $bBalance = $this->transactionRepository->bankBalance2($id);
+        $balance = $bBalance->tcredit - $bBalance->tdebit;
         return view('bankBalanceDetail', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
             'bank' => $bank,
             'balance' => $balance,
             'transaction' => $transaction,

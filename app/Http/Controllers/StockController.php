@@ -465,7 +465,9 @@ class StockController extends Controller
         $head = $this->headRepository->get('12');
         $receive = $this->stockRepository->receive();
         $issue = $this->stockRepository->receiveIssue();
+        $jobs = $issue->pluck('job_no')->filter()->unique();
         return view('receiveIssue', [
+            'jobs' => $jobs,
             'head' => $head,
             'issue' => $issue,
             'receive' => $receive,

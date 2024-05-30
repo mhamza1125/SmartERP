@@ -17,10 +17,10 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Customer No</th>
                     <th>Order No</th>
                     <th>Amount</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -29,10 +29,10 @@
                     @foreach($transaction as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->transaction_date}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>{{$item->order_no}}</td>
                       <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>                  
-                      <td>{{$item->transaction_date}}</td>
                       <td>
                         <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('transaction.editOPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -44,10 +44,10 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Date</th>
                     <th>Customer No</th>
                     <th>Order No</th>
                     <th>Amount</th>
-                    <th>Date</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

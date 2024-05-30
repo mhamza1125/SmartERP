@@ -139,7 +139,8 @@
                         <th>Stage</th>
                         <th>Ordered / Delivered</th>
                         <th>Remaining Qty</th>
-                        <th>Available Qty</th>
+                        <th>Per Box Qty</th>
+                        <th>Available Qty / Boxes</th>
                         <th>Deliver Qty</th>
                         <th>Box Qty</th>
                         <th>Action</th>
@@ -157,12 +158,12 @@
                                 <input type="hidden" name="material_id[]" value="0" required>
                               </td>
                               <td>{{$item->stname}}
-                                <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut)}}
-                                  <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
-                                </td>
+                                <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
                               </td>
+                              <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut)}}</td>
                               <td>{{number_format($item->quantity - $item->stockOut)}}</td>
-                              <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>
+                              <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
+                              <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
                               <td class="form-group">
                                 {{-- <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}"> --}}
                                 <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
@@ -195,9 +196,10 @@
                         <th>Sr.</th>
                         <th>Item / Product</th>
                         <th>Stage</th>
-                        <th>Ordered / Delivered Qty</th>
+                        <th>Ordered / Delivered</th>
                         <th>Remaining Qty</th>
-                        <th>Available Qty</th>
+                        <th>Per Box Qty</th>
+                        <th>Available Qty / Boxes</th>
                         <th>Deliver Qty</th>
                         <th>Box Qty</th>
                         <th>Action</th>
@@ -341,9 +343,10 @@
                     </tbody>
                     <tfoot>
                       <tr>
-                        <th colspan="8"></th>
+                        <th colspan="6"></th>
                         <th colspan="2">Grand Total:</th>
-                        <th colspan="2"><span id="tQty"></span> Boxes</th>
+                        <th colspan="2"><span id="tQty"></span> / <span id="totalBqty2">0</span> Boxes</th>
+                        <th colspan="2"> Remaining: <span id="remBqty">0</span> Boxes</th>
                       </tr>
                     </tfoot>
                   </table>
