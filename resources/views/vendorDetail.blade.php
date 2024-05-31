@@ -81,8 +81,10 @@
                     @if($detail->count())
                     @foreach($detail as $item)
                       @php
-                        isset($item->debit) ? $balance -= $item->debit : ''; 
-                        isset($item->credit) ? $balance += $item->credit : ''; 
+                        if (!isset($item->transaction_type) || $item->transaction_type != 'wages') {
+                          isset($item->debit) ? $balance -= $item->debit : '';
+                          isset($item->credit) ? $balance += $item->credit : '';
+                        }
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>

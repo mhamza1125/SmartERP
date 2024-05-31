@@ -98,25 +98,21 @@ class EmployeeController extends Controller
         $dto = $request->input('dto');
         $oBalance = 0; // Opening Balance
         $cBalance = 0; // Closing Balance
-        $oRBalance = 0; // Opening Receiveables
-        $cRBalance = 0; // Closing Receiveables
         if(!empty($dfrom) && !empty($dto)){
             $all = $this->transactionRepository->eDetailFilter($id, $dfrom, $dto);
             $detail = $all['transactions'];
             $oBalance = $all['opening_balance'];
             $cBalance = $all['closing_balance'];
-            $oRBalance = $all['opening_Rbalance'];
-            $cRBalance = $all['closing_Rbalance'];
         }else{
             $detail = $this->transactionRepository->eDetail($id);
         }
-
+        echo $oBalance;
+        echo $cBalance;
+        // dd($detail);
         $totalCredit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
         $totalDebit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('debit');
-        $balance = $totalCredit - $totalDebit + $oRBalance + $cRBalance;
+        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
 
-
-        // dd($detail);
         return view('employeeDetail', [
             'employee' => $employee,
             'detail' => $detail,

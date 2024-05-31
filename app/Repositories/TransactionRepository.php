@@ -261,14 +261,16 @@ class TransactionRepository implements GlobalInterface {
         //     ->groupBy('purchases.purchase_id')
         //     ->get();
 
-        $purchases = \DB::table('purchases') // Amount of Received Purchase Items
+        // Vendor Ledger - Amount of Received Purchase Items
+        $purchases = \DB::table('purchases')
             ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
             ->groupBy('purchases.purchase_id')
             ->get();
-        
+
+        // Vendor Ledger - Purchase Returns
         $purchaseReturns = \DB::table('returns')
             ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
@@ -278,7 +280,8 @@ class TransactionRepository implements GlobalInterface {
             ->where('purchases.vendor_id', $id)
             ->groupBy('purchases.purchase_id')
             ->get();
-        
+
+        // Vendor Ledger - Transactions
         $transactions = \DB::table('transactions')
             ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.payee_id', $id)
@@ -299,7 +302,7 @@ class TransactionRepository implements GlobalInterface {
             ->where('purchases.purchase_date', '<', $dfrom)
             ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
             ->first();
-        
+    
         $purchaseReturnsBefore = \DB::table('returns')
             ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
@@ -309,20 +312,19 @@ class TransactionRepository implements GlobalInterface {
             ->where('returns.return_date', '<', $dfrom)
             ->select(\DB::raw('SUM(return_materials.quantity * purchase_items.price) as debit'))
             ->first();
-        
+    
         $transactionsBefore = \DB::table('transactions')
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_date', '<', $dfrom)
             ->where('transactions.transaction_to', 'vendor')
-            ->select(\DB::raw('SUM(transactions.debit) as debit'))
-            ->select(\DB::raw('SUM(transactions.credit) as credit'))
+            ->where('transactions.transaction_type', '!=', 'wages')
+            ->select(\DB::raw('SUM(transactions.debit) as debit'), \DB::raw('SUM(transactions.credit) as credit'))
             ->first();
-            
-        
+    
         $totalCreditBefore = ($purchasesBefore->credit ?? 0) + ($transactionsBefore->credit ?? 0);
         $totalDebitBefore = ($purchaseReturnsBefore->debit ?? 0) + ($transactionsBefore->debit ?? 0);
         $openingBalance = $totalCreditBefore - $totalDebitBefore;
-
+    
         // Vendor Ledger - Between Date From and Date To
         $purchases = \DB::table('purchases')
             ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
@@ -332,7 +334,7 @@ class TransactionRepository implements GlobalInterface {
             ->whereBetween('purchases.purchase_date', [$dfrom, $dto])
             ->groupBy('purchases.purchase_id')
             ->get();
-
+    
         $purchaseReturns = \DB::table('returns')
             ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
@@ -343,16 +345,16 @@ class TransactionRepository implements GlobalInterface {
             ->whereBetween('returns.return_date', [$dfrom, $dto])
             ->groupBy('purchases.purchase_id')
             ->get();
-
+    
         $transactions = \DB::table('transactions')
             ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.payee_id', $id)
             ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
             ->where('transactions.transaction_to', 'vendor')
             ->get();
-
+    
         $transactionsBetween = $purchases->concat($purchaseReturns)->concat($transactions)->sortBy('timestamp');
-
+    
         // Vendor Ledger - After Date To
         $purchasesAfter = \DB::table('purchases')
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
@@ -361,7 +363,7 @@ class TransactionRepository implements GlobalInterface {
             ->where('purchases.purchase_date', '>', $dto)
             ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
             ->first();
-
+    
         $purchaseReturnsAfter = \DB::table('returns')
             ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
@@ -371,19 +373,19 @@ class TransactionRepository implements GlobalInterface {
             ->where('returns.return_date', '>', $dto)
             ->select(\DB::raw('SUM(return_materials.quantity * purchase_items.price) as debit'))
             ->first();
-
+    
         $transactionsAfter = \DB::table('transactions')
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_date', '>', $dto)
             ->where('transactions.transaction_to', 'vendor')
-            ->select(\DB::raw('SUM(transactions.debit) as debit'))
-            ->select(\DB::raw('SUM(transactions.credit) as credit'))
+            ->where('transactions.transaction_type', '!=', 'wages')
+            ->select(\DB::raw('SUM(transactions.debit) as debit'), \DB::raw('SUM(transactions.credit) as credit'))
             ->first();
-
-        $totalCreditAfter = ($purchasesAfter->credit ?? 0) + ($transactionsBefore->credit ?? 0);
+    
+        $totalCreditAfter = ($purchasesAfter->credit ?? 0) + ($transactionsAfter->credit ?? 0);
         $totalDebitAfter = ($purchaseReturnsAfter->debit ?? 0) + ($transactionsAfter->debit ?? 0);
         $closingBalance = $totalCreditAfter - $totalDebitAfter;
-
+    
         return [
             'transactions' => $transactionsBetween,
             'opening_balance' => $openingBalance,
@@ -492,7 +494,14 @@ class TransactionRepository implements GlobalInterface {
             ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.transaction_to', 'employee')
             ->where('transactions.transaction_date', '<', $dfrom)
-            ->get();
+            ->whereIn('transactions.transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])
+            ->select(\DB::raw('SUM(transactions.debit) as debit'),
+                \DB::raw('SUM(transactions.credit) as credit'))
+            ->first();
+        
+        $totalCreditBefore = $before->credit ?? 0;
+        $totalDebitBefore = $before->debit ?? 0;
+        $openingBalance = $totalCreditBefore - $totalDebitBefore;
 
         // Employee Ledger - Between Date From and Date To
         $between = Transaction::where('transactions.payee_id', $id)
@@ -506,36 +515,19 @@ class TransactionRepository implements GlobalInterface {
             ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.transaction_to', 'employee')
             ->where('transactions.transaction_date', '>', $dto)
-            ->get();
+            ->whereIn('transactions.transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])
+            ->select(\DB::raw('SUM(transactions.debit) as debit'),
+                \DB::raw('SUM(transactions.credit) as credit'))
+            ->first();
 
-        // Calculate opening balance
-        $totalCreditBefore = $before->sum('credit');
-        $totalDebitBefore = $before->sum('debit');
-        $openingBalance = $totalCreditBefore - $totalDebitBefore;
-
-        // Calculate Receiveable Balance Before
-        $totalRCreditBefore = $before->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
-        $totalRDebitBefore = $before->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('debit');
-        $openingRBalance = $totalRCreditBefore - $totalRDebitBefore;
-        
-        // Calculate closing balance
-        $totalCreditAfter = $after->sum('credit');
-        $totalDebitAfter = $after->sum('debit');
+        $totalCreditAfter = $after->credit ?? 0;
+        $totalDebitAfter = $after->debit ?? 0;
         $closingBalance = $totalCreditAfter - $totalDebitAfter;
-        
-        // Calculate Receiveable Balance After
-        $totalRCreditAfter = $after->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
-        $totalRDebitAfter = $after->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('debit');        
-        $closingRBalance = $totalRCreditAfter - $totalRDebitAfter;
-
-        $totalDebitBefore = $before->where('transaction_type', '!=', 'wages')->sum('debit');
-
+    
         return [
             'transactions' => $between,
             'opening_balance' => $openingBalance,
-            'closing_balance' => $closingBalance,
-            'opening_Rbalance' => $openingRBalance,
-            'closing_Rbalance' => $closingRBalance,
+            'closing_balance' => $closingBalance
         ];
     }
 
