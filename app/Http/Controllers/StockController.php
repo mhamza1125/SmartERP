@@ -457,7 +457,7 @@ class StockController extends Controller
     }
 
     // ==================================================
-    // ==============-= Receive Issuance ========-=======
+    // ================ Receive Issuance ================
     // ==================================================
 
     public function rIssue(){

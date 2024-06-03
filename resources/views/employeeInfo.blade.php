@@ -42,7 +42,8 @@
                 </tr>
                 <tr>
                   <td><b>Current Salary: </b> Rs. {{number_format($employee['salary'])}} </td>
-                  <td colspan="2"><b>Address: </b> {{$employee['address']}}, {{$employee['cname']}}</td>
+                  <td><b>Attendance No: </b> {{$employee['attendance_id']}}</td>
+                  <td><b>Address: </b> {{$employee['address']}}, {{$employee['cname']}}</td>
                 </tr>
                 <tr>
                   <td colspan="3">

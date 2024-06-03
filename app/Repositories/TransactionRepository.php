@@ -531,6 +531,17 @@ class TransactionRepository implements GlobalInterface {
         ];
     }
 
+    public function sAdvance($dfrom, $dto){
+        // Employee Ledger - Between Date From and Date To
+        return Transaction::groupBy('payee_id', 'transaction_to')
+            ->where('transactions.transaction_to', 'employee')
+            ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
+            ->where('transactions.transaction_type', 'salaryAdvance')
+            ->select('transactions.*', \DB::raw('SUM(transactions.debit) as debit'),
+            \DB::raw('SUM(transactions.credit) as credit'))
+            ->get();
+    }
+
     public function store(array $data){
         $data['created_by'] = auth()->id();
         $store = Transaction::create($data);

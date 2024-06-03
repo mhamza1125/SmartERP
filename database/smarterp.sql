@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 30, 2024 at 09:39 PM
+-- Generation Time: Jun 03, 2024 at 08:36 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -204,6 +204,7 @@ CREATE TABLE `employees` (
   `employee_no` varchar(255) NOT NULL,
   `department_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
   `employee_type_id` bigint(20) UNSIGNED NOT NULL COMMENT 'HeadID',
+  `attendance_id` bigint(20) UNSIGNED DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `fname` varchar(255) NOT NULL,
   `sname` varchar(255) DEFAULT NULL,
@@ -225,14 +226,15 @@ CREATE TABLE `employees` (
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`employee_id`, `employee_no`, `department_id`, `employee_type_id`, `name`, `fname`, `sname`, `cnic`, `phone1`, `phone2`, `city_id`, `address`, `salary`, `description`, `joining_date`, `employee_status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'E0001', 6, 39, 'Zohaib Khalid', 'Khalid', 'Zohaib', '3460389902345', '03001122334', NULL, 44, 'Address of Zohaib', 32000, '<p><span style=\"font-weight: bolder;\">Employee form Lahore, \"</span>Placed in Admin Department<span style=\"font-weight: bolder;\">\"</span><br></p>', '2024-02-18', 1, 1, '2024-02-18 13:04:22', '2024-04-20 04:46:27'),
-(5, 'E0002', 7, 40, 'Bashir Malik', 'Manoor', 'Basihr', '3460389902345', '03001122334', '03001122334', 43, 'Address of Bashir', 35000, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, voluptatibus. Laudantium corporis animi assumenda reprehenderit ipsum velit reiciendis nostrum esse id quod quisquam quasi veniam vel aliquid officia, voluptate debitis.</div>', '2024-02-25', 1, 1, '2024-02-25 13:56:59', '2024-04-30 07:55:57'),
-(6, 'E0003', 8, 40, 'Adil Nawaz', 'Adil Nawaz', 'Adil', '3460389902345', '03001122334', '03001122334', 44, 'Address of Adil Nawaz', 0, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-25', 1, 1, '2024-02-25 14:02:20', '2024-02-25 14:02:20'),
-(7, 'E0004', 9, 39, 'Haider Ali', 'Abdullah', 'Haider', '3460389902345', '03001122334', '03001122334', 45, 'Address of Haider', 20000, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-26', 1, 1, '2024-02-25 14:03:32', '2024-04-20 07:54:31'),
-(8, 'E0005', 9, 39, 'Uzair Aslam', 'Aslam', 'Uzair', '3460389902345', '03001122334', '03001122334', 46, 'Address of Uzair', 16000, '<p>Desc</p>', '2024-04-20', 1, 1, '2024-04-20 04:54:15', '2024-04-20 07:51:49'),
-(11, 'E0006', 8, 39, 'Mubashir', 'Saleem', 'Bashir', '3460389902345', '03001122334', '03001122334', 44, 'Address', 12020, NULL, '2024-04-29', 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04'),
-(12, 'E0007', 6, 40, 'Kashif ali', 'Manzoor', 'Kashif', '3460389902345', '03001122334', '03001122334', 43, 'Sialkot', 0, NULL, '2024-04-30', 1, 1, '2024-04-30 07:51:22', '2024-05-01 02:56:17');
+INSERT INTO `employees` (`employee_id`, `employee_no`, `department_id`, `employee_type_id`, `attendance_id`, `name`, `fname`, `sname`, `cnic`, `phone1`, `phone2`, `city_id`, `address`, `salary`, `description`, `joining_date`, `employee_status`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'E0001', 6, 39, 1, 'Zohaib Khalid', 'Khalid', 'Zohaib', '3460389902345', '03001122334', NULL, 44, 'Address of Zohaib', 32000, '<p><span style=\"font-weight: bolder;\">Employee form Lahore, \"</span>Placed in Admin Department<span style=\"font-weight: bolder;\">\"</span><br></p>', '2024-02-18', 1, 1, '2024-02-18 13:04:22', '2024-04-20 04:46:27'),
+(5, 'E0002', 7, 40, 0, 'Bashir Malik', 'Manoor', 'Basihr', '3460389902345', '03001122334', '03001122334', 43, 'Address of Bashir', 35000, '<div style=\"line-height: 19px;\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, voluptatibus. Laudantium corporis animi assumenda reprehenderit ipsum velit reiciendis nostrum esse id quod quisquam quasi veniam vel aliquid officia, voluptate debitis.</div>', '2024-02-25', 1, 1, '2024-02-25 13:56:59', '2024-04-30 07:55:57'),
+(6, 'E0003', 8, 40, 0, 'Adil Nawaz', 'Adil Nawaz', 'Adil', '3460389902345', '03001122334', '03001122334', 44, 'Address of Adil Nawaz', 0, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-25', 1, 1, '2024-02-25 14:02:20', '2024-02-25 14:02:20'),
+(7, 'E0004', 9, 39, 12, 'Haider Ali', 'Abdullah', 'Haider', '3460389902345', '03001122334', '03001122334', 45, 'Address of Haider', 20000, '<div style=\"line-height: 19px;\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati minima corporis quae, odit officiis facere labore autem beatae! Reprehenderit quasi corrupti ullam enim quia vitae suscipit, asperiores aut delectus possimus!</div>', '2024-02-26', 1, 1, '2024-02-25 14:03:32', '2024-04-20 07:54:31'),
+(8, 'E0005', 9, 39, 48, 'Uzair Aslam', 'Aslam', 'Uzair', '3460389902345', '03001122334', '03001122334', 46, 'Address of Uzair', 16000, '<p>Desc</p>', '2024-04-20', 1, 1, '2024-04-20 04:54:15', '2024-04-20 07:51:49'),
+(11, 'E0006', 8, 39, 43, 'Mubashir', 'Saleem', 'Bashir', '3460389902345', '03001122334', '03001122334', 44, 'Address', 12020, NULL, '2024-04-29', 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04'),
+(12, 'E0007', 6, 40, 0, 'Kashif ali', 'Manzoor', 'Kashif', '3460389902345', '03001122334', '03001122334', 43, 'Sialkot', 0, NULL, '2024-04-30', 1, 1, '2024-04-30 07:51:22', '2024-05-01 02:56:17'),
+(13, 'E0008', 10, 39, 9, 'Moazzam Ali', 'Abdullah', 'Moazzam', '3460389902345', '03001122334', '03001122334', 44, 'Sialkot', 50000, NULL, '2024-05-31', 1, 1, '2024-05-31 13:39:41', '2024-05-31 13:40:58');
 
 -- --------------------------------------------------------
 
@@ -408,7 +410,8 @@ CREATE TABLE `igroups` (
 INSERT INTO `igroups` (`igroup_id`, `igroup_no`, `order_id`, `igroup_date`, `igroup_status`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
 (5, 'Group 1', 16, '2024-05-28', 1, NULL, 1, '2024-05-28 13:14:55', '2024-05-28 15:16:22'),
 (6, 'Group 2', 17, '2024-05-28', 1, NULL, 1, '2024-05-28 13:53:15', '2024-05-28 14:12:49'),
-(7, 'Group 3', 27, '2024-05-30', 1, NULL, 1, '2024-05-30 12:07:10', '2024-05-30 12:07:10');
+(7, 'Group 3', 27, '2024-05-30', 1, NULL, 1, '2024-05-30 12:07:10', '2024-05-30 12:07:10'),
+(8, 'Group 4', 26, '2024-06-03', 1, NULL, 1, '2024-06-03 13:35:16', '2024-06-03 13:35:16');
 
 -- --------------------------------------------------------
 
@@ -441,7 +444,9 @@ INSERT INTO `igroup_items` (`igroup_item_id`, `igroup_id`, `product_type_id`, `m
 (9, 6, 92, 11, 20, 0, 1, '2024-05-28 13:53:15', '2024-05-28 13:53:15'),
 (12, 6, 92, 0, 1, 74, 1, '2024-05-28 15:15:43', '2024-05-28 15:15:43'),
 (13, 7, 52, 14, 123, 0, 1, '2024-05-30 12:07:10', '2024-05-30 12:07:10'),
-(15, 7, 52, 13, 12, 0, 1, '2024-05-30 12:07:59', '2024-05-30 12:07:59');
+(15, 7, 52, 13, 12, 0, 1, '2024-05-30 12:07:59', '2024-05-30 12:07:59'),
+(16, 8, 68, 5, 20, 0, 1, '2024-06-03 13:35:16', '2024-06-03 13:35:16'),
+(17, 8, 68, 0, 10, 72, 1, '2024-06-03 13:35:16', '2024-06-03 13:35:16');
 
 -- --------------------------------------------------------
 
@@ -1617,7 +1622,8 @@ INSERT INTO `salaries` (`salary_id`, `employee_id`, `amount`, `status`, `created
 (4, 7, 20000, 1, 1, '2024-04-20 07:56:29', '2024-04-20 07:56:29'),
 (5, 5, 35000, 1, 1, '2024-04-20 07:56:56', '2024-04-20 07:56:56'),
 (6, 11, 12020, 1, 1, '2024-04-29 10:53:04', '2024-04-29 10:53:04'),
-(7, 12, 0, 1, 1, '2024-04-30 07:51:22', '2024-04-30 07:51:22');
+(7, 12, 0, 1, 1, '2024-04-30 07:51:22', '2024-04-30 07:51:22'),
+(8, 13, 50000, 1, 1, '2024-05-31 13:39:41', '2024-05-31 13:39:41');
 
 -- --------------------------------------------------------
 
@@ -1690,7 +1696,10 @@ INSERT INTO `stocks` (`stock_id`, `issue_id`, `issue_for`, `stock_no`, `order_id
 (146, 127, NULL, 'R2-I24050020', 17, NULL, 'employee', 12, 1, '2024-05-28', 1, NULL, 1, '2024-05-28 07:18:43', '2024-05-28 07:18:43'),
 (147, NULL, 72, 'I24050025', 16, NULL, 'employee', 12, 2, '2024-05-28', 0, NULL, 1, '2024-05-28 10:56:04', '2024-05-28 10:56:04'),
 (10012, NULL, 72, 'I24050027', 16, NULL, 'employee', 12, 2, '2024-05-30', 0, NULL, 1, '2024-05-30 12:03:26', '2024-05-30 12:03:26'),
-(10013, NULL, 72, 'I24050028', 27, NULL, 'employee', 12, 2, '2024-05-30', 0, NULL, 1, '2024-05-30 12:08:48', '2024-05-30 12:08:48');
+(10013, NULL, 72, 'I24050028', 27, NULL, 'employee', 12, 2, '2024-05-30', 0, NULL, 1, '2024-05-30 12:08:48', '2024-05-30 12:08:48'),
+(10014, NULL, 72, 'I24060001', 26, NULL, 'employee', 6, 2, '2024-06-03', 2, NULL, 1, '2024-06-03 13:33:27', '2024-06-03 13:34:02'),
+(10015, 10014, NULL, 'R1-I24060001', 26, NULL, 'employee', 6, 1, '2024-06-03', 2, NULL, 1, '2024-06-03 13:34:02', '2024-06-03 13:34:02'),
+(10016, NULL, 74, 'I24060002', 26, NULL, 'employee', 6, 2, '2024-06-03', 0, '<p>Desc</p>', 1, '2024-06-03 13:35:51', '2024-06-03 13:35:51');
 
 -- --------------------------------------------------------
 
@@ -1863,7 +1872,12 @@ INSERT INTO `stock_items` (`stock_item_id`, `stock_id`, `product_type_id`, `mate
 (331, 10012, 54, 0, 10, 73, '0', '0', 1, '2024-05-30 12:03:26', '2024-05-30 12:03:26'),
 (332, 10013, 52, 11, 12, 0, '0', '0', 1, '2024-05-30 12:08:48', '2024-05-30 12:08:48'),
 (334, 10013, 52, 13, 3, 0, '0', '0', 1, '2024-05-30 12:12:06', '2024-05-30 12:12:06'),
-(335, 10013, 52, 12, 9, 0, '0', '0', 1, '2024-05-30 12:12:06', '2024-05-30 12:12:06');
+(335, 10013, 52, 12, 9, 0, '0', '0', 1, '2024-05-30 12:12:06', '2024-05-30 12:12:06'),
+(336, 10014, 68, 6, 100, 0, '0', '0', 1, '2024-06-03 13:33:27', '2024-06-03 13:33:27'),
+(337, 10015, 68, 0, 25, 72, '78', '12', 1, '2024-06-03 13:34:02', '2024-06-03 13:34:02'),
+(338, 10014, 68, 0, 5, 72, '0', '0', 1, '2024-06-03 13:34:22', '2024-06-03 13:34:22'),
+(339, 10016, 68, 5, 20, 0, '0', '0', 1, '2024-06-03 13:35:51', '2024-06-03 13:35:51'),
+(340, 10016, 68, 0, 10, 72, '0', '0', 1, '2024-06-03 13:35:51', '2024-06-03 13:35:51');
 
 -- --------------------------------------------------------
 
@@ -1943,7 +1957,14 @@ INSERT INTO `transactions` (`transaction_id`, `transaction_to`, `transaction_typ
 (69, 'employee', 'wages', 0, NULL, 12, 0, 104, 0, '2024-05-28', '<p>Desc</p>', 1, '2024-05-28 05:06:27', '2024-05-28 05:06:27'),
 (70, 'employee', 'receiveAdvance', 0, NULL, 12, 0, NULL, 1000, '2024-05-28', NULL, 1, '2024-05-28 05:07:03', '2024-05-28 05:07:03'),
 (71, 'vendor', 'receiveAdvance', 0, NULL, 6, 0, NULL, 32000, '2024-05-28', NULL, 1, '2024-05-28 05:11:03', '2024-05-28 05:11:03'),
-(72, 'vendor', 'openingBalance', 0, NULL, 15, 0, NULL, 0, '2024-05-29', NULL, 1, '2024-05-29 06:52:49', '2024-05-29 06:52:49');
+(72, 'vendor', 'openingBalance', 0, NULL, 15, 0, NULL, 0, '2024-05-29', NULL, 1, '2024-05-29 06:52:49', '2024-05-29 06:52:49'),
+(73, 'employee', 'openingBalance', 0, NULL, 13, 0, 0, NULL, '2024-05-31', NULL, 1, '2024-05-31 13:39:41', '2024-05-31 13:39:41'),
+(74, 'employee', 'salaryAdvance', 0, NULL, 1, 0, 1200, 0, '2024-03-07', '<p>&nbsp;&nbsp;&nbsp;&nbsp;<br></p>', 1, '2024-06-03 11:48:27', '2024-06-03 11:48:27'),
+(75, 'employee', 'salaryAdvance', 0, NULL, 1, 0, 20000, 0, '2024-05-08', NULL, 1, '2024-06-03 11:48:59', '2024-06-03 11:48:59'),
+(76, 'employee', 'salaryAdvance', 0, NULL, 7, 0, 5000, 0, '2024-03-06', NULL, 1, '2024-06-03 11:49:18', '2024-06-03 11:49:18'),
+(77, 'employee', 'salaryAdvance', 0, NULL, 7, 0, 4000, 0, '2024-04-25', NULL, 1, '2024-06-03 11:49:28', '2024-06-03 11:49:28'),
+(78, 'employee', 'salaryAdvance', 0, NULL, 8, 0, 15000, 0, '2024-02-28', NULL, 1, '2024-06-03 11:49:42', '2024-06-03 11:49:42'),
+(79, 'employee', 'salaryAdvance', 0, NULL, 8, 0, 3000, 0, '2024-04-25', NULL, 1, '2024-06-03 11:49:53', '2024-06-03 11:49:53');
 
 -- --------------------------------------------------------
 
@@ -2010,6 +2031,58 @@ INSERT INTO `vendors` (`vendor_id`, `vendor_type_id`, `vendor_no`, `vendor_type`
 (12, 57, 'V0008', 0, '0', 'Check 123', 'Check', 'Ali', '123123213', '1232132131', 43, 'Sialkot', '<p>&nbsp;&nbsp;&nbsp;&nbsp;<br></p>', 1, '2024-05-22 14:30:32', '2024-05-22 14:30:49'),
 (13, 0, 'V0009', 1, '0', 'Ansab', 'Ansab Sheikh', NULL, '03001122334', '03001122334', 70, 'Address', NULL, 1, '2024-05-23 14:16:32', '2024-05-23 14:39:09'),
 (15, 0, 'V0010', 1, '0', 'check', '123', NULL, 'contact', '1010', 70, 'address', '<p>desc</p>', 1, '2024-05-29 06:52:49', '2024-05-29 06:52:49');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `work_holidays`
+--
+
+CREATE TABLE `work_holidays` (
+  `work_holiday_id` bigint(20) UNSIGNED NOT NULL,
+  `date_from` date NOT NULL,
+  `date_to` date NOT NULL,
+  `description` longtext DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `work_holidays`
+--
+
+INSERT INTO `work_holidays` (`work_holiday_id`, `date_from`, `date_to`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, '2024-06-01', '2024-06-10', 'Eid Holidays', 1, '2024-06-01 08:40:09', '2024-06-01 08:41:15'),
+(2, '2024-05-01', '2024-05-10', 'Check Holidays 123', 1, '2024-06-01 09:05:27', '2024-06-03 01:45:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `work_times`
+--
+
+CREATE TABLE `work_times` (
+  `work_time_id` bigint(20) UNSIGNED NOT NULL,
+  `time_from` time NOT NULL,
+  `time_to` time NOT NULL,
+  `date_from` date NOT NULL,
+  `date_to` date NOT NULL,
+  `grace_time` bigint(20) UNSIGNED NOT NULL,
+  `description` longtext DEFAULT NULL,
+  `created_by` bigint(20) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `work_times`
+--
+
+INSERT INTO `work_times` (`work_time_id`, `time_from`, `time_to`, `date_from`, `date_to`, `grace_time`, `description`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, '09:30:00', '18:30:00', '2000-01-01', '2024-03-10', 5, 'Detail', 1, '2024-06-01 08:12:41', '2024-06-03 01:15:07'),
+(2, '08:00:00', '17:30:00', '2024-03-11', '2024-04-09', 5, 'Ramazan 2024 Timing', 1, '2024-06-03 00:47:12', '2024-06-03 00:47:50'),
+(3, '09:30:00', '18:30:00', '2024-04-10', '2025-04-09', 5, NULL, 1, '2024-06-03 03:16:02', '2024-06-03 03:16:02');
 
 --
 -- Indexes for dumped tables
@@ -2262,6 +2335,18 @@ ALTER TABLE `vendors`
   ADD UNIQUE KEY `vendor_no` (`vendor_no`);
 
 --
+-- Indexes for table `work_holidays`
+--
+ALTER TABLE `work_holidays`
+  ADD PRIMARY KEY (`work_holiday_id`);
+
+--
+-- Indexes for table `work_times`
+--
+ALTER TABLE `work_times`
+  ADD PRIMARY KEY (`work_time_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -2305,7 +2390,7 @@ ALTER TABLE `delivery_boxes`
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `employee_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `employee_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -2329,13 +2414,13 @@ ALTER TABLE `head_types`
 -- AUTO_INCREMENT for table `igroups`
 --
 ALTER TABLE `igroups`
-  MODIFY `igroup_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `igroup_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `igroup_items`
 --
 ALTER TABLE `igroup_items`
-  MODIFY `igroup_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `igroup_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `images`
@@ -2455,25 +2540,25 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `salaries`
 --
 ALTER TABLE `salaries`
-  MODIFY `salary_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `salary_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `stock_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10014;
+  MODIFY `stock_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10017;
 
 --
 -- AUTO_INCREMENT for table `stock_items`
 --
 ALTER TABLE `stock_items`
-  MODIFY `stock_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=336;
+  MODIFY `stock_item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=341;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `transaction_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `transaction_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -2486,6 +2571,18 @@ ALTER TABLE `users`
 --
 ALTER TABLE `vendors`
   MODIFY `vendor_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `work_holidays`
+--
+ALTER TABLE `work_holidays`
+  MODIFY `work_holiday_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `work_times`
+--
+ALTER TABLE `work_times`
+  MODIFY `work_time_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -8,58 +8,17 @@ use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
-    public function __construct(){
-        $this->middleware(['auth', 'all']);
-    }
+    public function index(){}
 
-    public function index(){
-        // Data Display
-    }
+    public function create(){}
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(){
-        // Form for Insertion
-    }
+    public function store(Request $request){}
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        // Insertion
-    }
+    public function show(Company $company){}
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Company $company)
-    {
-        // Similar to get
-    }
+    public function edit(Company $company){}
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Company $company)
-    {
-        // Edit Form
-    }
+    public function update(Request $request, Company $company){}
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Company $company)
-    {
-        // Edit
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Company $company)
-    {
-        // Delete
-    }
+    public function destroy(Company $company){}
 }

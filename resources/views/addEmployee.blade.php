@@ -171,6 +171,13 @@
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
+                    <label>Attendance No</label>
+                    <input type="text" class="form-control" name="attendance_id" value="{{ old('attendance_id') }}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">
                       <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>

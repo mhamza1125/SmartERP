@@ -21,6 +21,7 @@ use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MProcessController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProductCostController;
 use App\Http\Controllers\TransactionController;
@@ -42,8 +43,20 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 // ---------- Other Controllers ----------
 // ---------------------------------------
 
+// General
 Route::get('/admin', [AdminController::class, 'index'])->name('admin');
 Route::post('/image/{id}/{dir}', [ImageController::class, 'destroy'])->name('image.delete');
+
+// Attendance
+Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+Route::post('/attendance', [AttendanceController::class, 'index'])->name('attendance.filter');
+Route::get('/asummary', [AttendanceController::class, 'asummary'])->name('attendance.summary');
+Route::post('/asummary', [AttendanceController::class, 'asummary'])->name('attendance.summary');
+// Work Time
+Route::get('/workTime', [AttendanceController::class, 'workTime'])->name('workTime');
+Route::get('/workHoliday', [AttendanceController::class, 'workHoliday'])->name('workHoliday');
+Route::post('/work', [AttendanceController::class, 'store'])->name('work.store');
+Route::post('/work/{id}', [AttendanceController::class, 'update'])->name('work.update');
 
 // Head
 Route::get('/head', [HeadController::class, 'index'])->name('head');

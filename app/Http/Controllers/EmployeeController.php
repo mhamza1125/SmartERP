@@ -106,9 +106,6 @@ class EmployeeController extends Controller
         }else{
             $detail = $this->transactionRepository->eDetail($id);
         }
-        echo $oBalance;
-        echo $cBalance;
-        // dd($detail);
         $totalCredit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
         $totalDebit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('debit');
         $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;

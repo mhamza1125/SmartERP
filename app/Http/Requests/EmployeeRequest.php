@@ -25,6 +25,7 @@ class EmployeeRequest extends FormRequest
             'employee_no' => 'required|max:255',
             'department_id' => 'required',
             'employee_type_id' => 'required',
+            'attendance_id' => '',
             'joining_date' => 'required',
             'employee_status' => 'required',
             'city_id' => 'required',

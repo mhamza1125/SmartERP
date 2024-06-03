@@ -7,69 +7,33 @@ use App\Models\IGroup;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\IGroupRequest;
-use App\Repositories\HeadRepository;
-use App\Repositories\ImageRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
 use App\Repositories\IGroupRepository;
-use App\Repositories\VendorRepository;
-use App\Repositories\MachineRepository;
-use App\Repositories\EmployeeRepository;
 use App\Repositories\MaterialRepository;
-use App\Repositories\OrderItemRepository;
-use App\Repositories\StockItemRepository;
 use App\Repositories\IGroupItemRepository;
-use App\Repositories\ProductCostRepository;
-use App\Repositories\ProductMaterialRepository;
 
 class IGroupController extends Controller
 {
-    protected $headRepository;
-    protected $imageRepository;
     protected $orderRepository;
     protected $stockRepository;
     protected $igroupRepository;
-    protected $vendorRepository;
-    protected $machineRepository;
     protected $materialRepository;
-    protected $employeeRepository;
-    protected $stockItemRepository;
     protected $igroupItemRepository;
-    protected $orderItemRepository;
-    protected $productCostRepository;
-    protected $productMaterialRepository;
 
     public function __construct(
-        HeadRepository $headRepository,
-        ImageRepository $imageRepository,
         StockRepository $stockRepository,  
         IGroupRepository $igroupRepository,  
         OrderRepository $orderRepository,  
-        VendorRepository $vendorRepository,  
-        MachineRepository $machineRepository,  
         MaterialRepository $materialRepository,
-        EmployeeRepository $employeeRepository,
-        OrderItemRepository $orderItemRepository,  
-        StockItemRepository $stockItemRepository,  
-        IGroupItemRepository $igroupItemRepository,  
-        ProductCostRepository $productCostRepository,  
-        ProductMaterialRepository $productMaterialRepository,  
+        IGroupItemRepository $igroupItemRepository, 
     ){
         $this->middleware(['auth', 'all']);
-        $this->headRepository = $headRepository;
-        $this->imageRepository = $imageRepository;
         $this->orderRepository = $orderRepository;
         $this->igroupRepository = $igroupRepository;
         $this->stockRepository = $stockRepository;
-        $this->vendorRepository = $vendorRepository;
-        $this->machineRepository = $machineRepository;
         $this->materialRepository = $materialRepository;
-        $this->employeeRepository = $employeeRepository;
-        $this->stockItemRepository = $stockItemRepository;
         $this->igroupItemRepository = $igroupItemRepository;
-        $this->orderItemRepository = $orderItemRepository;
-        $this->productCostRepository = $productCostRepository;
-        $this->productMaterialRepository = $productMaterialRepository;
     }
 
     public function index(){

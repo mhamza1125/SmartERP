@@ -15,6 +15,7 @@ class Employee extends Model
         'employee_no',
         'department_id',
         'employee_type_id',
+        'attendance_id',
         'name',
         'fname',
         'sname',
