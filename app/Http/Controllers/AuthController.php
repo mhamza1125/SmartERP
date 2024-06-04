@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Requests\UserRequest;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -18,7 +21,7 @@ class AuthController extends Controller
         ]);
 
         if(!(auth()->attempt($request->only('email', 'password'), $request->remember))){
-            return back()->with('status', 'Invalid Login Details');
+            return back()->with('fails', 'Invalid Login Details');
         }
 
         $role = auth()->user()->pass;
@@ -40,20 +43,33 @@ class AuthController extends Controller
 
     public function register(){
         return view('register');
-    }
-
-    public function store(RegisterRequest $request){
-        $data = $request->validated();
-
+    }    
+    
+    public function store(UserRequest $request){
         User::create([
             'name' => $request->name,
-            'username' => $request->username,
             'email' => $request->email,
+            'role' => $request->role,
             'password' => Hash::make($request->password),
         ]);
+    
+        return back()->with('success', 'User Added Successfully');
+    }
 
-        auth()->attempt($request->only('email', 'password'));
+    public function update(UserRequest $request, $id){
+        $user = User::findOrFail($id);
+        
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+        ]);
 
-        return redirect()->route('login');
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+
+        return redirect()->back()->with('success', 'User Updated Successfully');
     }
 }

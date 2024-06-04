@@ -22,7 +22,7 @@ use App\Http\Controllers\MProcessController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProductCostController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\PurchaseItemController;
@@ -33,9 +33,7 @@ use App\Http\Controllers\ProductMaterialController;
 // --------------------------------------
 Route::get('/', [AuthController::class, 'index']);
 Route::get('/login', [AuthController::class, 'index'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'register'])->name('register');
-Route::post('/register', [AuthController::class, 'store']);
+Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -43,7 +41,6 @@ Route::group(['middleware' => 'auth'], function(){
     Route::group([
         'middleware' => ['auth', 'is_admin']
     ], function(){
-        Route::get('/head', [HeadController::class, 'index'])->name('head');
         // Add Routes Here
     });
 });
@@ -52,8 +49,11 @@ Route::group(['middleware' => 'auth'], function(){
 // ---------- Other Controllers ----------
 // ---------------------------------------
 
-// General
+// General / Admin
 Route::get('/admin', [AdminController::class, 'index'])->name('admin');
+Route::get('/user', [AdminController::class, 'user'])->name('user');
+Route::post('/user', [AuthController::class, 'store'])->name('user.store');
+Route::post('/user/{id}', [AuthController::class, 'update'])->name('user.update');
 Route::post('/image/{id}/{dir}', [ImageController::class, 'destroy'])->name('image.delete');
 
 // Attendance
@@ -68,7 +68,7 @@ Route::post('/work', [AttendanceController::class, 'store'])->name('work.store')
 Route::post('/work/{id}', [AttendanceController::class, 'update'])->name('work.update');
 
 // Head
-// Route::get('/head', [HeadController::class, 'index'])->name('head');
+Route::get('/head', [HeadController::class, 'index'])->name('head');
 Route::get('/headType', [HeadController::class, 'headType'])->name('head.headType');
 Route::get('/addHead', [HeadController::class, 'create'])->name('head.add');
 Route::post('/head', [HeadController::class, 'store'])->name('head.store');

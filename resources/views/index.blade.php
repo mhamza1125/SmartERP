@@ -169,10 +169,11 @@
                 <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
               </ul>
             </li>
-            <li class="dropdown">
+            <li class="dropdown mb-4">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Settings</span></a>
               <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('user') }}">Users</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('workTime') }}">Work Hours</a></li>

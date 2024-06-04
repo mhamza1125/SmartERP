@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Work Time Table</h4>
             <div class="card-header-action">
-              <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add New Work Time</button>
+              <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add Work Time</button>
             </div>
           </div>
           <div class="card-body">
@@ -67,7 +67,7 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="formModal">Edit Work Time</h5>
+        <h5 class="modal-title" id="formModal">Add Work Time</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
