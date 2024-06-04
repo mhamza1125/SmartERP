@@ -39,6 +39,15 @@ Route::post('/register', [AuthController::class, 'store']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+Route::group(['middleware' => 'auth'], function(){
+    Route::group([
+        'middleware' => ['auth', 'is_admin']
+    ], function(){
+        Route::get('/head', [HeadController::class, 'index'])->name('head');
+        // Add Routes Here
+    });
+});
+
 // ---------------------------------------
 // ---------- Other Controllers ----------
 // ---------------------------------------
@@ -59,7 +68,7 @@ Route::post('/work', [AttendanceController::class, 'store'])->name('work.store')
 Route::post('/work/{id}', [AttendanceController::class, 'update'])->name('work.update');
 
 // Head
-Route::get('/head', [HeadController::class, 'index'])->name('head');
+// Route::get('/head', [HeadController::class, 'index'])->name('head');
 Route::get('/headType', [HeadController::class, 'headType'])->name('head.headType');
 Route::get('/addHead', [HeadController::class, 'create'])->name('head.add');
 Route::post('/head', [HeadController::class, 'store'])->name('head.store');

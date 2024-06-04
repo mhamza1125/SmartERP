@@ -22,8 +22,9 @@ class HeadController extends Controller
         $this->headRepository = $headRepository;
         $this->headTypeRepository = $headTypeRepository;
     }
-
+    
     public function index(){
+        // $this->authorize('create');
         $head = $this->headRepository->all();
         $headType = $this->headTypeRepository->all();
         return view('head', [

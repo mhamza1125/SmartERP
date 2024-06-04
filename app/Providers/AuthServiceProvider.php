@@ -2,7 +2,8 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -21,6 +22,29 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
+        
+        // These are only to Show / Hide Buttons by @can Method for .blade
+        // To Restrict user access these must be used in Controller Methods
+
+        Gate::define('show', function (User $user) {
+            $allowedRoles = ['admin', 'operator'];
+            return in_array($user->role, $allowedRoles);
+        });
+
+        Gate::define('create', function (User $user) {
+            $allowedRoles = ['admin', 'operator'];
+            return in_array($user->role, $allowedRoles);
+        });
+
+        Gate::define('edit', function (User $user) {
+            $allowedRoles = ['admin'];
+            return in_array($user->role, $allowedRoles);
+        });
+
+        Gate::define('delete', function (User $user) {
+            $allowedRoles = ['admin'];
+            return in_array($user->role, $allowedRoles);
+        });
     }
 }

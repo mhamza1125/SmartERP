@@ -71,15 +71,6 @@
             </li>
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Attendance</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('attendance') }}">Attendance</a></li>
-                <li><a class="nav-link" href="{{ route('workTime') }}">Work Time</a></li>
-                <li><a class="nav-link" href="{{ route('workHoliday') }}">Holidays</a></li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Stock / Issuance</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>

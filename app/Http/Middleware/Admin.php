@@ -17,10 +17,9 @@ class Admin
 
     public function handle($request, Closure $next)
     {
-        if (auth()->user()->role== 'admin') {
+        if (auth()->user()->role == 'admin213') {
             return $next($request);
         }
-        // abort(403);
         return redirect()->route('login')->with('fails', 'Login as Admin to Access');
     }
 }

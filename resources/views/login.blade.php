@@ -22,6 +22,11 @@
     <section class="section">
       <div class="container mt-5">
         <div class="row">
+          <script> @if (session('fails'))
+            document.addEventListener('DOMContentLoaded', function() {
+              alert('{{ session('fails') }}');
+            });
+          @endif </script>
           <div class="col-12 col-sm-8 offset-sm-2 col-md-6 offset-md-3 col-lg-6 offset-lg-3 col-xl-6 offset-xl-3">
             <div class="card card-primary">
               <div class="card-header">

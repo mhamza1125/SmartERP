@@ -17,14 +17,16 @@
                 <form action="{{ route('attendance.filter') }}" method="POST" class="needs-validation col-md-12" novalidate="">@csrf
                   <div class="row">
                     <div class="form-group col-md-5">                    
-                      <label>Employee {{$eid}}</label>
+                      <label>Employee</label>
                       @php $selectedEmployee = 'All Employees'; @endphp
                       <select class="form-control select2" name="employee_id" required>
                         <option value="0" selected>All</option>
                         @if($employee->count())
                           @foreach($employee as $item)
-                            @php $selected = $eid == $item->attendance_id ? 'selected' : ''; @endphp
-                            <option value="{{$item->attendance_id}}" {{ $eid == $item->attendance_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}} - {{$item->attendance_id}}</option>
+                            @php if($item->attendance_id == $eid){
+                              $selectedEmployee = $item->employee_no . ' - ' . $item->name;
+                            } @endphp
+                            <option value="{{$item->attendance_id}}" {{ $eid == $item->attendance_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}</option>
                           @endforeach
                         @endif
                       </select>
@@ -54,7 +56,7 @@
                     <thead>
                       @if(!empty($dfrom) && !empty($dto))
                         <tr>
-                          <th colspan="2"><b>{{ $selectedEmployee ?? ''}}</b></th>
+                          <th colspan="2"><b>{{ $selectedEmployee }}</b></th>
                           <th colspan="3"><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</th>
                           <th colspan="3"><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</th>
                         </tr>
@@ -80,7 +82,7 @@
                               {{-- <td>{{ $row['USERID'] }}</td> --}}
                               @if($selectedEmployee == 'All Employees')
                                 @if($holiday == '1') <td>Holiday</td>
-                                @else <td>{{ $row['NAME'] }}</td>@endif
+                                @else <td>{{ $row['ENO'] }} - {{ $row['NAME'] }}</td>@endif
                               @endif
                               <td>{{ $row['DATE'] }}</td>
                               <td>{{ $row['CHECKIN'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKIN'])) : $row['CHECKIN'] }}</td>

@@ -60,7 +60,7 @@
                   @endphp
                     <tr>
                       <td>{{ $loop->index + 1 }}</td>
-                      <td>{{ $data['NAME'] }}</td>
+                      <td>{{ $data['ENO'] }} - {{ $data['NAME'] }}</td>
                       <td>{{ number_format($data['SALARY']) }}</td>
                       <td>{{ number_format($debit) }}</td>
                       <td>{{ number_format($data['SALARY'] - $debit) }}</td>

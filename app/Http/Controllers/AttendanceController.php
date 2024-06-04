@@ -114,6 +114,7 @@ class AttendanceController extends Controller
             if (!isset($summary[$row['USERID']])) {
                 $summary[$row['USERID']] = [
                     'NAME' => $row['NAME'],
+                    'ENO' => $row['ENO'],
                     'EID' => $row['EID'],
                     'SALARY' => $row['SALARY'], // Include salary
                     'TOTAL_LATE_MINUTES' => 0, // Initialize total late minutes
@@ -165,7 +166,8 @@ class AttendanceController extends Controller
     }
     
     private function attendance($eid, $dfrom, $dto) {
-        $dbPath = public_path('resources/att2000.mdb');
+        // $dbPath = public_path('resources/att2000.mdb');
+        $dbPath = 'D:\ZKTeco\att2000.mdb';
     
         if (!file_exists($dbPath)) {
             return [];
@@ -193,9 +195,9 @@ class AttendanceController extends Controller
             $accessData = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
             if ($eid == 0) {
-                $employees = DB::table('employees')->select('attendance_id', 'name', 'salary', 'employee_id')->where('employee_type_id', '39')->get();
+                $employees = DB::table('employees')->select('attendance_id', 'name', 'salary', 'employee_id', 'employee_no')->where('employee_type_id', '39')->get();
             } else {
-                $employees = DB::table('employees')->select('attendance_id', 'name', 'salary', 'employee_id')->where('attendance_id', $eid)->where('employee_type_id', '39')->get();
+                $employees = DB::table('employees')->select('attendance_id', 'name', 'salary', 'employee_id', 'employee_no')->where('attendance_id', $eid)->where('employee_type_id', '39')->get();
             }
     
             $employeeMap = $employees->keyBy('attendance_id');
@@ -221,6 +223,7 @@ class AttendanceController extends Controller
                 if ($holidayDetail) {
                     $rows[] = [
                         'USERID' => $userId,
+                        'ENO' => $employee->employee_no,
                         'EID' => $employee->employee_id,
                         'NAME' => $employee->name,
                         'SALARY' => $employee->salary,
@@ -237,6 +240,7 @@ class AttendanceController extends Controller
                 if ($this->isSunday($date)) {
                     $rows[] = [
                         'USERID' => $userId,
+                        'ENO' => $employee->employee_no,
                         'EID' => $employee->employee_id,
                         'NAME' => $employee->name,
                         'SALARY' => $employee->salary,
@@ -257,6 +261,7 @@ class AttendanceController extends Controller
                 if (empty($attendanceRecords)) {
                     $rows[] = [
                         'USERID' => $userId,
+                        'ENO' => $employee->employee_no,
                         'EID' => $employee->employee_id,
                         'NAME' => $employee->name,
                         'SALARY' => $employee->salary,
@@ -300,6 +305,7 @@ class AttendanceController extends Controller
     
                 $rows[] = [
                     'USERID' => $userId,
+                    'ENO' => $employee->employee_no,
                     'EID' => $employee->employee_id,
                     'NAME' => $employee->name,
                     'SALARY' => $employee->salary,
