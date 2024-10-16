@@ -30,6 +30,7 @@
                     @foreach($order as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>{{$item->order_date}}</td>                      
                       <td>{{$item->order_no}}</td>
                       <td>{{$item->job_no}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
@@ -62,7 +63,6 @@
                             </div>
                           </div>
                       </td>
-                      <td>{{$item->order_date}}</td>                      
                       <td>
                         <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('order.edit', $item->order_id) }}" class="btn btn-primary btn-sm">Edit</a>

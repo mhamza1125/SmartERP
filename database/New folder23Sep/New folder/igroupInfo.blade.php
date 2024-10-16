@@ -44,18 +44,24 @@
                           <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                           <td>
                             @php
-                              if (isset($item->material_id)) {
-                                $astock = $stock->where('material_id', $item->material_id)->first();
-                              }else{
-                                $astock = $pstock->where('product_type_id', $item->product_type_id)->where('stage_id', $item->stage_id)->first();
-                              }
+                                if (isset($item->material_id)) {
+                                    $astock = $stock->where('material_id', $item->material_id)->first();
+                                } else {
+                                    $astock = $pstock->where('product_type_id', $item->product_type_id)->where('stage_id', $item->stage_id)->first();
+                                }
                             @endphp
-                            @if (isset($item->material_id))
-                              {{ number_format($astock->total_received + $astock->stockIn - $astock->stockOut - $astock->total_returned) ?? 'N/A' }}
+
+                            @if ($astock)
+                                @if (isset($item->material_id))
+                                    {{ number_format(($astock->total_received ?? 0) + ($astock->stockIn ?? 0) - ($astock->stockOut ?? 0) - ($astock->total_returned ?? 0)) }}
+                                @else
+                                    {{ number_format(($astock->stockIn ?? 0) - ($astock->stockOut ?? 0)) }}
+                                @endif
                             @else
-                              {{ number_format($astock->stockIn - $astock->stockOut) ?? 'N/A' }}
+                                N/A
                             @endif
                           </td>
+
                         </tr>
                       @endforeach
                     @endif

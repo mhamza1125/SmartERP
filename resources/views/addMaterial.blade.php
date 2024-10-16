@@ -93,7 +93,7 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Material Location (In Store)</label>
                     <input type="text" class="form-control" name="location" value="{{old('location')}}">
@@ -107,6 +107,14 @@
                     <input type="number" step="0.001" class="form-control" name="cprice" required value="0">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Price</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Opening Stock</label>
+                    <input type="number" step="0.001" class="form-control" name="quantity" required value="0">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Opening Stock</div>
                   </div>
                 </div>
               </div>

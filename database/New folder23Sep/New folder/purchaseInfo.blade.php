@@ -95,9 +95,12 @@
                               <td>{{$item->material_no}}</td>
                               <td>{{$item->name}}</td>
                               <td>{{$item->hname}}</td>
-                              <td>{{number_format($item->quantity)}}</td>
-                              <td>{{number_format($item->price)}}</td>
-                              <td>{{number_format($item->quantity * $item->price)}}</td>
+                              <!-- <td>{{number_format($item->quantity)}}</td> -->
+                  			      <td>{{$item->quantity}}</td>
+                  			      <!-- <td>{{number_format($item->price)}}</td> -->
+                  			      <td>{{$item->price}}</td>
+                              <!-- <td>{{number_format($item->quantity * $item->price)}}</td> -->
+                              <td>{{$item->quantity * $item->price}}</td>
                             </tr>
                           @endforeach
                         @endif
@@ -109,7 +112,8 @@
                         <tr>
                           <th colspan="3"></th>
                           <th colspan="2" class="text-center">Grand Total:</th>
-                          <th>{{ number_format($total) }}</th>
+                          <th>{{ $total }}</th>
+                          <!-- <th>{{ number_format($total) }}</th> -->
                         </tr>
                       </tfoot>
                     </table>
@@ -135,6 +139,7 @@
                               <td>{{$item->material_no}} - {{$item->name}}</td>
                               <td>{{number_format($item->before_qty)}} {{$item->phname}}</td>
                               <td>{{number_format($item->quantity)}} {{$item->hname}}</td>
+                              <td>{{number_format($item->price)}}</td>
                               <td>{{number_format($item->price)}}</td>
                               <td>{{number_format($item->quantity * $item->price)}}</td>
                             </tr>

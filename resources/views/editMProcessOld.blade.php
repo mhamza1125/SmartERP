@@ -47,7 +47,7 @@
                       <option value="0" selected>Default Processing</option>
                       @if($order->count())
                         @foreach($order as $item)
-                          <option value="{{$item->order_id}}" {{ $purchase['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->order_no}} - {{$item->job_no}}</option>
+                          <option value="{{$item->order_id}}" {{ $purchase['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -153,18 +153,18 @@
                         @foreach($purchaseItem as $item)
                           <tr data-item-id="{{ $item->purchase_item_id }}">
                             <td></td>
-                            <td>{{$item->pmaterial_no}} - {{$item->pname}}
-                              <input type="hidden" name="amaterial_name[]" value="{{$item->pname}}">
-                              <input type="hidden" name="amaterial_id[]" value="{{$item->pmaterial_id}}">
-                            </td>
                             <td>{{$item->material_no}} - {{$item->name}}
-                              <input type="hidden" name="bmaterial_name[]" value="{{$item->name}}">
-                              <input type="hidden" name="bmaterial_id[]" value="{{$item->material_id}}">
+                              <input type="hidden" name="amaterial_name[]" value="{{$item->name}}">
+                              <input type="hidden" name="amaterial_id[]" value="{{$item->material_id}}">
                             </td>
-                            <td>{{$item->before_qty}} {{$item->phname}}
+                            <td>{{$item->pmaterial_no}} - {{$item->pname}}
+                              <input type="hidden" name="bmaterial_name[]" value="{{$item->pname}}">
+                              <input type="hidden" name="bmaterial_id[]" value="{{$item->pmaterial_id}}">
+                            </td>
+                            <td>{{$item->before_qty}} {{$item->hname}}
                               <input type="hidden" name="aquantity[]" value="{{$item->before_qty}}"></td>
                             </td>
-                            <td>{{$item->quantity}} {{$item->hname}}
+                            <td>{{$item->quantity}} {{$item->phname}}
                               <input type="hidden" name="bquantity[]" value="{{$item->quantity}}"></td>
                             </td>
                             <td>{{$item->price}}

@@ -60,7 +60,7 @@
                   {{-- Order Estimate --}}
                   <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
                     <div class="table-responsive">
-                      <table class="table table-sm table-striped">
+                      <table class="table table-sm table-striped" id="save-stage" style="width:100%;">
                         <thead>
                           <tr>
                             <th>Sr.</th>
@@ -109,13 +109,13 @@
                           </tr>
                         </tfoot>
                       </table>
-                    </div>
+                    </div>  
                   </div>
   
                   {{-- Purchase Order Estimate --}}
                   <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
                     <div class="table-responsive">
-                      <table class="table table-sm table-striped">
+                      <table class="table table-sm table-striped" id="table-1"'>
                         <thead>
                           <tr>
                             <th>Sr.</th>

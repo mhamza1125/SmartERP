@@ -13,6 +13,30 @@ class StockRepository implements GlobalInterface {
     }
 
     public function issue(){
+        // All Issuance with Issued Article
+        return Stock::where('stocks.stock_type', '2')
+        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+        ->leftJoin('employees', function($join) {
+            $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'employee');
+        })
+        ->leftJoin('vendors', function($join) {
+            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'vendor');
+        })
+        ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+        ->join('product_types', 'product_types.product_type_id', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', 'product_types.product_id')
+        ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
+        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+        ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
+        ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
+            DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
+        )
+        ->groupBy('stocks.stock_id') // Group by stock_id to aggregate article_numbers
+        ->orderBy('stocks.created_at', 'desc')
+        ->get();
+
         // All Issuance
         return Stock::where('stocks.stock_type', '2')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
@@ -26,6 +50,7 @@ class StockRepository implements GlobalInterface {
                 ->where('stocks.table_name', 'vendor');
         })
         ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
+        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
         ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
         ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
         ->orderBy('stocks.created_at', 'desc')
@@ -56,6 +81,30 @@ class StockRepository implements GlobalInterface {
     }
 
     public function receive(){
+        // All Received Issuance with Articles
+        return Stock::where('stocks.stock_type', '1')
+        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+        ->leftJoin('stocks as issue', 'issue.stock_id', '=', 'stocks.issue_id')
+        ->leftJoin('employees', function($join) {
+            $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'employee');
+        })
+        ->leftJoin('vendors', function($join) {
+            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                ->where('stocks.table_name', 'vendor');
+        })
+        ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
+        ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        ->join('products', 'products.product_id', '=', 'product_types.product_id')
+        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+        ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
+            DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
+        )
+        ->groupBy('stocks.stock_id') // Group by stock_id to aggregate article numbers
+        ->orderBy('stocks.created_at', 'desc')
+        ->get();
+
         // All Received Issuance
         return Stock::where('stocks.stock_type', '1')
         ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
@@ -70,6 +119,7 @@ class StockRepository implements GlobalInterface {
         })
         // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
         ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
+        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
         ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
         ->orderBy('stocks.created_at', 'desc')
         ->get();
@@ -183,8 +233,6 @@ class StockRepository implements GlobalInterface {
             'vendors' => $vendorWages,
         ];
     }
-    
-      
 
     public function wagesNotUsed(){
         // For Wages.blade.php page Monthly Wages
@@ -357,8 +405,8 @@ class StockRepository implements GlobalInterface {
     public function refNo() {
         // For Issuance
         $yearMonth = Carbon::now()->format('ym');
-        $count = Stock::whereMonth('stock_date', Carbon::now()->month)
-            ->whereYear('stock_date', Carbon::now()->year)
+        $count = Stock::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
             ->where('stock_type', '2')->count();
         $fourDigitNumber = str_pad($count+1, 4, '0', STR_PAD_LEFT);
         return 'I' . $yearMonth . $fourDigitNumber;
@@ -389,6 +437,13 @@ class StockRepository implements GlobalInterface {
     }
 
     public function update($id, array $data) {
+        $update = Stock::findOrFail($id);
+        $update->update($data);
+        return $update->stock_id;
+    }
+
+    public function updateStatus($id, array $data) {
+        // Might Not be used
         $update = Stock::findOrFail($id);
         $update->update($data);
         return $update->stock_id;

@@ -75,7 +75,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantityMaterial" placeholder="0">
+                    <input type="number" step="0.0000000001" min="0" class="form-control" name="quantityMaterial" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">
@@ -100,7 +100,7 @@
                 <div class="col-md-5">
                   <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" min="0" class="form-control" name="quantityStage" placeholder="0">
+                    <input type="number" step="0.0000000001" min="0" class="form-control" name="quantityStage" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-1">
@@ -166,5 +166,7 @@
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
   var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";
+  var ajaxAMQtyUrl = "{{ route('ajaxAMQty') }}";
+  var ajaxATMQtyUrl = "{{ route('ajaxATMQty') }}";
 </script>
 @endsection

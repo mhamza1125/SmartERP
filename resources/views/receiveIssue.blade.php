@@ -55,6 +55,7 @@
                     <th>Receive Issuance No</th>
                     <th>Job No</th>
                     <th>Issued For</th>
+                    <th>Articles</th>
                     <th>Employee</th>
                     <th>Action</th>
                   </tr>
@@ -68,6 +69,7 @@
                       <td>{{$item->stock_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default issue'}}</td>
                       <td>{{$item->sname}}</td>
+                      <td>{{$item->articles}}</td>
                       <td>{{ $item->table_name === 'employee' ? $item->employee_no . ' - ' . $item->name : $item->vendor_no . ' - ' . $item->fname }}</td>
                       <td>
                         <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
@@ -84,6 +86,7 @@
                     <th>Issue No</th>
                     <th>Job No</th>
                     <th>Issued For</th>
+                    <th>Articles</th>
                     <th>Employee</th>
                     <th>Action</th>
                   </tr>

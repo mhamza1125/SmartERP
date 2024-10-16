@@ -29,6 +29,7 @@
                     <td><b>Current Price (Pkr): </b> {{$material['cprice']}}</td>
                   </tr>
                   <tr>
+                    <td><b>Opening Stock: </b> {{$material['quantity'] ?? 0}} {{$material['uname']}}</td>
                     <td><b>Material Location (In Store): </b> {{$material['location']}}</td>
                   </tr>
                   <tr>

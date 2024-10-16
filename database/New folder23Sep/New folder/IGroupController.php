@@ -9,18 +9,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\IGroupRequest;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
+use App\Repositories\StockItemRepository;
 use App\Repositories\IGroupRepository;
 use App\Repositories\MaterialRepository;
-use App\Repositories\StockItemRepository;
 use App\Repositories\IGroupItemRepository;
 
 class IGroupController extends Controller
 {
     protected $orderRepository;
     protected $stockRepository;
+    protected $stockItemRepository;
     protected $igroupRepository;
     protected $materialRepository;
-    protected $stockItemRepository;
     protected $igroupItemRepository;
 
     public function __construct(
@@ -35,8 +35,8 @@ class IGroupController extends Controller
         $this->orderRepository = $orderRepository;
         $this->igroupRepository = $igroupRepository;
         $this->stockRepository = $stockRepository;
-        $this->materialRepository = $materialRepository;
         $this->stockItemRepository = $stockItemRepository;
+        $this->materialRepository = $materialRepository;
         $this->igroupItemRepository = $igroupItemRepository;
     }
 
@@ -59,7 +59,7 @@ class IGroupController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $ptid = $request->input('product_type_id'); 
+        $ptid = $request->input('product_type_id');
         $quantities = $request->input('quantity');
         $mid = $request->input('material_id');
         $stages = $request->input('stage_id');

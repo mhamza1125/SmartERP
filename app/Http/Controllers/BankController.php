@@ -73,7 +73,7 @@ class BankController extends Controller
                 'transaction_date' => date('Y-m-d'),
                 'payee_bank_id' => '0',
             ];
-            // $this->transactionRepository->store($transaction);
+            $this->transactionRepository->store($transaction);
 
         }
         return redirect()->route('bank.add')->with('success', 'Record Inserted Successfully');

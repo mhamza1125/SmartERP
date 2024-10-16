@@ -20,6 +20,37 @@ class ProductMaterialRepository implements GlobalInterface {
     }
 
     public function get($id){
+        $productMaterialIds = ProductMaterial::where('product_materials.product_type_id', $id)
+            ->pluck('material_id')
+            ->toArray();
+
+        $productMaterialIdsFromProducts = DB::table('products')
+            ->join('product_types', 'product_types.product_id', '=', 'products.product_id')
+            ->where('product_types.product_type_id', $id)
+            ->pluck('products.material_id')
+            ->toArray();
+
+        $allMaterialIds = array_unique(array_merge(
+            $productMaterialIds,
+            array_filter(explode('|', implode('|', $productMaterialIdsFromProducts)))
+        ));
+
+        $materials = DB::table('materials')
+            ->leftJoin('product_materials as pm', function($join) use ($id) {
+                $join->on('pm.material_id', '=', 'materials.material_id')
+                     ->where('pm.product_type_id', '=', $id);
+            })
+            ->leftJoin('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('pm.*', 'materials.*', 'heads.name as hname',
+                DB::raw('COALESCE(pm.quantity, 0) as quantity')
+            )
+            ->whereIn('materials.material_id', $allMaterialIds)
+            ->groupBy('materials.material_id', 'materials.name','heads.name')
+            ->get();
+
+        return $materials;
+
+        // Not showing newly added materials
         return ProductMaterial::where('product_materials.product_type_id', $id)
         ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
         ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
@@ -83,6 +114,22 @@ class ProductMaterialRepository implements GlobalInterface {
             } else {
                 $productMaterial['created_by'] = auth()->id();
                 $store = ProductMaterial::create($productMaterial);
+            }
+        }
+    }
+
+    public function updateMaterial($id, array $data) {
+        // Fetch the existing product materials
+        $materials = ProductMaterial::where('product_id', $id)
+        ->join('product_types', 'product_types.product_type_id', '=', 'product_materials.product_type_id')
+        ->join('materials', 'materials.material_id', 'product_materials.material_id')
+        ->where('materials.material_type_id', '!=', '61') // Not Getting Boxes
+        ->get();
+
+        // Loop through existing materials and delete those not in the $materialIds array
+        foreach ($materials as $material) {
+            if (!in_array($material->material_id, $data)) {
+                $material->delete();
             }
         }
     }

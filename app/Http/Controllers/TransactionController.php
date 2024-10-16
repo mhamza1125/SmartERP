@@ -296,6 +296,7 @@ class TransactionController extends Controller
         }
         $bBalance = $this->transactionRepository->bankBalance2($id);
         $balance = $bBalance->tcredit - $bBalance->tdebit;
+        $balance = ($bBalance->tcredit ?? 0) - ($bBalance->tdebit ?? 0);
         return view('bankBalanceDetail', [
             'dto' => $dto,
             'dfrom' => $dfrom,

@@ -100,6 +100,7 @@ class ProductController extends Controller
         $image = $this->imageRepository->image('products', $id);
         $file = $this->imageRepository->file('products', $id);
         $pcost = $this->productCostRepository->get($id);
+        $pWages = $pcost->where('table_name', 'general')->sum('amount');
         $totalMaterial = $this->productMaterialRepository->times($id);
         $getMaterial = $this->productMaterialRepository->getAll($id);
         $material = $this->materialRepository->getMaterial($product['material_id']);
@@ -110,6 +111,7 @@ class ProductController extends Controller
             'image' => $image,
             'file' => $file,
             'pcost' => $pcost,
+            'pWages' => $pWages,
             'totalMaterial' => $totalMaterial,
             'countMaterial' => $totalMaterial->count(),
             'getMaterial' => $getMaterial,
@@ -142,6 +144,7 @@ class ProductController extends Controller
 
     public function update(Request $request, $id){
         $materialIds = $request->input('material_id');
+        $this->productMaterialRepository->updateMaterial($id, $materialIds);
         $materialIds = $materialIds ? implode('|', $materialIds) : "0";
         $stageIds = $request->input('stage_ids');
         $stageIds = $stageIds ? implode('|', $stageIds) : "0";

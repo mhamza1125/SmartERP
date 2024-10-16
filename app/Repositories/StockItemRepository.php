@@ -300,6 +300,30 @@ class StockItemRepository implements GlobalInterface {
         ->get();
     }
 
+    public function freeStock(){
+        // Free Material Stock Based on Default Purchases
+        return DB::table(function ($subquery) {
+            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
+                // ->selectRaw('SUM(receive_materials.quantity) as total_received')
+                ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
+                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
+                ->from('materials')
+                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
+                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
+                ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+                ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
+        }, 'material_stock')
+        ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
+        ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+        ->select('material_stock.*')
+        ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
+        ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
+        ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
+        ->get();
+    }
+
     public function pStock(){
         // Available Product Stock
         return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'sthead.head_id as sthead_id', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
@@ -410,7 +434,6 @@ class StockItemRepository implements GlobalInterface {
         return $results;
     }
     
-
     public function rstock($id){
         // Receiveable Stock Based on Early Receiving & Null
         return StockItem::join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
@@ -549,6 +572,19 @@ class StockItemRepository implements GlobalInterface {
                     }
                 }
             }
+        }
+    }
+
+    public function updateStock($id, array $data) {
+        $stock = StockItem::where('stock_id', '1')
+        ->where('material_id', $id)
+        ->first();
+        if($stock){
+            $stock->update($data);
+        }else{
+            $data['created_by'] = auth()->id();
+            $store = StockItem::create($data);
+            return $store->stock_item_id;
         }
     }
 

@@ -100,7 +100,7 @@
               </div>
 
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-5">
                   <div class="form-group">
                     <label>Materials</label>
                     <select class="form-control select2" name="material_id" id="material_id">
@@ -110,19 +110,13 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group">
-                    <label for="available_stock">Available Stock</label>
+                    <label>Available Stock</label>
                     <input type="text" class="form-control" id="available_stock" name="available_stock" readonly>
                   </div>
                 </div>                
                 <div class="col-md-3">
-                  <div class="form-group">
-                    <label for="available_stock">Total Req &nbsp|&nbsp Issued &nbsp|&nbsp To Issue</label>  
-                    <input type="text" class="form-control" id="materialQty" readonly>
-                  </div>
-                </div>
-                <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" class="form-control" name="quantityMaterial" placeholder="0">
@@ -135,6 +129,28 @@
                   </div>
                 </div>
               </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Complete Order)</label>  
+                    <input type="text" class="form-control" id="materialQty" readonly>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Selected Article)</label>  
+                    <input type="text" class="form-control" id="articleQty" readonly placeholder="0  |  0  |  0">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Selected Article Size)</label>  
+                    <input type="text" class="form-control" id="articleTQty" readonly>
+                  </div>
+                </div>
+              </div>
+              
               {{-- <div class="row">
                 <div class="col-md-2">
                   <div class="form-group">
@@ -169,7 +185,7 @@
                 </div>
                 <div class="col-md-3">                  
                   <div class="form-group">
-                    <label for="available_pstock">Available Stock</label>
+                    <label>Available Stock</label>
                     <input type="text" class="form-control" id="available_pstock" name="available_pstock" readonly>
                   </div>
                 </div>
@@ -242,5 +258,7 @@
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
   var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";
+  var ajaxAMQtyUrl = "{{ route('ajaxAMQty') }}";
+  var ajaxATMQtyUrl = "{{ route('ajaxATMQty') }}";
 </script>
 @endsection

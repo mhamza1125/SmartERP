@@ -90,8 +90,8 @@ class PurchaseRepository implements GlobalInterface {
 
     public function refNo() {
         $yearMonth = Carbon::now()->format('ym');
-        $count = Purchase::whereMonth('purchase_date', Carbon::now()->month)
-            ->whereYear('purchase_date', Carbon::now()->year)->count();
+        $count = Purchase::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)->count();
         $threeDigitNumber = str_pad($count+1, 3, '0', STR_PAD_LEFT);
         return 'P' . $yearMonth . $threeDigitNumber;
     }

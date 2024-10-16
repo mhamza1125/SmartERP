@@ -10,6 +10,7 @@ use App\Repositories\ImageRepository;
 use App\Http\Requests\MaterialRequest;
 use App\Repositories\VendorRepository;
 use App\Repositories\MaterialRepository;
+use App\Repositories\StockItemRepository;
 
 class MaterialController extends Controller
 {
@@ -17,18 +18,21 @@ class MaterialController extends Controller
     protected $headRepository;
     protected $vendorRepository;
     protected $imageRepository;
+    protected $stockItemRepository;
 
     public function __construct(
         MaterialRepository $materialRepository, 
         HeadRepository $headRepository,
         VendorRepository $vendorRepository,
         ImageRepository $imageRepository,
+        StockItemRepository $stockItemRepository,
     ){
         $this->middleware(['auth', 'all']);
         $this->materialRepository = $materialRepository;
         $this->headRepository = $headRepository;
         $this->vendorRepository = $vendorRepository;
         $this->imageRepository = $imageRepository;
+        $this->stockItemRepository = $stockItemRepository;
     }
 
     public function index(){
@@ -54,6 +58,16 @@ class MaterialController extends Controller
     public function store(MaterialRequest $request){
         $validatedData = $request->validated();
         $getId = $this->materialRepository->store($validatedData);
+        $stockItem = [ // Opening Stock
+            'stock_id' => '1',
+            'product_type_id' => '0',
+            'material_id' => $getId,
+            'quantity' => $request->input('quantity'),
+            'stage_id' => '0',
+            'work_logs' => '0',
+            'work_wages' => '0',
+        ];
+        $this->stockItemRepository->store($stockItem);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'material', 'materials', $getId);        
@@ -71,7 +85,9 @@ class MaterialController extends Controller
         ]);
     }
     
-    public function edit(Material $id){
+    // public function edit(Material $id){
+    public function edit($id){
+        $id = $this->materialRepository->get($id);
         $material = $this->headRepository->get('10');
         $unit = $this->headRepository->get('4');
         $vendor = $this->vendorRepository->all();
@@ -94,7 +110,6 @@ class MaterialController extends Controller
         }else{
             $materialItem = $this->materialRepository->ledger();
         }
-        // dd($materialItem);
         return view('materialDetail', [
             'dto' => $dto,
             'dfrom' => $dfrom,
@@ -105,7 +120,17 @@ class MaterialController extends Controller
     }
 
     public function update(Request $request, $id){
-        $getId = $this->materialRepository->update($id, $request->input());      
+        $getId = $this->materialRepository->update($id, $request->input());   
+        $stockItem = [ // Opening Stock
+            'stock_id' => '1',
+            'product_type_id' => '0',
+            'material_id' => $id,
+            'quantity' => $request->input('quantity'),
+            'stage_id' => '0',
+            'work_logs' => '0',
+            'work_wages' => '0',
+        ];
+        $this->stockItemRepository->updateStock($id, $stockItem);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'material', 'materials', $getId);        

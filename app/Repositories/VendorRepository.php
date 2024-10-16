@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\DB;
 class VendorRepository implements GlobalInterface {
     
     public function all(){
-        return Vendor::join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
+        return Vendor::leftJoin('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
         ->select('vendors.*', 'vthead.name as vtname')
         ->orderBy('vendors.created_at', 'desc')->get();
     }
 
     public function worker(){ // Contractors
-        return Vendor::join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
+        return Vendor::leftJoin('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
         ->select('vendors.*', 'vthead.name as vtname')
         ->orderBy('vendors.created_at', 'desc')
         ->where('vendor_type', '1')->get();

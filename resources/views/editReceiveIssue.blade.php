@@ -174,6 +174,9 @@
                     <li class="nav-item">
                       <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Issued Items</a>
                     </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="received-tab" data-toggle="tab" href="#received" role="tab" aria-controls="receive" aria-selected="false">Received Items</a>
+                    </li>
                   </ul>     
                   <div class="tab-content" id="myTabContent">
                     {{-- Receive Issuance --}}
@@ -264,6 +267,39 @@
                             <th>Material / Stage</th>
                             <th>Quantity</th>
                             <th>Average</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                    {{-- Received --}}
+                    <div class="tab-pane fade" id="received" role="tabpanel" aria-labelledby="received-tab">  
+                      <table class="table table-sm table-striped">
+                        <thead>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Article No</th>
+                            <th>Material / Stage</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @if($issueSum->count())
+                            @foreach($issueSum as $item)
+                              <tr>
+                                <td>{{$loop->index + 1}}</td>
+                                <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                <td>{{($item->name)? $item->name:$item->stage}}</td>
+                                <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
+                              </tr>
+                            @endforeach
+                          @endif
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Article No</th>
+                            <th>Material / Stage</th>
+                            <th>Quantity</th>
                           </tr>
                         </tfoot>
                       </table>

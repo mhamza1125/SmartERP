@@ -161,10 +161,10 @@
                               <input type="hidden" name="bmaterial_name[]" value="{{$item->name}}">
                               <input type="hidden" name="bmaterial_id[]" value="{{$item->material_id}}">
                             </td>
-                            <td>{{$item->before_qty}} {{$item->phname}}
+                            <td>{{$item->before_qty}} {{$item->hname}}
                               <input type="hidden" name="aquantity[]" value="{{$item->before_qty}}"></td>
                             </td>
-                            <td>{{$item->quantity}} {{$item->hname}}
+                            <td>{{$item->quantity}} {{$item->phname}}
                               <input type="hidden" name="bquantity[]" value="{{$item->quantity}}"></td>
                             </td>
                             <td>{{$item->price}}

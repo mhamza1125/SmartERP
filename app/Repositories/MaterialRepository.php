@@ -32,6 +32,18 @@ class MaterialRepository implements GlobalInterface {
         ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
         ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
         ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+        ->leftJoin('stock_items', function($join) {
+            $join->on('stock_items.material_id', '=', 'materials.material_id')
+                ->where('stock_items.stock_id', '=', '1');
+        })
+        ->select('materials.*', 'stock_items.quantity', 'mthead.name as mtname', 'uhead.name as uname', 'vendors.fname', 'vendor_no')
+        ->first();
+
+        // Without Opening Stock
+        return Material::where('materials.material_id', $id)
+        ->join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
+        ->join('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
         ->select('materials.*', 'mthead.name as mtname', 'uhead.name as uname', 'vendors.fname', 'vendor_no')
         ->first();
     }

@@ -174,6 +174,7 @@ class MProcessController extends Controller
 
             $pid = $this->purchaseItemRepository->store($purchaseItem);
             $sid = $this->stockItemRepository->store($stockItem);
+            $this->materialRepository->update($bmaterial, ['cprice' => $price]);
 
             $mprocess = [
                 'purchase_id' => $getId,

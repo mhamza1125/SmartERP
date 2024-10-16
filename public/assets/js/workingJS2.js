@@ -312,11 +312,7 @@ $(document).ready(function() {
                 }
             });
 
-            // if (aquantity > availableStock) {
-            if (parseFloat(aquantity) > parseFloat(availableStock)) {
-                console.log(aquantity);
-                console.log(availableStock);
-
+            if (aquantity > availableStock) {
                 alert("Quantity cannot be greater than available stock.");
                 return;
             }
@@ -1557,38 +1553,6 @@ $(document).ready(function() {
             });
         });
 
-        // Required Material Qty, Issued Qty, Remaining Qty to Issue Against Specific Article 
-        $('#material_id').on('change', function() {
-            var materialId = $(this).val();
-            var orderId = $('#order_id').val();
-            var productId = $('#product_type_id').val();
-            $.ajax({
-                url: ajaxAMQtyUrl,
-                type: "GET",
-                data: { materialId: materialId, orderId: orderId, productId: productId },
-                dataType: "json",
-                success: function(response) {
-                    $('#articleQty').val(response.data);
-                },
-            });
-        });
-
-        // Required Material Qty, Issued Qty, Remaining Qty to Issue Against Specific Article Type
-        $('#material_id').on('change', function() {
-            var materialId = $(this).val();
-            var orderId = $('#order_id').val();
-            var productId = $('#product_type_id').val();
-            $.ajax({
-                url: ajaxATMQtyUrl,
-                type: "GET",
-                data: { materialId: materialId, orderId: orderId, productId: productId },
-                dataType: "json",
-                success: function(response) {
-                    $('#articleTQty').val(response.data);
-                },
-            });
-        });
-
         // Event listener for select2:select event on material ID
         $('#material_id').on('select2:select', function(e) {
             var selectedMaterialId = e.params.data.id;
@@ -1616,8 +1580,7 @@ $(document).ready(function() {
             var materialId = $('#material_id').val();
             var materialText = $('#material_id option:selected').text();
             var productName = $('#product_type_id option:selected').text();
-            var quantity = parseFloat($('input[name="quantityMaterial"]').val());
-            // var quantity = parseInt($('input[name="quantityMaterial"]').val());
+            var quantity = parseInt($('input[name="quantityMaterial"]').val());
             var availableStock = parseInt($('#available_stock').val());
             // var stageId = $('#stage_id').val() || "0"; 
             var stageId = "0"; 
@@ -1672,8 +1635,7 @@ $(document).ready(function() {
             var productId = $('#product_type_id').val();
             var materialId = $('#material_id').val() || "0";
             var productName = $('#product_type_id option:selected').text();
-            var quantity = parseFloat($('input[name="quantityStage"]').val());
-            // var quantity = parseInt($('input[name="quantityStage"]').val());
+            var quantity = parseInt($('input[name="quantityStage"]').val());
             var stageIds = $('#stage_id').val() || [];
         
             if (!stageIds.length || !quantity) return;
@@ -2007,8 +1969,7 @@ $(document).ready(function() {
         
             if (issueItem) {
                 var availableStock = issueItem.quantity - totalQuantityInTable - rqty;
-                // $('#receiveable_stock').val(availableStock > 0 ? availableStock : 0);
-                $('#receiveable_stock').val(parseFloat(availableStock.toFixed(4)));
+                $('#receiveable_stock').val(availableStock > 0 ? availableStock : 0);
             } else {
                 $('#receiveable_stock').val(0);
             }
@@ -2077,20 +2038,12 @@ $(document).ready(function() {
             var materialText = $('#material_id option:selected').text();
             var materialValues = materialText.split('|');
             var materialName = materialValues[0];
-            // var productName = materialValues[1];
-            var selectedId = $('#material_id'); // Select element jQuery object
-            var selectedOption = selectedId.find('option:selected');
-            var previousDisabled = selectedOption.prevAll('option[disabled]:first').text();
-            var previousDisabledValues = previousDisabled.split('|');
-            var articleNo = previousDisabledValues[0].replace('========== ', '').trim();
-            var articleSize = previousDisabledValues[1].replace('Size ', '').trim();
-            var productName = `${articleNo} - Size ${articleSize}`;
+            var productName = materialValues[1];
             var quantity = parseInt($('input[name="quantityMaterial"]').val());
             var availableStock = parseInt($('#receiveable_stock').val());
             var stageId = '0';
             var idsString = '0';
             var workLog = 'None';
-            var materialId = $('#material_id');
 
             if (!materialId || !quantity) return;
 

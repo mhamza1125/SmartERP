@@ -167,7 +167,7 @@ class TransactionRepository implements GlobalInterface {
             DB::raw('SUM(transactions.credit) AS tcredit'),
             DB::raw('COALESCE(SUM(transactions.debit - transactions.credit), 0) as balance'))
         ->groupBy('banks.bank_id')
-        ->havingRaw('balance = 0')
+        // ->havingRaw('balance = 0')
         ->get();
 
         // Dosen't show the Banks with 0 Transactions

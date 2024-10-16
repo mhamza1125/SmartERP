@@ -91,6 +91,7 @@ class OrderController extends Controller
     public function estimate($id){
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->stock();
+        $freeStock = $this->stockItemRepository->freeStock();
         $estimate = $this->orderItemRepository->estimate($id);
         $stockArray = $stock->keyBy('material_id')->toArray();
         $purchase = $this->purchaseItemRepository->estimate($id);

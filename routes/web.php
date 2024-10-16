@@ -233,6 +233,8 @@ Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Pro
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
 Route::get('/ajaxIG', [StockController::class, 'ajaxIG'])->name('ajaxIG'); //Issuance Group
 Route::get('/ajaxMQty', [StockController::class, 'ajaxMQty'])->name('ajaxMQty'); //Material Qty
+Route::get('/ajaxAMQty', [StockController::class, 'ajaxAMQty'])->name('ajaxAMQty'); //Article's MQty
+Route::get('/ajaxATMQty', [StockController::class, 'ajaxATMQty'])->name('ajaxATMQty'); //AType MQty
 
 // Machine Material Issuance
 Route::get('/issueMM', [StockController::class, 'issue2'])->name('missue');

@@ -161,10 +161,28 @@ class StockController extends Controller
     }
 
     public function ajaxMQty(Request $request){
-        // Ajax Material Qty against Order
+        // Ajax Material Qty Against Order
         $orderId = $request->input('orderId');
         $materialId = $request->input('materialId');
         $estimate = $this->orderItemRepository->estimateMaterial($orderId, $materialId);
+        return response()->json(['data' => $estimate]);
+    }
+    
+    public function ajaxAMQty(Request $request){
+        // Ajax Material Qty Against Article
+        $orderId = $request->input('orderId');
+        $productId = $request->input('productId');
+        $materialId = $request->input('materialId');
+        $estimate = $this->orderItemRepository->estimateAMaterial($orderId, $productId, $materialId);
+        return response()->json(['data' => $estimate]);
+    }
+
+    public function ajaxATMQty(Request $request){
+        // Ajax Material Qty Against Article Type
+        $orderId = $request->input('orderId');
+        $productId = $request->input('productId');
+        $materialId = $request->input('materialId');
+        $estimate = $this->orderItemRepository->estimateATMaterial($orderId, $productId, $materialId);
         return response()->json(['data' => $estimate]);
     }
 
@@ -197,6 +215,7 @@ class StockController extends Controller
         $order = $this->orderRepository->active();
         $count = $this->stockRepository->refNo();
         $stage = $this->headRepository->get('12');
+        // dd($stock);
         return view('addIssue', [
             'count' => $count,
             'order' => $order,
@@ -439,7 +458,7 @@ class StockController extends Controller
         $this->stockRepository->update($id, $request->input());
         $issueId = $request->input('issue_id');
         if($request->has('issue_id')){
-            $this->stockRepository->update($id, ['stock_status' => $request->input('stock_status')]);
+            $this->stockRepository->update($issueId, ['stock_status' => $request->input('stock_status')]);
         }
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -481,6 +500,7 @@ class StockController extends Controller
         $issueItem = $this->stockItemRepository->getAvg($id);
         $count = $this->stockRepository->refNo2($id);
         $rstock = $this->stockItemRepository->rstock($id);
+        $issueSum = $this->stockItemRepository->getSum($id);
         $average = [];
         foreach ($issueItem as $item) {
             if ($item->material_id) {
@@ -496,6 +516,7 @@ class StockController extends Controller
             'issue' => $issue,
             'rstock' => $rstock,
             'average' => $average,
+            'issueSum' => $issueSum,
             'issueItem' => $issueItem,
             'issueItemUnique' => $issueItem,
         ]);
@@ -522,6 +543,7 @@ class StockController extends Controller
         $rstock = $this->stockItemRepository->rstock($issue['issue_id']);
         $receiveItem = $this->stockItemRepository->get($id);
         $workLog = $this->stockItemRepository->workLog($id);
+        $issueSum = $this->stockItemRepository->getSum($issue['issue_id']);
         $average = [];
         foreach ($issueItem as $item) {
             if ($item->material_id) {
@@ -537,6 +559,7 @@ class StockController extends Controller
             'issue' => $issue,
             'rstock' => $rstock,
             'average' => $average,
+            'issueSum' => $issueSum,
             'issueItem' => $issueItem,
             'receiveItem' => $receiveItem,
             'issueItemUnique' => $issueItem,

@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Vendor Payment Table</h4>
+            <h4>Vendor / Contractor Payment Table</h4>
             <div class="card-header-action">
               <a href="{{ route('transaction.addVPayment') }}" class="btn btn-primary">Add Payment</a>
             </div>
@@ -18,7 +18,7 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Date</th>
-                    <th>Vendor</th>
+                    <th>Vendor / Contractor</th>
                     <th>Payment Type</th>
                     <th>Amount</th>
                     <th>Action</th>
@@ -48,7 +48,7 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Date</th>
-                    <th>Vendor</th>
+                    <th>Vendor / Contractor</th>
                     <th>Payment Type</th>
                     <th>Amount</th>
                     <th>Action</th>

@@ -22,10 +22,10 @@
                     <a class="nav-link active" id="general-info-tab" data-toggle="tab" href="#generalInfo" role="tab" aria-controls="generalInfo" aria-selected="true">General Info</a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" id="product-material-tab" data-toggle="tab" href="#productMaterial" role="tab" aria-controls="productMaterial" aria-selected="false">Packing / Material</a>
+                    <a class="nav-link" id="product-material-tab" data-toggle="tab" href="#productMaterial" role="tab" aria-controls="productMaterial" aria-selected="false">Packing / Material / Costing</a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" id="product-costing-tab" data-toggle="tab" href="#productCosting" role="tab" aria-controls="productCosting" aria-selected="false">Costing</a>
+                    <a class="nav-link" id="product-costing-tab" data-toggle="tab" href="#productCosting" role="tab" aria-controls="productCosting" aria-selected="false">Costing / Wages</a>
                   </li>
                 </ul>
                 
@@ -222,7 +222,7 @@
                                   @endif
                                 @endforeach
                                 
-                                <h5>Product Material</h5>
+                                <h5>Product Material / Costing</h5>
                                 <table class="table table-sm table-striped">
                                   <thead>
                                     <tr>
@@ -230,10 +230,12 @@
                                       <th>Material No</th>
                                       <th>Material Name</th>
                                       <th>Quantity</th>
+                                      <th>Price</th>
                                       <th>Units</th>
                                     </tr>
                                   </thead>
                                   <tbody>
+                                    @php $mprice = 0; @endphp
                                     @foreach($getMaterial as $item)
                                       @if(($totalMaterial[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
                                         @unless($item->material_type_id == '61')
@@ -242,21 +244,48 @@
                                               <td>{{$item->material_no}}</td>
                                               <td>{{$item->name}}</td>
                                               <td>{{$item->quantity}}</td>
+                                              <td>{{$item->cprice * $item->quantity}}</td>
                                               <td>{{$item->hname}}</td>
                                             </tr>
+                                            @php $mprice += $item->cprice * $item->quantity; @endphp
                                           @endunless
                                         @endif
                                     @endforeach
+                                    <tr>
+                                      <td>#</td>
+                                      <td></td>
+                                      <td></td>
+                                      <td></td>
+                                      <td><b>Material Cost :</b> {{$mprice}}</td>
+                                      <td></td>
+                                    </tr>
+                                    <tr>
+                                      <td>#</td>
+                                      <td></td>
+                                      <td></td>
+                                      <td></td>
+                                      <td><b>Wages Cost:</b> {{$pWages}}</td>
+                                      <td></td>
+                                    </tr>
+                                    <tr>
+                                      <td>#</td>
+                                      <td></td>
+                                      <td></td>
+                                      <td></td>
+                                      <td><b>Total Cost:</b> {{$mprice + $pWages}}</td>
+                                      <td></td>
+                                    </tr> 
                                   </tbody>
-                                  <tfoot>
+                                  {{-- <tfoot>
                                     <tr>
                                       <th>Sr.</th>
                                       <th>Material No</th>
                                       <th>Material Name</th>
                                       <th>Quantity</th>
+                                      <th>Price</th>
                                       <th>Units</th>
                                     </tr>
-                                  </tfoot>
+                                  </tfoot> --}}
                                 </table>
                               </div>
                             @endfor

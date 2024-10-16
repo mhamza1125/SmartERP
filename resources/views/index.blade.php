@@ -140,7 +140,7 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
                 <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
-                <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing</a></li>
+                <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing / Wages</a></li>
               </ul>
             </li>
             <li class="dropdown">

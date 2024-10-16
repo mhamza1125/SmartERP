@@ -79,13 +79,14 @@
                       @foreach($materialItem as $item)
                         <tr>
                           <td>{{$loopIndex++}}</td>
+                          <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td>
                           <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}</td>
                           @if(isset($item->purchase_id) && !isset($item->return_material_id))
                             <td>Purchase</td>
                             <td>{{$item->total_received}} {{$item->uname}}</td>
                             <td></td>
-                            <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td>
+                            {{-- <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
                               <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>
                             </td>
@@ -93,15 +94,15 @@
                             <td>Return</td>
                             <td>{{$item->total_returned}} {{$item->uname}}</td>
                             <td></td>
-                            <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td>
+                            {{-- <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
                               <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
                             </td>
                           @elseif(isset($item->stock_type) && $item->stock_type == 1)
-                            <td>Receive Issuance</td> 
+                            <td>Receive Issuance</td>
                             <td>{{$item->quantity}} {{$item->uname}}</td>
                             <td></td>
-                            <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td>
+                            {{-- <td>{{(new DateTisme($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
                               <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
                             </td>
@@ -109,7 +110,7 @@
                             <td>Issuance</td> 
                             <td></td>
                             <td>{{$item->quantity}} {{$item->uname}}</td>
-                            <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td>
+                            {{-- <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
                               <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
                             </td>
