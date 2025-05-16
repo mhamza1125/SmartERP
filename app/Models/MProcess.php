@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class MProcess extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'mprocess';
+
     protected $primaryKey = 'mprocess_id';
 
     protected $fillable = [

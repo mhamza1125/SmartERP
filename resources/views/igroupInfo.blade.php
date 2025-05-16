@@ -10,7 +10,7 @@
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ route('igroup') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a>
+                {{-- <a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a> --}}
               </div>
             </div>
           </div>
@@ -31,7 +31,8 @@
                     <tr class="trow">
                       <th></th>
                       <th>Group No: &nbsp {{$igroup['igroup_no']}}</th>
-                      <th>Order No: &nbsp {{$igroup['job_no']}}</th>
+                      {{-- <th>Order No: &nbsp {{$igroup['job_no']}}</th> --}}
+                      <th></th>
                       <th></th>
                       <th></th>
                     </tr>

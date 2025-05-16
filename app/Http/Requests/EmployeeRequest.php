@@ -37,6 +37,7 @@ class EmployeeRequest extends FormRequest
             'phone2' => '',
             'salary' => '',
             'address' => 'required|max:255',
+            'designation' => '',
             'description' => '',
         ];
     }

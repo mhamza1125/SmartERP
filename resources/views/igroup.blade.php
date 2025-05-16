@@ -19,7 +19,8 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Group No</th>
-                    <th>Order No</th>
+                    <th>Status</th>
+                    {{-- <th>Order No</th> --}}
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -30,7 +31,14 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->igroup_date}}</td>
                       <td>{{$item->igroup_no}}</td>
-                      <td>{{$item->job_no}}</td>
+                      <td>
+                        @if($item->igroup_status)
+                          <span class="badge badge-success">Active</span>
+                        @else
+                          <span class="badge badge-danger">Inactive</span>
+                        @endif
+                      </td>  
+                      {{-- <td>{{$item->job_no}}</td> --}}
                       <td>
                         <a href="{{ route('igroup.show', $item->igroup_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('igroup.edit', $item->igroup_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -44,7 +52,8 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Group No</th>
-                    <th>Order No</th>
+                    <th>Status</th>
+                    {{-- <th>Order No</th> --}}
                     <th>Action</th>
                   </tr>
                 </tfoot>

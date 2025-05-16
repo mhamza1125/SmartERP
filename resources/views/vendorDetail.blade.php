@@ -129,10 +129,11 @@
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
+                      <th>Date</th>
                       <th>Transaction Type</th>
                       <th>Debit</th>
                       <th>Credit</th>
-                      <th>Date</th>
+                      <th>Balance</th>
                       <th>Action</th>
                     </tr>
                   </tfoot>

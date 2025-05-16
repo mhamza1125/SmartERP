@@ -64,10 +64,11 @@
                   <th></th>
                 </tr>
                 @if($productMaterial->count())
+                  @php $count = 1;  @endphp
                   @foreach($productMaterial as $item)
                     @unless($item->material_type_id == '61')
                       <tr>
-                        <td>{{$loop->index + 1}}</td>
+                        <td>{{$count++}}</td>
                         <td>{{$item->material_no}}</td>
                         <td>{{$item->name}}</td>
                         <td>{{$item->quantity}}</td>

@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Return Table</h4>
             <div class="card-header-action">
-              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Return</a>
+              {{-- <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Return</a> --}}
             </div>
           </div>
           <div class="card-body">
@@ -19,8 +19,8 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Return No</th>
-                    <th>Receive No</th>
-                    <th>Purchase No</th>
+                    {{-- <th>Receive No</th> --}}
+                    {{-- <th>Purchase No</th> --}}
                     <th>Vendor</th>
                     <th>Action</th>
                   </tr>
@@ -32,8 +32,8 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->return_date}}</td>                      
                       <td>{{$item->return_no}}</td>
-                      <td>{{$item->receive_no}}</td>
-                      <td>{{$item->purchase_no}}</td>
+                      {{-- <td>{{$item->receive_no}}</td> --}}
+                      {{-- <td>{{$item->purchase_no}}</td> --}}
                       <td>{{$item->fname}}</td>
                       <td>
                         <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
@@ -48,8 +48,8 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Return No</th>
-                    <th>Receive No</th>
-                    <th>Purchase No</th>
+                    {{-- <th>Receive No</th> --}}
+                    {{-- <th>Purchase No</th> --}}
                     <th>Vendor</th>
                     <th>Action</th>
                   </tr>

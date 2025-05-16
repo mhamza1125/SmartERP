@@ -2,28 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Receive;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\ReceiveRequest;
-use App\Repositories\ReceiveRepository;
-use App\Repositories\PurchaseRepository;
 use App\Repositories\PurchaseItemRepository;
+use App\Repositories\PurchaseRepository;
 use App\Repositories\ReceiveMaterialRepository;
+use App\Repositories\ReceiveRepository;
+use Illuminate\Http\Request;
 
 class ReceiveController extends Controller
 {
     protected $receiveRepository;
+
     protected $purchaseRepository;
+
     protected $purchaseItemRepository;
+
     protected $receiveMaterialRepository;
 
     public function __construct(
-        ReceiveRepository $receiveRepository, 
-        PurchaseRepository $purchaseRepository, 
-        PurchaseItemRepository $purchaseItemRepository, 
-        ReceiveMaterialRepository $receiveMaterialRepository, 
-    ){
+        ReceiveRepository $receiveRepository,
+        PurchaseRepository $purchaseRepository,
+        PurchaseItemRepository $purchaseItemRepository,
+        ReceiveMaterialRepository $receiveMaterialRepository,
+    ) {
         $this->middleware(['auth', 'all']);
         $this->receiveRepository = $receiveRepository;
         $this->purchaseRepository = $purchaseRepository;
@@ -31,19 +32,27 @@ class ReceiveController extends Controller
         $this->receiveMaterialRepository = $receiveMaterialRepository;
     }
 
-    public function index(){
+    public function index()
+    {
         $purchase = $this->purchaseRepository->all();
         $receive = $this->receiveRepository->all();
+
         return view('receive', [
             'purchase' => $purchase,
             'receive' => $receive,
-        ]); 
+        ]);
     }
 
-    public function create($id){        
+    public function create($id)
+    {
         $purchase = $this->purchaseRepository->get($id);
-        $purchaseItem = $this->purchaseItemRepository->receive($id);
+        if($purchase['purchase_type'] == 'material'){
+            $purchaseItem = $this->purchaseItemRepository->receive($id);
+        }else{
+            $purchaseItem = $this->purchaseItemRepository->receiveProducts($id);
+        }
         $count = $this->receiveRepository->refNo($id);
+
         return view('addReceive', [
             'count' => $count,
             'purchase' => $purchase,
@@ -51,7 +60,8 @@ class ReceiveController extends Controller
         ]);
     }
 
-    public function store(ReceiveRequest $request){
+    public function store(ReceiveRequest $request)
+    {
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -65,23 +75,36 @@ class ReceiveController extends Controller
         $idates = $request->input('inspection_date');
         $getId = $this->receiveRepository->store($validatedData);
         $this->storeRM($getId, $pid, $quantities, $inspections, $idates, $pending, $approved, $rejected);
+
         return redirect()->route('receive.show', $getId)->with('success', 'Record Inserted Successfully');
     }
-    
-    public function show($id){
+
+    public function show($id)
+    {
         $receive = $this->receiveRepository->get($id);
-        $receiveMaterial = $this->receiveMaterialRepository->get($id);
+        if($receive['purchase_type'] == 'material'){
+            $receiveMaterial = $this->receiveMaterialRepository->get($id);
+        } else {
+            $receiveMaterial = $this->receiveMaterialRepository->get2($id);
+        }
+
         return view('receiveInfo', [
             'receive' => $receive,
             'receiveMaterial' => $receiveMaterial,
         ]);
     }
-    
-    public function edit($id){
+
+    public function edit($id)
+    {
         $receive = $this->receiveRepository->get($id);
         $date = $this->purchaseRepository->get($receive['purchase_id']);
-        $receiveMaterial = $this->receiveMaterialRepository->get($id);
-        $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
+        if($receive['purchase_type'] == 'material'){
+            $receiveMaterial = $this->receiveMaterialRepository->get($id);
+            $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
+        }else{
+            $receiveMaterial = $this->receiveMaterialRepository->get2($id);
+            $purchaseItem = $this->purchaseItemRepository->editReceive2($receive['purchase_id'], $id);
+        }
         return view('editReceive', [
             'date' => $date,
             'receive' => $receive,
@@ -90,24 +113,31 @@ class ReceiveController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id){
+    public function update(Request $request, $id)
+    {
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $this->receiveRepository->update($id, $request->input());
         $this->receiveMaterialRepository->update($id, $request->input());
+
         return redirect()->route('receive.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function updateStatus($id, $status){
-        $receiveStatus = ['receive_status' => $status];        
+    public function updateStatus($id, $status)
+    {
+        $receiveStatus = ['receive_status' => $status];
         $this->receiveRepository->update($id, $receiveStatus);
-        return redirect()->route('receive')->with('success', 'Status Updated Successfully');    
-    }
-    
-    public function destroy(ReceiveMaterial $receive){}
 
-    private function storeRM($getId, $pids, $quantities, $inspections, $idates, $pending, $approved, $rejected){
+        return redirect()->route('receive')->with('success', 'Status Updated Successfully');
+    }
+
+    public function destroy(ReceiveMaterial $receive)
+    {
+    }
+
+    private function storeRM($getId, $pids, $quantities, $inspections, $idates, $pending, $approved, $rejected)
+    {
         foreach ($quantities as $key => $quantity) {
             $pid = $pids[$key] ?? null;
             $status = $inspections[$key] ?? null;

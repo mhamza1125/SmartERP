@@ -81,23 +81,25 @@
                       @if($pstock->count())
                         @php $product_id = 0; $size = 0; @endphp
                         @foreach($pstock as $item)
-                        <tr>
-                          <td>{{$loop->index + 1}}</td>
-                          @if($item->product_id == $product_id)
-                            <td colspan="2"></td>
-                          @else
-                            <td>{{$item->article_no}}</td>
-                            <td>{{$item->name}}</td>
-                          @endif
-                          @if($item->sname == $size && $item->product_id == $product_id)
-                            <td></td>
-                          @else
-                            <td>{{$item->sname}}</td>
-                          @endif
-                          {{-- <td>{{$item->article_no}} - Size {{$item->sname}}</td> --}}
-                          <td>{{$item->stname}}</td>
-                          <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
-                        </tr>
+                        @if($item->stockIn - $item->stockOut != 0)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            @if($item->product_id == $product_id)
+                              <td colspan="2"></td>
+                            @else
+                              <td>{{$item->article_no}}</td>
+                              <td>{{$item->name}}</td>
+                            @endif
+                            @if($item->sname == $size && $item->product_id == $product_id)
+                              <td></td>
+                            @else
+                              <td>{{$item->sname}}</td>
+                            @endif
+                            {{-- <td>{{$item->article_no}} - Size {{$item->sname}}</td> --}}
+                            <td>{{$item->stname}}</td>
+                            <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
+                          </tr>
+                        @endif
                         @php $product_id = $item->product_id; $size = $item->sname @endphp
                         @endforeach
                       @endif

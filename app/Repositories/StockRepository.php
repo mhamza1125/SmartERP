@@ -2,146 +2,152 @@
 
 namespace App\Repositories;
 
-use Carbon\Carbon;
 use App\Models\Stock;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class StockRepository implements GlobalInterface {
-    
-    public function all(){
+class StockRepository implements GlobalInterface
+{
+    public function all()
+    {
         return Stock::all();
     }
 
-    public function issue(){
+    public function issue()
+    {
         // All Issuance with Issued Article
         return Stock::where('stocks.stock_type', '2')
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->leftJoin('employees', function($join) {
-            $join->on('employees.employee_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'employee');
-        })
-        ->leftJoin('vendors', function($join) {
-            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'vendor');
-        })
-        ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-        ->join('product_types', 'product_types.product_type_id', 'stock_items.product_type_id')
-        ->join('products', 'products.product_id', 'product_types.product_id')
-        ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
-        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
-        ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
-        ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
-            DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
-        )
-        ->groupBy('stocks.stock_id') // Group by stock_id to aggregate article_numbers
-        ->orderBy('stocks.created_at', 'desc')
-        ->get();
-
-        // All Issuance
-        return Stock::where('stocks.stock_type', '2')
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->leftJoin('employees', function($join) {
-            $join->on('employees.employee_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'employee');
-        })
-        ->leftJoin('vendors', function($join) {
-            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'vendor');
-        })
-        ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
-        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
-        ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
-        ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
-        ->orderBy('stocks.created_at', 'desc')
-        ->get();
-    }
-
-    public function issueMaterial(){
-        // All Issuance
-        return Stock::where('stocks.stock_type', '2')
-        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->join('machines', 'machines.machine_id', 'stocks.machine_id')
-        ->join('heads', 'heads.head_id', '=', 'machines.machine_type_id')
-        ->where('stocks.stock_status', '=', '4')
-        ->select('stocks.*', 'employees.employee_no', 'employees.name', 'heads.name as hname', 'machine_no')
-        ->orderBy('stocks.created_at', 'desc', 'machine_no')
-        ->get();
-    }
-
-    public function receiveIssue(){
-        // All UnReceived / Partially Received Issuance
-        return Stock::where('stocks.stock_type', '2')
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date', 'stock_status', 'issue_for')
-        ->where('stocks.stock_status', '!=', '1')
-        ->orderBy('stocks.created_at', 'desc')
-        ->get();
-    }
-
-    public function receive(){
-        // All Received Issuance with Articles
-        return Stock::where('stocks.stock_type', '1')
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->leftJoin('stocks as issue', 'issue.stock_id', '=', 'stocks.issue_id')
-        ->leftJoin('employees', function($join) {
-            $join->on('employees.employee_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'employee');
-        })
-        ->leftJoin('vendors', function($join) {
-            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'vendor');
-        })
-        ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
-        ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-        ->join('products', 'products.product_id', '=', 'product_types.product_id')
-        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
-        ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
-            DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
-        )
-        ->groupBy('stocks.stock_id') // Group by stock_id to aggregate article numbers
-        ->orderBy('stocks.created_at', 'desc')
-        ->get();
-
-        // All Received Issuance
-        return Stock::where('stocks.stock_type', '1')
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->leftJoin('stocks as issue', 'issue.stock_id', '=', 'stocks.issue_id')
-        ->leftJoin('employees', function($join) {
-            $join->on('employees.employee_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'employee');
-        })
-        ->leftJoin('vendors', function($join) {
-            $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
-                ->where('stocks.table_name', 'vendor');
-        })
-        // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
-        ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
-        ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
-        ->orderBy('stocks.created_at', 'desc')
-        ->get();
-
-        // Without Issue/Received For
-        return Stock::where('stocks.stock_type', '1')
-        ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-        ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
-        ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date')
-        ->orderBy('stocks.created_at', 'desc')
-        ->get();
-    }
-
-    public function wagesAll(){
-        // Grouped Wages Single record for each person
-        $stocks = Stock::where('stock_type', '1') // StockIN
-            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->leftJoin('employees', function($join) {
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('employees', function ($join) {
                 $join->on('employees.employee_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'employee');
             })
-            ->leftJoin('vendors', function($join) {
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->join('product_types', 'product_types.product_type_id', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', 'product_types.product_id')
+            ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
+            ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
+            ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
+                DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
+            )
+            ->groupBy('stocks.stock_id') // Group by stock_id to aggregate article_numbers
+            ->orderBy('stocks.created_at', 'desc')
+            ->get();
+
+        // All Issuance
+        return Stock::where('stocks.stock_type', '2')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+        // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->where('stocks.stock_status', '<', '3') // Delivery / Material Issuance Excluded
+            ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
+            ->select('stocks.*', 'job_no', 'stock_date', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
+            ->orderBy('stocks.created_at', 'desc')
+            ->get();
+    }
+
+    public function issueMaterial()
+    {
+        // All Issuance
+        return Stock::where('stocks.stock_type', '2')
+            ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+            ->join('machines', 'machines.machine_id', 'stocks.machine_id')
+            ->join('heads', 'heads.head_id', '=', 'machines.machine_type_id')
+            ->where('stocks.stock_status', '=', '4')
+            ->select('stocks.*', 'employees.employee_no', 'employees.name', 'heads.name as hname', 'machine_no')
+            ->orderBy('stocks.created_at', 'desc', 'machine_no')
+            ->get();
+    }
+
+    public function receiveIssue()
+    {
+        // All UnReceived / Partially Received Issuance
+        return Stock::where('stocks.stock_type', '2')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+            ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date', 'stock_status', 'issue_for')
+            ->where('stocks.stock_status', '!=', '1')
+            ->orderBy('stocks.created_at', 'desc')
+            ->get();
+    }
+
+    public function receive()
+    {
+        // All Received Issuance with Articles
+        return Stock::where('stocks.stock_type', '1')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stocks as issue', 'issue.stock_id', '=', 'stocks.issue_id')
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
+            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+            ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
+                DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
+            )
+            ->groupBy('stocks.stock_id') // Group by stock_id to aggregate article numbers
+            ->orderBy('stocks.created_at', 'desc')
+            ->get();
+
+        // All Received Issuance
+        return Stock::where('stocks.stock_type', '1')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stocks as issue', 'issue.stock_id', '=', 'stocks.issue_id')
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+        // ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'issue.issue_for')
+            ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+            ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname')
+            ->orderBy('stocks.created_at', 'desc')
+            ->get();
+
+        // Without Issue/Received For
+        return Stock::where('stocks.stock_type', '1')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->join('employees', 'employees.employee_id', '=', 'stocks.employee_id')
+            ->select('stock_id', 'stock_no', 'job_no', 'employee_no', 'name', 'stock_date')
+            ->orderBy('stocks.created_at', 'desc')
+            ->get();
+    }
+
+    public function wagesAll()
+    {
+        // Grouped Wages Single record for each person
+        $stocks = Stock::where('stock_type', '1') // StockIN
+            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
                 $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'vendor');
             })
@@ -153,18 +159,18 @@ class StockRepository implements GlobalInterface {
             ->where('work_wages', '!=', '0')
             ->orderBy('stocks.stock_date', 'desc')
             ->get();
-    
-        if($stocks->isEmpty()) {
+
+        if ($stocks->isEmpty()) {
             return ['employees' => [], 'vendors' => []];
         }
-    
+
         $groupedWages = [];
-    
+
         foreach ($stocks as $stock) {
-            $groupKey = $stock->table_name . '_' . $stock->employee_id;
-    
+            $groupKey = $stock->table_name.'_'.$stock->employee_id;
+
             // Initialize the grouped record if not set
-            if (!isset($groupedWages[$groupKey])) {
+            if (! isset($groupedWages[$groupKey])) {
                 $groupedWages[$groupKey] = [
                     'stock_id' => $stock->stock_id,
                     'table_name' => $stock->table_name,
@@ -181,19 +187,19 @@ class StockRepository implements GlobalInterface {
                     'obCredit' => 0,
                 ];
             }
-    
+
             // Calculate total wages for the stock
             $quantity = $stock->quantity;
             $workWages = explode('|', $stock->work_wages);
             $totalWages = 0;
             foreach ($workWages as $wage) {
-                $totalWages += (int)$wage * $quantity;
+                $totalWages += (int) $wage * $quantity;
             }
-    
+
             // Add the total wages to the corresponding grouped record
             $groupedWages[$groupKey]['total_wages'] += $totalWages;
         }
-    
+
         // Retrieve transactions for each person and add to grouped record
         foreach ($groupedWages as &$group) {
             $transactions = DB::table('transactions')
@@ -207,42 +213,43 @@ class StockRepository implements GlobalInterface {
                     DB::raw('SUM(CASE WHEN transactions.transaction_type = "openingBalance" THEN transactions.credit ELSE 0 END) AS obCredit')
                 )
                 ->first();
-    
+
             $group['wagesDebit'] = $transactions->wagesDebit;
             $group['advanceDebit'] = $transactions->advanceDebit;
             $group['radvanceCredit'] = $transactions->radvanceCredit;
             $group['obDebit'] = $transactions->obDebit;
             $group['obCredit'] = $transactions->obCredit;
         }
-    
+
         // Separate employee and vendor wages
-        $employeeWages = array_filter($groupedWages, function($wage) {
+        $employeeWages = array_filter($groupedWages, function ($wage) {
             return $wage['table_name'] === 'employee';
         });
-    
-        $vendorWages = array_filter($groupedWages, function($wage) {
+
+        $vendorWages = array_filter($groupedWages, function ($wage) {
             return $wage['table_name'] === 'vendor';
         });
-    
+
         // Reindex the arrays to start with 0
         $employeeWages = array_values($employeeWages);
         $vendorWages = array_values($vendorWages);
-    
+
         return [
             'employees' => $employeeWages,
             'vendors' => $vendorWages,
         ];
     }
 
-    public function wagesNotUsed(){
+    public function wagesNotUsed()
+    {
         // For Wages.blade.php page Monthly Wages
         $stocks = Stock::where('stock_type', '1') // StockIN
             ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->leftJoin('employees', function($join) {
+            ->leftJoin('employees', function ($join) {
                 $join->on('employees.employee_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'employee');
             })
-            ->leftJoin('vendors', function($join) {
+            ->leftJoin('vendors', function ($join) {
                 $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'vendor');
             })
@@ -250,22 +257,22 @@ class StockRepository implements GlobalInterface {
             ->where('work_wages', '!=', '0')
             ->orderBy('stocks.stock_date', 'desc')
             ->get();
-    
-        if($stocks->isEmpty()) {
+
+        if ($stocks->isEmpty()) {
             return ['employees' => [], 'vendors' => []];
         }
-    
+
         $employeeWages = [];
         $vendorWages = [];
-    
+
         foreach ($stocks as $stock) {
             $stockDate = Carbon::parse($stock->stock_date);
             $monthYear = $stockDate->format('F Y');
-            
-            $groupKey = $monthYear . '_' . $stock->table_name . '_' . $stock->employee_id;
-            
+
+            $groupKey = $monthYear.'_'.$stock->table_name.'_'.$stock->employee_id;
+
             // Initialize the employee or vendor record if not set
-            if (!isset($employeeWages[$groupKey]) && $stock->table_name == 'employee') {
+            if (! isset($employeeWages[$groupKey]) && $stock->table_name == 'employee') {
                 $employeeWages[$groupKey] = [
                     'stock_id' => $stock->stock_id,
                     'month_year' => $monthYear,
@@ -276,7 +283,7 @@ class StockRepository implements GlobalInterface {
                     'total_wages' => 0,
                     'records' => [],
                 ];
-            } elseif (!isset($vendorWages[$groupKey]) && $stock->table_name == 'vendor') {
+            } elseif (! isset($vendorWages[$groupKey]) && $stock->table_name == 'vendor') {
                 $vendorWages[$groupKey] = [
                     'stock_id' => $stock->stock_id,
                     'month_year' => $monthYear,
@@ -288,15 +295,15 @@ class StockRepository implements GlobalInterface {
                     'records' => [],
                 ];
             }
-    
+
             // Calculate total wages for the stock
             $quantity = $stock->quantity;
             $workWages = explode('|', $stock->work_wages);
             $totalWages = 0;
             foreach ($workWages as $wage) {
-                $totalWages += (int)$wage * $quantity;
+                $totalWages += (int) $wage * $quantity;
             }
-    
+
             // Add the total wages to the corresponding employee or vendor
             if ($stock->table_name == 'employee') {
                 $employeeWages[$groupKey]['total_wages'] += $totalWages;
@@ -306,18 +313,19 @@ class StockRepository implements GlobalInterface {
                 $vendorWages[$groupKey]['records'][] = $stock->toArray();
             }
         }
-    
+
         // Reindex the arrays to start with 0
         $employeeWages = array_values($employeeWages);
         $vendorWages = array_values($vendorWages);
-    
+
         return [
             'employees' => $employeeWages,
             'vendors' => $vendorWages,
         ];
     }
 
-    public function wagesInfo($id){
+    public function wagesInfo($id)
+    {
         // For Wagesinfo.blade.php page
         $stockDate = new \DateTime($id['stock_date']);
         $stocks = Stock::where('stocks.employee_id', $id['employee_id'])
@@ -333,22 +341,24 @@ class StockRepository implements GlobalInterface {
             ->whereMonth('stocks.stock_date', '=', $stockDate->format('m'))
             ->select('*', 'shead.name as sname', 'sthead.name as stage', 'uhead.name as uname')
             ->get();
-        foreach ($stocks as $stock) {   
+        foreach ($stocks as $stock) {
             // Calculate total wages for the stock
             $quantity = $stock->quantity;
             $workWages = explode('|', $stock->work_wages);
             $totalWages = 0;
             foreach ($workWages as $wage) {
-                $totalWages += (int)$wage * $quantity;
+                $totalWages += (int) $wage * $quantity;
             }
-        
+
             // Add total_wages attribute to stock
             $stock->total_wages = $totalWages;
         }
+
         return $stocks;
     }
 
-    public function wagesInfoFilter($id, $dfrom, $dto){
+    public function wagesInfoFilter($id, $dfrom, $dto)
+    {
         // For Wagesinfo.blade.php page
         $stockDate = new \DateTime($id['stock_date']);
         $stocks = Stock::where('stocks.employee_id', $id['employee_id'])
@@ -364,31 +374,33 @@ class StockRepository implements GlobalInterface {
             ->select('*', 'shead.name as sname', 'sthead.name as stage', 'uhead.name as uname')
             ->get();
 
-        foreach ($stocks as $stock) {   
+        foreach ($stocks as $stock) {
             // Calculate total wages for the stock
             $quantity = $stock->quantity;
             $workWages = explode('|', $stock->work_wages);
             $totalWages = 0;
             foreach ($workWages as $wage) {
-                $totalWages += (int)$wage * $quantity;
+                $totalWages += (int) $wage * $quantity;
             }
-        
+
             // Add total_wages attribute to stock
             $stock->total_wages = $totalWages;
         }
+
         return $stocks;
     }
 
-    public function get($id){
+    public function get($id)
+    {
         return Stock::where('stocks.stock_id', $id)
             ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stocks as rstock', 'rstock.issue_id', '=', 'stocks.stock_id')
             ->leftJoin('stocks as sdate', 'sdate.stock_id', '=', 'stocks.issue_id')
-            ->leftJoin('employees', function($join) {
+            ->leftJoin('employees', function ($join) {
                 $join->on('employees.employee_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'employee');
             })
-            ->leftJoin('vendors', function($join) {
+            ->leftJoin('vendors', function ($join) {
                 $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
                     ->where('stocks.table_name', 'vendor');
             })
@@ -397,57 +409,70 @@ class StockRepository implements GlobalInterface {
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
             ->leftJoin('heads as mhead', 'mhead.head_id', '=', 'machines.machine_type_id')
             ->select(
-                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id', 
+                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id',
                 DB::raw('CASE WHEN rstock.stock_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
             ->first();
     }
 
-    public function refNo() {
+    public function refNo()
+    {
         // For Issuance
         $yearMonth = Carbon::now()->format('ym');
         $count = Stock::whereMonth('created_at', Carbon::now()->month)
             ->whereYear('created_at', Carbon::now()->year)
             ->where('stock_type', '2')->count();
-        $fourDigitNumber = str_pad($count+1, 4, '0', STR_PAD_LEFT);
-        return 'I' . $yearMonth . $fourDigitNumber;
+        $fourDigitNumber = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+        return 'I'.$yearMonth.$fourDigitNumber;
     }
-    
-    public function refNo2($id) {
+
+    public function refNo2($id)
+    {
         // For Receive Issuance
         $yearMonth = Carbon::now()->format('ym');
         $count = Stock::where('issue_id', $id)->count();
-        return 'R' . $count+1;
+
+        return 'R'.$count + 1;
     }
 
-    public function receivingIssue($id, $empId){
+    public function receivingIssue($id, $empId)
+    {
         // Add / Edit Receiving Issuance
         return Stock::where('order_id', $id)->where('employee_id', $empId)
-        ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-        ->join('products', 'products.product_id', '=', 'product_types.product_id')
-        ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-        ->groupBy('stock_items.product_type_id')
-        ->get();
+            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
+            ->groupBy('stock_items.product_type_id')
+            ->get();
     }
 
-    public function store(array $data){
+    public function store(array $data)
+    {
         $data['created_by'] = auth()->id();
         $store = Stock::create($data);
+
         return $store->stock_id;
     }
 
-    public function update($id, array $data) {
+    public function update($id, array $data)
+    {
         $update = Stock::findOrFail($id);
         $update->update($data);
+
         return $update->stock_id;
     }
 
-    public function updateStatus($id, array $data) {
+    public function updateStatus($id, array $data)
+    {
         // Might Not be used
         $update = Stock::findOrFail($id);
         $update->update($data);
+
         return $update->stock_id;
     }
 
-    public function delete($id){}
+    public function delete($id)
+    {
+    }
 }

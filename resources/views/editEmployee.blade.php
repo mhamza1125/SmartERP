@@ -34,6 +34,14 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
+                    <label>Designation</label>
+                    <input type="text" class="form-control" name="designation" value="{{$employee['designation']}}">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Employee Designaiton</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
                     <label>City</label>
                     <select class="form-control select2" name="city_id" required>
                       <option value="" selected disabled>Select City</option>
@@ -45,21 +53,6 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select City</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Employee Type</label>
-                    <select class="form-control" name="employee_type_id" required>
-                      <option value="" selected disabled>Select Employee Type</option>
-                      @if($employeeType->count())
-                        @foreach($employeeType as $item)
-                          <option value="{{$item->head_id}}" {{ $employee['employee_type_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee Type</div>
                   </div>
                 </div>
               </div>
@@ -81,12 +74,17 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Employee Status</label>
-                    <select class="form-control" name="employee_status" required>
-                      <option value="1" {{ $employee['employee_status'] == '1' ? 'selected' : '' }}>Active</option>
-                      <option value="0" {{ $employee['employee_status'] == '0' ? 'selected' : '' }}>Inactive</option>
+                    <label>Employee Type</label>
+                    <select class="form-control" name="employee_type_id" required>
+                      <option value="" selected disabled>Select Employee Type</option>
+                      @if($employeeType->count())
+                        @foreach($employeeType as $item)
+                          <option value="{{$item->head_id}}" {{ $employee['employee_type_id'] == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                        @endforeach
+                      @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Employee Type</div>
                   </div>
                 </div>
               </div>
@@ -173,6 +171,16 @@
                   <div class="form-group">
                     <label>Attendance No</label>
                     <input type="text" class="form-control" name="attendance_id" value="{{$employee['attendance_id']}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Employee Status</label>
+                    <select class="form-control" name="employee_status" required>
+                      <option value="1" {{ $employee['employee_status'] == '1' ? 'selected' : '' }}>Active</option>
+                      <option value="0" {{ $employee['employee_status'] == '0' ? 'selected' : '' }}>Inactive</option>
+                    </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>

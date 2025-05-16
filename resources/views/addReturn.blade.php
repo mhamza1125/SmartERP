@@ -61,8 +61,9 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        {{-- <th>Code</th>
+                        <th>Material</th> --}}
+                        <th>Item / Material</th>
                         <th>Units</th>
                         <th>Returned / Receive Qty</th>
                         <th>Return Qty</th>
@@ -74,8 +75,14 @@
                         @foreach($combined as $item)
                         <tr>
                           <td>{{ $loop->index + 1 }}</td>
-                          <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}<input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
+                          {{-- <td>{{$item->material_no}}</td> --}}
+                          <td>{{-- {{$item->name}} --}}
+                            @if($receive['purchase_type'] == 'material')
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                            @else
+                              {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                            @endif
+                            <input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
                           <td>{{$item->hname}}</td>
                           <td>{{$item->rqty}} / {{$item->quantity}}</td>
                           <td>
@@ -89,8 +96,9 @@
                     <tfoot>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        {{-- <th>Code</th>
+                        <th>Material</th> --}}
+                        <th>Item / Material</th>
                         <th>Units</th>
                         <th>Returned / Receive Qty</th>
                         <th>Return Qty</th>

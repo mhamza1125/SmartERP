@@ -23,7 +23,7 @@ class IGroupRequest extends FormRequest
     {
         return [
             'igroup_no' => 'required',
-            'order_id' => 'required',
+            // 'order_id' => 'required',
             'igroup_date' => 'required',
             'igroup_status' => '',
             'description' => '',

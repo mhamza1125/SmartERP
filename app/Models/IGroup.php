@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class IGroup extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'igroups';
+
     protected $primaryKey = 'igroup_id';
 
     protected $fillable = [

@@ -30,7 +30,7 @@
                       <td>{{$item->vendor_no}}</td>
                       <td>{{$item->fname}}</td>
                       <td>
-                        <a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
+                        <a href="{{ route('vendor.show2', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('vendor.edit2', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>
                         <a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Ledger</a>
                       </td>

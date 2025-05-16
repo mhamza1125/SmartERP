@@ -60,8 +60,9 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        {{-- <th>Code</th>
+                        <th>Material</th> --}}
+                        <th>Item / Material</th>
                         <th>Units</th>
                         <th>Receive Qty</th>
                         <th>Return Qty</th>
@@ -75,8 +76,14 @@
                           $qty = $returnMaterial[$key]['quantity'];}else{$qty = 0;} @endphp
                         <tr>
                           <td>{{ $loop->index + 1 }}</td>
-                          <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}<input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
+                          {{-- <td>{{$item->material_no}}</td> --}}
+                          <td>{{-- {{$item->name}} --}}
+                            @if($return['purchase_type'] == 'material')
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                            @else
+                              {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                            @endif
+                            <input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
                           <td>{{$item->hname}}</td>
                           <td>{{$item->quantity}}</td>
                           <td>
@@ -90,8 +97,9 @@
                     <tfoot>
                       <tr>
                         <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material</th>
+                        {{-- <th>Code</th>
+                        <th>Material</th> --}}
+                        <th>Item / Material</th>
                         <th>Units</th>
                         <th>Receive Qty</th>
                         <th>Return Qty</th>

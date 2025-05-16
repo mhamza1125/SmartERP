@@ -19,8 +19,8 @@
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
-                    <input type="hidden" name="transaction_to" required value="brs">
-                    <input type="hidden" name="transaction_type" required value="brs">
+                    <input type="hidden" name="transaction_to" required value="{{ $transaction['transaction_to'] ?? 'brs' }}">
+                    <input type="hidden" name="transaction_type" required value="{{ $transaction['transaction_type'] ?? 'brs' }}">
                     <input type="hidden" name="payee_bank_id" required value="0">
                     <label>Cash / Bank BRS</label>
                     <select class="form-control select2" name="bank_id" required>

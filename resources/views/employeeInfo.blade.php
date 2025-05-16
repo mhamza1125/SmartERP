@@ -46,11 +46,12 @@
                   <td><b>Address: </b> {{$employee['address']}}, {{$employee['cname']}}</td>
                 </tr>
                 <tr>
-                  <td colspan="3">
+                  <td><b>Designation: </b> {{$employee['designation']}} </td>
+                  <td colspan="2">
                     <div class="row">
-                      <div class="col-md-1"><b>Details: </b></div>
-                      <div class="col-md-11">
-                        @php echo $employee['descrpiption'] @endphp
+                      <div class="col-md-2"><b>Details: </b></div>
+                      <div class="col-md-10">
+                        @php echo $employee['description'] @endphp
                       </div>
                     </div>
                   </td>

@@ -20,6 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase No</label>
+                    <input type="hidden" name="purchase_type" required value="material">
                     <input type="text" class="form-control" name="purchase_no" required value="{{$count}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Purchase No</div>

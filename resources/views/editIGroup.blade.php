@@ -25,7 +25,17 @@
                     <div class="invalid-feedback">Enter Group Name</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Group Status</label>
+                    <select class="form-control" name="igroup_status" required>
+                      <option value="1" {{ $igroup['igroup_status'] == '1' ? 'selected' : '' }}>Active</option>
+                      <option value="0" {{ $igroup['igroup_status'] == '0' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Date</label>
                     <input type="text" class="form-control datepicker" name="igroup_date" required value="{{$igroup['igroup_date']}}">
@@ -34,11 +44,11 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                   <div class="form-group">
                     <label>Issuance For Orders</label>
                     <select class="form-control select2" name="order_id" id="order_id" required>
-                      {{-- <option value="0" selected>Default Issuance</option> --}}
+                      <option value="0" selected>Default Issuance</option> // That's commented
                       <option value="" selected disabled>Select Order</option>
                       @if($order->count())
                         @foreach($order as $item)
@@ -57,6 +67,19 @@
                       <option value="" disabled>Select Product</option>
                       <!-- You can keep this option or remove it, depending on your needs -->
                   </select>
+                  </div>
+                </div> --}}
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Products</label>
+                    <select class="form-control select2" name="product_type_id" id="product_type_id">
+                      <option value="" disabled selected>Select Product</option>
+                      @if($product->count())
+                        @foreach($product as $item)
+                          <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
+                        @endforeach
+                      @endif
+                    </select>
                   </div>
                 </div>
               </div>

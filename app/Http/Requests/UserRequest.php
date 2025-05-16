@@ -29,12 +29,12 @@ class UserRequest extends FormRequest
 
         // If it's a store request, add password validation
         if ($this->isMethod('post')) {
-            $rules['password'] = 'required|confirmed';
+            $rules['password'] = 'confirmed'; // required|confirmed
         }
 
         // If it's an update request, add email uniqueness validation
         if ($this->isMethod('put') || $this->isMethod('patch')) {
-            $rules['email'] .= '|unique:users,email,' . $this->route('id');
+            $rules['email'] .= '|unique:users,email,'.$this->route('id');
             // Add conditional password validation
             $rules['password'] = 'sometimes|required|confirmed';
         }

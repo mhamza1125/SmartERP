@@ -2,8 +2,8 @@
 
 namespace App\Repositories;
 
-interface GlobalInterface {
-
+interface GlobalInterface
+{
     public function all();
 
     public function get($id);
@@ -13,5 +13,4 @@ interface GlobalInterface {
     public function update($id, array $data);
 
     public function delete($id);
-
 }

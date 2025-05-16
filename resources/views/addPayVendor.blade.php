@@ -6,7 +6,8 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Pay Vendor / Contractor</h4>
+            <h4>Pay Vendor</h4>
+            {{-- Pay Vendor / Contractor --}}
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -21,9 +22,9 @@
                   <div class="form-group">          
                     <input type="hidden" name="transaction_to" required value="vendor" id="transaction_to">
                     <input type="hidden" name="credit" required value="0">
-                    <label>Vendor / Contractor</label>
+                    <label>Vendor</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
-                      <option value="" selected disabled>Select Vendor / Contractor</option>
+                      <option value="" selected disabled>Select Vendor</option>
                       @if($vendor->count())
                         @foreach($vendor as $item)
                           <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
@@ -31,7 +32,7 @@
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Vendor / Contractor</div>
+                    <div class="invalid-feedback">Select Vendor</div>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -39,9 +40,9 @@
                     <label>Payment Type</label>
                     <select class="form-control" name="transaction_type" required id="transaction_type">
                       <option value="payment" {{ old('transaction_type') == 'payment' ? 'selected' : '' }}>Payment</option>
-                      <option value="wages" {{ old('transaction_type') == 'wages' ? 'selected' : '' }}>Wages</option>
-                      <option value="advance" {{ old('transaction_type') == 'advance' ? 'selected' : '' }}>Advance</option>
-                      <option value="receiveAdvance" {{ old('transaction_type') == 'receiveAdvance' ? 'selected' : '' }}>Receive Advance</option>
+                      {{-- <option value="wages" {{ old('transaction_type') == 'wages' ? 'selected' : '' }}>Wages</option> --}}
+                      <option value="advance" {{ old('transaction_type') == 'advance' ? 'selected' : '' }}>Advance / Loan</option>
+                      <option value="receiveAdvance" {{ old('transaction_type') == 'receiveAdvance' ? 'selected' : '' }}>Receive Advance / Loan</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>

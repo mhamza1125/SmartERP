@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Employee extends Model
 {
     use HasFactory;
-    
+
     protected $primaryKey = 'employee_id';
 
     protected $fillable = [
@@ -24,6 +24,7 @@ class Employee extends Model
         'phone2',
         'city_id',
         'address',
+        'designation',
         'salary',
         'description',
         'joining_date',

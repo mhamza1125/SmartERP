@@ -160,8 +160,8 @@
                               <td>{{$item->stname}}
                                 <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
                               </td>
-                              <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut)}}</td>
-                              <td>{{number_format($item->quantity - $item->stockOut)}}</td>
+                              <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivred)}}</td>
+                              <td>{{number_format($item->quantity - $item->stockOutDelivred)}}</td>
                               <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
                               <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
                               <td class="form-group">

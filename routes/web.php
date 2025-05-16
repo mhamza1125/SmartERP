@@ -1,32 +1,31 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankController;
-use App\Http\Controllers\HeadController;
-use App\Http\Controllers\ImageController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\StockController;
-use App\Http\Controllers\IGroupController;
-use App\Http\Controllers\ReturnController;
-use App\Http\Controllers\VendorController;
-use App\Http\Controllers\MachineController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ReceiveController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\HeadController;
+use App\Http\Controllers\IGroupController;
+use App\Http\Controllers\ImageController;
+use App\Http\Controllers\MachineController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MProcessController;
-use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCostController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\PurchaseItemController;
 use App\Http\Controllers\ProductMaterialController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReceiveController;
+use App\Http\Controllers\ReturnController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\VendorController;
+use Illuminate\Support\Facades\Route;
 
 // --------------------------------------
 // ---------- Auth Controllers ----------
@@ -37,10 +36,10 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::group(['middleware' => 'auth'], function(){
+Route::group(['middleware' => 'auth'], function () {
     Route::group([
-        'middleware' => ['auth', 'is_admin']
-    ], function(){
+        'middleware' => ['auth', 'is_admin'],
+    ], function () {
         // Add Routes Here
     });
 });
@@ -55,6 +54,13 @@ Route::get('/user', [AdminController::class, 'user'])->name('user');
 Route::post('/user', [AuthController::class, 'store'])->name('user.store');
 Route::post('/user/{id}', [AuthController::class, 'update'])->name('user.update');
 Route::post('/image/{id}/{dir}', [ImageController::class, 'destroy'])->name('image.delete');
+
+// Roles & Permissions
+Route::get('/role', [AdminController::class, 'role'])->name('role');
+Route::get('/addRole', [AdminController::class, 'create'])->name('role.add');
+Route::post('/role', [AdminController::class, 'store'])->name('role.store');
+Route::get('/editRole/{id}', [AdminController::class, 'edit'])->name('role.edit');
+Route::post('/role/{id}', [AdminController::class, 'update'])->name('role.update');
 
 // Attendance
 Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
@@ -108,6 +114,7 @@ Route::get('/addVendor', [VendorController::class, 'create'])->name('vendor.add'
 Route::get('/addContractor', [VendorController::class, 'create2'])->name('vendor.add2');
 Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
 Route::get('/vendor/{id}', [VendorController::class, 'show'])->name('vendor.show');
+Route::get('/contractor/{id}', [VendorController::class, 'show2'])->name('vendor.show2');
 Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
 Route::get('/editContractor/{id}', [VendorController::class, 'edit2'])->name('vendor.edit2');
 Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
@@ -187,6 +194,8 @@ Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchas
 Route::get('/editPurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
 Route::get('/ajaxPMQty', [PurchaseController::class, 'ajaxPMQty'])->name('ajaxPMQty'); //Material Qty
+Route::get('/addProductPurchase', [PurchaseController::class, 'create2'])->name('productPurchase.add');
+Route::get('/editProductPurchase/{id}', [PurchaseController::class, 'edit2'])->name('productPurchase.edit');
 
 // Purchase Receive
 Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
@@ -277,10 +286,14 @@ Route::get('/ePayment/{id}', [TransactionController::class, 'showEPayment'])->na
 Route::get('/editEPayment/{id}', [TransactionController::class, 'editEPayment'])->name('transaction.editEPayment');
 // Transaction Vendor
 Route::get('/vPayment', [TransactionController::class, 'vPayment'])->name('vPayment');
+Route::get('/cPayment', [TransactionController::class, 'cPayment'])->name('cPayment');
 Route::get('/ajaxPurchase', [TransactionController::class, 'ajaxPurchase'])->name('ajaxPurchase'); //Purchases
 Route::get('/vPayment/{id}', [TransactionController::class, 'showVPayment'])->name('transaction.showVPayment');
+Route::get('/cPayment/{id}', [TransactionController::class, 'showCPayment'])->name('transaction.showCPayment');
 Route::get('/addVPayment', [TransactionController::class, 'createVPayment'])->name('transaction.addVPayment');
+Route::get('/addCPayment', [TransactionController::class, 'createCPayment'])->name('transaction.addCPayment');
 Route::get('/editVPayment/{id}', [TransactionController::class, 'editVPayment'])->name('transaction.editVPayment');
+Route::get('/editCPayment/{id}', [TransactionController::class, 'editCPayment'])->name('transaction.editCPayment');
 // Transaction Expense
 Route::get('/expense', [TransactionController::class, 'expense'])->name('expense');
 Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name('transaction.addExpense');
@@ -304,7 +317,6 @@ Route::get('/ajaxOrder', [TransactionController::class, 'ajaxOrder'])->name('aja
 Route::get('/addOPayment', [TransactionController::class, 'createOPayment'])->name('transaction.addOPayment');
 Route::get('/oPayment/{id}', [TransactionController::class, 'showOPayment'])->name('transaction.showOPayment');
 Route::get('/editOPayment/{id}', [TransactionController::class, 'editOPayment'])->name('transaction.editOPayment');
-
 
 // Bank
 Route::get('/bank', [BankController::class, 'index'])->name('bank');

@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductType;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use App\Models\ProductMaterial;
-use App\Http\Controllers\Controller;
 use App\Repositories\ProductRepository;
 use App\Repositories\MaterialRepository;
 use App\Repositories\ProductTypeRepository;
@@ -15,16 +13,19 @@ use App\Repositories\ProductMaterialRepository;
 class ProductMaterialController extends Controller
 {
     protected $productRepository;
+
     protected $materialRepository;
+
     protected $productTypeRepository;
+
     protected $productMaterialRepository;
 
     public function __construct(
         ProductRepository $productRepository,
-        MaterialRepository $materialRepository, 
-        ProductTypeRepository $productTypeRepository, 
+        MaterialRepository $materialRepository,
+        ProductTypeRepository $productTypeRepository,
         ProductMaterialRepository $productMaterialRepository,
-    ){
+    ) {
         $this->middleware(['auth', 'all']);
         $this->productRepository = $productRepository;
         $this->materialRepository = $materialRepository;
@@ -32,22 +33,31 @@ class ProductMaterialController extends Controller
         $this->productMaterialRepository = $productMaterialRepository;
     }
 
-    public function index(){
+    public function index()
+    {
+        $this->authorize('access', Product::class);
         $product = $this->productRepository->active();
         $productMaterial = $this->productMaterialRepository->all();
+
         return view('productMaterial', [
             'product' => $product,
             'productMaterial' => $productMaterial,
-        ]); 
+        ]);
     }
 
-    public function create(){}
+    public function create()
+    {
+        $this->authorize('create', Product::class);
+    }
 
-    public function create2($id){
+    public function create2($id)
+    {
+        $this->authorize('create', Product::class);
         $product = $this->productRepository->get($id);
         $productType = $this->productRepository->material($id);
         $material = $this->materialRepository->getMaterial($product['material_id']);
         $mbox = $this->materialRepository->getBox();
+
         return view('addProductMaterial', [
             'product' => $product,
             'mbox' => $mbox,
@@ -56,12 +66,13 @@ class ProductMaterialController extends Controller
         ]);
     }
 
-    public function store(ProductMaterialRequest $request){
+    public function store(ProductMaterialRequest $request)
+    {
         $validatedData = $request->validated();
-        if (!$request->has('quantity')) {
+        if (! $request->has('quantity')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        
+
         $getId = $request->input('product_type_id');
         $products = $request->input('material_id');
         $quantities = $request->input('quantity');
@@ -69,21 +80,27 @@ class ProductMaterialController extends Controller
 
         return redirect()->route('productMaterial.show', $getId)->with('success', 'Record Inserted Successfully');
     }
-    
-    public function show($id){
+
+    public function show($id)
+    {
+        $this->authorize('show', Product::class);
         $productType = $this->productTypeRepository->get($id);
         $productMaterial = $this->productMaterialRepository->get($id);
+
         return view('productMaterialInfo', [
             'productType' => $productType,
             'productMaterial' => $productMaterial,
         ]);
     }
-    
-    public function edit($id){
+
+    public function edit($id)
+    {
+        $this->authorize('edit', Product::class);
         $productType = $this->productTypeRepository->get($id);
         $material = $this->materialRepository->getMaterial($productType['material_id']);
         $productMaterial = $this->productMaterialRepository->get($id);
         $mbox = $this->materialRepository->getBox();
+
         return view('editProductMaterial', [
             'mbox' => $mbox,
             'material' => $material,
@@ -92,17 +109,23 @@ class ProductMaterialController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id){
-        if (!$request->has('quantity')) {
+    public function update(Request $request, $id)
+    {
+        if (! $request->has('quantity')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $this->productMaterialRepository->update($id, $request->input());
-        return redirect()->route('productMaterial.show', $id)->with('success', 'Record Updated Successfully');    
-    }
-    
-    public function destroy(Purchase $purchase){}
 
-    private function storePM($getId, $products, $quantities){
+        return redirect()->route('productMaterial.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    public function destroy(Purchase $purchase)
+    {
+        $this->authorize('delete', Product::class);
+    }
+
+    private function storePM($getId, $products, $quantities)
+    {
         foreach ($quantities as $key => $quantity) {
             $product = $products[$key] ?? null;
             $productMaterial = [

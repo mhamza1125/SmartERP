@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductCost extends Model
 {
     use HasFactory;
-    
+
     protected $primaryKey = 'product_cost_id';
 
     protected $fillable = [

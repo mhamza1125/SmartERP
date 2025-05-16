@@ -48,9 +48,10 @@
                     <tr>
                       <th>Sr.</th>
                       <th>Inspection Date</th>
-                      <th>Code</th>
-                      <th>Material</th>
-                      <th>Units</th>
+                      {{-- <th>Code</th>
+                      <th>Material</th> --}}
+                      <th>Material / Product</th>
+                      <th>Units / Size</th>
                       <th>Receive Qty</th>
                       <th>Pending</th>
                       <th>Approved</th>
@@ -66,8 +67,15 @@
                         <tr>
                           <td>{{$loopIndex++}}</td>
                           <td>{{$item->inspection_date}}</td>
-                          <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}</td>
+                          {{-- <td>{{$item->material_no}}</td>
+                          <td>{{$item->name}}</td> --}}
+                          <td>
+                            @if($receive['purchase_type'] == 'material')
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                            @else
+                              {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                            @endif
+                          </td>
                           <td>{{$item->hname}}</td>
                           <td>{{$item->quantity}}</td>
                           <td>{{$item->pending_qty}}</td>
@@ -84,15 +92,16 @@
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
-                      <th>Code</th>
-                      <th>Material</th>
-                      <th>Units</th>
+                      <th>Inspection Date</th>
+                      {{-- <th>Code</th>
+                      <th>Material</th> --}}
+                      <th>Material / Product</th>
+                      <th>Units / Size</th>
                       <th>Receive Qty</th>
                       <th>Pending</th>
                       <th>Approved</th>
                       <th>Rejected</th>
                       {{-- <th>Inspection Status</th> --}}
-                      <th>Inspection Date</th>
                     </tr>
                   </tfoot>
                 </table>

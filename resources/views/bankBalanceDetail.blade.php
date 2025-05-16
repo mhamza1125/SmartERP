@@ -82,7 +82,7 @@
                       <td>{{ucfirst($item->transaction_type)}}</td>
                       <td>{{isset($item->debit) ? number_format($item->debit) : ''}}</td>
                       <td>{{isset($item->credit) ? number_format($item->credit) : ''}}</td>
-                      <td>{{$balance}}</td>
+                      <td>{{number_format($balance)}}</td>
                       <td>
                         @if($item->transaction_to == 'employee')
                           <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>

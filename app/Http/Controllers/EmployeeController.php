@@ -3,59 +3,71 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
-use App\Repositories\SalaryRepository;
 use App\Repositories\ImageRepository;
 use App\Http\Requests\EmployeeRequest;
+use App\Repositories\SalaryRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\TransactionRepository;
 
 class EmployeeController extends Controller
 {
     protected $headRepository;
+
     protected $salaryRepository;
+
     protected $imageRepository;
+
     protected $employeeRepository;
+
     protected $transactionRepository;
 
     public function __construct(
         HeadRepository $headRepository,
         SalaryRepository $salaryRepository,
         ImageRepository $imageRepository,
-        EmployeeRepository $employeeRepository, 
-        TransactionRepository $transactionRepository, 
-    ){
+        EmployeeRepository $employeeRepository,
+        TransactionRepository $transactionRepository,
+    ) {
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->salaryRepository = $salaryRepository;
         $this->imageRepository = $imageRepository;
         $this->employeeRepository = $employeeRepository;
         $this->transactionRepository = $transactionRepository;
+        $this->authorizeResource(Employee::class, 'employee');
     }
 
-    public function index(){
+    public function index()
+    {
+        $this->authorize('access', Employee::class);
         $employee = $this->employeeRepository->all();
+
         return view('employee', [
             'employee' => $employee,
-        ]); 
+        ]);
     }
 
-    public function create(){
+    public function create()
+    {
+        $this->authorize('create', Employee::class);
         $department = $this->headRepository->get('3');
         $employeeType = $this->headRepository->get('9');
         $city = $this->headRepository->get('8');
         $count = $this->employeeRepository->refNo();
+
         return view('addEmployee', [
             'department' => $department,
             'employeeType' => $employeeType,
             'city' => $city,
-            'count' => $count,  
+            'count' => $count,
         ]);
     }
 
-    public function store(EmployeeRequest $request){
+    public function store(EmployeeRequest $request)
+    {
         $validatedData = $request->validated();
         $getId = $this->employeeRepository->store($validatedData);
         $salary = ['employee_id' => $getId, 'amount' => $request->input('salary')];
@@ -80,30 +92,37 @@ class EmployeeController extends Controller
             'payee_bank_id' => '0',
         ];
         $this->transactionRepository->store($transaction);
+
         return redirect()->route('employee.show', $getId)->with('success', 'Record Inserted Successfully');
     }
-    
-    public function show($id){
+
+    public function show($id)
+    {
+        $this->authorize('show', Employee::class);
         $employee = $this->employeeRepository->get($id);
         $image = $this->imageRepository->image('employees', $id);
+
         return view('employeeInfo', [
             'employee' => $employee,
             'image' => $image,
         ]);
     }
 
-    public function detail(Request $request, $id){
+    public function detail(Request $request, $id)
+    {
+        $this->authorize('show', Employee::class);
+        $this->authorize('show', Transaction::class);
         $employee = $this->employeeRepository->get($id);
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
         $oBalance = 0; // Opening Balance
         $cBalance = 0; // Closing Balance
-        if(!empty($dfrom) && !empty($dto)){
+        if (! empty($dfrom) && ! empty($dto)) {
             $all = $this->transactionRepository->eDetailFilter($id, $dfrom, $dto);
             $detail = $all['transactions'];
             $oBalance = $all['opening_balance'];
             $cBalance = $all['closing_balance'];
-        }else{
+        } else {
             $detail = $this->transactionRepository->eDetail($id);
         }
         $totalCredit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
@@ -120,11 +139,14 @@ class EmployeeController extends Controller
             'dto' => $dto,
         ]);
     }
-    
-    public function edit(Employee $id){
+
+    public function edit(Employee $id)
+    {
+        $this->authorize('edit', Employee::class);
         $department = $this->headRepository->get('3');
         $employeeType = $this->headRepository->get('9');
         $city = $this->headRepository->get('8');
+
         return view('editEmployee', [
             'employee' => $id,
             'department' => $department,
@@ -133,13 +155,14 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id){
-        $getId = $this->employeeRepository->update($id, $request->input());      
+    public function update(Request $request, $id)
+    {
+        $getId = $this->employeeRepository->update($id, $request->input());
         $salary = ['employee_id' => $id, 'amount' => $request->input('salary')];
         $this->salaryRepository->update($id, $salary);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
-                $this->storeImage($file, 'employee', 'employees', $getId);        
+                $this->storeImage($file, 'employee', 'employees', $getId);
             }
         }
         if ($request->input('balance_type') == 'debit') {
@@ -157,8 +180,12 @@ class EmployeeController extends Controller
             'payee_bank_id' => '0',
         ];
         $this->transactionRepository->updateOB($getId, 'employee', $transaction);
-        return redirect()->route('employee.show', $id)->with('success', 'Record Updated Successfully');    
+
+        return redirect()->route('employee.show', $id)->with('success', 'Record Updated Successfully');
     }
-    
-    public function destroy(Employee $employee){}
+
+    public function destroy(Employee $employee)
+    {
+        $this->authorize('delete', Employee::class);
+    }
 }

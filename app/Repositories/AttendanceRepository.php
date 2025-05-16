@@ -2,46 +2,56 @@
 
 namespace App\Repositories;
 
-use App\Models\WorkTime;
 use App\Models\WorkHoliday;
+use App\Models\WorkTime;
 
-class AttendanceRepository implements GlobalInterface {
-    
-    public function all(){
+class AttendanceRepository implements GlobalInterface
+{
+    public function all()
+    {
         return WorkTime::orderBy('customers.created_at', 'desc')
-        ->get();
+            ->get();
     }
 
-    public function workTime(){
+    public function workTime()
+    {
         return WorkTime::orderBy('created_at', 'desc')->get();
     }
 
-    public function workHoliday(){
+    public function workHoliday()
+    {
         return WorkHoliday::orderBy('created_at', 'desc')->get();
     }
 
-    public function get($id){}
+    public function get($id)
+    {
+    }
 
-    public function store(array $data){
+    public function store(array $data)
+    {
         $data['created_by'] = auth()->id();
-        if(isset($data['time_from'])){
+        if (isset($data['time_from'])) {
             $store = WorkTime::create($data);
-        }else{
+        } else {
             $store = WorkHoliday::create($data);
         }
+
         return $store->id;
     }
 
-    public function update($id, array $data) {
-        if(isset($data['time_from'])){
+    public function update($id, array $data)
+    {
+        if (isset($data['time_from'])) {
             $update = WorkTime::findOrFail($id);
-        }else{
+        } else {
             $update = WorkHoliday::findOrFail($id);
         }
         $update->update($data);
+
         return $update->id;
     }
 
-    
-    public function delete($id){}
+    public function delete($id)
+    {
+    }
 }

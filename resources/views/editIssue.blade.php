@@ -288,6 +288,7 @@
   var isIssuePage = true;
   var stockData = @json($stock);
   var pstockData = @json($pstock);
+  var ajaxIGUrl = "{{ route('ajaxIG') }}"; // Temp
   var ajaxPTUrl = "{{ route('ajaxPT') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";

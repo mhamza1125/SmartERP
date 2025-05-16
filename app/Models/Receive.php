@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Receive extends Model
 {
     use HasFactory;
-    
+
     protected $primaryKey = 'receive_id';
 
     protected $fillable = [

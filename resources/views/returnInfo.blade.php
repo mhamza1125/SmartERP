@@ -48,8 +48,9 @@
                   <thead>
                     <tr>
                       <th>Sr.</th>
-                      <th>Code</th>
-                      <th>Material</th>
+                      {{-- <th>Code</th>
+                      <th>Material</th> --}}
+                      <th>Material / Product</th>
                       <th>Units</th>
                       <th>Return Qty</th>
                       <th>Remarks</th>
@@ -62,8 +63,15 @@
                         @if($item->quantity)
                         <tr>
                           <td>{{$loopIndex++}}</td>
-                          <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}</td>
+                          {{-- <td>{{$item->material_no}}</td>
+                          <td>{{$item->name}}</td> --}}
+                          <td>
+                            @if($return['purchase_type'] == 'material')
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                            @else
+                              {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                            @endif
+                          </td>
                           <td>{{$item->hname}}</td>
                           <td>{{$item->quantity}}</td>
                           <td>{{$item->remarks}}</td>
@@ -75,8 +83,9 @@
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
-                      <th>Code</th>
-                      <th>Material</th>
+                      {{-- <th>Code</th>
+                      <th>Material</th> --}}
+                      <th>Material / Product</th>
                       <th>Units</th>
                       <th>Return Qty</th>
                       <th>Remarks</th>

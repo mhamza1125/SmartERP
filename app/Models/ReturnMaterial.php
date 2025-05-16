@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ReturnMaterial extends Model
 {
     use HasFactory;
-    
+
     protected $primaryKey = 'return_material_id';
 
     protected $fillable = [

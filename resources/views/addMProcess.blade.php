@@ -20,6 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Material Process No</label>
+                    <input type="hidden" name="purchase_type" value="mProcess">
                     <input type="text" class="form-control" name="purchase_no" required value="{{$count}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Process No</div>

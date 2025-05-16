@@ -5,179 +5,190 @@ namespace App\Repositories;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\DB;
 
-class OrderItemRepository implements GlobalInterface {
-    
-    public function all(){
+class OrderItemRepository implements GlobalInterface
+{
+    public function all()
+    {
         return OrderItem::all();
     }
 
-    public function get($id){
+    public function get($id)
+    {
         return OrderItem::where('order_id', $id)
-        ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
-        ->join('products', 'products.product_id', '=', 'product_types.product_id')
-        ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-        ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-        ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
-        ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
-        ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname', 'shead.name as sname', 'chead.name as cname')
-        ->orderBy('product_types.product_id')
-        ->orderBy('product_types.size_id')
-        ->get();
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
+            ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+            ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
+            ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
+            ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname', 'shead.name as sname', 'chead.name as cname')
+            ->orderBy('product_types.product_id')
+            ->orderBy('product_types.size_id')
+            ->get();
     }
 
-    public function estimate($id){ // Requred Material Against Order
-        return OrderItem::where('order_id', $id)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->select('*', 'materials.material_id', 'heads.name as hname', 'materials.name', 'vendors.fname', 'vendor_no')
-        ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
-        ->groupBy('materials.material_id')
-        ->orderBy('materials.vendor_id')
-        ->orderBy('materials.material_id')
-        ->get();
+    public function estimate($id) // Requred Material Against Order
+    {return OrderItem::where('order_id', $id)
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('*', 'materials.material_id', 'heads.name as hname', 'materials.name', 'vendors.fname', 'vendor_no')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('materials.material_id')
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->get();
 
         // Separate Material Required for Each Order Item
         return OrderItem::where('order_id', $id)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', 'vendors.fname', 'vendor_no')
-        ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
-        ->groupBy('order_items.order_item_id')
-        ->groupBy('product_materials.material_id')
-        ->orderBy('materials.vendor_id')
-        ->orderBy('materials.material_id')
-        ->get();
-    
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', 'vendors.fname', 'vendor_no')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('order_items.order_item_id')
+            ->groupBy('product_materials.material_id')
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->get();
+
         // Old Working Queery (False Record for Boxes)
         return OrderItem::where('order_id', $id)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', DB::raw('SUM(order_items.quantity * product_materials.quantity) as total_qty'), 'vendors.fname', 'vendor_no')
-        ->groupBy('product_materials.material_id')
-        ->orderBy('materials.vendor_id')
-        ->orderBy('materials.material_id')->get();
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', DB::raw('SUM(order_items.quantity * product_materials.quantity) as total_qty'), 'vendors.fname', 'vendor_no')
+            ->groupBy('product_materials.material_id')
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')->get();
     }
 
-    public function estimateMaterial($orderId, $materialId){
+    public function estimateMaterial($orderId, $materialId)
+    {
         // Required Material Against Complete Order, Issuance
         $totalQty = OrderItem::where('order_id', $orderId)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
-        ->groupBy('materials.material_id')
-        ->where('materials.material_id', $materialId)
-        ->orderBy('materials.vendor_id')
-        ->orderBy('materials.material_id')
-        ->first();
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('materials.material_id')
+            ->where('materials.material_id', $materialId)
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->first();
 
-        // Already Issued Material 
+        // Already Issued Material
         $issuedQty = \DB::table('stock_items')->where('stocks.order_id', $orderId)
-        ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
-        ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
-        ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
-        ->where('stock_items.material_id', $materialId)
-        ->groupBy('stock_items.material_id')
-        ->first();
-        
+            ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
+            ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
+            ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
+            ->where('stock_items.material_id', $materialId)
+            ->groupBy('stock_items.material_id')
+            ->first();
+
         $totalQty = $totalQty->total_qty ?? '0';
-        $issuedQty =  $issuedQty->issued_qty ?? '0';
-        
-        $return = $totalQty . "  |  " . $issuedQty . "  |  " . $totalQty - $issuedQty;
+        $issuedQty = $issuedQty->issued_qty ?? '0';
+
+        $return = $totalQty.'  |  '.$issuedQty.'  |  '.$totalQty - $issuedQty;
+
         return $return;
     }
 
-    public function estimateAMaterial($orderId, $productId, $materialId){
+    public function estimateAMaterial($orderId, $productId, $materialId)
+    {
         // Required Material Against Order's Article, Issuance
         $pid = OrderItem::where('order_id', $orderId)
-        ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
-        ->where('order_items.product_type_id', $productId)
-        ->select('product_types.product_id')->first();
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
+            ->where('order_items.product_type_id', $productId)
+            ->select('product_types.product_id')->first();
         $pid = $pid['product_id'];
 
         $totalQty = OrderItem::where('order_id', $orderId)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
-        ->groupBy('materials.material_id')
-        ->where('materials.material_id', $materialId)
-        ->where('product_types.product_id', $pid)
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('materials.material_id')
+            ->where('materials.material_id', $materialId)
+            ->where('product_types.product_id', $pid)
         // ->where('order_items.product_type_id', $productId)
-        ->orderBy('materials.vendor_id')
-        ->orderBy('materials.material_id')
-        ->first();
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->first();
 
-        // Already Issued Material 
+        // Already Issued Material
         $issuedQty = \DB::table('stock_items')->where('stocks.order_id', $orderId)
-        ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
-        ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
-        ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-        ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
-        ->where('stock_items.material_id', $materialId)
+            ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
+            ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
+            ->where('stock_items.material_id', $materialId)
         // ->where('stock_items.product_type_id', $productId)
-        ->where('product_types.product_id', $pid)
-        ->groupBy('stock_items.material_id')
-        ->first();
-        
+            ->where('product_types.product_id', $pid)
+            ->groupBy('stock_items.material_id')
+            ->first();
+
         $totalQty = $totalQty->total_qty ?? '0';
-        $issuedQty =  $issuedQty->issued_qty ?? '0';
-        
-        $return = $totalQty . "  |  " . $issuedQty . "  |  " . $totalQty - $issuedQty;
+        $issuedQty = $issuedQty->issued_qty ?? '0';
+
+        $return = $totalQty.'  |  '.$issuedQty.'  |  '.$totalQty - $issuedQty;
+
         return $return;
     }
 
-    public function estimateATMaterial($orderId, $productId, $materialId){
+    public function estimateATMaterial($orderId, $productId, $materialId)
+    {
         // Required Material Against Order's Article Type, Issuance
         $totalQty = OrderItem::where('order_id', $orderId)
-        ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-        ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-        ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-        ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
-        ->groupBy('materials.material_id')
-        ->where('materials.material_id', $materialId)
-        ->where('order_items.product_type_id', $productId)
-        ->orderBy('materials.vendor_id')
-        ->orderBy('materials.material_id')
-        ->first();
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
+            ->groupBy('materials.material_id')
+            ->where('materials.material_id', $materialId)
+            ->where('order_items.product_type_id', $productId)
+            ->orderBy('materials.vendor_id')
+            ->orderBy('materials.material_id')
+            ->first();
 
-        // Already Issued Material 
+        // Already Issued Material
         $issuedQty = \DB::table('stock_items')->where('stocks.order_id', $orderId)
-        ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
-        ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
-        ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
-        ->where('stock_items.material_id', $materialId)
-        ->where('stock_items.product_type_id', $productId)
-        ->groupBy('stock_items.material_id')
-        ->first();
-        
+            ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
+            ->join('materials', 'materials.material_id', '=', 'stock_items.material_id')
+            ->select(DB::raw('SUM(stock_items.quantity) as issued_qty'))
+            ->where('stock_items.material_id', $materialId)
+            ->where('stock_items.product_type_id', $productId)
+            ->groupBy('stock_items.material_id')
+            ->first();
+
         $totalQty = $totalQty->total_qty ?? '0';
-        $issuedQty =  $issuedQty->issued_qty ?? '0';
-        
-        $return = $totalQty . "  |  " . $issuedQty . "  |  " . $totalQty - $issuedQty;
+        $issuedQty = $issuedQty->issued_qty ?? '0';
+
+        $return = $totalQty.'  |  '.$issuedQty.'  |  '.$totalQty - $issuedQty;
+
         return $return;
     }
 
-    public function store(array $data){
+    public function store(array $data)
+    {
         $data['created_by'] = auth()->id();
         $store = OrderItem::create($data);
+
         return $store->order_item_id;
     }
 
-    public function update($id, array $data) {
+    public function update($id, array $data)
+    {
         $existingItems = OrderItem::where('order_id', $id)->get();
         foreach ($existingItems as $existingItem) {
-            if (!in_array($existingItem->product_type_id, $data['product_type_id']) || !in_array($existingItem->product_stage_id, $data['product_stage_id'])) {
+            if (! in_array($existingItem->product_type_id, $data['product_type_id']) || ! in_array($existingItem->product_stage_id, $data['product_stage_id'])) {
                 $existingItem->delete();
             }
         }
@@ -213,5 +224,7 @@ class OrderItemRepository implements GlobalInterface {
         }
     }
 
-    public function delete($id){}
+    public function delete($id)
+    {
+    }
 }

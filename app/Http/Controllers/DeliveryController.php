@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Delivery;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Repositories\BankRepository;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
@@ -18,12 +18,19 @@ use App\Repositories\TransactionRepository;
 class DeliveryController extends Controller
 {
     protected $headRepository;
+
     protected $bankRepository;
+
     protected $orderRepository;
+
     protected $stockRepository;
+
     protected $deliveryRepository;
+
     protected $stockItemRepository;
+
     protected $deliveryBoxRepository;
+
     protected $transactionRepository;
 
     public function __construct(
@@ -32,10 +39,10 @@ class DeliveryController extends Controller
         OrderRepository $orderRepository,
         StockRepository $stockRepository,
         DeliveryRepository $deliveryRepository,
-        StockItemRepository $stockItemRepository, 
+        StockItemRepository $stockItemRepository,
         DeliveryBoxRepository $deliveryBoxRepository,
         TransactionRepository $transactionRepository,
-    ){
+    ) {
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->bankRepository = $bankRepository;
@@ -47,21 +54,32 @@ class DeliveryController extends Controller
         $this->transactionRepository = $transactionRepository;
     }
 
-    public function index(){
+    public function index()
+    {
+        $this->authorize('access', Delivery::class);
         $delivery = $this->deliveryRepository->all();
+
         return view('delivery', [
             'delivery' => $delivery,
-        ]); 
+        ]);
     }
 
-    public function create($id){}
-    
-    public function create2($id){
+    public function create($id)
+    {
+        // This is GET method
+        $this->authorize('create', Delivery::class);
+    }
+
+    public function create2($id)
+    {
+        // This is POST method
+        $this->authorize('create', Delivery::class);
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->orderDelivery($id);
         $vehicle = $this->stockItemRepository->stockVehicle($id);
         $bank = $this->bankRepository->self();
         $expense = $this->headRepository->get('7');
+
         return view('addDelivery', [
             'bank' => $bank,
             'expense' => $expense,
@@ -71,7 +89,8 @@ class DeliveryController extends Controller
         ]);
     }
 
-    public function store(DeliveryRequest $request){
+    public function store(DeliveryRequest $request)
+    {
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -101,14 +120,18 @@ class DeliveryController extends Controller
         $this->storeSI($getId, $ptid, $mid, $quantities, $stages); // Delivery Items
         $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
         $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
+
         return redirect()->route('delivery.show', $get)->with('success', 'Record Inserted Successfully');
     }
-    
-    public function show($id){
+
+    public function show($id)
+    {
+        $this->authorize('show', Delivery::class);
         $delivery = $this->deliveryRepository->get($id);
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $transaction = $this->transactionRepository->delivery($id);
         $deliveryBox = $this->deliveryBoxRepository->get($id);
+
         return view('deliveryInfo', [
             'delivery' => $delivery,
             'deliveryBox' => $deliveryBox,
@@ -116,8 +139,10 @@ class DeliveryController extends Controller
             'deliveryItem' => $deliveryItem,
         ]);
     }
-    
-    public function edit($id){
+
+    public function edit($id)
+    {
+        $this->authorize('edit', Delivery::class);
         $order = $this->deliveryRepository->get($id); // Delivery
         $stock = $this->stockItemRepository->orderDelivery($order['order_id']);
         $vehicle = $this->stockItemRepository->stockVehicle($order['order_id']);
@@ -126,6 +151,7 @@ class DeliveryController extends Controller
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $deliveryBox = $this->deliveryBoxRepository->get($id);
         $transaction = $this->transactionRepository->delivery($id);
+
         return view('editDelivery', [
             'bank' => $bank,
             'expense' => $expense,
@@ -135,10 +161,11 @@ class DeliveryController extends Controller
             'deliveryBox' => $deliveryBox,
             'deliveryItem' => $deliveryItem,
             'transaction' => $transaction,
-        ]); 
+        ]);
     }
 
-    public function update(Request $request, $id){
+    public function update(Request $request, $id)
+    {
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -149,23 +176,30 @@ class DeliveryController extends Controller
         $this->orderRepository->update($request->input('order_id'), $orderStatus);
         $this->deliveryBoxRepository->delete($id);
         $this->storeDB($id, $request->input('vehicle_no'),
-                $request->input('rowQty'), $request->input('totalQty'));
+            $request->input('rowQty'), $request->input('totalQty'));
         $this->stockItemRepository->update($request->input('stock_id'), $request->input());
+
         return redirect()->route('delivery.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function updateStatus($id, $status){
-        $deliveryStatus = ['delivery_status' => $status];        
+    public function updateStatus($id, $status)
+    {
+        $deliveryStatus = ['delivery_status' => $status];
         $this->deliveryRepository->update($id, $deliveryStatus);
-        return redirect()->route('delivery')->with('success', 'Status Updated Successfully');    
-    }
-    
-    public function destroy(Purchase $purchase){}
 
-    private function storeSI($getId, $ptids, $mids, $quantities, $stages){
+        return redirect()->route('delivery')->with('success', 'Status Updated Successfully');
+    }
+
+    public function destroy(Purchase $purchase)
+    {
+        $this->authorize('delete', Delivery::class);
+    }
+
+    private function storeSI($getId, $ptids, $mids, $quantities, $stages)
+    {
         // Store Delivery Items
         foreach ($quantities as $key => $quantity) {
-            if($quantity > 0){
+            if ($quantity > 0) {
                 $ptid = $ptids[$key] ?? null;
                 $mid = $mids[$key] ?? null;
                 $stage = $stages[$key] ?? null;
@@ -182,10 +216,11 @@ class DeliveryController extends Controller
             }
         }
     }
-    
-    private function storeEI($validatedData, $heads, $banks, $debits, $remarks){
+
+    private function storeEI($validatedData, $heads, $banks, $debits, $remarks)
+    {
         // Store Delivery Expense
-        if(!empty($debits)){
+        if (! empty($debits)) {
             foreach ($debits as $key => $debit) {
                 $head = $heads[$key] ?? null;
                 $bank = $banks[$key] ?? null;
@@ -203,12 +238,13 @@ class DeliveryController extends Controller
                 ];
                 $this->transactionRepository->store($transaction);
             }
-        }        
+        }
     }
 
-    private function storeDB($validatedData, $vehicles, $rowQtys, $totalQtys){
+    private function storeDB($validatedData, $vehicles, $rowQtys, $totalQtys)
+    {
         // Store Delivery Boxes
-        if(!empty($rowQtys)){
+        if (! empty($rowQtys)) {
             foreach ($rowQtys as $key => $rowQty) {
                 $totalQty = $totalQtys[$key] ?? null;
                 $vehicle = $vehicles[$key] ?? null;

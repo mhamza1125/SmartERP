@@ -20,6 +20,7 @@
                     <th>Employee No</th>
                     <th>Name</th>
                     <th>Department</th>
+                    <th>Designation</th>
                     <th>City</th>
                     <th>Employee Type</th>
                     <th>Action</th>
@@ -32,7 +33,8 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->employee_no}}</td>
                       <td>{{$item->name}}</td>                      
-                      <td>{{$item->dname}}</td>                      
+                      <td>{{$item->dname}}</td>                     
+                      <td>{{$item->designation}}</td>                      
                       <td>{{$item->cname}}</td>
                       <td><b>@if($item->employee_type_id == 39) 
                         <span class="badge badge-success">Salary</span> 
@@ -56,6 +58,7 @@
                     <th>Employee No</th>
                     <th>Name</th>
                     <th>Department</th>
+                    <th>Designation</th>
                     <th>City</th>
                     <th>Employee Type</th>
                     <th>Action</th>

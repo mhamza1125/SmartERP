@@ -19,7 +19,7 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Receive No</th>
-                    <th>Purchase No</th>
+                    {{-- <th>Purchase No</th> --}}
                     <th>Vendor</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -32,7 +32,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->receive_date}}</td>
                       <td>{{$item->receive_no}}</td>
-                      <td>{{$item->purchase_no}}</td>
+                      {{-- <td>{{$item->purchase_no}}</td> --}}
                       <td>{{$item->fname}}</td>
                       <td>@if($item->pqty == 0) 
                         <span class="badge badge-success">Checked</span> @else 
@@ -67,7 +67,7 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Receive No</th>
-                    <th>Purchase No</th>
+                    {{-- <th>Purchase No</th> --}}
                     <th>Vendor</th>
                     <th>Status</th>
                     <th>Action</th>

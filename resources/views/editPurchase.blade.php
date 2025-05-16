@@ -20,6 +20,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Purchase No</label>
+                    <input type="hidden" name="purchase_type" required value="material">
                     <input type="text" class="form-control" name="purchase_no" required value="{{$purchase['purchase_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Purchase No</div>
@@ -128,8 +129,11 @@
                           <tr data-item-id="{{ $item->purchase_item_id }}">
                             <td></td>
                             <td>{{$item->material_no}} - {{$item->name}}
-                              <input type="hidden" name="material_name[]" value="{{$item->name}}">
+                              {{-- <input type="hidden" name="material_name[]" value="{{$item->name}}"> --}}
+                              {{-- <input type="hidden" name="name[]" value="{{$item->article_no}} - Size {{$item->hname}}"> --}}
                               <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                              <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
+                              <input type="hidden" name="product_stage_id[]" value="{{$item->product_stage_id}}"></td>
                             </td>
                             <td>{{$item->quantity}}
                               <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>

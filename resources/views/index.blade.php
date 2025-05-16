@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-  <title>{{ ucfirst(auth()->user()->role) }} - SmartERP</title>
+  <title>{{ ucfirst(auth()->user()->role->name) }} - SmartERP</title>
   <!-- General CSS Files -->
   <link rel="stylesheet" href="{{ URL::asset('assets/css/app.min.css') }}">
   <link rel="stylesheet" href="{{ URL::asset('assets/bundles/lightgallery/dist/css/lightgallery.css') }}">
@@ -14,8 +14,10 @@
   <link rel="stylesheet" href="{{ URL::asset('assets/bundles/select2/dist/css/select2.min.css') }}">
   <link rel="stylesheet" href="{{ URL::asset('assets/bundles/datatables/datatables.min.css') }}">
   <link rel="stylesheet" href="{{ URL::asset('assets/bundles/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css') }}">
+  <link rel="stylesheet" href="{{ URL::asset('assets/bundles/pretty-checkbox/pretty-checkbox.min.css')}}">
   <link rel="stylesheet" href="{{ URL::asset('assets/css/style.css') }}">
   <link rel="stylesheet" href="{{ URL::asset('assets/css/components.css') }}">
+  
   <!-- Custom style CSS -->
   <link rel="stylesheet" href="{{ URL::asset('assets/css/custom.css') }}">
   <link rel='shortcut icon' type='image/x-icon' href='{{ URL::asset('assets/img/favicon.ico') }}' />
@@ -42,13 +44,8 @@
               class="nav-link dropdown-toggle nav-link-lg nav-link-user"> <img alt="image" src="{{ URL::asset('assets/img/user.jpg') }}"
                 class="user-img-radious-style"> <span class="d-sm-none d-lg-inline-block"></span></a>
             <div class="dropdown-menu dropdown-menu-right pullDown">
-              <div class="dropdown-title">Hello User</div>
-              <a href="#" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile
-              </a> <a href="#" class="dropdown-item has-icon"> <i class="fas fa-bolt"></i>
-                Activities
-              </a> <a href="#" class="dropdown-item has-icon"> <i class="fas fa-cog"></i>
-                Settings
-              </a>
+              <div class="dropdown-title">Hello {{ auth()->user()->name }}</div>
+              <a href="{{ route('user') }}" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile </a>
               <div class="dropdown-divider"></div>
               <a href="#" class="dropdown-item has-icon text-danger"> <i class="fas fa-sign-out-alt"></i>
                 Logout
@@ -94,7 +91,8 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
                 <li><a class="nav-link" href="{{ route('ePayment') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor / Contractor</a></li>
+                <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('cPayment') }}">Contractor</a></li>
                 <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
                 <li><a class="nav-link" href="{{ route('oPayment') }}">Customer Order</a></li>
               </ul>
@@ -174,6 +172,7 @@
                   data-feather="briefcase"></i><span>Settings</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('user') }}">Users</a></li>
+                <li><a class="nav-link" href="{{ route('role') }}">Roles & Permissions</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('workTime') }}">Work Hours</a></li>
@@ -194,9 +193,12 @@
           <input type="hidden" id="successMessage" value="{{ session('success') }}">
         @elseif (session('fails'))
           <input type="hidden" id="errorMessage" value="{{ session('fails') }}">
+        @elseif ($errors->any())
+          <input type="hidden" id="errorMessage" value="{{ implode(', ', $errors->all()) }}">
         @endif
+
         @yield('content')
-        <div class="settingSidebar">
+        {{-- <div class="settingSidebar">
           <a href="javascript:void(0)" class="settingPanelToggle"> <i class="fa fa-spin fa-cog"></i>
           </a>
           <div class="settingSidebar-body ps-container ps-theme-default">
@@ -286,7 +288,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> --}}
       </div>
       <footer class="main-footer">
         <div class="footer-left">

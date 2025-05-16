@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductCost;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Repositories\HeadRepository;
 use App\Repositories\VendorRepository;
 use App\Repositories\ProductRepository;
@@ -16,10 +15,15 @@ use App\Repositories\ProductTypeRepository;
 class ProductCostController extends Controller
 {
     protected $headRepository;
+
     protected $productRepository;
+
     protected $employeeRepository;
+
     protected $vendorRepository;
+
     protected $productCostRepository;
+
     protected $productTypeRepository;
 
     public function __construct(
@@ -27,9 +31,9 @@ class ProductCostController extends Controller
         ProductRepository $productRepository,
         EmployeeRepository $employeeRepository,
         VendorRepository $vendorRepository,
-        ProductCostRepository $productCostRepository, 
-        ProductTypeRepository $productTypeRepository, 
-    ){
+        ProductCostRepository $productCostRepository,
+        ProductTypeRepository $productTypeRepository,
+    ) {
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
         $this->productRepository = $productRepository;
@@ -39,18 +43,24 @@ class ProductCostController extends Controller
         $this->productTypeRepository = $productTypeRepository;
     }
 
-    public function index(){
+    public function index()
+    {
+        $this->authorize('access', Product::class);
         $productCost = $this->productCostRepository->all();
+
         return view('productCost', [
             'productCost' => $productCost,
-        ]); 
+        ]);
     }
 
-    public function create(){
+    public function create()
+    {
+        $this->authorize('create', Product::class);
         $head = $this->headRepository->get('14');
         $product = $this->productRepository->cost();
         $employee = $this->employeeRepository->wages();
         $vendor = $this->vendorRepository->all();
+
         return view('addProductCost', [
             'head' => $head,
             'product' => $product,
@@ -59,9 +69,10 @@ class ProductCostController extends Controller
         ]);
     }
 
-    public function store(ProductCostRequest $request){
+    public function store(ProductCostRequest $request)
+    {
         $validatedData = $request->validated();
-        if (!$request->has('amount')) {
+        if (! $request->has('amount')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $products = $request->input('product_id');
@@ -70,25 +81,32 @@ class ProductCostController extends Controller
         $tids = $request->input('table_id');
         $tnames = $request->input('table_name');
         $this->storePC($products, $amounts, $heads, $tnames, $tids);
+
         return redirect()->route('productCost.show', $products)->with('success', 'Record Inserted Successfully');
     }
-    
-    public function show($id){
+
+    public function show($id)
+    {
+        $this->authorize('show', Product::class);
         $product = $this->productRepository->get($id);
         $productCost = $this->productCostRepository->get($id);
+
         return view('productCostInfo', [
             'product' => $product,
             'productCost' => $productCost,
         ]);
     }
-    
-    public function edit($id){
+
+    public function edit($id)
+    {
+        $this->authorize('edit', Product::class);
         $product = $this->productRepository->get($id);
         $head = $this->headRepository->get('14');
         $productType = $this->productTypeRepository->get($id);
         $productCost = $this->productCostRepository->get($id);
         $employee = $this->employeeRepository->wages();
         $vendor = $this->vendorRepository->all();
+
         return view('editProductCost', [
             'head' => $head,
             'product' => $product,
@@ -99,17 +117,23 @@ class ProductCostController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id){
-        if (!$request->has('amount')) {
+    public function update(Request $request, $id)
+    {
+        if (! $request->has('amount')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $this->productCostRepository->update($id, $request->input());
+
         return redirect()->route('productCost.show', $id)->with('success', 'Record Updated Successfully');
     }
-    
-    public function destroy(Purchase $purchase){}
 
-    private function storePC($products, $amounts, $heads, $tnames, $tids){
+    public function destroy(Purchase $purchase)
+    {
+        $this->authorize('delete', Product::class);
+    }
+
+    private function storePC($products, $amounts, $heads, $tnames, $tids)
+    {
         foreach ($amounts as $key => $amount) {
             $head = $heads[$key] ?? null;
             $table_id = $tids[$key] ?? null;

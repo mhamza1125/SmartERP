@@ -33,7 +33,16 @@
                         <tr>
                           <td>{{$index++}}</td>
                           <td>{{$item->transaction_date}}</td>
-                          <td>{{ucfirst($item->transaction_to)}}</td>
+                          <td>
+                            {{ucfirst($item->transaction_to)}}
+                            @if(isset($item->vendor_no)) <br>
+                              {{$item->vendor_no}} - {{$item->fname}}
+                            @elseif(isset($item->employee_no)) <br>
+                              {{$item->employee_no}} - {{$item->name}}
+                            @elseif(isset($item->order_no)) <br>
+                              {{$item->order_no}} | {{$item->job_no}}
+                            @endif
+                          </td>
                           <td>{{ucfirst($item->transaction_type)}}</td>
                           <td>{{isset($item->debit) ? number_format($item->debit) : ''}}</td>
                           <td>{{isset($item->credit) ? number_format($item->credit) : ''}}</td>
@@ -42,6 +51,8 @@
                               <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @elseif($item->transaction_to == 'vendor')
                               <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                            @elseif($item->transaction_to == 'contractor')
+                              <a href="{{ route('transaction.showCPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @elseif($item->transaction_to == 'expense')
                               <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @elseif($item->transaction_to == 'customer')

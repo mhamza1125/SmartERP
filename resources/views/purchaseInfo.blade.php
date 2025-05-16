@@ -14,7 +14,7 @@
                   @if(isset($process))
                     <a href="{{ route('mprocess.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
                   @else
-                    <a href="{{ route('purchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
+                    <a href="{{ route($purchase['purchase_type'] == 'material' ? 'purchase.edit' : 'productPurchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
                   @endif
                 @endif
                 <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
@@ -79,9 +79,8 @@
                       <thead>
                         <tr>
                           <th>Sr.</th>
-                          <th>Material No</th>
-                          <th>Material Name</th>
-                          <th>Unit</th>
+                          <th>Material / Product</th>
+                          <th>Units / Size</th>
                           <th>Quantity</th>
                           <th>Rate</th>
                           <th>Amount</th>
@@ -92,8 +91,13 @@
                           @foreach($purchaseItem as $item)
                             <tr>
                               <td>{{$loop->index + 1}}</td>
-                              <td>{{$item->material_no}}</td>
-                              <td>{{$item->name}}</td>
+                              <td>
+                                @if($purchase['purchase_type'] == 'material')
+                                  {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                                @else
+                                  {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                                @endif
+                              </td>
                               <td>{{$item->hname}}</td>
                               <td>{{number_format($item->quantity)}}</td>
                               <td>{{number_format($item->price)}}</td>
@@ -160,9 +164,8 @@
                       <thead>
                         <tr>
                           <th>Sr.</th>
-                          <th>Material No</th>
-                          <th>Material Name</th>
-                          <th>Units</th>
+                          <th>Material / Product</th>
+                          <th>Units / Size</th>
                           <th>Order Qty</th>
                           <th>Receive Qty</th>
                           <th>Return Qty</th>
@@ -180,8 +183,13 @@
                           @foreach($receiveSum as $item)
                             <tr>
                               <td>{{$loop->index + 1}}</td>
-                              <td>{{$item->material_no}}</td>
-                              <td>{{$item->name}}</td>
+                              <td>
+                                @if($purchase['purchase_type'] == 'material')
+                                  {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                                @else
+                                  {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                                @endif
+                              </td>
                               <td>{{$item->hname}}</td>
                               <td>{{$item->quantity}}</td>
                               <td>{{$item->rqty}}</td>
@@ -195,8 +203,7 @@
                       <tfoot>
                         <tr>
                           <th>Sr.</th>
-                          <th>Material No</th>
-                          <th>Material Name</th>
+                          <th>Material / Product</th>
                           <th>Units</th>
                           <th>Order Qty</th>
                           <th>Receive Qty</th>
@@ -257,8 +264,7 @@
                           <thead>
                             <tr>
                               <th>Sr.</th>
-                              <th>Material No</th>
-                              <th>Material Name</th>
+                              <th>Material / Product</th>
                               <th>Units</th>
                               <th>Receive Qty</th>
                               <th>Pending</th>
@@ -273,8 +279,13 @@
                               @if($receiveTimes[$i-1]['receive_no'] == $item->receive_no)
                                 <tr>
                                   <td>{{$loopIndex++}}</td>
-                                  <td>{{$item->material_no}}</td>
-                                  <td>{{$item->name}}</td>
+                                  <td>
+                                    @if($purchase['purchase_type'] == 'material')
+                                      {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                                    @else
+                                      {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                                    @endif
+                                  </td>
                                   <td>{{$item->hname}}</td>
                                   <td>{{$item->rqty}}</td>
                                   <td>{{$item->pending_qty}}</td>
@@ -291,8 +302,7 @@
                           <tfoot>
                             <tr>
                               <th>Sr.</th>
-                              <th>Material No</th>
-                              <th>Material Name</th>
+                              <th>Material / Product</th>
                               <th>Units</th>
                               <th>Receive Qty</th>
                               <th>Pending</th>
@@ -316,8 +326,7 @@
                           <thead>
                             <tr>
                               <th>Sr.</th>
-                              <th>Material No</th>
-                              <th>Material Name</th>
+                              <th>Material / Product</th>
                               <th>Units</th>
                               <th>Return Qty</th>
                               <th>Remarks</th>
@@ -328,8 +337,13 @@
                               @if($returnTimes[$i-1]['return_no'] == $item->return_no)
                                 <tr>
                                   <td>{{$loopIndex++}}</td>
-                                  <td>{{$item->material_no}}</td>
-                                  <td>{{$item->name}}</td>
+                                  <td>
+                                    @if($purchase['purchase_type'] == 'material')
+                                      {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                                    @else
+                                      {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                                    @endif
+                                  </td>
                                   <td>{{$item->hname}}</td>
                                   <td>{{$item->rqty}}</td>
                                   <td>{{$item->remarks}}</td>
@@ -340,8 +354,7 @@
                           <tfoot>
                             <tr>
                               <th>Sr.</th>
-                              <th>Material No</th>
-                              <th>Material Name</th>
+                              <th>Material / Product</th>
                               <th>Units</th>
                               <th>Return Qty</th>
                               <th>Remarks</th>
@@ -377,7 +390,14 @@
               <table class="table table-sm">
                 <thead>
                   <tr>
-                    <th colspan="6">{{$purchase->material_no}} - {{$purchase->name}} | Order Qty: {{$purchase->quantity}}</th>
+                    <th colspan="6">
+                      @if($purchase['purchase_type'] == 'material')  
+                        {{$purchase->material_no}} - {{$purchase->name}}
+                      @else
+                        {{$purchase->name}} - {{ $item->sname }} - {{$item->hname}}
+                      @endif
+                      | Order Qty: {{$purchase->quantity}}
+                    </th>
                   </tr>
                   <tr>
                     <th>Sr.</th>

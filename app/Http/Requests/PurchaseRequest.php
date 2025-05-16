@@ -23,6 +23,7 @@ class PurchaseRequest extends FormRequest
     {
         return [
             'purchase_no' => 'required|max:255',
+            'purchase_type' => 'required|max:255',
             'vendor_id' => 'required',
             'order_id' => 'required',
             'description' => '',
@@ -30,6 +31,8 @@ class PurchaseRequest extends FormRequest
             'require_date' => 'required',
             // Purchase Items
             'material_id.*' => 'required',
+            'product_type_id.*' => 'required',
+            'product_stage_id.*' => 'required',
             'quantity.*' => 'required',
             'amaterial_id.*' => 'required',
             'aquantity.*' => 'required',

@@ -2,62 +2,73 @@
 
 namespace App\Repositories;
 
-use Carbon\Carbon;
 use App\Models\Receive;
+use Carbon\Carbon;
 
-class ReceiveRepository implements GlobalInterface {
-    
-    public function all(){
+class ReceiveRepository implements GlobalInterface
+{
+    public function all()
+    {
         return Receive::join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-        ->join('receive_materials', 'receive_materials.receive_id', 'receives.receive_id')
-        ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
-        ->groupBy('receive_materials.receive_id')
-        ->selectRaw('SUM(receive_materials.pending_qty) as pqty')
-        ->orderBy('receives.created_at', 'desc')->get();
+            ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->join('receive_materials', 'receive_materials.receive_id', 'receives.receive_id')
+            ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
+            ->groupBy('receive_materials.receive_id')
+            ->selectRaw('SUM(receive_materials.pending_qty) as pqty')
+            ->orderBy('receives.created_at', 'desc')->get();
 
         // Without Status of Pending / Checked etc
         return Receive::join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-        ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
-        ->orderBy('receives.created_at', 'desc')->get();
+            ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
+            ->orderBy('receives.created_at', 'desc')->get();
     }
 
-    public function get($id){
+    public function get($id)
+    {
         return Receive::where('receives.receive_id', $id)
-        ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-        ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-        ->select('receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 'receives.description as desc')
-        ->first();
+            ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+            ->select('receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 'receives.description as desc')
+            ->first();
     }
 
-    public function pending(){
+    public function pending()
+    {
         // Used to Add Return
         return Receive::where('receives.receive_status', '0')
-        ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
-        ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-        ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
-        ->orderBy('receives.created_at', 'desc')->get();
+            ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->select('receives.*', 'vendors.fname', 'purchases.purchase_no')
+            ->orderBy('receives.created_at', 'desc')->get();
     }
 
-    public function refNo($id) {
+    public function refNo($id)
+    {
         $yearMonth = Carbon::now()->format('ym');
         $count = Receive::where('purchase_id', $id)->count();
-        return 'R' . $count+1;
+
+        return 'R'.$count + 1;
     }
 
-    public function store(array $data){
+    public function store(array $data)
+    {
         $data['created_by'] = auth()->id();
         $store = Receive::create($data);
+
         return $store->receive_id;
     }
 
-    public function update($id, array $data) {
+    public function update($id, array $data)
+    {
         $update = Receive::findOrFail($id);
         $update->update($data);
+
         return $update->receive_id;
     }
 
-    public function delete($id){}
+    public function delete($id)
+    {
+    }
 }

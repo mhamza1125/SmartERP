@@ -23,6 +23,7 @@
                     <select class="form-control select2" name="bank_holder" required>
                       <option value="admin" {{ old('bank_holder') == 'admin' ? 'selected' : '' }}>Admin / Self</option>
                       <option value="vendor" {{ old('bank_holder') == 'vendor' ? 'selected' : '' }}>Vendor</option>
+                      <option value="contractor" {{ old('bank_holder') == 'contractor' ? 'selected' : '' }}>Contractor</option>
                       <option value="employee" {{ old('bank_holder') == 'employee' ? 'selected' : '' }}>Employee</option>
                       <option value="customer" {{ old('bank_holder') == 'customer' ? 'selected' : '' }}>Customer</option>
                     </select>
@@ -60,12 +61,27 @@
                       <option value="" selected disabled>Select Vendor</option>
                       @if($vendor->count())
                         @foreach($vendor as $item)
-                          <option data-type="vendor" value="{{$item->vendor_id}}" {{ old('banker_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
+                          <option value="{{$item->vendor_id}}" {{ old('banker_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Vendor</div>
+                  </div>
+                </div>
+                <div class="col-md-5" id="contractor">
+                  <div class="form-group">          
+                    <label>Contractor</label>
+                    <select class="form-control select2" name="banker_id">
+                      <option value="" selected disabled>Select Contractor</option>
+                      @if($contractor->count())
+                        @foreach($contractor as $item)
+                          <option value="{{$item->vendor_id}}" {{ old('banker_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Contractor</div>
                   </div>
                 </div>
                 <div class="col-md-5" id="customer">
@@ -75,7 +91,7 @@
                       <option value="" selected disabled>Select Customer</option>
                       @if($customer->count())
                         @foreach($customer as $item)
-                          <option data-type="customer" value="{{$item->customer_id}}" {{ old('banker_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                          <option value="{{$item->customer_id}}" {{ old('banker_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
                     </select>

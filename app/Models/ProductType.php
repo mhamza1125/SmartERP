@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductType extends Model
 {
     use HasFactory;
-    
+
     protected $primaryKey = 'product_type_id';
 
     protected $fillable = [
@@ -20,3 +20,4 @@ class ProductType extends Model
         'updated_at',
     ];
 }
+    

@@ -76,7 +76,12 @@
                         @foreach($purchaseItem as $item)
                         <tr>
                           <td>{{ $loop->index + 1 }}</td>
-                          <td class="form-group">{{$item->material_no}} - {{$item->name}}
+                          <td class="form-group">
+                            @if($purchase['purchase_type'] == 'material')
+                                {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                            @else
+                                {{ $item->article_no ?? '' }} - Size {{ $item->hname ?? '' }} - {{ $item->sname ?? '' }}
+                            @endif
                             <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
                           </td>
                           <td class="form-group">

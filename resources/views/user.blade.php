@@ -30,7 +30,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->name}}</td>
                       <td>{{$item->email}}</td>
-                      <td>{{$item->role}}</td>
+                      <td>{{$item->role->name}}</td>
                       <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->id}}">Edit</button></td>
                     </tr>
                     @endforeach
@@ -139,26 +139,27 @@
                   </div>
                   <div class="form-group col-md-6">
                     <label>Password</label>
-                    <input type="password" class="form-control" name="password" required>
+                    <input type="password" class="form-control" name="password" placeholder="Leave empty to keep same">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Password</div>
                   </div>
                   <div class="form-group col-md-6">
                     <label>Repeat Password</label>
-                    <input type="password" class="form-control" name="password_confirmation" required>
+                    <input type="password" class="form-control" name="password_confirmation" placeholder="Leave empty to keep same">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Repeat Valid Password</div>
                   </div>
                   <div class="form-group col-md-12">
                     <label>User Roles</label>
-                    @if($item->role != 'admin')
-                      <select class="form-control" name="role" required>
-                        <option value="" disabled selected>Select User Role</option>
-                        <option value="manager" {{ $item->role == 'manager' ? 'selected' : '' }}>Manager - (With All Access)</option>
-                        <option value="accountant" {{ $item->role == 'accountant' ? 'selected' : '' }}>Accountant - (Just Insertion / No Editing / Deletion)</option>
+                    @if($item->role_id == '1')
+                      <select class="form-control" name="role_id" required>
+                        <option value="" selected disabled>Select User Role</option>
+                        @foreach($roles as $role)
+                          <option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>
+                        @endforeach
                       </select>
                     @else
-                      <input type="text" class="form-control" name="role" value="{{$item->role}}" required readonly>
+                      <input type="text" class="form-control" name="role" value="{{$item->role->name}}" required readonly>
                     @endif
                   </div>
                 </div>

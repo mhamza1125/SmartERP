@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Purchase Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Purchase</a>
+              <div class="btn-group">
+                <a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Material Purchase</a>
+                <a href="{{ route('productPurchase.add') }}" class="btn btn-primary">Add Product Purchase</a>
+              </div>
             </div>
           </div>
           <div class="card-body">
@@ -19,6 +22,7 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Purchase No</th>
+                    <th>Purchase Type</th>
                     <th>Job No</th>
                     <th>Vendor</th>
                     <th>Status</th>
@@ -32,6 +36,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->purchase_date}}</td>                      
                       <td>{{$item->purchase_no}}</td>
+                      <td><span class="badge {{ $item->purchase_type == 'material' ? 'badge-secondary' : 'badge-dark' }}">{{ucfirst($item->purchase_type)}}</span></td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>
                       <td>{{$item->vendor_no}} - {{$item->fname}}</td>
                       <td>@if($item->has_received) 
@@ -40,7 +45,9 @@
                       </td>
                       <td>
                         <a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
-                        @if(!$item->has_received) <a href="{{ route('purchase.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a> @endif
+                        @if(!$item->has_received)
+                          <a href="{{ route($item->purchase_type == 'material' ? 'purchase.edit' : 'productPurchase.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @endif
                         <a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Receive</a>
                       </td>
                     </tr>
@@ -52,6 +59,7 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Purchase No</th>
+                    <th>Purchase Type</th>
                     <th>Job No</th>
                     <th>Vendor</th>
                     <th>Status</th>

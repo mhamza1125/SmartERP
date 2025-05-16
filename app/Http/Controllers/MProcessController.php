@@ -2,46 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Purchase;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use App\Repositories\OrderRepository;
 use App\Http\Requests\PurchaseRequest;
-use App\Repositories\VendorRepository;
-use App\Repositories\MProcessRepository;
+use App\Models\Purchase;
 use App\Repositories\MaterialRepository;
+use App\Repositories\MProcessRepository;
+use App\Repositories\OrderRepository;
+use App\Repositories\PurchaseItemRepository;
 use App\Repositories\PurchaseRepository;
+use App\Repositories\ReceiveMaterialRepository;
+use App\Repositories\ReturnMaterialRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\TransactionRepository;
-use App\Repositories\PurchaseItemRepository;
-use App\Repositories\ReturnMaterialRepository;
-use App\Repositories\ReceiveMaterialRepository;
+use App\Repositories\VendorRepository;
+use Illuminate\Http\Request;
 
 class MProcessController extends Controller
 {
     protected $orderRepository;
+
     protected $vendorRepository;
+
     protected $mprocessRepository;
+
     protected $materialRepository;
+
     protected $purchaseRepository;
+
     protected $stockItemRepository;
+
     protected $transactionRepository;
+
     protected $purchaseItemRepository;
+
     protected $returnMaterialRepository;
+
     protected $receiveMaterialRepository;
 
     public function __construct(
         OrderRepository $orderRepository,
-        VendorRepository $vendorRepository, 
-        MProcessRepository $mprocessRepository, 
-        PurchaseRepository $purchaseRepository, 
-        MaterialRepository $materialRepository, 
-        StockItemRepository $stockItemRepository, 
-        TransactionRepository $transactionRepository, 
-        PurchaseItemRepository $purchaseItemRepository, 
-        ReturnMaterialRepository $returnMaterialRepository, 
-        ReceiveMaterialRepository $receiveMaterialRepository, 
-    ){
+        VendorRepository $vendorRepository,
+        MProcessRepository $mprocessRepository,
+        PurchaseRepository $purchaseRepository,
+        MaterialRepository $materialRepository,
+        StockItemRepository $stockItemRepository,
+        TransactionRepository $transactionRepository,
+        PurchaseItemRepository $purchaseItemRepository,
+        ReturnMaterialRepository $returnMaterialRepository,
+        ReceiveMaterialRepository $receiveMaterialRepository,
+    ) {
         $this->middleware(['auth', 'all']);
         $this->orderRepository = $orderRepository;
         $this->vendorRepository = $vendorRepository;
@@ -55,20 +63,24 @@ class MProcessController extends Controller
         $this->receiveMaterialRepository = $receiveMaterialRepository;
     }
 
-    public function index(){
+    public function index()
+    {
         $purchase = $this->purchaseRepository->mprocess();
+
         return view('mprocess', [
             'purchase' => $purchase,
-        ]); 
+        ]);
     }
 
-    public function create(){
+    public function create()
+    {
         $order = $this->orderRepository->active();
         // $vendor = $this->vendorRepository->all();
         $vendor = $this->vendorRepository->vendor();
         $material = $this->materialRepository->all();
         $stock = $this->stockItemRepository->stock();
         $count = $this->purchaseRepository->refNo();
+
         return view('addMProcess', [
             'count' => $count,
             'stock' => $stock,
@@ -78,17 +90,20 @@ class MProcessController extends Controller
         ]);
     }
 
-    public function store(PurchaseRequest $request){
+    public function store(PurchaseRequest $request)
+    {
         $validatedData = $request->validated();
-        if (!$request->has('total')) {
+        if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $getId = $this->purchaseRepository->store($validatedData);
         $this->storeAll($getId, $validatedData);
+
         return redirect()->route('mprocess.show', $getId)->with('success', 'Record Inserted Successfully');
     }
-    
-    public function show($id){
+
+    public function show($id)
+    {
         $purchase = $this->purchaseRepository->get($id);
         $purchaseItem = $this->mprocessRepository->get($id);
         $receiveSum = $this->receiveMaterialRepository->rSum($id);
@@ -97,8 +112,9 @@ class MProcessController extends Controller
         $returnAll = $this->returnMaterialRepository->rAll($id);
         $returnTimes = $this->returnMaterialRepository->times($id);
         $transaction = $this->transactionRepository->getPPayment($id);
+
         return view('purchaseInfo', [
-            'process' => '1',
+            'process' => '1', // To tell MProcess Page
             'purchase' => $purchase,
             'transaction' => $transaction,
             'purchaseItem' => $purchaseItem,
@@ -111,13 +127,15 @@ class MProcessController extends Controller
             'count2' => $returnTimes->count(),
         ]);
     }
-    
-    public function edit(Purchase $id){
+
+    public function edit(Purchase $id)
+    {
         $order = $this->orderRepository->active();
         $vendor = $this->vendorRepository->all();
         $material = $this->materialRepository->all();
         $stock = $this->stockItemRepository->stock();
         $purchaseItem = $this->mprocessRepository->get($id->purchase_id);
+
         return view('editMProcess', [
             'purchase' => $id,
             'order' => $order,
@@ -128,19 +146,24 @@ class MProcessController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id){
-        if (!$request->has('total')) {
+    public function update(Request $request, $id)
+    {
+        if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
         $this->purchaseRepository->update($id, $request->input());
         $this->mprocessRepository->delete($id);
         $this->storeAll($id, $request->input());
-        return redirect()->route('mprocess.show', $id)->with('success', 'Record Updated Successfully');    
-    }
-    
-    public function destroy(Purchase $purchase){}
 
-    private function storeAll($getId, $validatedData){
+        return redirect()->route('mprocess.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    public function destroy(Purchase $purchase)
+    {
+    }
+
+    private function storeAll($getId, $validatedData)
+    {
         $amaterials = $validatedData['amaterial_id'];
         $bmaterials = $validatedData['bmaterial_id'];
         $aquantities = $validatedData['aquantity'];
@@ -153,7 +176,7 @@ class MProcessController extends Controller
             $aquantity = $aquantities[$key] ?? null;
             $bquantity = $bquantities[$key] ?? null;
             $total = $price * $bquantity;
-            
+
             $purchaseItem = [
                 'purchase_id' => $getId,
                 'material_id' => $bmaterial,
@@ -161,7 +184,7 @@ class MProcessController extends Controller
                 'quantity' => $bquantity,
                 'total' => $total,
             ];
-            
+
             $stockItem = [
                 'stock_id' => '0',
                 'product_type_id' => '0',
@@ -186,7 +209,7 @@ class MProcessController extends Controller
 
             $this->mprocessRepository->store($mprocess);
             // Direct Insertion - Not Used
-            $stock = [ 
+            $stock = [
                 // 'stock_id' => '0', 'issue_id' => NULL, 'issue_for' => '0', 'stock_no' => 'I24000000', 'order_id' => '0', 'machine_id' => NULL, 'table_name' => 'mprocess', 'employee_id' => '0', 'stock_type' => '2', 'stock_date' => '2024-06-01', 'stock_status' => '5', 'description' => '',
             ];
         }
