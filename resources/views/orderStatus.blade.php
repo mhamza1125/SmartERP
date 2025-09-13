@@ -105,7 +105,7 @@
                       </tfoot>
                     </table>
                   </div>
-                  {{-- Dummy Table Tab --}}
+                  {{-- Additional Details Tab - Dynamic Data --}}
                   <div class="tab-pane fade" id="dummy" role="tabpanel" aria-labelledby="dummy-tab">
                     <table class="table table-sm table-striped">
                       <thead>
@@ -115,44 +115,142 @@
                           <th>Item / Product</th>
                           <th>Size</th>
                           <th>Stage</th>
-                          <th>Quantity</th>
+                          <th>Ordered Qty</th>
+                          <th>Delivered Qty</th>
+                          <th>Returned Qty</th>
+                          <th>Net Delivered</th>
+                          <th>Remaining Qty</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td>1</td>
-                          <td>ART-001</td>
-                          <td>Sample Product A</td>
-                          <td>Medium</td>
-                          <td>Production</td>
-                          <td>100 Units</td>
-                        </tr>
-                        <tr>
-                          <td>2</td>
-                          <td>ART-002</td>
-                          <td>Sample Product B</td>
-                          <td>Large</td>
-                          <td>Quality Check</td>
-                          <td>50 Units</td>
-                        </tr>
-                        <tr>
-                          <td>3</td>
-                          <td>ART-003</td>
-                          <td>Sample Product C</td>
-                          <td>Small</td>
-                          <td>Packaging</td>
-                          <td>200 Units</td>
-                        </tr>
+                        @if($remainingItems->count())
+                          @php $product_id = 0; $size = 0; @endphp
+                          @foreach($remainingItems as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            @if($item->product_name == $product_id)
+                              <td colspan="2"></td>
+                            @else
+                              <td>{{$item->article_no}}</td>
+                              <td>{{$item->product_name}}</td>
+                            @endif
+                            @if($item->size_name == $size && $item->product_name == $product_id)
+                              <td></td>
+                            @else
+                              <td>{{$item->size_name}}</td>
+                            @endif
+                            <td>{{$item->stage_name}}</td>
+                            <td>{{number_format($item->ordered_quantity)}} {{$item->unit_name}}</td>
+                            <td>
+                              <span class="badge badge-success">{{number_format($item->delivered_quantity)}} {{$item->unit_name}}</span>
+                            </td>
+                            <td>
+                              @if($item->returned_quantity > 0)
+                                <span class="badge badge-danger">{{number_format($item->returned_quantity)}} {{$item->unit_name}}</span>
+                              @else
+                                <span class="badge badge-secondary">0 {{$item->unit_name}}</span>
+                              @endif
+                            </td>
+                            <td>
+                              <span class="badge badge-info">{{number_format($item->net_delivered_quantity)}} {{$item->unit_name}}</span>
+                            </td>
+                            <td>
+                              @if($item->remaining_quantity > 0)
+                                <span class="badge badge-warning">{{number_format($item->remaining_quantity)}} {{$item->unit_name}}</span>
+                              @else
+                                <span class="badge badge-success">0 {{$item->unit_name}}</span>
+                              @endif
+                            </td>
+                            <td>
+                              @if($item->remaining_quantity <= 0)
+                                <span class="badge badge-success">Completed</span>
+                              @elseif($item->net_delivered_quantity > 0)
+                                <span class="badge badge-warning">Partially Delivered</span>
+                              @else
+                                <span class="badge badge-danger">Pending</span>
+                              @endif
+                            </td>
+                          </tr>
+                          @php $product_id = $item->product_name; $size = $item->size_name @endphp
+                          @endforeach
+                        @else
+                          <tr>
+                            <td colspan="11" class="text-center">No items found for this order</td>
+                          </tr>
+                        @endif
                       </tbody>
                       <tfoot>
                         <tr>
                           <th>Sr.</th>
+                          <th>Article No</th>
                           <th>Item / Product</th>
+                          <th>Size</th>
                           <th>Stage</th>
-                          <th>Quantity</th>
+                          <th>Ordered Qty</th>
+                          <th>Delivered Qty</th>
+                          <th>Returned Qty</th>
+                          <th>Net Delivered</th>
+                          <th>Remaining Qty</th>
+                          <th>Status</th>
                         </tr>
                       </tfoot>
                     </table>
+
+                    {{-- Summary Statistics --}}
+                    <div class="row mt-4">
+                      <div class="col-md-12">
+                        <div class="card">
+                          <div class="card-header">
+                            <h6>Delivery Summary</h6>
+                          </div>
+                          <div class="card-body">
+                            <div class="row">
+                              @php
+                                $totalItems = $remainingItems->count();
+                                $completedItems = $remainingItems->where('remaining_quantity', '<=', 0)->count();
+                                $partialItems = $remainingItems->where('net_delivered_quantity', '>', 0)->where('remaining_quantity', '>', 0)->count();
+                                $pendingItems = $remainingItems->where('net_delivered_quantity', '<=', 0)->count();
+                                $completionPercentage = $totalItems > 0 ? round(($completedItems / $totalItems) * 100, 2) : 0;
+                              @endphp
+                              <div class="col-md-3">
+                                <div class="text-center">
+                                  <h4 class="text-primary">{{$totalItems}}</h4>
+                                  <p class="mb-0">Total Items</p>
+                                </div>
+                              </div>
+                              <div class="col-md-3">
+                                <div class="text-center">
+                                  <h4 class="text-success">{{$completedItems}}</h4>
+                                  <p class="mb-0">Completed</p>
+                                </div>
+                              </div>
+                              <div class="col-md-3">
+                                <div class="text-center">
+                                  <h4 class="text-warning">{{$partialItems}}</h4>
+                                  <p class="mb-0">Partially Delivered</p>
+                                </div>
+                              </div>
+                              <div class="col-md-3">
+                                <div class="text-center">
+                                  <h4 class="text-danger">{{$pendingItems}}</h4>
+                                  <p class="mb-0">Pending</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row mt-3">
+                              <div class="col-md-12">
+                                <div class="progress">
+                                  <div class="progress-bar bg-success" role="progressbar" style="width: {{$completionPercentage}}%" aria-valuenow="{{$completionPercentage}}" aria-valuemin="0" aria-valuemax="100">
+                                    {{$completionPercentage}}% Complete
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -834,4 +834,65 @@ class StockItemRepository implements GlobalInterface
     public function delete($id)
     {
     }
+
+    public function orderRemainingItems($id)
+    {
+        // Get order items with delivered quantities and returned quantities to show remaining items
+        return DB::table('order_items')
+            ->select(
+                'order_items.order_item_id',
+                'order_items.product_type_id',
+                'order_items.product_stage_id',
+                'order_items.quantity as ordered_quantity',
+                'products.name as product_name',
+                'products.article_no',
+                'shead.name as size_name',
+                'sthead.name as stage_name',
+                'uhead.name as unit_name',
+                DB::raw('COALESCE(delivered.delivered_quantity, 0) as delivered_quantity'),
+                DB::raw('COALESCE(returned.returned_quantity, 0) as returned_quantity'),
+                DB::raw('(COALESCE(delivered.delivered_quantity, 0) - COALESCE(returned.returned_quantity, 0)) as net_delivered_quantity'),
+                DB::raw('(order_items.quantity - (COALESCE(delivered.delivered_quantity, 0) - COALESCE(returned.returned_quantity, 0))) as remaining_quantity')
+            )
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'order_items.product_stage_id')
+            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
+            ->leftJoin(DB::raw('(
+                SELECT
+                    si.product_type_id,
+                    si.stage_id,
+                    SUM(si.quantity) as delivered_quantity
+                FROM stock_items si
+                JOIN stocks s ON s.stock_id = si.stock_id
+                WHERE s.order_id = ' . $id . '
+                AND s.stock_status = 3
+                AND s.stock_type = 2
+                GROUP BY si.product_type_id, si.stage_id
+            ) as delivered'), function($join) {
+                $join->on('delivered.product_type_id', '=', 'order_items.product_type_id')
+                     ->on('delivered.stage_id', '=', 'order_items.product_stage_id');
+            })
+            ->leftJoin(DB::raw('(
+                SELECT
+                    si.product_type_id,
+                    si.stage_id,
+                    SUM(dri.quantity) as returned_quantity
+                FROM delivery_return_items dri
+                JOIN stock_items si ON si.stock_item_id = dri.stock_item_id
+                JOIN stocks s ON s.stock_id = si.stock_id
+                WHERE s.order_id = ' . $id . '
+                GROUP BY si.product_type_id, si.stage_id
+            ) as returned'), function($join) {
+                $join->on('returned.product_type_id', '=', 'order_items.product_type_id')
+                     ->on('returned.stage_id', '=', 'order_items.product_stage_id');
+            })
+            ->where('order_items.order_id', $id)
+            ->orderBy('products.product_id')
+            ->orderBy('product_types.product_type_id')
+            ->get();
+    }
+
+
 }

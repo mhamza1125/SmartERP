@@ -127,10 +127,12 @@ class OrderController extends Controller
         $this->authorize('show', Order::class);
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->orderStatus($id);
+        $remainingItems = $this->stockItemRepository->orderRemainingItems($id);
 
         return view('orderStatus', [
             'order' => $order,
             'stock' => $stock,
+            'remainingItems' => $remainingItems,
         ]);
     }
 

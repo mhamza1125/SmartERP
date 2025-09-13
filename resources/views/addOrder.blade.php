@@ -75,6 +75,16 @@
                 </div>
               </div>
 
+              {{-- <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Expected Delivery Date <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control datepicker" name="expected_delivery_date" placeholder="Select expected delivery date" value="{{old('expected_delivery_date')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div> --}}
+
               <h6>Order Items</h6>
               <div class="row">
                 <div class="col-md-6">

@@ -21,6 +21,7 @@
                     <th>Order No</th>
                     <th>Job No</th>
                     <th>Customer</th>
+                    {{-- <th>Expected Delivery</th> --}}
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -30,10 +31,17 @@
                     @foreach($order as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->order_date}}</td>                      
+                      <td>{{$item->order_date}}</td>
                       <td>{{$item->order_no}}</td>
                       <td>{{$item->job_no}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
+                      {{-- <td>
+                        @if($item->expected_delivery_date)
+                          <span class="badge badge-info">{{$item->expected_delivery_date}}</span>
+                        @else
+                          <span class="text-muted">Not set</span>
+                        @endif
+                      </td> --}}
                       <td>
                         <div class="btn-group">
                             <button class="btn <?php 
@@ -78,6 +86,7 @@
                     <th>Order No</th>
                     <th>Job No</th>
                     <th>Customer</th>
+                    {{-- <th>Expected Delivery</th> --}}
                     <th>Status</th>
                     <th>Action</th>
                   </tr>

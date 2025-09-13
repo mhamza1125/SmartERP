@@ -8,6 +8,7 @@
           <div class="card-header">
             <h4>Delivery Table</h4>
             <div class="card-header-action">
+              <a href="{{ route('delivery-return') }}" class="btn btn-warning">View Returns</a>
               {{-- <a href="{{ route('delivery') }}" class="btn btn-primary">Add Delivery</a> --}}
             </div>
           </div>
@@ -56,6 +57,9 @@
                       <td>
                         <a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('delivery.edit', $item->delivery_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if($item->delivery_status == 2)
+                          <a href="{{ route('delivery-return.create', $item->delivery_id) }}" class="btn btn-warning btn-sm">Return</a>
+                        @endif
                       </td>
                     </tr>
                     @endforeach

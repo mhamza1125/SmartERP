@@ -463,7 +463,15 @@ class TransactionRepository implements GlobalInterface
             ->get();
 
         $transactions = \DB::table('transactions')
-            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->select(
+                'transactions.*',
+                'transactions.created_at as timestamp',
+                \DB::raw('CASE
+                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
+                    THEN transactions.gross_amount
+                    ELSE transactions.credit
+                END as credit')
+            )
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_to', 'customer')
             ->get();
@@ -488,8 +496,14 @@ class TransactionRepository implements GlobalInterface
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_date', '<', $dfrom)
             ->where('transactions.transaction_to', 'customer')
-            ->select(\DB::raw('SUM(transactions.debit) as debit'))
-            ->select(\DB::raw('SUM(transactions.credit) as credit'))
+            ->select(
+                \DB::raw('SUM(transactions.debit) as debit'),
+                \DB::raw('SUM(CASE
+                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
+                    THEN transactions.gross_amount
+                    ELSE transactions.credit
+                END) as credit')
+            )
             ->first();
 
         $totalDebitBefore = ($ordersBefore->debit ?? 0) + ($transactionsBefore->debit ?? 0);
@@ -506,7 +520,15 @@ class TransactionRepository implements GlobalInterface
             ->get();
 
         $transactions = \DB::table('transactions')
-            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->select(
+                'transactions.*',
+                'transactions.created_at as timestamp',
+                \DB::raw('CASE
+                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
+                    THEN transactions.gross_amount
+                    ELSE transactions.credit
+                END as credit')
+            )
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_to', 'customer')
             ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
@@ -526,8 +548,14 @@ class TransactionRepository implements GlobalInterface
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_date', '>', $dto)
             ->where('transactions.transaction_to', 'customer')
-            ->select(\DB::raw('SUM(transactions.debit) as debit'))
-            ->select(\DB::raw('SUM(transactions.credit) as credit'))
+            ->select(
+                \DB::raw('SUM(transactions.debit) as debit'),
+                \DB::raw('SUM(CASE
+                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
+                    THEN transactions.gross_amount
+                    ELSE transactions.credit
+                END) as credit')
+            )
             ->first();
 
         $totalDebitAfter = ($ordersAfter->debit ?? 0) + ($transactionsAfter->debit ?? 0);

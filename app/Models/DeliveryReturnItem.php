@@ -5,20 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model
+class DeliveryReturnItem extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'order_id';
+    protected $primaryKey = 'delivery_return_item_id';
 
     protected $fillable = [
-        'order_no',
-        'job_no',
-        'customer_id',
-        'order_status',
-        'order_date',
-        'expected_delivery_date',
-        'description',
+        'delivery_return_id',
+        'stock_item_id',
+        'quantity',
+        'reason',
         'created_by',
         'updated_at',
     ];

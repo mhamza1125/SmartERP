@@ -325,5 +325,7 @@
   <script src="{{ URL::asset('assets/js/scripts.js') }}"></script>
   <!-- Custom JS File -->
   <script src="{{ URL::asset('assets/js/custom.js') }}"></script>
+
+  @stack('scripts')
 </body>
 </html>

@@ -20,7 +20,9 @@
                     <th>Date</th>
                     <th>Customer No</th>
                     <th>Order No</th>
-                    <th>Amount</th>
+                    <th>Net Amount</th>
+                    <th>Gross Amount</th>
+                    <th>Fees</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -32,7 +34,9 @@
                       <td>{{$item->transaction_date}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>{{$item->order_no}}</td>
-                      <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>                  
+                      <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
+                      <td>{{$item->gross_amount ? number_format($item->gross_amount) : 'N/A'}}</td>
+                      <td>{{$item->fees_expenses ? number_format($item->fees_expenses) : 'N/A'}}</td>
                       <td>
                         <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('transaction.editOPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -47,7 +51,9 @@
                     <th>Date</th>
                     <th>Customer No</th>
                     <th>Order No</th>
-                    <th>Amount</th>
+                    <th>Net Amount</th>
+                    <th>Gross Amount</th>
+                    <th>Fees</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

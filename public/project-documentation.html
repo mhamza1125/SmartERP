@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Order Management System - Project Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+        }
+
+        .feature-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #667eea;
+        }
+
+        .section-title {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .tech-badge {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 8px 16px;
+            margin: 4px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-boxes"></i> Order Management System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#technical">Technical</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#modules">Modules</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#demo">Demo</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="overview">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-4">Laravel Order Management System</h1>
+                    <p class="lead mb-4">A comprehensive enterprise-level order management system built with Laravel,
+                        featuring advanced inventory tracking, delivery management, payment processing, and return
+                        handling.</p>
+                    <div class="d-flex gap-3">
+                        <a href="http://127.0.0.1:8000" class="btn btn-light btn-lg" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Live Demo
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line" style="font-size: 150px; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5" id="features">
+        <div class="container">
+            <h2 class="text-center section-title">Key Features</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">Order Management</h5>
+                            <p class="card-text">Complete order lifecycle management with status tracking, customer
+                                management, and expected delivery dates.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-truck fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Delivery & Returns</h5>
+                            <p class="card-text">Advanced delivery tracking with comprehensive return management system
+                                and automatic stock adjustments.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-credit-card fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">Payment Processing</h5>
+                            <p class="card-text">Sophisticated payment system with fee tracking, gross vs net amount
+                                handling, and customer ledger management.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Details -->
+    <section class="py-5 bg-light" id="technical">
+        <div class="container">
+            <h2 class="text-center section-title">Technical Architecture</h2>
+            <div class="row">
+                <div class="col-lg-6">
+                    <h4><i class="fas fa-code"></i> Technology Stack</h4>
+                    <div class="mb-4">
+                        <span class="tech-badge"><i class="fab fa-laravel"></i> Laravel 10</span>
+                        <span class="tech-badge"><i class="fab fa-php"></i> PHP 8.1+</span>
+                        <span class="tech-badge"><i class="fas fa-database"></i> MySQL</span>
+                        <span class="tech-badge"><i class="fab fa-bootstrap"></i> Bootstrap 5</span>
+                        <span class="tech-badge"><i class="fab fa-js"></i> JavaScript</span>
+                        <span class="tech-badge"><i class="fas fa-chart-bar"></i> Chart.js</span>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <h4><i class="fas fa-cogs"></i> Architecture Patterns</h4>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Repository Pattern</li>
+                        <li><i class="fas fa-check text-success"></i> MVC Architecture</li>
+                        <li><i class="fas fa-check text-success"></i> Policy-based Authorization</li>
+                        <li><i class="fas fa-check text-success"></i> Blade Template Engine</li>
+                        <li><i class="fas fa-check text-success"></i> Database Migrations</li>
+                        <li><i class="fas fa-check text-success"></i> Form Request Validation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modules Section -->
+    <section class="py-5" id="modules">
+        <div class="container">
+            <h2 class="text-center section-title">System Modules</h2>
+
+            <!-- Tab Navigation -->
+            <ul class="nav nav-pills justify-content-center mb-4" id="moduleTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="orders-tab" data-bs-toggle="pill" data-bs-target="#orders"
+                        type="button">Orders</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="delivery-tab" data-bs-toggle="pill" data-bs-target="#delivery"
+                        type="button">Delivery</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="payments-tab" data-bs-toggle="pill" data-bs-target="#payments"
+                        type="button">Payments</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="inventory-tab" data-bs-toggle="pill" data-bs-target="#inventory"
+                        type="button">Inventory</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports"
+                        type="button">Reports</button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="moduleTabContent">
+                <!-- Orders Tab -->
+                <div class="tab-pane fade show active" id="orders" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h4>Order Management System</h4>
+                            <p>Comprehensive order lifecycle management with advanced tracking capabilities.</p>
+                            <ul>
+                                <li><strong>Order Creation:</strong> Multi-item orders with product variants and stages
+                                </li>
+                                <li><strong>Status Tracking:</strong> 9 different order statuses from Pending to
+                                    Completed</li>
+                                <li><strong>Customer Integration:</strong> Full customer management with ledger tracking
+                                </li>
+                                <li><strong>Expected Delivery:</strong> Optional delivery date planning</li>
+                                <li><strong>Dynamic Status View:</strong> Real-time order progress with delivered vs
+                                    remaining quantities</li>
+                                <li><strong>Return Integration:</strong> Automatic adjustment for returned items</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Order Status Types</h6>
+                                </div>
+                                <div class="card-body">
+                                    <span class="badge bg-warning mb-1">Pending</span><br>
+                                    <span class="badge bg-primary mb-1">Processing</span><br>
+                                    <span class="badge bg-secondary mb-1">On Hold</span><br>
+                                    <span class="badge bg-info mb-1">Partially Delivered</span><br>
+                                    <span class="badge bg-success mb-1">Delivered</span><br>
+                                    <span class="badge bg-success mb-1">Completed</span><br>
+                                    <span class="badge bg-danger mb-1">Cancelled</span><br>
+                                    <span class="badge bg-danger mb-1">Returned</span><br>
+                                    <span class="badge bg-warning mb-1">Disputed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Tab -->
+                <div class="tab-pane fade" id="delivery" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h4>Delivery & Return Management</h4>
+                            <p>Advanced delivery tracking with comprehensive return processing capabilities.</p>
+                            <ul>
+                                <li><strong>Delivery Tracking:</strong> Real-time delivery status monitoring</li>
+                                <li><strong>Return Processing:</strong> Complete return workflow with reason tracking
+                                </li>
+                                <li><strong>Stock Adjustment:</strong> Automatic inventory updates on returns</li>
+                                <li><strong>Returnable Calculation:</strong> Smart calculation of returnable quantities
+                                </li>
+                                <li><strong>Return History:</strong> Complete audit trail of all returns</li>
+                                <li><strong>Order Integration:</strong> Returns properly reflected in order status</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Return Process Flow</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ol class="list-unstyled">
+                                        <li>1. <i class="fas fa-search"></i> Identify Delivered Items</li>
+                                        <li>2. <i class="fas fa-calculator"></i> Calculate Returnable Qty</li>
+                                        <li>3. <i class="fas fa-edit"></i> Process Return Request</li>
+                                        <li>4. <i class="fas fa-sync"></i> Update Stock Levels</li>
+                                        <li>5. <i class="fas fa-chart-line"></i> Adjust Order Status</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Tab -->
+                <div class="tab-pane fade" id="payments" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h4>Advanced Payment Processing</h4>
+                            <p>Sophisticated payment system with fee tracking and customer-facing transparency.</p>
+                            <ul>
+                                <li><strong>Gross vs Net Tracking:</strong> Separate tracking of customer payment and
+                                    received amount</li>
+                                <li><strong>Fee Management:</strong> Bank fees, processing charges, and expense tracking
+                                </li>
+                                <li><strong>Customer Ledger:</strong> Shows gross amounts to customers while tracking
+                                    internal fees</li>
+                                <li><strong>Auto-calculation:</strong> JavaScript-powered automatic net amount
+                                    calculation</li>
+                                <li><strong>Payment Methods:</strong> Support for multiple payment types and banks</li>
+                                <li><strong>Transaction History:</strong> Complete payment audit trail</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Payment Example</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Customer Payment:</strong> $1,000</p>
+                                    <p><strong>Bank Fees:</strong> $20</p>
+                                    <p><strong>Net Received:</strong> $980</p>
+                                    <hr>
+                                    <small class="text-muted">Customer sees $1,000 payment in ledger, while internal
+                                        records track the $20 fee and $980 net amount.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Tab -->
+                <div class="tab-pane fade" id="inventory" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h4>Inventory & Stock Management</h4>
+                            <p>Comprehensive inventory tracking with multi-stage product management.</p>
+                            <ul>
+                                <li><strong>Multi-stage Products:</strong> Track products through different
+                                    manufacturing stages</li>
+                                <li><strong>Stock Movements:</strong> Complete in/out tracking with order-specific
+                                    allocation</li>
+                                <li><strong>Material Management:</strong> Raw material tracking and vendor management
+                                </li>
+                                <li><strong>Production Tracking:</strong> Monitor manufacturing progress by order</li>
+                                <li><strong>Stock Adjustments:</strong> Automatic adjustments for deliveries and returns
+                                </li>
+                                <li><strong>Remaining Calculations:</strong> Real-time calculation of pending quantities
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Stock Flow</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center">
+                                        <i class="fas fa-arrow-down text-success"></i><br>
+                                        <small>Raw Materials</small><br>
+                                        <i class="fas fa-arrow-down text-primary"></i><br>
+                                        <small>Production</small><br>
+                                        <i class="fas fa-arrow-down text-info"></i><br>
+                                        <small>Finished Goods</small><br>
+                                        <i class="fas fa-arrow-down text-warning"></i><br>
+                                        <small>Delivery</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div class="tab-pane fade" id="reports" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h4>Reporting & Analytics</h4>
+                            <p>Essential reporting capabilities for business insights and operational tracking.</p>
+                            <ul>
+                                <li><strong>Daily Issuance:</strong> Track daily material issuance to production</li>
+                                <li><strong>Daily Receiving:</strong> Monitor daily material receiving from vendors</li>
+                                <li><strong>Material Ledger:</strong> Complete material movement history</li>
+                                <li><strong>Order Status Reports:</strong> Detailed order progress tracking</li>
+                                <li><strong>Delivery Summary:</strong> Comprehensive delivery performance metrics</li>
+                                <li><strong>Return Analytics:</strong> Return patterns and impact analysis</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Available Reports</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-chart-bar"></i> Daily Issuance Report</li>
+                                        <li><i class="fas fa-chart-line"></i> Daily Receiving Report</li>
+                                        <li><i class="fas fa-list"></i> Material Ledger</li>
+                                        <li><i class="fas fa-clipboard-list"></i> Order Status Report</li>
+                                        <li><i class="fas fa-truck"></i> Delivery Summary</li>
+                                        <li><i class="fas fa-undo"></i> Return Analytics</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="py-5 bg-light" id="demo">
+        <div class="container">
+            <h2 class="text-center section-title">Live Demo & Access</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h4><i class="fas fa-globe"></i> Access the System</h4>
+                            <p class="lead">Experience the full functionality of the Laravel Order Management System</p>
+
+                            <div class="row g-3 mt-4">
+                                <div class="col-md-6">
+                                    <div class="card border-primary">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-tachometer-alt"></i> Dashboard</h6>
+                                            <p class="small">View system overview and quick actions</p>
+                                            <a href="http://127.0.0.1:8000/dashboard" class="btn btn-primary btn-sm"
+                                                target="_blank">Visit Dashboard</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-success">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-shopping-cart"></i> Orders</h6>
+                                            <p class="small">Manage orders and track progress</p>
+                                            <a href="http://127.0.0.1:8000/order" class="btn btn-success btn-sm"
+                                                target="_blank">View Orders</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-warning">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-truck"></i> Deliveries</h6>
+                                            <p class="small">Track deliveries and process returns</p>
+                                            <a href="http://127.0.0.1:8000/delivery" class="btn btn-warning btn-sm"
+                                                target="_blank">View Deliveries</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-info">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-credit-card"></i> Payments</h6>
+                                            <p class="small">Process payments and track transactions</p>
+                                            <a href="http://127.0.0.1:8000/oPayment" class="btn btn-info btn-sm"
+                                                target="_blank">View Payments</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h6>Key Features Implemented:</h6>
+                                <div class="row text-start">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success"></i> ✅ Dashboard with static
+                                                content</li>
+                                            <li><i class="fas fa-check text-success"></i> ✅ Dynamic order status
+                                                tracking</li>
+                                            <li><i class="fas fa-check text-success"></i> ✅ Delivery return system</li>
+                                            <li><i class="fas fa-check text-success"></i> ✅ Payment fee tracking</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success"></i> ✅ Customer ledger with gross
+                                                amounts</li>
+                                            <li><i class="fas fa-check text-success"></i> ✅ Expected delivery date
+                                                support</li>
+                                            <li><i class="fas fa-check text-success"></i> ✅ Return impact on order
+                                                status</li>
+                                            <li><i class="fas fa-check text-success"></i> ✅ Comprehensive documentation
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h5><i class="fas fa-boxes"></i> Laravel Order Management System</h5>
+                    <p class="mb-0">A comprehensive enterprise-level solution for order processing, inventory
+                        management, and customer relationship management.</p>
+                </div>
+                <div class="col-lg-6">
+                    <h6>Technical Specifications</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fab fa-laravel"></i> Laravel 10 Framework</li>
+                        <li><i class="fas fa-database"></i> MySQL Database</li>
+                        <li><i class="fab fa-bootstrap"></i> Bootstrap 5 UI</li>
+                        <li><i class="fas fa-shield-alt"></i> Policy-based Security</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-0">&copy; 2025 Laravel Order Management System. Built with ❤️ using Laravel.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Smooth Scrolling -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

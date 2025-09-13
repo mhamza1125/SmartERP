@@ -26,7 +26,16 @@
                     @else
                       <tr><td><b>Received By:</b> Cash Payment</td></tr>
                     @endif
-                    <tr><td><b>Amount:</b> {{number_format($transaction['credit'])}}</td></tr>
+                    <tr><td><b>Net Amount Received:</b> {{number_format($transaction['credit'])}}</td></tr>
+                    @if($transaction['gross_amount'])
+                    <tr><td><b>Gross Amount (Customer Paid):</b> {{number_format($transaction['gross_amount'])}}</td></tr>
+                    @endif
+                    @if($transaction['fees_expenses'])
+                    <tr><td><b>Fees/Expenses:</b> {{number_format($transaction['fees_expenses'])}}</td></tr>
+                    @endif
+                    @if($transaction['net_amount'])
+                    <tr><td><b>Net Amount (Calculated):</b> {{number_format($transaction['net_amount'])}}</td></tr>
+                    @endif
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>  
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif
                   </tbody>

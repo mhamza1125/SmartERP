@@ -35,7 +35,10 @@
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
                     <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
-                    <tr><td><b>Order Status:</b> 
+                    {{-- @if($order['expected_delivery_date'])
+                    <tr><td><b>Expected Delivery:</b> {{$order['expected_delivery_date']}}</td></tr>
+                    @endif --}}
+                    <tr><td><b>Order Status:</b>
                       @if($order['order_status'] == 1) <span class="badge badge-warning">Pending</span>
                       @elseif($order['order_status'] == 2) <span class="badge badge-success">Processing</span>
                       @elseif($order['order_status'] == 3) <span class="badge badge-warning">On Hold</span>

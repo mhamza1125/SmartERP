@@ -25,6 +25,7 @@ use App\Http\Controllers\ReturnController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\DeliveryReturnController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------------------
@@ -325,3 +326,11 @@ Route::post('/bank', [BankController::class, 'store'])->name('bank.store');
 Route::get('/bank/{id}', [BankController::class, 'show'])->name('bank.show');
 Route::get('/editBank/{id}', [BankController::class, 'edit'])->name('bank.edit');
 Route::post('/bank/{id}', [BankController::class, 'update'])->name('bank.update');
+
+// Delivery Returns
+Route::get('/delivery-return', [DeliveryReturnController::class, 'index'])->name('delivery-return');
+Route::get('/delivery-return/create/{delivery_id}', [DeliveryReturnController::class, 'create'])->name('delivery-return.create');
+Route::post('/delivery-return', [DeliveryReturnController::class, 'store'])->name('delivery-return.store');
+Route::get('/delivery-return/{id}', [DeliveryReturnController::class, 'show'])->name('delivery-return.show');
+Route::get('/delivery-return/{id}/edit', [DeliveryReturnController::class, 'edit'])->name('delivery-return.edit');
+Route::post('/delivery-return/{id}', [DeliveryReturnController::class, 'update'])->name('delivery-return.update');
