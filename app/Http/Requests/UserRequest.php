@@ -24,7 +24,7 @@ class UserRequest extends FormRequest
         $rules = [
             'name' => 'required|max:255|string',
             'email' => 'required|max:255|email',
-            'role' => 'required|string|max:255',
+            'role_id' => 'required|string|max:255',
         ];
 
         // If it's a store request, add password validation

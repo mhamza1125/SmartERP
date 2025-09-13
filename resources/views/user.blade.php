@@ -93,10 +93,11 @@
               </div>
               <div class="form-group col-md-12">
                 <label>User Roles</label>
-                <select class="form-control" name="role" required>
-                  <option value="" disabled selected>Select User Role</option>
-                  <option value="manager">Manager - (With All Access)</option>
-                  <option value="accountant">Accountant - (Just Insertion / No Editing / Deletion)</option>
+                <select class="form-control" name="role_id" required>
+                  <option value="" selected>Select User Role</option>
+                  @foreach($roles as $role)
+                    <option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>
+                  @endforeach
                 </select>
               </div>
             </div>
@@ -151,16 +152,16 @@
                   </div>
                   <div class="form-group col-md-12">
                     <label>User Roles</label>
-                    @if($item->role_id == '1')
+                    {{-- @if($item->role_id == '1') --}}
                       <select class="form-control" name="role_id" required>
-                        <option value="" selected disabled>Select User Role</option>
+                        <option value="" selected>Select User Role</option>
                         @foreach($roles as $role)
                           <option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>
                         @endforeach
                       </select>
-                    @else
+                    {{-- @else
                       <input type="text" class="form-control" name="role" value="{{$item->role->name}}" required readonly>
-                    @endif
+                    @endif --}}
                   </div>
                 </div>
               </div>

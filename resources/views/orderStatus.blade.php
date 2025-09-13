@@ -40,7 +40,7 @@
                       @elseif($order['order_status'] == 6) <span class="badge badge-success">Completed</span>
                       @elseif($order['order_status'] == 7) <span class="badge badge-danger">Canceled</span>
                       @elseif($order['order_status'] == 8) <span class="badge badge-danger">Returned</span>
-                      @elseif($order['delivery_status'] == 9) <span class="badge badge-warning">Disputed</span>
+                      @elseif($order['order_status'] == 9) <span class="badge badge-warning">Disputed</span>
                       @else @endif
                     </td></tr>
                   </tbody>
@@ -49,50 +49,112 @@
             </div>
             <div class="row">
               <div class="col-md-12">
-                <table class="table table-sm table-striped">                    
-                  <thead>
-                    <tr>
-                      <th>Sr.</th>
-                      <th>Article No</th>
-                      <th>Item / Product</th>
-                      <th>Size</th>
-                      <th>Stage</th>
-                      <th>Quantity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @if($stock->count())
-                      @php $product_id = 0; $size = 0; @endphp
-                      @foreach($stock as $item)
-                      <tr>
-                        <td>{{$loop->index + 1}}</td>
-                        @if($item->product_id == $product_id)
-                            <td colspan="2"></td>
-                        @else
-                          <td>{{$item->article_no}}</td>
-                          <td>{{$item->name}}</td>
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                  <li class="nav-item">
+                    <a class="nav-link active" id="order-tab" data-toggle="tab" href="#order" role="tab" aria-controls="order" aria-selected="true">Order Details</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" id="dummy-tab" data-toggle="tab" href="#dummy" role="tab" aria-controls="dummy" aria-selected="false">Additional Details</a>
+                  </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                  {{-- Order Details Tab --}}
+                  <div class="tab-pane fade show active" id="order" role="tabpanel" aria-labelledby="order-tab">
+                    <table class="table table-sm table-striped">                    
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Article No</th>
+                          <th>Item / Product</th>
+                          <th>Size</th>
+                          <th>Stage</th>
+                          <th>Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if($stock->count())
+                          @php $product_id = 0; $size = 0; @endphp
+                          @foreach($stock as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            @if($item->product_id == $product_id)
+                              <td colspan="2"></td>
+                            @else
+                              <td>{{$item->article_no}}</td>
+                              <td>{{$item->name}}</td>
+                            @endif
+                            @if($item->sname == $size && $item->product_id == $product_id)
+                              <td></td>
+                            @else
+                              <td>{{$item->sname}}</td>
+                            @endif
+                            <td>{{$item->stname}}</td>
+                            <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
+                          </tr>
+                          @php $product_id = $item->product_id; $size = $item->sname @endphp
+                          @endforeach
                         @endif
-                        @if($item->sname == $size && $item->product_id == $product_id)
-                          <td></td>
-                        @else
-                          <td>{{$item->sname}}</td>
-                        @endif
-                        <td>{{$item->stname}}</td>
-                        <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
-                      </tr>
-                      @php $product_id = $item->product_id; $size = $item->sname @endphp
-                      @endforeach
-                    @endif
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <th>Sr.</th>
-                      <th>Item / Product</th>
-                      <th>Stage</th>
-                      <th>Quantity</th>
-                    </tr>
-                  </tfoot>
-                </table>
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Item / Product</th>
+                          <th>Stage</th>
+                          <th>Quantity</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  {{-- Dummy Table Tab --}}
+                  <div class="tab-pane fade" id="dummy" role="tabpanel" aria-labelledby="dummy-tab">
+                    <table class="table table-sm table-striped">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Article No</th>
+                          <th>Item / Product</th>
+                          <th>Size</th>
+                          <th>Stage</th>
+                          <th>Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>1</td>
+                          <td>ART-001</td>
+                          <td>Sample Product A</td>
+                          <td>Medium</td>
+                          <td>Production</td>
+                          <td>100 Units</td>
+                        </tr>
+                        <tr>
+                          <td>2</td>
+                          <td>ART-002</td>
+                          <td>Sample Product B</td>
+                          <td>Large</td>
+                          <td>Quality Check</td>
+                          <td>50 Units</td>
+                        </tr>
+                        <tr>
+                          <td>3</td>
+                          <td>ART-003</td>
+                          <td>Sample Product C</td>
+                          <td>Small</td>
+                          <td>Packaging</td>
+                          <td>200 Units</td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Item / Product</th>
+                          <th>Stage</th>
+                          <th>Quantity</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -37,7 +37,7 @@ class EmployeeController extends Controller
         $this->imageRepository = $imageRepository;
         $this->employeeRepository = $employeeRepository;
         $this->transactionRepository = $transactionRepository;
-        $this->authorizeResource(Employee::class, 'employee');
+        // $this->authorizeResource(Employee::class, 'employee');
     }
 
     public function index()

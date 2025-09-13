@@ -86,7 +86,7 @@ class StockController extends Controller
 
     public function index()
     {
-        $this->authorize('stock_access', Stock::class);
+        $this->authorize('stocks_access', Stock::class);
 
         // Available Stock
         $stock = $this->stockItemRepository->stock();
