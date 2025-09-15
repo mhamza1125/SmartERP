@@ -353,7 +353,7 @@
       </div>
       <footer class="main-footer">
         <div class="footer-left">
-          <a href="#">Palls Enterprises</a>
+          <a href="#">Company XYZ</a>
         </div>
         <div class="footer-right">
           Copyright &copy; Designed & Developed by <a href="#">Core Web Solutions</a> {{date("Y")}}

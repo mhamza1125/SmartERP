@@ -87,7 +87,7 @@ $(document).ready(function () {
     }
 
     // Custom header HTML
-    var customHeader = '<center><h1>Company XYZ</h1><h5> Nasir Road, Sialkot, Pakistan </h5></center>';
+    var customHeader = '<center><h1>Company XYZ</h1><h5> Sialkot, Pakistan </h5></center>';
 
     // Initialize DataTable for table with ID #tableExport
     initializeDataTable('#tableExport');
