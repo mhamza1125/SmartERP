@@ -66,16 +66,27 @@
             <li class="dropdown active">
               <a href="{{ route('dashboard') }}" class="nav-link"><i data-feather="monitor"></i><span>Dashboard</span></a>
             </li>
+
+            {{-- Stock / Issuance Section --}}
+            @can('stocks_access', App\Models\Stock::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Stock / Issuance</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>
-                <li><a class="nav-link" href="{{ route('issue') }}">Issue</a></li>
-                <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
-                <li><a class="nav-link" href="{{ route('igroup') }}">Group / Lot</a></li>
+                @can('stocks_access', App\Models\Stock::class)
+                  <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>
+                @endcan
+                @can('access', App\Models\Stock::class)
+                  <li><a class="nav-link" href="{{ route('issue') }}">Issue</a></li>
+                  <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
+                  <li><a class="nav-link" href="{{ route('igroup') }}">Group / Lot</a></li>
+                @endcan
               </ul>
             </li>
+            @endcan
+
+            {{-- Purchase Orders Section --}}
+            @can('access', App\Models\Purchase::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Purchase Orders</span></a>
@@ -85,6 +96,10 @@
                 <li><a class="nav-link" href="{{ route('return') }}">Return</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Transactions Section --}}
+            @can('access', App\Models\Transaction::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Transactions</span></a>
@@ -97,6 +112,10 @@
                 <li><a class="nav-link" href="{{ route('oPayment') }}">Customer Order</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Bank / Cash Section --}}
+            @can('access', App\Models\Bank::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Bank / Cash</span></a>
@@ -106,6 +125,10 @@
                 <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Machines Section --}}
+            @can('access', App\Models\Machine::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Machines</span></a>
@@ -114,24 +137,45 @@
                 <li><a class="nav-link" href="{{ route('missue') }}">Material Issuance</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Customer Orders Section --}}
+            @can('access', App\Models\Order::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Customer Orders</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
-                <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
+                @can('access', App\Models\Delivery::class)
+                  <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
+                @endcan
               </ul>
             </li>
+            @endcan
+            {{-- People Management Section --}}
+            @if(Gate::allows('access', App\Models\Customer::class) || Gate::allows('access', App\Models\Employee::class) || Gate::allows('access', App\Models\Vendor::class) || Gate::allows('contractors_access', App\Models\Vendor::class))
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>People Management</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
-                <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
-                <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
+                @can('access', App\Models\Customer::class)
+                  <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
+                @endcan
+                @can('access', App\Models\Employee::class)
+                  <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
+                @endcan
+                @can('access', App\Models\Vendor::class)
+                  <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+                @endcan
+                @can('contractors_access', App\Models\Vendor::class)
+                  <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
+                @endcan
               </ul>
             </li>
+            @endif
+
+            {{-- Products Section --}}
+            @can('access', App\Models\Product::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Products</span></a>
@@ -141,6 +185,10 @@
                 <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing / Wages</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Materials Section --}}
+            @can('access', App\Models\Material::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                 data-feather="briefcase"></i><span>Materials</span></a>
@@ -149,6 +197,10 @@
                   <li><a class="nav-link" href="{{ route('mprocess') }}">Material Processing</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Attendance / Payroll Section --}}
+            @can('attendances_access', App\Models\User::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Attendance / Payroll</span></a>
@@ -158,6 +210,10 @@
                 <li><a class="nav-link" href="{{ route('attendance.summary') }}">Salary Calculation</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Reports Section --}}
+            @can('reports_access', App\Models\User::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Reports</span></a>
@@ -167,6 +223,10 @@
                 <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
               </ul>
             </li>
+            @endcan
+
+            {{-- Settings Section --}}
+            @can('access', App\Models\User::class)
             <li class="dropdown mb-4">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Settings</span></a>
@@ -179,6 +239,7 @@
                 <li><a class="nav-link" href="{{ route('workHoliday') }}">Non Working Days</a></li>
               </ul>
             </li>
+            @endcan
             
             @if(auth()->user()->role == 'admin')
               {{-- Data to Display --}}

@@ -9,9 +9,12 @@
             <h4>Employee Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Employee Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ route('employee') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('employee.detail', $employee['employee_id']) }}" class="btn btn-primary">Ledger</a>               
+                <a href="{{ route('employee.detail', $employee['employee_id']) }}" class="btn btn-primary">Ledger</a>
               </div>
             </div>
           </div>

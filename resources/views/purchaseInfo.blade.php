@@ -9,6 +9,30 @@
             <h4>{{ isset($process) ? 'Process Material' : 'Purchase' }} Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <div class="dropdown">
+                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
+                    <i class="fas fa-print"></i> Print
+                  </button>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('{{ isset($process) ? 'Process Material' : 'Purchase' }} Information')">Print All</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('all', '{{ isset($process) ? 'Process Material' : 'Purchase' }} Details')">Print {{ isset($process) ? 'Process' : 'Purchase' }}</a>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('receive', 'All Records')">Print All Records</a>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('payment', 'Payment Records')">Print Payment Records</a>
+                    @if($count >= 1)
+                      @for($i=1; $i<=$count; $i++)
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('tab-content-{{ $i }}', 'Receive Record - {{$receiveTimes[$i-1]['receive_no']}}')">Print {{$receiveTimes[$i-1]['receive_no']}}</a>
+                      @endfor
+                    @endif
+                    @if($count2 >= 1)
+                      @for($i=1; $i<=$count2; $i++)
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('rtab-content-{{ $i }}', 'Return Record - {{$returnTimes[$i-1]['return_no']}}')">Print {{$returnTimes[$i-1]['return_no']}}</a>
+                      @endfor
+                    @endif
+                  </div>
+                </div>
+              </div>
+              <div class="btn-group">
                 <a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>
                 @if(!$purchase['has_received'])
                   @if(isset($process))

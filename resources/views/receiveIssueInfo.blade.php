@@ -9,6 +9,9 @@
             <h4>Receive Issuance Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Receive Issuance Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ route('receiveIssue') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('rstock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
               </div>

@@ -14,6 +14,9 @@
                 <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-success">Deliver</a>
               </div>
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Order Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ route('order') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('order.edit', $order['order_id']) }}" class="btn btn-primary">Edit</a>
               </div>
