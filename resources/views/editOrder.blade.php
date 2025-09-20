@@ -75,15 +75,46 @@
                 </div>
               </div>
 
-              {{-- <div class="row">
+              <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Expected Delivery Date <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control datepicker" name="expected_delivery_date" placeholder="Select expected delivery date" value="{{$order['expected_delivery_date'] ?? ''}}">
+                    <label>Due Date <small class="text-muted">(Optional)</small></label>
+                    <input type="date" class="form-control" name="due_date" value="{{$order['due_date'] ?? ''}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-              </div> --}}
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Payment Terms <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="payment_terms" placeholder="e.g., Net 30, COD" value="{{$order['payment_terms'] ?? ''}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>FI No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{$order['fi_no'] ?? ''}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>REX No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{$order['rex_no'] ?? ''}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Statement of Origin <small class="text-muted">(Optional)</small></label>
+                    <textarea class="form-control" name="so_origin" rows="3" placeholder="Statement of Origin">{{$order['so_origin'] ?? ''}}</textarea>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
 
               <h6>Order Items</h6>
               <div class="row">

@@ -17,6 +17,10 @@ class Bank extends Model
         'head_id',
         'account',
         'account_title',
+        'iban',
+        'address',
+        'branch_code',
+        'swift_code',
         'created_by',
         'updated_at',
     ];

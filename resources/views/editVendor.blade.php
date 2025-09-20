@@ -142,7 +142,7 @@
                 </div> --}}
               </div>
               <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Vendor Materials</label>
                     <select class="form-control select2" name="material_id[]" multiple="">
@@ -150,6 +150,19 @@
                       @if($material->count())
                         @foreach($material as $item)
                           <option value="{{$item->material_id}}" {{ $vmaterial->pluck('material_id')->contains($item->material_id) ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}}</option>
+                        @endforeach
+                      @endif
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Vendor Products</label>
+                    <select class="form-control select2" name="product_id[]" multiple="">
+                      <option value="" disabled>Select Product</option>
+                      @if(isset($product) && $product->count())
+                        @foreach($product as $item)
+                          <option value="{{$item->product_id}}" {{ isset($vproduct) && $vproduct->pluck('product_id')->contains($item->product_id) ? 'selected' : '' }}>{{$item->article_no}} - {{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>

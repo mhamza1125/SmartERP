@@ -64,6 +64,21 @@ class ProductRepository implements GlobalInterface
             ->first();
     }
 
+    public function getProduct($id)
+    {
+        // Vendor Associated Products
+        if ($id === '0' || empty($id)) {
+            return collect([]);
+        }
+
+        $productIds = explode('|', $id);
+
+        return Product::whereIn('products.product_id', $productIds)
+            ->join('categories', 'categories.category_id', '=', 'products.category_id')
+            ->select('products.*', 'categories.name as cname')
+            ->get();
+    }
+
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();

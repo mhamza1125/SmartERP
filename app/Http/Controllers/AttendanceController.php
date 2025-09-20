@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Repositories\AttendanceRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\TransactionRepository;
@@ -31,6 +32,9 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
+        dd(auth()->user()->can('attendance_access', \App\Models\User::class));
+
+        $this->authorize('attendance_access', User::class);
         $dto = $request->input('dto');
         $dfrom = $request->input('dfrom');
         $eid = $request->input('employee_id');
@@ -54,6 +58,7 @@ class AttendanceController extends Controller
 
     public function asummary(Request $request)
     {
+        $this->authorize('attendance_show', User::class);
         $dto = $request->input('dto');
         $dfrom = $request->input('dfrom');
         $eid = $request->input('employee_id');
@@ -73,6 +78,7 @@ class AttendanceController extends Controller
 
     public function workTime()
     {
+        $this->authorize('attendance_access', User::class);
         $work = $this->attendanceRepository->workTime();
 
         return view('workTime', [
@@ -82,6 +88,7 @@ class AttendanceController extends Controller
 
     public function workHoliday()
     {
+        $this->authorize('attendance_access', User::class);
         $work = $this->attendanceRepository->workHoliday();
 
         return view('workHoliday', [
@@ -91,6 +98,7 @@ class AttendanceController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('attendance_create', User::class);
         $this->attendanceRepository->store($request->input());
         if (isset($request->time_from)) {
             return redirect()->route('workTime')->with('success', 'Record Inserted Successfully');
@@ -101,6 +109,7 @@ class AttendanceController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('attendance_edit', User::class);
         $this->attendanceRepository->update($id, $request->input());
         if (isset($request->time_from)) {
             return redirect()->route('workTime')->with('success', 'Record Updated Successfully');
@@ -111,18 +120,22 @@ class AttendanceController extends Controller
 
     public function create()
     {
+        $this->authorize('attendance_create', User::class);
     }
 
     public function show(Attendance $attendance)
     {
+        $this->authorize('attendance_show', User::class);
     }
 
     public function edit(Attendance $attendance)
     {
+        $this->authorize('attendance_edit', User::class);
     }
 
     public function destroy(Attendance $attendance)
     {
+        $this->authorize('attendance_delete', User::class);
     }
 
     private function calculateSummary($eid, $dfrom, $dto)

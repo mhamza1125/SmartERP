@@ -58,9 +58,16 @@ class HeadController extends Controller
         $validatedData = $request->validated();
         $duplicate = $this->headRepository->duplicate($validatedData);
         if ($duplicate) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Head name already exists'], 422);
+            }
             return redirect()->route('head.add')->with(['fails' => 'Head name already exists'])->withInput();
         }
-        $this->headRepository->store($validatedData);
+        $headId = $this->headRepository->store($validatedData);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'head_id' => $headId, 'message' => 'Head created successfully']);
+        }
 
         return redirect()->route('head.add')->with('success', 'Record Inserted Successfully');
     }

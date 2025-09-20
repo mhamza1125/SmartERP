@@ -9,6 +9,9 @@
             <h4>Receive Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Receive Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ route('receive') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('receive.edit', $receive['receive_id']) }}" class="btn btn-primary">Edit</a>
                 <a href="{{ route('return.add', $receive['receive_id']) }}" class="btn btn-primary">Return</a>

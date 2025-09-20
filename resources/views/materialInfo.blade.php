@@ -9,6 +9,9 @@
             <h4>Material Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Material Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ route('material') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('material.edit', $material['material_id']) }}" class="btn btn-primary">Edit</a>
               </div>

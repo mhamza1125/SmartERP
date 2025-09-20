@@ -8,7 +8,7 @@ class BankRepository implements GlobalInterface
 {
     public function all()
     {
-        return Bank::select('*', 'heads.name as hname', 'vendors.fname', 'customers.fname as cname')
+        return Bank::select('*', 'heads.name as hname', 'vendors.fname', 'customers.fname as cname', 'banks.address as baddress')
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->leftJoin('vendors', function ($join) {
                 $join->on('vendors.vendor_id', '=', 'banks.banker_id')

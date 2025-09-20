@@ -8,8 +8,13 @@
           <div class="card-header">
             <h4>Delivery Return Details</h4>
             <div class="card-header-action">
-              <a href="{{ route('delivery-return') }}" class="btn btn-primary">Back to Returns</a>
-              <a href="{{ route('delivery-return.edit', $return->delivery_return_id) }}" class="btn btn-warning">Edit</a>
+              <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Delivery Return Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <a href="{{ route('delivery-return') }}" class="btn btn-primary">Back to Returns</a>
+                <a href="{{ route('delivery-return.edit', $return->delivery_return_id) }}" class="btn btn-warning">Edit</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

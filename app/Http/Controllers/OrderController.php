@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\OrderRequest;
 use App\Models\Order;
-use App\Repositories\CustomerRepository;
+use Illuminate\Http\Request;
+use App\Http\Requests\OrderRequest;
+use App\Repositories\BankRepository;
 use App\Repositories\HeadRepository;
-use App\Repositories\OrderItemRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
-use App\Repositories\PurchaseItemRepository;
+use App\Repositories\CustomerRepository;
+use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
-use Illuminate\Http\Request;
+use App\Repositories\PurchaseItemRepository;
 
 class OrderController extends Controller
 {
     protected $headRepository;
 
     protected $orderRepository;
+
+    protected $bankRepository;
 
     protected $productRepository;
 
@@ -31,6 +34,7 @@ class OrderController extends Controller
 
     public function __construct(
         HeadRepository $headRepository,
+        BankRepository $bankRepository,
         OrderRepository $orderRepository,
         ProductRepository $productRepository,
         CustomerRepository $customerRepository,
@@ -40,6 +44,7 @@ class OrderController extends Controller
     ) {
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
+        $this->bankRepository = $bankRepository;
         $this->orderRepository = $orderRepository;
         $this->productRepository = $productRepository;
         $this->customerRepository = $customerRepository;
@@ -96,10 +101,12 @@ class OrderController extends Controller
         $this->authorize('show', Order::class);
         $order = $this->orderRepository->get($id);
         $orderItem = $this->orderItemRepository->get($id);
+        $banks = $this->bankRepository->self();
 
         return view('orderInfo', [
             'order' => $order,
             'orderItem' => $orderItem,
+            'banks' => $banks,
         ]);
     }
 

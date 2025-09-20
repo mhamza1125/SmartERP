@@ -75,6 +75,47 @@
                 </div>
               </div>
 
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Due Date <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control datepicker" name="due_date" value="{{old('due_date')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Payment Terms <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="payment_terms" placeholder="Payment Terms" value="{{old('payment_terms')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>FI No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{old('fi_no')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>REX No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{old('rex_no')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Statement of Origin <small class="text-muted">(Optional)</small></label>
+                    <textarea class="form-control" name="so_origin" rows="3" placeholder="Statement of Origin">{{old('so_origin')}}</textarea>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+
               {{-- <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">

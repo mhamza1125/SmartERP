@@ -9,6 +9,9 @@
             <h4>BRS Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('BRS Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editBRS', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>

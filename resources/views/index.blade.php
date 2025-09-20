@@ -200,17 +200,24 @@
             @endcan
 
             {{-- Attendance / Payroll Section --}}
-            @can('attendances_access', App\Models\User::class)
+            @if (
+                auth()->user()->can('access', App\Models\Attendance::class) ||
+                auth()->user()->can('access', App\Models\Transaction::class)
+            )
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Attendance / Payroll</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('attendance') }}">Attendance</a></li>
-                <li><a class="nav-link" href="{{ route('wages') }}">Work Wages</a></li>
-                <li><a class="nav-link" href="{{ route('attendance.summary') }}">Salary Calculation</a></li>
+                @can('access', App\Models\Transaction::class)
+                  <li><a class="nav-link" href="{{ route('wages') }}">Work Wages</a></li>
+                @endcan
+                @can('access', App\Models\Attendance::class)
+                  <li><a class="nav-link" href="{{ route('attendance') }}">Attendance</a></li>
+                  <li><a class="nav-link" href="{{ route('attendance.summary') }}">Salary Calculation</a></li>
+                @endcan
               </ul>
             </li>
-            @endcan
+            @endif
 
             {{-- Reports Section --}}
             @can('reports_access', App\Models\User::class)

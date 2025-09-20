@@ -14,6 +14,7 @@ use App\Models\Delivery;
 use App\Models\Employee;
 use App\Models\Material;
 use App\Models\Purchase;
+use App\Models\Attendance;
 use App\Models\Transaction;
 use App\Policies\BankPolicy;
 use App\Policies\AdminPolicy;
@@ -27,6 +28,7 @@ use App\Policies\DeliveryPolicy;
 use App\Policies\EmployeePolicy;
 use App\Policies\MaterialPolicy;
 use App\Policies\PurchasePolicy;
+use App\Policies\AttendancePolicy;
 use App\Policies\TransactionPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -52,6 +54,7 @@ class AuthServiceProvider extends ServiceProvider
         Stock::class => StockPolicy::class,
         Purchase::class => PurchasePolicy::class,
         Transaction::class => TransactionPolicy::class,
+        Attendance::class => AttendancePolicy::class,
     ];
 
     /**

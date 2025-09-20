@@ -77,19 +77,27 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <div class="form-group">
                     <label>Sizes</label>
-                    <select class="form-control select2" name="size_id[]" multiple="" required>
-                      <option value="" disabled>Select Sizes</option>
-                      @if($size->count())
-                        @foreach($size as $item)
-                          <option value="{{$item->head_id}}" {{ old('size_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
+                      <select class="form-control select2" name="size_id[]" multiple="" id="size_id" required>
+                        <option value="" disabled>Select Sizes</option>
+                        @if($size->count())
+                          @foreach($size as $item)
+                            <option value="{{$item->head_id}}" {{ old('size_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                          @endforeach
+                        @endif
+                      </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Sizes</div>
+                    <div class="invalid-feedback">Select Size</div>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-primary form-control" data-toggle="modal" data-target="#createSizeModal">
+                      <i class="fas fa-plus"></i>
+                    </button>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -190,4 +198,88 @@
     </div>
   </div>
 </section>
+
+<!-- Create Size Modal -->
+<div class="modal fade" id="createSizeModal" tabindex="-1" role="dialog" aria-labelledby="createSizeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createSizeModalLabel">Create New Size</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createSizeForm">
+          @csrf
+          <div class="form-group">
+            <label for="size_name">Size Name</label>
+            <input type="text" class="form-control" id="size_name" name="name" required>
+            <div class="invalid-feedback" id="size_name_error"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="createSize()">Create Size</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function createSize() {
+    var sizeName = $('#size_name').val();
+
+    if (!sizeName) {
+        $('#size_name').addClass('is-invalid');
+        $('#size_name_error').text('Size name is required');
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("head.store") }}',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            name: sizeName,
+            head_type_id: 1 // Size type
+        },
+        success: function(response) {
+            if (response.success) {
+                // Add new option to select
+                var newOption = new Option(sizeName, response.head_id, true, true);
+                $('#size_id').append(newOption);
+
+                // Close modal and reset form
+                $('#createSizeModal').modal('hide');
+                $('#createSizeForm')[0].reset();
+                $('#size_name').removeClass('is-invalid');
+
+                // Show success message
+                alert('Size created successfully!');
+            } else {
+                alert('Error creating size: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            var errors = xhr.responseJSON.errors;
+            if (errors && errors.name) {
+                $('#size_name').addClass('is-invalid');
+                $('#size_name_error').text(errors.name[0]);
+            } else {
+                alert('Error creating size. Please try again.');
+            }
+        }
+    });
+}
+
+// Reset form when modal is closed
+$('#createSizeModal').on('hidden.bs.modal', function () {
+    $('#createSizeForm')[0].reset();
+    $('#size_name').removeClass('is-invalid');
+    $('#size_name_error').text('');
+});
+</script>
+
 @endsection

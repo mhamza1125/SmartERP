@@ -108,6 +108,32 @@
                   <div class="valid-feedback">Good job!</div>
                   <div class="invalid-feedback">Enter Account No</div>
                 </div>
+                <div class="form-group">
+                  <label>IBAN</label>
+                  <input type="text" class="form-control" name="iban" placeholder="International Bank Account Number" value="{{$item->iban ?? ''}}">
+                  <div class="valid-feedback">Good job!</div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Branch Code</label>
+                      <input type="text" class="form-control" name="branch_code" placeholder="Branch Code" value="{{$item->branch_code ?? ''}}">
+                      <div class="valid-feedback">Good job!</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>SWIFT Code</label>
+                      <input type="text" class="form-control" name="swift_code" placeholder="SWIFT/BIC Code" value="{{$item->swift_code ?? ''}}">
+                      <div class="valid-feedback">Good job!</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Bank Address</label>
+                  <textarea class="form-control" name="address" rows="3" placeholder="Bank Address">{{$item->baddress ?? ''}}</textarea>
+                  <div class="valid-feedback">Good job!</div>
+                </div>
               </div>
               <div class="card-footer text-right">
                 <button class="btn btn-primary">Submit</button>

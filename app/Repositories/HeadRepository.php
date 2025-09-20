@@ -64,6 +64,8 @@ class HeadRepository implements GlobalInterface
     {
         $data['created_by'] = auth()->id();
         $store = Head::create($data);
+
+        return $store->head_id;
     }
 
     public function update($id, array $data)

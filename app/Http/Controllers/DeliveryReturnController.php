@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Delivery;
 use App\Models\DeliveryReturn;
 use Illuminate\Http\Request;
 use App\Http\Requests\DeliveryReturnRequest;
@@ -42,6 +43,7 @@ class DeliveryReturnController extends Controller
 
     public function index()
     {
+        $this->authorize('access', Delivery::class);
         $returns = $this->deliveryReturnRepository->all();
 
         return view('deliveryReturn', [
@@ -51,6 +53,7 @@ class DeliveryReturnController extends Controller
 
     public function create($deliveryId)
     {
+        $this->authorize('create', Delivery::class);
         // Get delivery information
         $delivery = $this->deliveryRepository->get($deliveryId);
         
@@ -87,6 +90,7 @@ class DeliveryReturnController extends Controller
 
     public function store(DeliveryReturnRequest $request)
     {
+        $this->authorize('create', Delivery::class);
         $validatedData = $request->validated();
         
         if (array_sum($request->input('return_quantity', [])) == 0) {
@@ -121,6 +125,7 @@ class DeliveryReturnController extends Controller
 
     public function show($id)
     {
+        $this->authorize('show', Delivery::class);
         $return = $this->deliveryReturnRepository->get($id);
         $returnItems = $this->deliveryReturnItemRepository->get($id);
 
@@ -132,6 +137,7 @@ class DeliveryReturnController extends Controller
 
     public function edit($id)
     {
+        $this->authorize('edit', Delivery::class);
         $return = $this->deliveryReturnRepository->get($id);
         $returnItems = $this->deliveryReturnItemRepository->get($id);
         $delivery = $this->deliveryRepository->get($return->delivery_id);
@@ -147,6 +153,7 @@ class DeliveryReturnController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Delivery::class);
         if (array_sum($request->input('return_quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Please specify quantities to return'])->withInput();
         }

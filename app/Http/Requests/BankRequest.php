@@ -26,8 +26,11 @@ class BankRequest extends FormRequest
             'banker_id' => 'required|max:255',
             'account_title' => 'required|max:255',
             'account' => 'required|max:255',
+            'iban' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'branch_code' => 'nullable|string|max:255',
+            'swift_code' => 'nullable|string|max:255',
             'head_id' => 'required',
-            'banker_id' => 'required|max:255',
             'credit' => '',
         ];
     }

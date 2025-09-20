@@ -84,6 +84,40 @@
               <blockquote>No Materials</blockquote>
             @endif
 
+            @if(isset($product) && $product->count())
+              <h5>Vendor Products</h5>
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Sr.</th>
+                    <th>Category</th>
+                    <th>Article No</th>
+                    <th>Product Name</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($product as $item)
+                    <tr>
+                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{ $item->cname }}</td>
+                      <td>{{ $item->article_no }}</td>
+                      <td>{{ $item->name }}</td>
+                      <td>
+                        @if($item->product_status == 1)
+                          <span class="badge badge-success">Active</span>
+                        @else
+                          <span class="badge badge-danger">Inactive</span>
+                        @endif
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            @else
+              <blockquote>No Products</blockquote>
+            @endif
+
             @if($image->count())
               <h5>Images</h5>
               <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

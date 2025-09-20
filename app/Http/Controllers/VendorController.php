@@ -9,6 +9,7 @@ use App\Http\Requests\VendorRequest;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\VendorRepository;
+use App\Repositories\ProductRepository;
 use App\Repositories\MaterialRepository;
 use App\Repositories\TransactionRepository;
 
@@ -28,6 +29,7 @@ class VendorController extends Controller
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         VendorRepository $vendorRepository,
+        ProductRepository $productRepository,
         TransactionRepository $transactionRepository,
         MaterialRepository $materialRepository,
     ) {
@@ -35,6 +37,7 @@ class VendorController extends Controller
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
         $this->vendorRepository = $vendorRepository;
+        $this->productRepository = $productRepository;
         $this->transactionRepository = $transactionRepository;
         $this->materialRepository = $materialRepository;
     }
@@ -76,12 +79,14 @@ class VendorController extends Controller
         $vendorType = $this->headRepository->get('11');
         $city = $this->headRepository->get('8');
         $material = $this->materialRepository->all();
+        $product = $this->productRepository->all();
         $count = $this->vendorRepository->refNo();
 
         return view('addVendor', [
             'city' => $city,
             'count' => $count,
             'material' => $material,
+            'product' => $product,
             'vendorType' => $vendorType,
         ]);
     }
@@ -103,6 +108,8 @@ class VendorController extends Controller
         $validatedData = $request->validated();
         $materialIds = $request->input('material_id');
         $validatedData['material_id'] = $materialIds ? implode('|', $materialIds) : '0';
+        $productIds = $request->input('product_id');
+        $validatedData['product_id'] = $productIds ? implode('|', $productIds) : '0';
         $getId = $this->vendorRepository->store($validatedData);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -134,9 +141,11 @@ class VendorController extends Controller
         $vendor = $this->vendorRepository->get($id);
         $image = $this->imageRepository->image('vendors', $id);
         $material = $this->materialRepository->getMaterial($vendor['material_id']);
+        $product = $this->productRepository->getProduct($vendor['product_id'] ?? '0');
 
         return view('vendorInfo', [
             'material' => $material,
+            'product' => $product,
             'vendor' => $vendor,
             'image' => $image,
         ]);
@@ -198,13 +207,17 @@ class VendorController extends Controller
         $vendorType = $this->headRepository->get('11');
         $city = $this->headRepository->get('8');
         $material = $this->materialRepository->all();
+        $product = $this->productRepository->all();
         $vmaterial = $this->materialRepository->getMaterial($id['material_id']);
+        $vproduct = $this->productRepository->getProduct($id['product_id'] ?? '0');
 
         return view('editVendor', [
             'city' => $city,
             'vendor' => $id,
             'material' => $material,
+            'product' => $product,
             'vmaterial' => $vmaterial,
+            'vproduct' => $vproduct,
             'vendorType' => $vendorType,
         ]);
     }
@@ -224,7 +237,9 @@ class VendorController extends Controller
     {
         $materialIds = $request->input('material_id');
         $materialIds = $materialIds ? implode('|', $materialIds) : '0';
-        $request->merge(['material_id' => $materialIds]);
+        $productIds = $request->input('product_id');
+        $productIds = $productIds ? implode('|', $productIds) : '0';
+        $request->merge(['material_id' => $materialIds, 'product_id' => $productIds]);
         $getId = $this->vendorRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {

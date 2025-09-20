@@ -87,7 +87,7 @@ $(document).ready(function () {
     }
 
     // Custom header HTML
-    var customHeader = '<center><h1>Company XYZ</h1><h5> Sialkot, Pakistan </h5></center>';
+    var customHeader = '<center><h1>Sajjad Son Lab</h1><h5>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</h5><h6>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</h6></center>';
 
     // Initialize DataTable for table with ID #tableExport
     initializeDataTable('#tableExport');
@@ -736,8 +736,9 @@ function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
         </head>
         <body>
             <div class="print-header">
-                <h1>SmartERP</h1>
-                <p>Company XYZ</p>
+                <h1>Sajjad Son Lab</h1>
+                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
+                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
             </div>
             <div class="page-title">${title}</div>
             <div class="print-content">
