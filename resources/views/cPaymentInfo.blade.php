@@ -9,6 +9,9 @@
             <h4>Contractor Payment Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="printPage('Contractor Payment Information')">
+                  <i class="fas fa-print"></i> Print
+                </button>
                 <a href="{{ route('vPayment') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editCPayment', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>
