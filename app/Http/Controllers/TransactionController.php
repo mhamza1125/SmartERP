@@ -280,7 +280,8 @@ class TransactionController extends Controller
             $validatedData['debit'] = null;
         }
 
-        if ($validatedData['bank_id'] != '0' && $validatedData['credit'] == '0') {
+        // if ($validatedData['bank_id'] != '0' && $validatedData['credit'] == '0') {
+        if ($validatedData['bank_id'] != '0' && $validatedData['debit'] == '0') {
             $transaction = $this->transactionRepository->bankBalance2($validatedData['bank_id']);
             $balance = $transaction->tcredit - $transaction->tdebit;
         } else {
