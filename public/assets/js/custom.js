@@ -757,8 +757,8 @@ function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
         </head>
         <body>
             <div class="print-header">
-                <img src="/assets/print-logo.png" alt="Company Logo">
-                <h1>Sajjad Son Lab</h1>
+                <img src="http://localhost:8080/ERP/public/assets/print-logo.png" alt="Company Logo">
+                <h1>Sajjadson Lab Equipment</h1>
                 <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
                 <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
             </div>
