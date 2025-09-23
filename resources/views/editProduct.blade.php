@@ -116,12 +116,21 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Product Stages</label>
-                    <select class="form-control select2" name="stage_ids[]" multiple="" required>
+                    <select class="form-control select2" name="stage_ids[]" multiple="" required id="stage_ids_select">
                       <option value="" disabled>Select Stages</option>
+                      {{-- First display selected stages in their original order --}}
+                      @if($pstage->count())
+                        @foreach($pstage as $selectedStage)
+                          <option value="{{$selectedStage->head_id}}" selected>{{$selectedStage->name}}</option>
+                        @endforeach
+                      @endif
+                      {{-- Then display remaining unselected stages --}}
                       @if($stage->count())
                         @foreach($stage as $item)
                           @unless($item->material_type_id == '61' || $item->material_type_id == '96')
-                            <option value="{{$item->head_id}}" {{ $pstage->pluck('head_id')->contains($item->head_id) ? 'selected' : '' }}>{{$item->name}}</option>
+                            @unless($pstage->pluck('head_id')->contains($item->head_id))
+                              <option value="{{$item->head_id}}">{{$item->name}}</option>
+                            @endunless
                           @endunless
                         @endforeach
                       @endif
@@ -278,6 +287,72 @@ $('#createSizeModal').on('hidden.bs.modal', function () {
     $('#createSizeForm')[0].reset();
     $('#size_name').removeClass('is-invalid');
     $('#size_name_error').text('');
+});
+
+// Preserve selection order for stage multiselect
+$(document).ready(function() {
+    var stageSelect = $('#stage_ids_select');
+    var selectedOrder = [];
+
+    // Initialize with current selection order
+    stageSelect.find('option:selected').each(function() {
+        selectedOrder.push($(this).val());
+    });
+
+    // Handle selection changes
+    stageSelect.on('select2:select', function(e) {
+        var selectedValue = e.params.data.id;
+        if (selectedOrder.indexOf(selectedValue) === -1) {
+            selectedOrder.push(selectedValue);
+        }
+        updateSelectionOrder();
+    });
+
+    stageSelect.on('select2:unselect', function(e) {
+        var unselectedValue = e.params.data.id;
+        var index = selectedOrder.indexOf(unselectedValue);
+        if (index > -1) {
+            selectedOrder.splice(index, 1);
+        }
+        updateSelectionOrder();
+    });
+
+    function updateSelectionOrder() {
+        // Reorder options to match selection order
+        var selectElement = stageSelect[0];
+        var selectedOptions = [];
+        var unselectedOptions = [];
+
+        // Separate selected and unselected options
+        $(selectElement).find('option').each(function() {
+            if ($(this).prop('selected')) {
+                selectedOptions.push(this);
+            } else if ($(this).val() !== '') { // Skip disabled option
+                unselectedOptions.push(this);
+            }
+        });
+
+        // Clear all options except the disabled one
+        $(selectElement).find('option:not([disabled])').remove();
+
+        // Add selected options in the order they were selected
+        selectedOrder.forEach(function(value) {
+            var option = selectedOptions.find(function(opt) {
+                return opt.value === value;
+            });
+            if (option) {
+                $(selectElement).append(option);
+            }
+        });
+
+        // Add unselected options
+        unselectedOptions.forEach(function(option) {
+            $(selectElement).append(option);
+        });
+
+        // Trigger change to update Select2
+        stageSelect.trigger('change.select2');
+    }
 });
 </script>
 

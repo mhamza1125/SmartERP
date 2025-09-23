@@ -82,7 +82,7 @@
                         </tbody>
                       </table>
                     @else
-                      <blockquote> No Materials </blockquote>
+                      <blockquote> No Stages </blockquote>
                     @endif
   
                     @if($material->count())

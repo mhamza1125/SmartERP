@@ -42,8 +42,19 @@ class HeadRepository implements GlobalInterface
         // Product Stages Used by Product Controller
         $stageIds = explode('|', $id);
 
-        return Head::whereIn('heads.head_id', $stageIds)
-            ->get();
+        // Order by the position in the original string to maintain the order they were added
+        $stages = Head::whereIn('heads.head_id', $stageIds)->get();
+
+        // Sort the collection based on the order in the original pipe-separated string
+        $orderedStages = collect();
+        foreach ($stageIds as $stageId) {
+            $stage = $stages->where('head_id', $stageId)->first();
+            if ($stage) {
+                $orderedStages->push($stage);
+            }
+        }
+
+        return $orderedStages;
     }
 
     public function getStageAjax($id)
@@ -56,8 +67,19 @@ class HeadRepository implements GlobalInterface
         $product = $product ? (array) $product : [];
         $stageIds = explode('|', $product['stage_ids']);
 
-        return Head::whereIn('heads.head_id', $stageIds)
-            ->get();
+        // Order by the position in the original string to maintain the order they were added
+        $stages = Head::whereIn('heads.head_id', $stageIds)->get();
+
+        // Sort the collection based on the order in the original pipe-separated string
+        $orderedStages = collect();
+        foreach ($stageIds as $stageId) {
+            $stage = $stages->where('head_id', $stageId)->first();
+            if ($stage) {
+                $orderedStages->push($stage);
+            }
+        }
+
+        return $orderedStages;
     }
 
     public function store(array $data)

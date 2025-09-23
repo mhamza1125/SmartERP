@@ -23,7 +23,7 @@ class OrderRequest extends FormRequest
     {
         return [
             'order_no' => 'required|max:255',
-            'job_no' => 'required|max:255',
+            'job_no' => 'nullable|max:255',
             'customer_id' => 'required',
             'description' => '',
             'order_date' => 'required',

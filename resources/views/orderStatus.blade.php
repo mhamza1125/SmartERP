@@ -9,6 +9,18 @@
             <h4>Order Status</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <div class="dropdown">
+                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-print"></i> Print
+                  </button>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('Order Status')">Print Page</a>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('order', 'Order Details')">Print Order Details</a>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('dummy', 'Additional Details')">Print Additional Details</a>
+                  </div>
+                </div>
+              </div>
+              <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('purchase.add')}}" class="btn btn-primary" target="_blank">Purchase</a>
                 <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>

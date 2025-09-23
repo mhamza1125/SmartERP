@@ -28,7 +28,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Job No</label>
-                    <input type="text" class="form-control" name="job_no" placeholder="Job No" required value="{{old('job_no')}}">
+                    <input type="text" class="form-control" placeholder="Auto-generated" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Job No</div>
                   </div>

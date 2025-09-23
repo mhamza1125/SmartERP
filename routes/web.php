@@ -158,6 +158,7 @@ Route::get('/orderStatus/{id}', [OrderController::class, 'status'])->name('order
 Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
 Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
 Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
+Route::post('/generateJobNumber', [OrderController::class, 'generateJobNumberAjax'])->name('generateJobNumber');
 
 // Delivery
 Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery');

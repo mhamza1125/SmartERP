@@ -9,31 +9,60 @@ class VendorRepository implements GlobalInterface
 {
     public function all()
     {
-        return Vendor::leftJoin('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
-            ->select('vendors.*', 'vthead.name as vtname')
+        $vendors = Vendor::select('vendors.*')
             ->orderBy('vendors.created_at', 'desc')->get();
+
+        // Add vendor type names for each vendor
+        foreach ($vendors as $vendor) {
+            if ($vendor->vendor_type_id) {
+                $vendor->vtname = $this->getVendorTypeNames($vendor->vendor_type_id);
+            } else {
+                $vendor->vtname = '';
+            }
+        }
+
+        return $vendors;
     }
 
     public function worker() // Contractors
     {
-        return Vendor::leftJoin('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
-            ->select('vendors.*', 'vthead.name as vtname')
+        $vendors = Vendor::select('vendors.*')
             ->orderBy('vendors.created_at', 'desc')
             ->where('vendor_type', '1')->get();
+
+        // Add vendor type names for each vendor
+        foreach ($vendors as $vendor) {
+            if ($vendor->vendor_type_id) {
+                $vendor->vtname = $this->getVendorTypeNames($vendor->vendor_type_id);
+            } else {
+                $vendor->vtname = '';
+            }
+        }
+
+        return $vendors;
     }
 
     public function vendor() // Without Balance
     {
-        return Vendor::join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
-            ->select('vendors.*', 'vthead.name as vtname')
+        $vendors = Vendor::select('vendors.*')
             ->orderBy('vendors.created_at', 'desc')
             ->where('vendor_type', '0')->get();
+
+        // Add vendor type names for each vendor
+        foreach ($vendors as $vendor) {
+            if ($vendor->vendor_type_id) {
+                $vendor->vtname = $this->getVendorTypeNames($vendor->vendor_type_id);
+            } else {
+                $vendor->vtname = '';
+            }
+        }
+
+        return $vendors;
     }
 
     public function vendorWithBalance()
     {
-        $vendors = Vendor::join('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
-            ->select('vendors.*', 'vthead.name as vtname')
+        $vendors = Vendor::select('vendors.*')
             ->where('vendor_type', '0')
             ->orderBy('vendors.created_at', 'desc')
             ->get();
@@ -69,6 +98,13 @@ class VendorRepository implements GlobalInterface
             $totalCredit = ($purchases->credit ?? 0) + ($transactions->totalCredit ?? 0);
             $totalDebit = ($purchaseReturns->debit ?? 0) + ($transactions->totalDebit ?? 0);
             $vendor->balance = $totalCredit - $totalDebit;
+
+            // Add vendor type names
+            if ($vendor->vendor_type_id) {
+                $vendor->vtname = $this->getVendorTypeNames($vendor->vendor_type_id);
+            } else {
+                $vendor->vtname = '';
+            }
         }
 
         return $vendors;
@@ -76,11 +112,31 @@ class VendorRepository implements GlobalInterface
 
     public function get($id)
     {
-        return Vendor::where('vendor_id', $id)
-            ->leftJoin('heads as vthead', 'vthead.head_id', '=', 'vendors.vendor_type_id')
+        $vendor = Vendor::where('vendor_id', $id)
             ->join('heads as chead', 'chead.head_id', '=', 'vendors.city_id')
-            ->select('vendors.*', 'vthead.name as vtname', 'chead.name as cname')
+            ->select('vendors.*', 'chead.name as cname')
             ->first();
+
+        if ($vendor && $vendor->vendor_type_id) {
+            $vendor->vtname = $this->getVendorTypeNames($vendor->vendor_type_id);
+        }
+
+        return $vendor;
+    }
+
+    private function getVendorTypeNames($vendorTypeIds)
+    {
+        if (empty($vendorTypeIds)) {
+            return '';
+        }
+
+        $typeIds = explode('|', $vendorTypeIds);
+        $types = DB::table('heads')
+            ->whereIn('head_id', $typeIds)
+            ->pluck('name')
+            ->toArray();
+
+        return implode(', ', $types);
     }
 
     public function refNo()

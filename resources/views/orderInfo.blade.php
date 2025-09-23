@@ -14,6 +14,18 @@
                 <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-success">Deliver</a>
               </div>
               <div class="btn-group">
+                <div class="dropdown">
+                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-print"></i> Print
+                  </button>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('Order Information')">Print Page</a>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('order-details', 'Order Details')">Print Order Details</a>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('packing-list', 'Packing List')">Print Packing List</a>
+                  </div>
+                </div>
+              </div>
+              <div class="btn-group">
                 <button type="button" class="btn btn-info" data-toggle="modal" data-target="#invoiceModal">
                   <i class="fas fa-file-invoice"></i> Generate Invoice
                 </button>
@@ -81,60 +93,116 @@
               </div>
             </div>
             @endif
-            <div class="row">
-              <div class="col-md-12 mt-2">
-                <table class="table table-sm table-striped">
-                  <thead>
-                    <tr>
-                      <th>Sr.</th>
-                      <th>Article No</th>
-                      <th>Item / Product</th>
-                      <th>Product Stage</th>
-                      <th>Size</th>
-                      <th>Unit</th>
-                      <th>Quantity</th>
-                      <th>Price (Currency)</th>
-                      <th>Exchange (Pkr)</th>
-                      <th>Price (Pkr)</th>
-                      <th>Total (Pkr)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @if($orderItem->count())
-                      @php $product_id = 0; @endphp
-                      @foreach($orderItem as $item)
+
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" id="order-details-tab" data-toggle="tab" href="#order-details" role="tab" aria-controls="order-details" aria-selected="true">Order Details</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="packing-list-tab" data-toggle="tab" href="#packing-list" role="tab" aria-controls="packing-list" aria-selected="false">Packing List</a>
+              </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="orderTabContent">
+              <!-- Order Details Tab -->
+              <div class="tab-pane fade show active" id="order-details" role="tabpanel" aria-labelledby="order-details-tab">
+                <div class="row">
+                  <div class="col-md-12 mt-2">
+                    <table class="table table-sm table-striped">
+                      <thead>
                         <tr>
-                          <td>{{$loop->index + 1}}</td>
-                          @if($item->product_id == $product_id)
-                            <td colspan="2"></td>
-                          @else
-                            <td>{{$item->article_no}}</td>
-                            <td>{{$item->name}}</td>
-                          @endif                          
-                          <td>{{$item->sname}}</td>
-                          <td>{{$item->hname}}</td>
-                          <td>{{$item->uname}}</td>
-                          <td>{{$item->quantity}}</td>
-                          <td>{{$item->price2}} {{$item->cname}}</td>
-                          <td>{{$item->exchange}}</td>
-                          <td>{{$item->price}}</td>
-                          <td>{{$item->quantity * $item->price}}</td>
+                          <th>Sr.</th>
+                          <th>Article No</th>
+                          <th>Item / Product</th>
+                          <th>Product Stage</th>
+                          <th>Size</th>
+                          <th>Unit</th>
+                          <th>Quantity</th>
+                          <th>Price (Currency)</th>
+                          <th>Exchange (Pkr)</th>
+                          <th>Price (Pkr)</th>
+                          <th>Total (Pkr)</th>
                         </tr>
-                      @php $product_id = $item->product_id; @endphp
-                      @endforeach
-                    @endif
-                  </tbody>
-                  <tfoot>
-                    @php $total = $orderItem->sum(function($item) {
-                      return $item->quantity * $item->price;
-                    }); @endphp
-                    <tr>
-                      <th colspan="9"></th>
-                      <th>Grand Total:</th>
-                      <th>{{ number_format($total) }}</th>
-                    </tr>
-                  </tfoot>
-                </table>
+                      </thead>
+                      <tbody>
+                        @if($orderItem->count())
+                          @php $product_id = 0; @endphp
+                          @foreach($orderItem as $item)
+                            <tr>
+                              <td>{{$loop->index + 1}}</td>
+                              @if($item->product_id == $product_id)
+                                <td colspan="2"></td>
+                              @else
+                                <td>{{$item->article_no}}</td>
+                                <td>{{$item->name}}</td>
+                              @endif
+                              <td>{{$item->sname}}</td>
+                              <td>{{$item->hname}}</td>
+                              <td>{{$item->uname}}</td>
+                              <td>{{$item->quantity}}</td>
+                              <td>{{$item->price2}} {{$item->cname}}</td>
+                              <td>{{$item->exchange}}</td>
+                              <td>{{$item->price}}</td>
+                              <td>{{$item->quantity * $item->price}}</td>
+                            </tr>
+                          @php $product_id = $item->product_id; @endphp
+                          @endforeach
+                        @endif
+                      </tbody>
+                      <tfoot>
+                        @php $total = $orderItem->sum(function($item) {
+                          return $item->quantity * $item->price;
+                        }); @endphp
+                        <tr>
+                          <th colspan="9"></th>
+                          <th>Grand Total:</th>
+                          <th>{{ number_format($total) }}</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Packing List Tab -->
+              <div class="tab-pane fade" id="packing-list" role="tabpanel" aria-labelledby="packing-list-tab">
+                <div class="row">
+                  <div class="col-md-12 mt-2">
+                    <table class="table table-sm table-striped">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Product</th>
+                          <th>Box Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if(isset($packingList['items']) && count($packingList['items']) > 0)
+                          @php $index = 1; @endphp
+                          @foreach($packingList['items'] as $product => $boxQty)
+                            <tr>
+                              <td>{{ $index++ }}</td>
+                              <td>{{ $product }}</td>
+                              <td>{{ number_format($boxQty) }} boxes</td>
+                            </tr>
+                          @endforeach
+                        @else
+                          <tr>
+                            <td colspan="3" class="text-center">No packing data available</td>
+                          </tr>
+                        @endif
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th colspan="2">Total:</th>
+                          <th>{{ isset($packingList['total']) ? number_format($packingList['total']) : 0 }} boxes</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -170,7 +238,7 @@
                   <div class="form-check">
                     <input class="form-check-input" type="radio" name="invoice_type" id="performa" value="performa">
                     <label class="form-check-label" for="performa">
-                      Performa Invoice
+                      Proforma Invoice
                     </label>
                   </div>
                 </div>
@@ -238,7 +306,7 @@ function generateInvoice() {
 
     // Validate invoice type selection
     if (!invoiceType) {
-        alert('Please select an invoice type (Commercial or Performa)');
+        alert('Please select an invoice type (Commercial or Proforma)');
         return;
     }
 
@@ -295,7 +363,7 @@ function printCommercialInvoice(bankDetails, includeSO) {
 
 function printPerformaInvoice(bankDetails, includeSO) {
     console.log('printPerformaInvoice() called');
-    var title = 'Performa Invoice';
+    var title = 'Proforma Invoice';
     var content = generateInvoiceContent(title, bankDetails, includeSO);
     console.log('Generated content length:', content.length);
     printInvoice(content, title);
@@ -305,6 +373,50 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
     // Get order information
     var orderInfo = document.querySelector('.card-body');
     var orderTable = document.querySelector('.table.table-sm.table-striped');
+
+    // Clone the order info to modify it
+    var modifiedOrderInfo = orderInfo.cloneNode(true);
+
+    // Remove duplicate statement of origin from the cloned content
+    var duplicateSO = modifiedOrderInfo.querySelector('.border.p-3.bg-light');
+    if (duplicateSO && duplicateSO.parentNode) {
+        duplicateSO.parentNode.parentNode.remove(); // Remove the entire row containing SO
+    }
+
+    // Modify the table to remove unwanted columns for printing
+    var table = modifiedOrderInfo.querySelector('.table.table-sm.table-striped');
+    if (table) {
+        // Remove orderStatus, productStage, unit, PKR price columns (indices 3, 4, 6, 7)
+        var headerRow = table.querySelector('thead tr');
+        var footerRow = table.querySelector('tfoot tr');
+
+        if (headerRow) {
+            // Remove headers: Product Stage (3), Unit (4), Exchange (Pkr) (6), Price (Pkr) (7)
+            var headers = headerRow.querySelectorAll('th');
+            if (headers[8]) headers[8].remove(); // Exchange (Pkr)
+            if (headers[7]) headers[7].remove(); // Price (Pkr)
+            if (headers[5]) headers[5].remove(); // Unit
+            if (headers[3]) headers[3].remove(); // Product Stage
+        }
+
+        // Remove corresponding data cells from body rows
+        var bodyRows = table.querySelectorAll('tbody tr');
+        bodyRows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (cells[8]) cells[8].remove(); // Exchange (Pkr)
+            if (cells[7]) cells[7].remove(); // Price (Pkr)
+            if (cells[5]) cells[5].remove(); // Unit
+            if (cells[3]) cells[3].remove(); // Product Stage
+        });
+
+        // Update footer colspan
+        if (footerRow) {
+            var footerCells = footerRow.querySelectorAll('th');
+            if (footerCells[0]) {
+                footerCells[0].setAttribute('colspan', '5'); // Adjust colspan after removing columns
+            }
+        }
+    }
 
     // Build bank details section
     var bankSection = '<div class="bank-details" style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9;">';
@@ -325,7 +437,7 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
     }
     bankSection += '</div>';
 
-    // Get statement of origin if included
+    // Get statement of origin if included (only at the end)
     var soSection = '';
     if (includeSO) {
         var soElement = document.querySelector('.border.p-3.bg-light');
@@ -336,7 +448,7 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
 
     // Combine all content
     var content = '<div class="invoice-header" style="text-align: center; margin-bottom: 30px;"><h2>' + invoiceType + '</h2></div>';
-    content += orderInfo.innerHTML;
+    content += modifiedOrderInfo.innerHTML;
     content += bankSection;
     content += soSection;
 
@@ -361,7 +473,7 @@ function printInvoice(content, title) {
             <title>${title}</title>
             <style>
                 @media print {
-                    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                    body { margin: 0; padding: 20px; padding-bottom: 80px; font-family: Arial, sans-serif; }
                     .no-print { display: none !important; }
                     .btn, .card-header-action, .modal { display: none !important; }
                     table { width: 100%; border-collapse: collapse; margin: 10px 0; }
@@ -372,13 +484,15 @@ function printInvoice(content, title) {
                     .badge-success { background-color: #28a745; color: white; }
                     .badge-danger { background-color: #dc3545; color: white; }
                     .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
-                    .print-header h1 { margin: 0; font-size: 24px; }
-                    .print-header p { margin: 5px 0; font-size: 14px; }
+                    .print-header img { max-height: 80px; margin-bottom: 10px; }
+                    .print-header h1 { margin: 0; font-size: 24px; display: none; }
+                    .print-header p { margin: 5px 0; font-size: 14px; display: none; }
                     .page-title { text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0; }
                     .bank-details { margin: 20px 0; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; }
                     .bank-details h4 { margin-top: 0; }
                     .so-section { margin: 20px 0; }
                     .so-section h4 { margin-bottom: 10px; }
+                    .print-footer { position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; font-size: 12px; border-top: 1px solid #000; padding-top: 10px; background: white; }
                 }
                 body { font-family: Arial, sans-serif; }
                 table { width: 100%; border-collapse: collapse; margin: 10px 0; }
@@ -400,18 +514,23 @@ function printInvoice(content, title) {
         </head>
         <body>
             <div class="print-header">
-                <h1>SmartERP</h1>
+                <img src="/assets/print-logo.png" alt="Company Logo">
+                <h1>Sajjadson Lab Equipment</h1>
                 <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
                 <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
             </div>
-            <div class="page-title">${title}</div>
             <div class="print-content">
                 ${content}
+            </div>
+            <div class="print-footer">
+                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
+                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
             </div>
         </body>
         </html>
     `;
-
+    // <div class="page-title">${title}</div>
+    
     console.log('Writing content to print window...');
     printWindow.document.write(printContent);
     printWindow.document.close();

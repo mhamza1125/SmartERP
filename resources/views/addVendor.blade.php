@@ -72,11 +72,11 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Vendor Type</label>
-                    <select class="form-control select2" name="vendor_type_id" required>
+                    <select class="form-control select2" name="vendor_type_id[]" multiple required>
                       <option value="" selected disabled>Select Vendor Type</option>
                       @if($vendorType->count())
                         @foreach($vendorType as $item)
-                          <option value="{{$item->head_id}}" {{ old('vendor_type_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
+                          <option value="{{$item->head_id}}" {{ in_array($item->head_id, old('vendor_type_id', [])) ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
                     </select>

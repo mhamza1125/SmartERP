@@ -13,6 +13,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\PurchaseItemRepository;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -83,6 +84,10 @@ class OrderController extends Controller
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+
+        // Generate dynamic job number
+        $validatedData['job_no'] = $this->generateJobNumber($validatedData['customer_id']);
+
         $products = $request->input('product_type_id');
         $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
@@ -96,18 +101,82 @@ class OrderController extends Controller
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
 
+    private function generateJobNumber($customerId)
+    {
+        // Get customer number
+        $customer = DB::table('customers')->where('customer_id', $customerId)->first();
+        if (!$customer) {
+            throw new \Exception('Customer not found');
+        }
+
+        $customerNumber = $customer->customer_no; // e.g., "CU0001"
+        $currentYear = date('y'); // e.g., "25" for 2025
+
+        // Count existing orders for this customer in current year
+        $orderCount = DB::table('orders')
+            ->where('customer_id', $customerId)
+            ->whereYear('created_at', date('Y'))
+            ->count();
+
+        $nextCount = str_pad($orderCount + 1, 3, '0', STR_PAD_LEFT); // e.g., "001"
+
+        return $customerNumber . '/J' . $currentYear . '-' . $nextCount;
+    }
+
     public function show($id)
     {
         $this->authorize('show', Order::class);
         $order = $this->orderRepository->get($id);
         $orderItem = $this->orderItemRepository->get($id);
         $banks = $this->bankRepository->self();
+        $packingList = $this->getPackingList($id);
 
         return view('orderInfo', [
             'order' => $order,
             'orderItem' => $orderItem,
             'banks' => $banks,
+            'packingList' => $packingList,
         ]);
+    }
+
+    private function getPackingList($orderId)
+    {
+        // Get delivery box data for this order
+        $deliveryBoxes = DB::table('delivery_boxes')
+            ->join('deliveries', 'deliveries.delivery_id', '=', 'delivery_boxes.delivery_id')
+            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
+            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
+            ->where('stocks.order_id', $orderId)
+            ->select(
+                'products.name as product_name',
+                'products.article_no',
+                'heads.name as size_name',
+                'delivery_boxes.totalQty as box_quantity'
+            )
+            ->get();
+
+        // Group by product and sum box quantities
+        $packingData = [];
+        $totalBoxes = 0;
+
+        foreach ($deliveryBoxes as $box) {
+            $productKey = $box->article_no . ' - ' . $box->product_name . ' (Size: ' . $box->size_name . ')';
+
+            if (!isset($packingData[$productKey])) {
+                $packingData[$productKey] = 0;
+            }
+
+            $packingData[$productKey] += $box->box_quantity;
+            $totalBoxes += $box->box_quantity;
+        }
+
+        return [
+            'items' => $packingData,
+            'total' => $totalBoxes
+        ];
     }
 
     public function estimate($id)
@@ -165,10 +234,32 @@ class OrderController extends Controller
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $this->orderRepository->update($id, $request->input());
+
+        // Get current order to check if customer changed
+        $currentOrder = Order::findOrFail($id);
+        $requestData = $request->input();
+
+        // If customer changed, regenerate job number
+        if ($currentOrder->customer_id != $requestData['customer_id']) {
+            $requestData['job_no'] = $this->generateJobNumber($requestData['customer_id']);
+        }
+
+        $this->orderRepository->update($id, $requestData);
         $this->orderItemRepository->update($id, $request->input());
 
         return redirect()->route('order.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    public function generateJobNumberAjax(Request $request)
+    {
+        try {
+            $customerId = $request->input('customer_id');
+            $jobNumber = $this->generateJobNumber($customerId);
+
+            return response()->json(['job_no' => $jobNumber]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function updateStatus($id, $status)

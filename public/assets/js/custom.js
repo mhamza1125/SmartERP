@@ -87,7 +87,7 @@ $(document).ready(function () {
     }
 
     // Custom header HTML
-    var customHeader = '<center><h1>Sajjad Son Lab</h1><h5>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</h5><h6>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</h6></center>';
+    var customHeader = '<center><h1>Sajjadson Lab Equipment</h1><h5>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</h5><h6>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</h6></center>';
 
     // Initialize DataTable for table with ID #tableExport
     initializeDataTable('#tableExport');
@@ -621,6 +621,7 @@ function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
                     background: white;
                     margin: 0;
                     padding: 20px;
+                    padding-bottom: 80px; /* Space for footer */
                 }
 
                 h1, h2, h3, h4, h5, h6 {
@@ -723,19 +724,40 @@ function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
                     padding-bottom: 15px;
                 }
 
+                .print-header img {
+                    max-height: 80px;
+                    margin-bottom: 10px;
+                }
+
                 .print-header h1 {
                     margin: 0;
                     font-size: 24px;
+                    display: none; /* Hide company name to accommodate logo */
                 }
 
                 .print-header p {
                     margin: 5px 0;
                     font-size: 12px;
+                    display: none; /* Hide address from header */
+                }
+
+                /* Footer styling */
+                .print-footer {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 0;
+                    right: 0;
+                    text-align: center;
+                    font-size: 12px;
+                    border-top: 1px solid #000;
+                    padding-top: 10px;
+                    background: white;
                 }
             </style>
         </head>
         <body>
             <div class="print-header">
+                <img src="/assets/print-logo.png" alt="Company Logo">
                 <h1>Sajjad Son Lab</h1>
                 <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
                 <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
@@ -743,6 +765,10 @@ function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
             <div class="page-title">${title}</div>
             <div class="print-content">
                 ${printContent}
+            </div>
+            <div class="print-footer">
+                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
+                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
             </div>
             <script>
                 window.onload = function() {

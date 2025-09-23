@@ -28,7 +28,7 @@
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Job No</label>
-                    <input type="text" class="form-control" name="job_no" required value="{{$order['job_no']}}">
+                    <input type="text" class="form-control" name="job_no" id="job_no" required value="{{$order['job_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Job No</div>
                   </div>
@@ -157,7 +157,8 @@
                 <div class="col-md-3">
                   <div class="form-group">                    
                     <label>Currency</label>
-                    <select class="form-control select2" name="head_id" required>
+                    {{-- <select class="form-control select2" name="head_id" required> --}}
+                    <select class="form-control select2" name="head_id">
                       <option value="" selected disabled>Select Currency</option>
                       @if($head->count())
                         @foreach($head as $item)
@@ -268,5 +269,29 @@
 <script>
   var isOrderPage = true;
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
+
+  // Handle customer change to regenerate job number
+  $(document).ready(function() {
+    $('select[name="customer_id"]').on('change', function() {
+      var customerId = $(this).val();
+      if (customerId) {
+        // Make AJAX call to generate new job number
+        $.ajax({
+          url: "{{ route('generateJobNumber') }}",
+          type: 'POST',
+          data: {
+            customer_id: customerId,
+            _token: '{{ csrf_token() }}'
+          },
+          success: function(response) {
+            $('#job_no').val(response.job_no);
+          },
+          error: function(xhr, status, error) {
+            console.error('Error generating job number:', error);
+          }
+        });
+      }
+    });
+  });
   </script>
 @endsection

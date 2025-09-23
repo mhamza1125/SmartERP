@@ -110,6 +110,8 @@ class VendorController extends Controller
         $validatedData['material_id'] = $materialIds ? implode('|', $materialIds) : '0';
         $productIds = $request->input('product_id');
         $validatedData['product_id'] = $productIds ? implode('|', $productIds) : '0';
+        $vendorTypeIds = $request->input('vendor_type_id');
+        $validatedData['vendor_type_id'] = $vendorTypeIds ? implode('|', $vendorTypeIds) : '';
         $getId = $this->vendorRepository->store($validatedData);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -239,7 +241,9 @@ class VendorController extends Controller
         $materialIds = $materialIds ? implode('|', $materialIds) : '0';
         $productIds = $request->input('product_id');
         $productIds = $productIds ? implode('|', $productIds) : '0';
-        $request->merge(['material_id' => $materialIds, 'product_id' => $productIds]);
+        $vendorTypeIds = $request->input('vendor_type_id');
+        $vendorTypeIds = $vendorTypeIds ? implode('|', $vendorTypeIds) : '';
+        $request->merge(['material_id' => $materialIds, 'product_id' => $productIds, 'vendor_type_id' => $vendorTypeIds]);
         $getId = $this->vendorRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
