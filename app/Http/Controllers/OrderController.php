@@ -141,36 +141,49 @@ class OrderController extends Controller
 
     private function getPackingList($orderId)
     {
-        // Get delivery box data for this order
-        $deliveryBoxes = DB::table('delivery_boxes')
-            ->join('deliveries', 'deliveries.delivery_id', '=', 'delivery_boxes.delivery_id')
-            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
-            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+        // Get order items with box quantity factors to calculate theoretical packing list
+        $orderItems = DB::table('order_items')
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-            ->where('stocks.order_id', $orderId)
+            ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
+            ->join('product_materials', function($join) {
+                $join->on('product_materials.product_type_id', '=', 'order_items.product_type_id')
+                     ->whereIn('product_materials.material_id', function($query) {
+                         // Get packing box material IDs (material_type_id = 61)
+                         $query->select('material_id')
+                               ->from('materials')
+                               ->where('material_type_id', 61);
+                     });
+            })
+            ->where('order_items.order_id', $orderId)
             ->select(
                 'products.name as product_name',
                 'products.article_no',
                 'heads.name as size_name',
-                'delivery_boxes.totalQty as box_quantity'
+                'shead.name as stage_name',
+                'order_items.quantity as order_quantity',
+                'product_materials.quantity as bqty'
             )
             ->get();
 
-        // Group by product and sum box quantities
+        // Calculate box quantities: order_quantity * bqty
         $packingData = [];
         $totalBoxes = 0;
 
-        foreach ($deliveryBoxes as $box) {
-            $productKey = $box->article_no . ' - ' . $box->product_name . ' (Size: ' . $box->size_name . ')';
+        foreach ($orderItems as $item) {
+            $productKey = $item->article_no . ' - ' . $item->product_name . ' (Size: ' . $item->size_name . ', Stage: ' . $item->stage_name . ')';
+
+            $boxQuantity = $item->order_quantity * $item->bqty;
+            // Round to 2 decimal places like in delivery calculation
+            $boxQuantity = round($boxQuantity * 100) / 100;
 
             if (!isset($packingData[$productKey])) {
                 $packingData[$productKey] = 0;
             }
 
-            $packingData[$productKey] += $box->box_quantity;
-            $totalBoxes += $box->box_quantity;
+            $packingData[$productKey] += $boxQuantity;
+            $totalBoxes += $boxQuantity;
         }
 
         return [
