@@ -90,30 +90,6 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>FI No <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{$order['fi_no'] ?? ''}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>REX No <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{$order['rex_no'] ?? ''}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Statement of Origin <small class="text-muted">(Optional)</small></label>
-                    <textarea class="form-control" name="so_origin" rows="3" placeholder="Statement of Origin">{{$order['so_origin'] ?? ''}}</textarea>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
               </div>
 
               <h6>Order Items</h6>

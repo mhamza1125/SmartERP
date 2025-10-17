@@ -67,7 +67,10 @@ class StockController extends Controller
         ProductCostRepository $productCostRepository,
         ProductMaterialRepository $productMaterialRepository,
     ) {
-        $this->middleware(['auth', 'all']);
+        $this->middleware(['auth', 'all'])->except([
+            'ajaxPM', 'ajaxPT', 'ajaxPTStock', 'ajaxPC', 'ajaxPS',
+            'ajaxIG', 'ajaxMQty', 'ajaxAMQty', 'ajaxATMQty'
+        ]);
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
         $this->orderRepository = $orderRepository;
@@ -145,15 +148,39 @@ class StockController extends Controller
 
     public function ajaxPM(Request $request)
     {
-        // Ajax Product Material
-        $productId = $request->input('productId');
-        $productMaterial = $this->productMaterialRepository->get($productId);
-        $stockItem = $this->stockItemRepository->pStockGet($productId);
+        try {
+            // Ajax Product Material
+            $productId = $request->input('productId');
 
-        return response()->json([
-            'materials' => $productMaterial,
-            'stockItems' => $stockItem,
-        ]);
+            // Validate productId
+            if (empty($productId) || !is_numeric($productId)) {
+                \Log::error('ajaxPM: Invalid productId provided', ['productId' => $productId]);
+                return response()->json(['error' => 'Invalid product ID'], 400);
+            }
+
+            \Log::info('ajaxPM: Processing request', ['productId' => $productId]);
+
+            $productMaterial = $this->productMaterialRepository->get($productId);
+            $stockItem = $this->stockItemRepository->pStockGet($productId);
+
+            \Log::info('ajaxPM: Data retrieved successfully', [
+                'productId' => $productId,
+                'materials_count' => count($productMaterial),
+                'stock_items_count' => count($stockItem)
+            ]);
+
+            return response()->json([
+                'materials' => $productMaterial,
+                'stockItems' => $stockItem,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('ajaxPM: Exception occurred', [
+                'productId' => $request->input('productId'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
     }
 
     public function ajaxPT(Request $request)
@@ -163,6 +190,26 @@ class StockController extends Controller
         $orderItem = $this->orderItemRepository->get($orderId);
 
         return response()->json(['data' => $orderItem]);
+    }
+
+    public function ajaxPTStock(Request $request)
+    {
+        // Ajax Product Type - All products with stock (for issuance forms)
+        $pstock = $this->stockItemRepository->pStock();
+
+        // Group products by product_type_id to avoid duplicates
+        $groupedProducts = $pstock->groupBy('product_type_id')->map(function ($group) {
+            $first = $group->first();
+            return [
+                'product_type_id' => $first->product_type_id,
+                'article_no' => $first->article_no,
+                'name' => $first->name,
+                'sname' => $first->sname, // size name
+                'product_id' => $first->product_id,
+            ];
+        })->values();
+
+        return response()->json(['data' => $groupedProducts]);
     }
 
     public function ajaxIG(Request $request)

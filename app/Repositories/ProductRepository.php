@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class ProductRepository implements GlobalInterface
 {
@@ -57,11 +58,41 @@ class ProductRepository implements GlobalInterface
 
     public function get($id)
     {
-        return Product::where('product_id', $id)
+        return Product::where('products.product_id', $id)
             ->join('categories', 'categories.category_id', '=', 'products.category_id')
             ->join('heads', 'heads.head_id', '=', 'products.unit_id')
-            ->select('products.*', 'categories.name as cname', 'heads.name as hname')
+            ->leftJoin('product_types', function ($join) {
+                $join->on('product_types.product_id', '=', 'products.product_id')
+                    ->where('product_types.product_type_status', '=', '1')
+                    ->orderBy('product_types.product_type_id');
+            })
+            ->leftJoin('stock_items', function ($join) {
+                $join->on('stock_items.product_type_id', '=', 'product_types.product_type_id')
+                    ->where('stock_items.stock_id', '=', '1')
+                    ->where('stock_items.material_id', '=', '0');
+            })
+            ->select('products.*', 'categories.name as cname', 'heads.name as hname', 'stock_items.quantity as opening_stock')
             ->first();
+    }
+
+    public function getOpeningStock($productId)
+    {
+        // Get all opening stock entries for a product (size and stage-specific)
+        return DB::table('stock_items')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('heads as stage_heads', 'stage_heads.head_id', '=', 'stock_items.stage_id')
+            ->join('heads as size_heads', 'size_heads.head_id', '=', 'product_types.size_id')
+            ->where('product_types.product_id', $productId)
+            ->where('stock_items.stock_id', '1') // Opening stock
+            ->where('stock_items.material_id', '0')
+            ->select(
+                'stock_items.stage_id',
+                'stock_items.quantity',
+                'stage_heads.name as stage_name',
+                'product_types.size_id',
+                'size_heads.name as size_name'
+            )
+            ->get();
     }
 
     public function getProduct($id)

@@ -180,6 +180,8 @@ class VendorController extends Controller
         $dto = $request->input('dto');
         $oBalance = 0; // Opening Balance
         $cBalance = 0; // Closing Balance
+
+        // Get transaction data
         if (! empty($dfrom) && ! empty($dto)) {
             $all = $this->transactionRepository->vDetailFilter($id, $dfrom, $dto);
             $detail = $all['transactions'];
@@ -188,8 +190,17 @@ class VendorController extends Controller
         } else {
             $detail = $this->transactionRepository->vDetail($id);
         }
+
+        // Get wages data for contractors (vendor_type = 1)
+        if ($vendor['vendor_type'] == 1) {
+            $wages = $this->getContractorWages($id, $dfrom, $dto);
+            // Merge wages with transactions and sort by date
+            $detail = $this->mergeWagesWithTransactions($detail, $wages);
+        }
+
         $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
-        $totalDebit = $detail->where('transaction_type', '!=', 'wages')->sum('debit');
+        $totalDebit = $detail->whereIn('transaction_type', ['wages'])->sum('debit') +
+                     $detail->where('transaction_type', '!=', 'wages')->sum('debit');
         $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
 
         return view('vendorDetail', [
@@ -201,6 +212,104 @@ class VendorController extends Controller
             'dfrom' => $dfrom,
             'dto' => $dto,
         ]);
+    }
+
+    /**
+     * Get wages data for a contractor
+     */
+    private function getContractorWages($vendorId, $dfrom = null, $dto = null)
+    {
+        $query = \DB::table('stocks')
+            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+            ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->where('stocks.employee_id', $vendorId)
+            ->where('stocks.table_name', 'vendor')
+            ->where('stocks.stock_type', '1') // StockIN
+            ->where('stock_items.work_wages', '!=', '0')
+            ->select(
+                'stocks.stock_id',
+                'stocks.stock_no',
+                'stocks.stock_date as transaction_date',
+                'stocks.created_at',
+                'stock_items.quantity',
+                'stock_items.work_wages',
+                'products.article_no',
+                'shead.name as size_name',
+                'sthead.name as stage_name'
+            );
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $query->whereBetween('stocks.stock_date', [$dfrom, $dto]);
+        }
+
+        $wagesData = $query->orderBy('stocks.stock_date')->get();
+
+        // Group wages by stock_no (receive/issuance number) and calculate totals
+        $groupedWages = $wagesData->groupBy('stock_no')->map(function ($wageGroup, $stockNo) {
+            $totalWages = 0;
+            $wageDetails = [];
+            $firstWage = $wageGroup->first();
+
+            foreach ($wageGroup as $wage) {
+                $workWages = explode('|', $wage->work_wages);
+                $itemWages = 0;
+                foreach ($workWages as $wageAmount) {
+                    $itemWages += (int) $wageAmount * $wage->quantity;
+                }
+                $totalWages += $itemWages;
+
+                // Store individual wage details for modal display
+                $wageDetails[] = [
+                    'article_no' => $wage->article_no,
+                    'size_name' => $wage->size_name,
+                    'stage_name' => $wage->stage_name,
+                    'quantity' => $wage->quantity,
+                    'wages' => $itemWages,
+                ];
+            }
+
+            return (object) [
+                'transaction_id' => null,
+                'transaction_type' => 'wages',
+                'transaction_date' => $firstWage->transaction_date,
+                'created_at' => $firstWage->created_at,
+                'timestamp' => $firstWage->created_at,
+                'debit' => $totalWages, // Total wages for this receive/issuance
+                'credit' => null,
+                'description' => "Wages for {$stockNo} (" . count($wageGroup) . " items)",
+                'payee_id' => null,
+                'bank_id' => null,
+                'order_id' => null,
+                // Additional fields for enhanced display
+                'stock_id' => $firstWage->stock_id,
+                'stock_no' => $stockNo,
+                'wage_details' => $wageDetails, // For modal popup
+                'item_count' => count($wageGroup),
+            ];
+        });
+
+        return $groupedWages->values(); // Reset array keys
+    }
+
+    /**
+     * Merge wages data with transaction data and sort chronologically
+     */
+    private function mergeWagesWithTransactions($transactions, $wages)
+    {
+        // Convert transactions to collection if it isn't already
+        if (!$transactions instanceof \Illuminate\Support\Collection) {
+            $transactions = collect($transactions);
+        }
+
+        // Merge and sort by timestamp/created_at
+        $merged = $transactions->concat($wages)->sortBy(function ($item) {
+            return $item->timestamp ?? $item->created_at;
+        });
+
+        return $merged;
     }
 
     public function edit(Vendor $id)

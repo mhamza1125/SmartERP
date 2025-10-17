@@ -12,6 +12,16 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'ajaxPM',
+        'ajaxPT',
+        'ajaxPTStock',
+        'ajaxPC',
+        'ajaxPS',
+        'ajaxIG',
+        'ajaxMQty',
+        'ajaxAMQty',
+        'ajaxATMQty',
+        'ajaxPMQty',
+        'ajax/customer-orders/*',
     ];
 }

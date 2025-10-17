@@ -184,7 +184,8 @@
   var pstockData = @json($pstock);
   var gstockData = @json($gstock);
   var ajaxIGUrl = "{{ route('ajaxIG') }}";
-  var ajaxPTUrl = "{{ route('ajaxPT') }}";
+  // var ajaxPTUrl = "{{ route('ajaxPT') }}";
+  var ajaxPTUrl = "{{ route('ajaxPTStock') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
   var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";

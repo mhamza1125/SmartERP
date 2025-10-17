@@ -13,7 +13,7 @@
                   <i class="fas fa-print"></i> Print
                 </button>
                 <a href="{{ route('igroup') }}" class="btn btn-primary">Back</a>
-                {{-- <a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a> --}}
+                <a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a>
               </div>
             </div>
           </div>

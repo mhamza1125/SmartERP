@@ -14,6 +14,7 @@ class Product extends Model
     protected $fillable = [
         'category_id',
         'article_no',
+        'hs_code',
         'material_id', // Multiple
         'stage_ids', // Multiple
         'name',

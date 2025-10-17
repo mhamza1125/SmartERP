@@ -37,6 +37,35 @@ class OrderRepository implements GlobalInterface
             ->get();
     }
 
+    public function getCustomerOrders($customerId)
+    {
+        // Get non-completed/non-delivered orders for multi-order delivery
+        return Order::where('orders.customer_id', $customerId)
+            ->where('order_status', '<', 6) // Not completed
+            ->whereNotExists(function ($query) {
+                $query->select('deliveries.delivery_id')
+                      ->from('deliveries')
+                      ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
+                      ->whereColumn('stocks.order_id', 'orders.order_id')
+                      ->where('deliveries.delivery_status', '>=', 2); // Not delivered
+            })
+            ->select('orders.order_id', 'orders.job_no', 'orders.order_date', 'orders.order_status')
+            ->orderBy('orders.created_at', 'desc')
+            ->get()
+            ->map(function ($order) {
+                $statusMap = [
+                    1 => 'Pending',
+                    2 => 'Confirmed',
+                    3 => 'In Production',
+                    4 => 'Ready',
+                    5 => 'Partial Delivery',
+                    6 => 'Completed'
+                ];
+                $order->status = $statusMap[$order->order_status] ?? 'Unknown';
+                return $order;
+            });
+    }
+
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();

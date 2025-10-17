@@ -167,28 +167,35 @@ class OrderController extends Controller
             )
             ->get();
 
-        // Calculate box quantities: order_quantity * bqty
+        // Calculate both product quantities and box quantities
         $packingData = [];
+        $totalQuantity = 0;
         $totalBoxes = 0;
 
         foreach ($orderItems as $item) {
             $productKey = $item->article_no . ' - ' . $item->product_name . ' (Size: ' . $item->size_name . ', Stage: ' . $item->stage_name . ')';
 
             $boxQuantity = $item->order_quantity * $item->bqty;
-            // Round to 2 decimal places like in delivery calculation
-            $boxQuantity = round($boxQuantity * 100) / 100;
+            // Use ceil to get whole boxes needed (round up for partial boxes)
+            $boxQuantity = ceil($boxQuantity);
 
             if (!isset($packingData[$productKey])) {
-                $packingData[$productKey] = 0;
+                $packingData[$productKey] = [
+                    'quantity' => 0,
+                    'boxes' => 0
+                ];
             }
 
-            $packingData[$productKey] += $boxQuantity;
+            $packingData[$productKey]['quantity'] += $item->order_quantity;
+            $packingData[$productKey]['boxes'] += $boxQuantity;
+            $totalQuantity += $item->order_quantity;
             $totalBoxes += $boxQuantity;
         }
 
         return [
             'items' => $packingData,
-            'total' => $totalBoxes
+            'totalQuantity' => $totalQuantity,
+            'totalBoxes' => $totalBoxes
         ];
     }
 

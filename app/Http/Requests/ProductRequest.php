@@ -24,9 +24,13 @@ class ProductRequest extends FormRequest
         return [
             'category_id' => 'required',
             'article_no' => 'required|max:255',
-            'name' => 'required|max:255',
+            'hs_code' => 'nullable|max:255',
+             'name' => 'required|max:255',
             'unit_id' => 'required',
             'product_status' => 'required',
+            'opening_stock_size_id.*' => 'nullable|exists:heads,head_id',
+            'opening_stock_stage_id.*' => 'nullable|exists:heads,head_id',
+            'opening_stock_quantity.*' => 'nullable|numeric|min:0',
             'description' => '',
         ];
     }

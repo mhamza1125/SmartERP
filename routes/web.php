@@ -5,6 +5,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
@@ -162,13 +163,18 @@ Route::post('/generateJobNumber', [OrderController::class, 'generateJobNumberAja
 
 // Delivery
 Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery');
-Route::get('/addDelivery/{id}', [DeliveryController::class, 'create2'])->name('delivery.add');
-Route::post('/addDelivery/{id}', [DeliveryController::class, 'create2'])->name('delivery.add');
+Route::get('/addDelivery/{id?}', [DeliveryController::class, 'create2'])->name('delivery.add');
+Route::post('/addDelivery/{id?}', [DeliveryController::class, 'create2'])->name('delivery.add');
 Route::post('/delivery', [DeliveryController::class, 'store'])->name('delivery.store');
 Route::get('/delivery/{id}', [DeliveryController::class, 'show'])->name('delivery.show');
 Route::get('/editDelivery/{id}', [DeliveryController::class, 'edit'])->name('delivery.edit');
 Route::post('/delivery/{id}', [DeliveryController::class, 'update'])->name('delivery.update');
 Route::get('/deliveryStatus/{id}/{status}', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
+
+// AJAX Routes for Multi-Order Delivery
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/ajax/customer-orders/{customer_id}', [DeliveryController::class, 'getCustomerOrders'])->name('ajax.customer-orders');
+});
 
 // Product Material
 Route::get('/productMaterial', [ProductMaterialController::class, 'index'])->name('productMaterial');
@@ -240,6 +246,7 @@ Route::get('/editIssue/{id}', [StockController::class, 'edit'])->name('stock.edi
 Route::post('/issue/{id}', [StockController::class, 'update'])->name('stock.update');
 Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Product Material
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
+Route::get('/ajaxPTStock', [StockController::class, 'ajaxPTStock'])->name('ajaxPTStock'); //Product Type with Stock
 Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
 Route::get('/ajaxIG', [StockController::class, 'ajaxIG'])->name('ajaxIG'); //Issuance Group
@@ -278,6 +285,7 @@ Route::post('/productCost/{id}', [ProductCostController::class, 'update'])->name
 // Transaction
 Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction');
 Route::get('/ajaxBank', [TransactionController::class, 'ajaxBank'])->name('ajaxBank'); //Bank Account
+Route::get('/ajaxBalance', [TransactionController::class, 'ajaxBalance'])->name('ajaxBalance'); //Balance
 Route::post('/transaction', [TransactionController::class, 'store'])->name('transaction.store');
 Route::get('/transaction/{id}', [TransactionController::class, 'show'])->name('transaction.show');
 Route::post('/transaction/{id}', [TransactionController::class, 'update'])->name('transaction.update');
@@ -335,3 +343,13 @@ Route::post('/delivery-return', [DeliveryReturnController::class, 'store'])->nam
 Route::get('/delivery-return/{id}', [DeliveryReturnController::class, 'show'])->name('delivery-return.show');
 Route::get('/delivery-return/{id}/edit', [DeliveryReturnController::class, 'edit'])->name('delivery-return.edit');
 Route::post('/delivery-return/{id}', [DeliveryReturnController::class, 'update'])->name('delivery-return.update');
+
+// Company
+Route::get('/company/data', [CompanyController::class, 'getCompanyData'])->name('company.data');
+Route::get('/company', [CompanyController::class, 'index'])->name('company');
+Route::get('/addCompany', [CompanyController::class, 'create'])->name('company.add');
+Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
+Route::get('/company/{id}', [CompanyController::class, 'show'])->name('company.show');
+Route::get('/editCompany/{id}', [CompanyController::class, 'edit'])->name('company.edit');
+Route::post('/company/{id}', [CompanyController::class, 'update'])->name('company.update');
+Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->name('company.destroy');

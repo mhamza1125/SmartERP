@@ -59,15 +59,23 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
-                    <label>Aricle No</label>
+                    <label>Article No</label>
                     <input type="text" class="form-control" name="article_no" required value="{{$product['article_no']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Article No</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>HS Code</label>
+                    <input type="text" class="form-control" name="hs_code" value="{{$product['hs_code'] ?? ''}}" placeholder="Enter HS Code">
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter HS Code</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Product Name</label>
                     <input type="text" class="form-control" name="name" required value="{{$product['name']}}">
@@ -185,7 +193,53 @@
                     </div>
                   </div>
                 </div>
-              </div>   
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Opening Stock by Size and Stage</label>
+                    <div id="opening-stock-container">
+                      @if($openingStock->count() > 0)
+                        @foreach($openingStock as $stock)
+                          <div class="row opening-stock-row mb-2">
+                            <div class="col-md-3">
+                              <select class="form-control" name="opening_stock_size_id[]" required>
+                                <option value="">Select Size</option>
+                                @foreach($size as $sizeItem)
+                                  <option value="{{$sizeItem->head_id}}" {{$stock->size_id == $sizeItem->head_id ? 'selected' : ''}}>{{$sizeItem->name}}</option>
+                                @endforeach
+                              </select>
+                            </div>
+                            <div class="col-md-3">
+                              <select class="form-control" name="opening_stock_stage_id[]" required>
+                                <option value="">Select Stage</option>
+                                @foreach($pstage as $stage)
+                                  <option value="{{$stage->head_id}}" {{$stock->stage_id == $stage->head_id ? 'selected' : ''}}>{{$stage->name}}</option>
+                                @endforeach
+                              </select>
+                            </div>
+                            <div class="col-md-3">
+                              <input type="number" step="0.001" class="form-control" name="opening_stock_quantity[]" value="{{$stock->quantity}}" placeholder="Quantity" min="0" required>
+                            </div>
+                            <div class="col-md-3">
+                              <button type="button" class="btn btn-sm btn-danger remove-opening-stock">
+                                <i class="fas fa-trash"></i> Remove
+                              </button>
+                            </div>
+                          </div>
+                        @endforeach
+                      @else
+                        <div class="alert alert-info">
+                          <i class="fas fa-info-circle"></i> Select product sizes and stages first, then add opening stock for each size-stage combination below.
+                        </div>
+                      @endif
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-opening-stock">
+                      <i class="fas fa-plus"></i> Add Opening Stock
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
@@ -353,6 +407,107 @@ $(document).ready(function() {
         // Trigger change to update Select2
         stageSelect.trigger('change.select2');
     }
+});
+
+// Opening Stock Management
+$(document).ready(function() {
+    var openingStockCounter = $('.opening-stock-row').length;
+
+    // Add opening stock row
+    $('#add-opening-stock').click(function() {
+        var selectedSizes = $('#size_id').val();
+        var selectedStages = $('#stage_ids_select').val();
+
+        if (!selectedSizes || selectedSizes.length === 0) {
+            alert('Please select product sizes first.');
+            return;
+        }
+
+        if (!selectedStages || selectedStages.length === 0) {
+            alert('Please select product stages first.');
+            return;
+        }
+
+        var sizeOptions = '';
+        $('#size_id option:selected').each(function() {
+            sizeOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+
+        var stageOptions = '';
+        $('#stage_ids_select option:selected').each(function() {
+            stageOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+
+        var row = `
+            <div class="row opening-stock-row mb-2" data-index="${openingStockCounter}">
+                <div class="col-md-3">
+                    <select class="form-control" name="opening_stock_size_id[]" required>
+                        <option value="">Select Size</option>
+                        ${sizeOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" name="opening_stock_stage_id[]" required>
+                        <option value="">Select Stage</option>
+                        ${stageOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" step="0.001" class="form-control" name="opening_stock_quantity[]" placeholder="Quantity" min="0" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-sm btn-danger remove-opening-stock">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        `;
+
+        $('#opening-stock-container').append(row);
+        openingStockCounter++;
+    });
+
+    // Remove opening stock row
+    $(document).on('click', '.remove-opening-stock', function() {
+        $(this).closest('.opening-stock-row').remove();
+    });
+
+    // Update available sizes and stages when selections change
+    function updateOpeningStockOptions() {
+        var selectedSizes = $('#size_id').val() || [];
+        var selectedStages = $('#stage_ids_select').val() || [];
+
+        var sizeOptions = '<option value="">Select Size</option>';
+        $('#size_id option:selected').each(function() {
+            sizeOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+
+        var stageOptions = '<option value="">Select Stage</option>';
+        $('#stage_ids_select option:selected').each(function() {
+            stageOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+
+        $('.opening-stock-row select[name="opening_stock_size_id[]"]').each(function() {
+            var currentValue = $(this).val();
+            $(this).html(sizeOptions);
+            if (selectedSizes.includes(currentValue)) {
+                $(this).val(currentValue);
+            }
+        });
+
+        $('.opening-stock-row select[name="opening_stock_stage_id[]"]').each(function() {
+            var currentValue = $(this).val();
+            $(this).html(stageOptions);
+            if (selectedStages.includes(currentValue)) {
+                $(this).val(currentValue);
+            }
+        });
+    }
+
+    // Update opening stock options when size or stage selection changes
+    $('#size_id, #stage_ids_select').on('change', function() {
+        updateOpeningStockOptions();
+    });
 });
 </script>
 

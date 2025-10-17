@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Order Status</h4>
+            <h4>Order Status @if(isset($isMultiOrder) && $isMultiOrder) <span class="badge badge-info ml-2">Multi-Order</span> @endif</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
@@ -29,9 +29,21 @@
                 <div class="col-md-5">
                   <table class="table table-sm">
                     <tbody>
-                      <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
-                      <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                      <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                      <tr><td><b>Order No</b> {{is_array($order) ? $order['order_no'] : $order->order_no}}</td></tr>
+                      <tr><td><b>Job No:</b> {{is_array($order) ? $order['job_no'] : $order->job_no}}</td></tr>
+                      @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
+                      <tr><td><b>Related Orders:</b>
+                        @foreach($relatedOrders as $index => $relOrder)
+                          @if($index < 3)
+                          <span class="badge badge-secondary mr-1">{{$relOrder->order_no ?? 'N/A'}}</span>
+                          @endif
+                        @endforeach
+                        @if(count($relatedOrders) > 3)
+                        <span class="badge badge-light">+{{count($relatedOrders) - 3}} more</span>
+                        @endif
+                      </td></tr>
+                      @endif
+                      <tr><td><b>Date:</b> {{is_array($order) ? $order['order_date'] : $order->order_date}}</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -131,7 +143,55 @@
                   <input type="text" class="form-control" name="tport_no" placeholder="Port No" value="{{$order['tport_no']}}">
                 </div>
               </div>
-              
+
+              <h6 class="mt-4">Commercial Invoice Information</h6>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>FI No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{$order['fi_no'] ?? ''}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>REX No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{$order['rex_no'] ?? ''}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>NTN <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="ntn" placeholder="NTN Number" value="{{$order['ntn'] ?? ''}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Delivery Status</label>
+                    <select class="form-control select2" name="delivery_status" required>
+                      <option value="" selected disabled>Select Status</option>
+                      <option value="1" {{$order['delivery_status'] == '1' ? 'selected' : ''}}>Pending</option>
+                      <option value="2" {{$order['delivery_status'] == '2' ? 'selected' : ''}}>In Transit</option>
+                      <option value="3" {{$order['delivery_status'] == '3' ? 'selected' : ''}}>Delivered</option>
+                      <option value="4" {{$order['delivery_status'] == '4' ? 'selected' : ''}}>Cancelled</option>
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Delivery Status</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Statement of Origin <small class="text-muted">(Optional)</small></label>
+                    <textarea class="form-control" name="so_origin" rows="3" placeholder="Statement of Origin for commercial invoice">{{$order['so_origin'] ?? ''}}</textarea>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+
               <h5 class="mt-4">Ordered Items / Products</h5>
               <div class="row">
                 <div class="col-md-12">

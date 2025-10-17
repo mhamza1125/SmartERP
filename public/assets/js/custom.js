@@ -86,8 +86,19 @@ $(document).ready(function () {
         });
     }
 
-    // Custom header HTML
-    var customHeader = '<center><h1>Sajjadson Lab Equipment</h1><h5>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</h5><h6>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</h6></center>';
+    // Custom header HTML - will be populated dynamically
+    var customHeader = '<center><h1>Loading...</h1></center>';
+
+    // Fetch company data for table printing
+    fetch('/company/data')
+        .then(response => response.json())
+        .then(company => {
+            customHeader = `<center><h1>${company.name}</h1><h5>${company.address}</h5><h6>Phone: ${company.phone} || Email: ${company.email} || Web: ${company.website}</h6></center>`;
+        })
+        .catch(error => {
+            console.error('Error fetching company data:', error);
+            customHeader = '<center><h1>Sajjadson Lab Equipment</h1><h5>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</h5><h6>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</h6></center>';
+        });
 
     // Initialize DataTable for table with ID #tableExport
     initializeDataTable('#tableExport');
@@ -541,280 +552,7 @@ $(document).ready(function () {
         });
     }
 });
-// Print Purchase Info Modal
-function printPModal(modalId) {
-    var printContents = document.getElementById(modalId).innerHTML;
-    var originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-}
-
-// ===========================================================================================
-// =============================== Global Print Functionality ===============================
-// ===========================================================================================
-
-/**
- * Global print function for information/detail pages
- * Supports printing entire page or specific tabs with header information
- * @param {string} mode - 'page' for entire page, 'tab' for specific tab
- * @param {string} tabId - ID of specific tab to print (only used when mode is 'tab')
- * @param {string} pageTitle - Custom title for the print page
- */
-function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
-    // Get the main content area (excluding navigation)
-    const mainContent = document.querySelector('.main-content');
-    const cardBody = document.querySelector('.card-body');
-    const cardHeader = document.querySelector('.card-header h4');
-
-    if (!mainContent || !cardBody) {
-        console.error('Required elements not found for printing');
-        return;
-    }
-
-    // Create print window
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-
-    // Get page title
-    const title = pageTitle || (cardHeader ? cardHeader.textContent : document.title);
-
-    // Build print content
-    let printContent = '';
-
-    if (mode === 'page') {
-        // Print entire page content
-        printContent = cardBody.innerHTML;
-    } else if (mode === 'tab' && tabId) {
-        // Print specific tab with header information
-        const headerInfo = cardBody.querySelector('.row:first-child');
-        const tabContent = document.getElementById(tabId);
-
-        if (headerInfo && tabContent) {
-            printContent = headerInfo.outerHTML + '<hr>' + tabContent.innerHTML;
-        } else {
-            console.error('Tab content or header not found');
-            printWindow.close();
-            return;
-        }
-    }
-
-    // Write print document
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${title}</title>
-            <style>
-                /* Print Styles */
-                @media print {
-                    @page {
-                        margin: 1in;
-                        size: A4;
-                    }
-                }
-
-                body {
-                    font-family: Arial, sans-serif;
-                    font-size: 12px;
-                    line-height: 1.4;
-                    color: #000;
-                    background: white;
-                    margin: 0;
-                    padding: 20px;
-                    padding-bottom: 80px; /* Space for footer */
-                }
-
-                h1, h2, h3, h4, h5, h6 {
-                    color: #000;
-                    margin-bottom: 10px;
-                }
-
-                .page-title {
-                    text-align: center;
-                    font-size: 18px;
-                    font-weight: bold;
-                    margin-bottom: 20px;
-                    border-bottom: 2px solid #000;
-                    padding-bottom: 10px;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 20px;
-                    font-size: 11px;
-                }
-
-                table th,
-                table td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    text-align: left;
-                    vertical-align: top;
-                }
-
-                table th {
-                    background-color: #f5f5f5;
-                    font-weight: bold;
-                }
-
-                table tfoot th {
-                    background-color: #e9e9e9;
-                    font-weight: bold;
-                }
-
-                .table-sm th,
-                .table-sm td {
-                    padding: 4px;
-                }
-
-                .badge {
-                    display: inline-block;
-                    padding: 2px 6px;
-                    font-size: 10px;
-                    font-weight: bold;
-                    border-radius: 3px;
-                    color: white;
-                }
-
-                .badge-success { background-color: #28a745; }
-                .badge-warning { background-color: #ffc107; color: #000; }
-                .badge-danger { background-color: #dc3545; }
-                .badge-info { background-color: #17a2b8; }
-
-                .row {
-                    display: block;
-                    margin-bottom: 15px;
-                }
-
-                .col-md-7, .col-md-5, .col-md-12 {
-                    display: block;
-                    width: 100%;
-                    margin-bottom: 10px;
-                }
-
-                /* Hide elements that shouldn't be printed */
-                .btn, .button, .nav-tabs, .card-header-action,
-                .dropdown, .modal, .tooltip, .popover,
-                .pbtn, .no-print {
-                    display: none !important;
-                }
-
-                /* Tab content styling */
-                .tab-content {
-                    display: block !important;
-                }
-
-                .tab-pane {
-                    display: block !important;
-                    opacity: 1 !important;
-                }
-
-                hr {
-                    border: none;
-                    border-top: 1px solid #ccc;
-                    margin: 20px 0;
-                }
-
-                /* Company header styling */
-                .print-header {
-                    text-align: center;
-                    margin-bottom: 30px;
-                    border-bottom: 2px solid #000;
-                    padding-bottom: 15px;
-                }
-
-                .print-header img {
-                    max-height: 80px;
-                    margin-bottom: 10px;
-                }
-
-                .print-header h1 {
-                    margin: 0;
-                    font-size: 24px;
-                    display: none; /* Hide company name to accommodate logo */
-                }
-
-                .print-header p {
-                    margin: 5px 0;
-                    font-size: 12px;
-                    display: none; /* Hide address from header */
-                }
-
-                /* Footer styling */
-                .print-footer {
-                    position: fixed;
-                    bottom: 20px;
-                    left: 0;
-                    right: 0;
-                    text-align: center;
-                    font-size: 12px;
-                    border-top: 1px solid #000;
-                    padding-top: 10px;
-                    background: white;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="print-header">
-                <img src="http://localhost:8080/ERP/public/assets/print-logo.png" alt="Company Logo">
-                <h1>Sajjadson Lab Equipment</h1>
-                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
-                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
-            </div>
-            <div class="page-title">${title}</div>
-            <div class="print-content">
-                ${printContent}
-            </div>
-            <div class="print-footer">
-                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
-                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
-            </div>
-            <script>
-                window.onload = function() {
-                    window.print();
-                    window.onafterprint = function() {
-                        window.close();
-                    };
-                };
-            </script>
-        </body>
-        </html>
-    `);
-
-    printWindow.document.close();
-}
-
-/**
- * Print entire information page
- * @param {string} pageTitle - Custom title for the print page
- */
-function printPage(pageTitle = null) {
-    globalPrint('page', null, pageTitle);
-}
-
-/**
- * Print specific tab content with header
- * @param {string} tabId - ID of the tab to print
- * @param {string} tabTitle - Title for the tab being printed
- */
-function printTab(tabId, tabTitle = null) {
-    const tabElement = document.getElementById(tabId);
-    if (!tabElement) {
-        console.error('Tab with ID "' + tabId + '" not found');
-        return;
-    }
-
-    // Get tab title from nav link if not provided
-    if (!tabTitle) {
-        const navLink = document.querySelector(`[href="#${tabId}"]`);
-        tabTitle = navLink ? navLink.textContent.trim() : 'Tab Content';
-    }
-
-    globalPrint('tab', tabId, tabTitle);
-}
-
-// End - Global Print Functionality
+// Print functionality has been moved to print.js
 
 // Start - Order Script
 $(document).ready(function () {
@@ -1391,21 +1129,21 @@ $(document).ready(function () {
             });
 
             $('.bqty-input').each(function () {
-                let bqty = parseFloat($(this).val());
+                let bqty = Math.ceil($(this).val());
                 if (!isNaN(bqty)) {
                     totalBqty += bqty;
                 }
             });
 
             $('#totalQuantity').text(totalQuantity.toFixed(2));
-            $('#totalBqty').text(totalBqty.toFixed(2));
-            $('#totalBqty2').text(totalBqty.toFixed(2));
+            $('#totalBqty').text(totalBqty);
+            $('#totalBqty2').text(totalBqty);
             calculateDifference();
         }
 
         function calculateDifference() {
             var tQty = parseFloat($('#tQty').text()) || 0;
-            var totalBqty2 = parseFloat($('#totalBqty2').text()) || 0;
+            var totalBqty2 = parseInt($('#totalBqty2').text()) || 0;
             var difference = tQty - totalBqty2;
             $('#remBqty').text(difference.toFixed(2));
         }
@@ -1415,9 +1153,9 @@ $(document).ready(function () {
             let quantity = $(this).val();
             let bqty = $(this).data('bqty');
             let calculatedBqty = quantity * bqty;
-            // Round the value to 2 decimal places and handle values like 2.99999 as 3
-            calculatedBqty = Math.round(calculatedBqty * 100) / 100;
-            $(this).closest('tr').find('.bqty-input').val(calculatedBqty.toFixed(2));
+            // Use ceil to get whole boxes needed (round up for partial boxes)
+            calculatedBqty = Math.ceil(calculatedBqty);
+            $(this).closest('tr').find('.bqty-input').val(calculatedBqty);
             updateTotals();
         });
 
@@ -1815,7 +1553,8 @@ $(document).ready(function () {
         function loadProductsBasedOnOrder() {
             var orderId = $('#order_id').val();
             $.ajax({
-                url: ajaxPTUrl,
+                // Use original route for order-based products
+                url: ajaxPTUrl.replace('ajaxPTStock', 'ajaxPT'),
                 type: "GET",
                 data: { orderId: orderId },
                 dataType: "json",
@@ -1823,6 +1562,23 @@ $(document).ready(function () {
                     $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
                     response.data.forEach(function (item) {
                         var optionText = item.article_no + ' - Size ' + item.hname;
+                        $('#product_type_id').append(new Option(optionText, item.product_type_id));
+                    });
+                    $('#product_type_id').trigger('change');
+                }
+            });
+        }
+
+        // Function to load all products with stock (for issuance forms)
+        function loadAllProductsWithStock() {
+            $.ajax({
+                url: ajaxPTUrl, // This now points to ajaxPTStock route
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
+                    response.data.forEach(function (item) {
+                        var optionText = item.article_no + ' - ' + item.name + ' (Size: ' + item.sname + ')';
                         $('#product_type_id').append(new Option(optionText, item.product_type_id));
                     });
                     $('#product_type_id').trigger('change');
@@ -1883,6 +1639,12 @@ $(document).ready(function () {
 
         // Define stageStockInfo outside of the event listeners
         var stageStockInfo = {};
+
+        // Load all products with stock on page load for issuance forms
+        if (typeof isIGroupPage === 'undefined' && typeof isIssuePage !== 'undefined') {
+            // This is an issuance page, load all products with stock
+            loadAllProductsWithStock();
+        }
 
         // Event listener for change in product type
         if (typeof isIGroupPage === 'undefined') {

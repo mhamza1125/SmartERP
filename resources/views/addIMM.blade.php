@@ -171,7 +171,8 @@
   var stockData = @json($stock);
   // Following are needed in other Issuance Page
   var pstockData = @json($pstock);
-  var ajaxPTUrl = "{{ route('ajaxPT') }}";
+  // var ajaxPTUrl = "{{ route('ajaxPT') }}";
+  var ajaxPTUrl = "{{ route('ajaxPTStock') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";
 </script>

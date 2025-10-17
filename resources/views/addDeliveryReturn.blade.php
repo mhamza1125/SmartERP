@@ -17,11 +17,30 @@
               <div class="col-md-12">
                 <div class="card bg-light">
                   <div class="card-body">
-                    <h5>Delivery Information</h5>
+                    <h5>Delivery Information
+                      @if(isset($isMultiOrder) && $isMultiOrder)
+                        <span class="badge badge-secondary ml-2">Multi-Order</span>
+                      @endif
+                    </h5>
                     <div class="row">
                       <div class="col-md-6">
-                        <strong>Order No:</strong> {{ $delivery->order_no }}<br>
-                        <strong>Job No:</strong> {{ $delivery->job_no }}<br>
+                        @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
+                          <strong>Primary Order:</strong> {{ $delivery->order_no }}<br>
+                          <strong>Primary Job No:</strong> {{ $delivery->job_no }}<br>
+                          <strong>All Orders:</strong>
+                          @foreach($relatedOrders as $index => $order)
+                            @if($index < 3)
+                              <span class="badge badge-secondary mr-1">{{ $order->order_no ?? 'N/A' }}</span>
+                            @endif
+                          @endforeach
+                          @if(count($relatedOrders) > 3)
+                            <span class="badge badge-light">+{{ count($relatedOrders) - 3 }} more</span>
+                          @endif
+                          <br>
+                        @else
+                          <strong>Order No:</strong> {{ $delivery->order_no }}<br>
+                          <strong>Job No:</strong> {{ $delivery->job_no }}<br>
+                        @endif
                         <strong>Customer:</strong> {{ $delivery->fname }} {{ $delivery->lname }}
                       </div>
                       <div class="col-md-6">

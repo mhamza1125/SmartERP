@@ -240,6 +240,7 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('user') }}">Users</a></li>
                 <li><a class="nav-link" href="{{ route('role') }}">Roles & Permissions</a></li>
+                <li><a class="nav-link" href="{{ route('company') }}">Company</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 <li><a class="nav-link" href="{{ route('workTime') }}">Work Hours</a></li>
@@ -391,6 +392,8 @@
   <script src="{{ URL::asset('assets/js/page/index.js') }}"></script>
   <!-- Template JS File -->
   <script src="{{ URL::asset('assets/js/scripts.js') }}"></script>
+  <!-- Print JS File -->
+  <script src="{{ URL::asset('assets/js/print.js') }}"></script>
   <!-- Custom JS File -->
   <script src="{{ URL::asset('assets/js/custom.js') }}"></script>
 

@@ -254,6 +254,52 @@ class TransactionController extends Controller
         return response()->json(['data' => $bank]);
     }
 
+    public function ajaxBalance(Request $request)
+    {
+        $table = $request->input('table');
+        $tableId = $request->input('tableId');
+
+        if (!$table || !$tableId) {
+            return response()->json(['balance' => 0, 'error' => 'Invalid parameters']);
+        }
+
+        try {
+            $balance = 0;
+
+            switch ($table) {
+                case 'customer':
+                    $detail = $this->transactionRepository->cDetail($tableId);
+                    $totalCredit = $detail->sum('credit');
+                    $totalDebit = $detail->sum('debit');
+                    $balance = $totalCredit - $totalDebit; // Positive = customer owes us
+                    break;
+
+                case 'employee':
+                    $detail = $this->transactionRepository->eDetail($tableId);
+                    $totalCredit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance'])->sum('credit');
+                    $totalDebit = $detail->whereIn('transaction_type', ['advance', 'receiveAdvance', 'openingBalance', 'wages'])->sum('debit');
+                    $balance = $totalCredit - $totalDebit; // Positive = we owe employee
+                    break;
+
+                case 'vendor':
+                    $detail = $this->transactionRepository->vDetail($tableId);
+                    $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
+                    $totalDebit = $detail->whereIn('transaction_type', ['wages'])->sum('debit') +
+                                 $detail->where('transaction_type', '!=', 'wages')->sum('debit');
+                    $balance = $totalCredit - $totalDebit; // Positive = we owe vendor/contractor
+                    break;
+
+                default:
+                    return response()->json(['balance' => 0, 'error' => 'Invalid table']);
+            }
+
+            return response()->json(['balance' => $balance]);
+
+        } catch (\Exception $e) {
+            return response()->json(['balance' => 0, 'error' => 'Error calculating balance']);
+        }
+    }
+
     public function ajaxOrder(Request $request)
     {
         $customerId = $request->input('customerId');

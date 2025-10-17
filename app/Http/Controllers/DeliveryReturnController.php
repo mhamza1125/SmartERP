@@ -78,6 +78,13 @@ class DeliveryReturnController extends Controller
             return $item->returnable_qty > 0;
         });
 
+        // Detect if this is a multi-order delivery and get related orders
+        $isMultiOrder = $this->isMultiOrderDelivery($delivery);
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($delivery);
+        }
+
         // Generate return number
         $returnNo = $this->generateReturnNo($deliveryId);
 
@@ -85,6 +92,8 @@ class DeliveryReturnController extends Controller
             'delivery' => $delivery,
             'returnableItems' => $returnableItems,
             'returnNo' => $returnNo,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
         ]);
     }
 
@@ -252,7 +261,83 @@ class DeliveryReturnController extends Controller
     {
         $yearMonth = Carbon::now()->format('ym');
         $count = DB::table('delivery_returns')->where('delivery_id', $deliveryId)->count();
-        
+
         return 'DR-' . $yearMonth . '-' . str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Check if a delivery is a multi-order delivery
+     */
+    private function isMultiOrderDelivery($delivery)
+    {
+        if (!$delivery) return false;
+
+        $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
+
+        // Check for multi-order patterns in stock_no
+        if (strpos($stockNo, ',') !== false ||
+            stripos($stockNo, 'Multi') !== false ||
+            stripos($stockNo, 'combined') !== false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get related orders for a multi-order delivery
+     */
+    private function getRelatedOrdersForDelivery($delivery)
+    {
+        if (!$delivery) return [];
+
+        $customerId = is_array($delivery) ? ($delivery['customer_id'] ?? null) : ($delivery->customer_id ?? null);
+        $stockDate = is_array($delivery) ? ($delivery['stock_date'] ?? null) : ($delivery->stock_date ?? null);
+        $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
+        $stockId = is_array($delivery) ? ($delivery['stock_id'] ?? null) : ($delivery->stock_id ?? null);
+
+        if (!$customerId || !$stockId) return [];
+
+        try {
+            // If stock_no contains multi-order patterns, try to extract order numbers
+            if (strpos($stockNo, ',') !== false || stripos($stockNo, 'Multi-Order') !== false) {
+                $orderNumbers = [];
+
+                // Handle "Multi-Order: Order1, Order2" format
+                if (stripos($stockNo, 'Multi-Order:') !== false) {
+                    $orderPart = substr($stockNo, stripos($stockNo, ':') + 1);
+                    $orderNumbers = explode(',', $orderPart);
+                } else {
+                    // Handle direct comma-separated format
+                    $orderNumbers = explode(',', $stockNo);
+                }
+
+                $orderNumbers = array_map('trim', $orderNumbers);
+                $orderNumbers = array_filter($orderNumbers); // Remove empty values
+
+                if (!empty($orderNumbers)) {
+                    $ordersFromStockNo = \DB::table('orders')
+                        ->whereIn('order_no', $orderNumbers)
+                        ->get();
+
+                    if ($ordersFromStockNo->count() > 0) {
+                        return $ordersFromStockNo->toArray();
+                    }
+                }
+            }
+
+            // Fallback: Look for orders with similar dates and same customer
+            $relatedOrders = \DB::table('orders')
+                ->where('customer_id', $customerId)
+                ->where('order_date', '>=', \Carbon\Carbon::parse($stockDate ?? now())->subDays(30))
+                ->where('order_date', '<=', \Carbon\Carbon::parse($stockDate ?? now())->addDays(7))
+                ->where('order_status', '!=', 'Cancelled')
+                ->get();
+
+            return $relatedOrders->toArray();
+
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 }

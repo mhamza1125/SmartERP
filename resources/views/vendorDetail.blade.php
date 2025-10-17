@@ -81,7 +81,10 @@
                     @if($detail->count())
                     @foreach($detail as $item)
                       @php
-                        if (!isset($item->transaction_type) || $item->transaction_type != 'wages') {
+                        // Include wages in balance calculation
+                        if (isset($item->transaction_type) && $item->transaction_type == 'wages') {
+                          isset($item->debit) ? $balance -= $item->debit : '';
+                        } else {
                           isset($item->debit) ? $balance -= $item->debit : '';
                           isset($item->credit) ? $balance += $item->credit : '';
                         }
@@ -102,6 +105,23 @@
                           @if(isset($item->transaction_type))
                             @if($item->transaction_type == 'openingBalance')
                               <a href="#" class="btn btn-info btn-sm">View</a>
+                            @elseif($item->transaction_type == 'wages')
+                              <div>
+                                <span class="badge badge-success mb-1">{{ $item->stock_no ?? 'N/A' }}</span><br>
+                                <small class="text-muted">
+                                  <strong>{{ $item->item_count ?? 1 }} items</strong> - Total Wages: {{ number_format($item->debit) }}
+                                </small><br>
+                                <div class="btn-group mt-1">
+                                  @if(isset($item->stock_id))
+                                    <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-xs">View</a>
+                                  @endif
+                                  @if(isset($item->wage_details) && !empty($item->wage_details) && isset($item->stock_id))
+                                    <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#wagesModal{{ $item->stock_id }}">
+                                      <i class="fas fa-info-circle"></i> Info
+                                    </button>
+                                  @endif
+                                </div>
+                              </div>
                             @else
                               <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @endif
@@ -146,4 +166,69 @@
     </div>
   </div>
 </section>
+
+{{-- Wages Detail Modals --}}
+@if($detail->count())
+  @foreach($detail as $item)
+    @if(isset($item->transaction_type) && $item->transaction_type == 'wages' && isset($item->wage_details))
+      <div class="modal fade" id="wagesModal{{ $item->stock_id }}" tabindex="-1" role="dialog" aria-labelledby="wagesModalLabel{{ $item->stock_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="wagesModalLabel{{ $item->stock_id }}">
+                Wages Details - {{ $item->stock_no }}
+              </h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                  <thead>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Article No</th>
+                      <th>Size</th>
+                      <th>Stage</th>
+                      <th>Quantity</th>
+                      <th>Wages (PKR)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @php $totalWages = 0; @endphp
+                    @foreach($item->wage_details as $index => $detail)
+                      @php $totalWages += $detail['wages']; @endphp
+                      <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $detail['article_no'] }}</td>
+                        <td>{{ $detail['size_name'] }}</td>
+                        <td>{{ $detail['stage_name'] }}</td>
+                        <td>{{ $detail['quantity'] }}</td>
+                        <td>{{ number_format($detail['wages']) }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                  <tfoot>
+                    <tr class="table-info">
+                      <th colspan="5">Total Wages:</th>
+                      <th>{{ number_format($totalWages) }}</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            <div class="modal-footer">
+              @if(isset($item->stock_id))
+                <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info">View Full Issuance</a>
+              @endif
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    @endif
+  @endforeach
+@endif
+
 @endsection

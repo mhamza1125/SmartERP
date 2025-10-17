@@ -91,6 +91,13 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
+                    <label>Outstanding Balance</label>
+                    <input type="text" class="form-control" id="outstanding_balance" readonly placeholder="Select customer to see balance">
+                    <small class="form-text text-muted">Positive amount = Customer owes us</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
                     <label>Net Amount Received <span class="text-danger">*</span></label>
                     <input type="number" min="0" step="0.01" class="form-control" name="credit" id="credit" required value="{{ old('credit') }}">
                     <div class="valid-feedback">Good job!</div>
@@ -181,6 +188,8 @@
     document.getElementById('credit').value = netAmount.toFixed(2);
   }
 
+  var ajaxBalanceUrl = "{{ route('ajaxBalance') }}";
+
   // Add event listeners when document is ready
   document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('gross_amount').addEventListener('input', calculateNetAmount);
@@ -190,6 +199,43 @@
     document.getElementById('credit').addEventListener('input', function() {
       const creditValue = parseFloat(this.value) || 0;
       document.getElementById('net_amount').value = creditValue.toFixed(2);
+    });
+
+    // Fetch balance when customer is selected
+    $('#payee_id').on('change', function() {
+      var customerId = $(this).val();
+      if (customerId) {
+        $.ajax({
+          url: ajaxBalanceUrl,
+          type: "GET",
+          data: { tableId: customerId, table: 'customer' },
+          dataType: "json",
+          success: function(response) {
+            if (response.balance !== undefined) {
+              var balance = parseFloat(response.balance);
+              var balanceText = 'PKR ' + balance.toLocaleString();
+              if (balance > 0) {
+                balanceText += ' (Customer owes us)';
+                $('#outstanding_balance').removeClass('text-danger').addClass('text-success');
+              } else if (balance < 0) {
+                balanceText += ' (We owe customer)';
+                $('#outstanding_balance').removeClass('text-success').addClass('text-danger');
+              } else {
+                balanceText += ' (Balanced)';
+                $('#outstanding_balance').removeClass('text-success text-danger');
+              }
+              $('#outstanding_balance').val(balanceText);
+            } else {
+              $('#outstanding_balance').val('Error loading balance');
+            }
+          },
+          error: function() {
+            $('#outstanding_balance').val('Error loading balance');
+          }
+        });
+      } else {
+        $('#outstanding_balance').val('');
+      }
     });
   });
 </script>

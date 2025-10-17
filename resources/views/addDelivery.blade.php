@@ -5,46 +5,115 @@
     <div class="row">
       <div class="col-12">
         <div class="card">
-          <div class="card-header">
-            <h4>Add Delivery</h4>
+          <div class="card-header {{ isset($isMultiOrder) && $isMultiOrder ? 'bg-info text-white' : '' }}">
+            <h4>
+              @if(isset($isMultiOrder) && $isMultiOrder)
+                <i class="fas fa-shipping-fast"></i>
+                @if(isset($editMode) && $editMode)
+                  Edit Multi-Order Delivery
+                @else
+                  Create Multi-Order Delivery
+                @endif
+              @else
+                Add Delivery
+              @endif
+            </h4>
             <div class="card-header-action">
-              <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+              @if(isset($isMultiOrder) && $isMultiOrder)
+                <span class="badge badge-light badge-lg mr-2">{{ count($orders) }} Orders Combined</span>
+              @endif
+              <a href="{{ url()->previous() }}" class="btn {{ isset($isMultiOrder) && $isMultiOrder ? 'btn-light' : 'btn-primary' }}">Back</a>
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('delivery.store') }}" method="POST" class="needs-validation" novalidate="">
-              @csrf
-              <div class="row">
-                <div class="col-md-7">
-                  <table class="table table-sm">
-                    <tbody>
-                      <tr><td><b>Customer No:</b> {{$order['customer_no']}}</td></tr>
-                      <tr><td><b>Customer Name:</b> {{$order['fname']}} {{$order['lname']}}</td></tr>
-                    </tbody>
-                  </table>
+            @if(isset($editMode) && $editMode && isset($existingDelivery))
+              <form action="{{ route('delivery.update', $existingDelivery['delivery_id']) }}" method="POST" class="needs-validation" novalidate="">
+                @csrf
+            @else
+              <form action="{{ route('delivery.store') }}" method="POST" class="needs-validation" novalidate="">
+                @csrf
+            @endif
+
+              @if(isset($isMultiOrder) && $isMultiOrder)
+                <!-- Multi-Order Delivery Summary -->
+                <div class="card bg-light mb-4">
+                  <div class="card-body">
+                  <div class="row align-items-center">
+                    <div class="col-md-8">
+                      <h5 class="mb-1"><i class="fas fa-boxes"></i> Multi-Order Delivery Summary <span class="badge badge-secondary ml-2">Multi-Order</span></h5>
+                      <p class="mb-0">
+                        <strong>Customer:</strong> {{ $customer->fname }} {{ $customer->lname }} ({{ $customer->customer_no }}) |
+                        <strong>Total Orders:</strong> {{ count($orders) }} |
+                        <strong>Order Numbers:</strong>
+                        @foreach($orders as $index => $order)
+                          <span class="badge badge-secondary">{{ $order->order_no }}</span>{{ $index < count($orders) - 1 ? ', ' : '' }}
+                        @endforeach
+                      </p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                      <div class="text-muted small">
+                        <strong>Job Numbers:</strong><br>
+                        @foreach($orders as $index => $order)
+                          {{ $order->job_no }}{{ $index < count($orders) - 1 ? ', ' : '' }}
+                        @endforeach
+                      </div>
+                    </div>
+                  </div>
+                  </div>
                 </div>
-                <div class="col-md-5">
-                  <table class="table table-sm">
-                    <tbody>
-                      <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
-                      <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                      <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
-                    </tbody>
-                  </table>
+
+                <!-- Hidden field for multi-order delivery -->
+                <input type="hidden" name="order_ids" value="{{ $orderIds }}">
+                <input type="hidden" name="order_id" value="{{ $orders[0]->order_id }}">
+              @else
+                <!-- Single Order Information -->
+                <div class="row">
+                  <div class="col-md-7">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr><td><b>Customer No:</b> {{$order['customer_no']}}</td></tr>
+                        <tr><td><b>Customer Name:</b> {{$order['fname']}} {{$order['lname']}}</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="col-md-5">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
+                        <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
+                        <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              @endif
 
               <h5 class="mt-2">Delivery Information</h5>
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Delivery No</label>
-                    <input type="hidden" name="order_id" value="{{$order['order_id']}}" required>
+                    @if(!isset($isMultiOrder) || !$isMultiOrder)
+                      <input type="hidden" name="order_id" value="{{$order['order_id']}}" required>
+                    @else
+                      <!-- Multi-order delivery: use first order as primary and pass all order IDs -->
+                      <input type="hidden" name="order_id" value="{{$orders[0]['order_id']}}" required>
+                      <input type="hidden" name="order_ids" value="{{$orderIds}}" required>
+                    @endif
                     <input type="hidden" name="table_name" value="delivery" required>
                     <input type="hidden" name="employee_id" value="0" required>
                     <input type="hidden" name="stock_type" value="2" required>
                     <input type="hidden" name="stock_status" required value="3">
-                    <input type="text" class="form-control" name="stock_no" placeholder="Delivery No" required value="{{old('stock_no')}}">
+                    @if(isset($isMultiOrder) && $isMultiOrder && isset($orders) && count($orders) > 1)
+                      @php
+                        $orderNumbers = collect($orders)->pluck('order_no')->toArray();
+                        $multiOrderStockNo = 'Multi-Order: ' . implode(', ', $orderNumbers);
+                      @endphp
+                      <input type="text" class="form-control" name="stock_no" placeholder="Delivery No" required value="{{old('stock_no', $multiOrderStockNo)}}" readonly>
+                      <small class="form-text text-muted">Auto-generated for multi-order delivery</small>
+                    @else
+                      <input type="text" class="form-control" name="stock_no" placeholder="Delivery No" required value="{{old('stock_no')}}">
+                    @endif
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Delivery No</div>
                   </div>
@@ -91,6 +160,68 @@
                 </div>
               </div>
 
+              <!-- Multi-Order Delivery Section -->
+              <h5 class="mt-3">Multi-Order Delivery (Optional)</h5>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Select Additional Orders from Same Customer</label>
+                    <div class="card bg-light">
+                      <div class="card-body">
+                        <i class="fas fa-info-circle"></i> You can select multiple orders from the same customer to create a combined delivery.
+                      </div>
+                    </div>
+                    @if(isset($customerOrders) && $customerOrders->count() > 1)
+                      <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                          <thead>
+                            <tr>
+                              <th width="50">Select</th>
+                              <th>Order No</th>
+                              <th>Job No</th>
+                              <th>Order Date</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($customerOrders as $customerOrder)
+                              <tr>
+                                <td>
+                                  <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="selected_orders[]" value="{{$customerOrder->order_id}}"
+                                           id="order_{{$customerOrder->order_id}}"
+                                           {{$customerOrder->order_id == $order['order_id'] ? 'checked disabled' : ''}}>
+                                    <label class="form-check-label" for="order_{{$customerOrder->order_id}}"></label>
+                                  </div>
+                                </td>
+                                <td>{{$customerOrder->order_no}}</td>
+                                <td>{{$customerOrder->job_no}}</td>
+                                <td>{{$customerOrder->order_date}}</td>
+                                <td>
+                                  @if($customerOrder->order_status == 1) <span class="badge badge-warning">Pending</span>
+                                  @elseif($customerOrder->order_status == 2) <span class="badge badge-info">Processing</span>
+                                  @elseif($customerOrder->order_status == 3) <span class="badge badge-secondary">On Hold</span>
+                                  @elseif($customerOrder->order_status == 4) <span class="badge badge-primary">Partially Delivered</span>
+                                  @elseif($customerOrder->order_status == 5) <span class="badge badge-success">Delivered</span>
+                                  @elseif($customerOrder->order_status == 6) <span class="badge badge-dark">Completed</span>
+                                  @elseif($customerOrder->order_status == 7) <span class="badge badge-danger">Cancelled</span>
+                                  @else <span class="badge badge-light">Unknown</span>
+                                  @endif
+                                </td>
+                              </tr>
+                            @endforeach
+                          </tbody>
+                        </table>
+                      </div>
+                    @else
+                      <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No other orders found for this customer.
+                      </div>
+                    @endif
+                  </div>
+                </div>
+              </div>
+
               <h6 class="mt-2">Shipping From</h6>
               <div class="row">
                 <div class="col-md-6">
@@ -127,8 +258,60 @@
                   <input type="text" class="form-control" name="tport_no" placeholder="Port No" value="{{old('tport_no')}}">
                 </div>
               </div>
-              
-              <h5 class="mt-4">Ordered Items / Products</h5>
+
+              <h6 class="mt-4">Commercial Invoice Information</h6>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>FI No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{old('fi_no')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>REX No <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{old('rex_no')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>NTN <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control" name="ntn" placeholder="NTN Number" value="{{old('ntn')}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Delivery Status</label>
+                    <select class="form-control select2" name="delivery_status" required>
+                      <option value="" selected disabled>Select Status</option>
+                      <option value="1">Pending</option>
+                      <option value="2">In Transit</option>
+                      <option value="3">Delivered</option>
+                      <option value="4">Cancelled</option>
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Delivery Status</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Statement of Origin <small class="text-muted">(Optional)</small></label>
+                    <textarea class="form-control" name="so_origin" rows="3" placeholder="Statement of Origin for commercial invoice">{{old('so_origin')}}</textarea>
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+
+              @if(isset($isMultiOrder) && $isMultiOrder)
+                <h5 class="mt-4"><i class="fas fa-list-alt"></i> Selected Orders <span class="badge badge-info">{{ count($orders) }} Orders Combined</span></h5>
+              @else
+                <h5 class="mt-4">Ordered Items / Products</h5>
+              @endif
               <div class="row">
                 <div class="col-md-12">
                   <table class="table table-sm table-striped">                    
@@ -147,37 +330,86 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @if($stock->count())
-                      @php $index = 1; @endphp
-                        @foreach($stock as $item)
-                          @unless(($item->stockIn - $item->stockOut) <= 0)
-                            <tr>
-                              <td>{{$index++}}</td>
-                              <td>{{$item->article_no}} - Size {{$item->sname}}
-                                <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}" required>
-                                <input type="hidden" name="material_id[]" value="0" required>
-                              </td>
-                              <td>{{$item->stname}}
-                                <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
-                              </td>
-                              <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivred)}}</td>
-                              <td>{{number_format($item->quantity - $item->stockOutDelivred)}}</td>
-                              <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
-                              <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
-                              <td class="form-group">
-                                {{-- <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}"> --}}
-                                <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
-                              </td>
-                              <td class="form-group">
-                                <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
-                              </td>
-                              <td>
-                                <button class="btn btn-success btn-sm maxBtn">Max</button>
-                                <button class="btn btn-warning btn-sm zeroBtn">Zero</button>
-                              </td>
-                            </tr>
-                          @endunless
-                        @endforeach
+                      @if(isset($isMultiOrder) && $isMultiOrder)
+                        @if(isset($orderItems) && count($orderItems) > 0)
+                          @php
+                            $aggregatedItems = [];
+                            foreach($orderItems as $item) {
+                              $item = (object) $item;
+                              $key = $item->product_type_id . '_' . $item->stage_id;
+                              if (!isset($aggregatedItems[$key])) {
+                                $aggregatedItems[$key] = $item;
+                              } else {
+                                $aggregatedItems[$key]->quantity += $item->quantity;
+                                $aggregatedItems[$key]->stockOutDelivered += $item->stockOutDelivered;
+                                $aggregatedItems[$key]->stockIn += $item->stockIn;
+                                $aggregatedItems[$key]->stockOut += $item->stockOut;
+                              }
+                            }
+                            $index = 1;
+                          @endphp
+                          @foreach($aggregatedItems as $item)
+                            @unless(($item->stockIn - $item->stockOut) <= 0)
+                              <tr>
+                                <td>{{$index++}}</td>
+                                <td>{{$item->article_no}} - Size {{$item->sname}}
+                                  <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}" required>
+                                  <input type="hidden" name="material_id[]" value="0" required>
+                                </td>
+                                <td>{{$item->stname}}
+                                  <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
+                                </td>
+                                <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
+                                <td>{{number_format($item->quantity - $item->stockOutDelivered)}}</td>
+                                <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
+                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
+                                <td class="form-group">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
+                                </td>
+                                <td class="form-group">
+                                  <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
+                                </td>
+                                <td>
+                                  <button class="btn btn-success btn-sm maxBtn">Max</button>
+                                  <button class="btn btn-warning btn-sm zeroBtn">Zero</button>
+                                </td>
+                              </tr>
+                            @endunless
+                          @endforeach
+                        @endif
+                      @else
+                        @if($stock->count())
+                        @php $index = 1; @endphp
+                          @foreach($stock as $item)
+                            @unless(($item->stockIn - $item->stockOut) <= 0)
+                              <tr>
+                                <td>{{$index++}}</td>
+                                <td>{{$item->article_no}} - Size {{$item->sname}}
+                                  <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}" required>
+                                  <input type="hidden" name="material_id[]" value="0" required>
+                                </td>
+                                <td>{{$item->stname}}
+                                  <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
+                                </td>
+                                <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
+                                <td>{{number_format($item->quantity - $item->stockOutDelivered)}}</td>
+                                <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
+                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
+                                <td class="form-group">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
+                                </td>
+                                <td class="form-group">
+                                  <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
+                                </td>
+                                <td>
+                                  <button class="btn btn-success btn-sm maxBtn">Max</button>
+                                  <button class="btn btn-warning btn-sm zeroBtn">Zero</button>
+                                </td>
+                              </tr>
+                            @endunless
+                          @endforeach
+                        @endif
+                      @endif
                         <tr>
                           <td></td>
                           <td></td>
@@ -189,7 +421,6 @@
                           <th> Total Boxes: <span id="totalBqty">0</span> </th>
                           <td></td>
                         </tr>
-                      @endif
                     </tbody>
                     <tfoot>
                       <tr>
@@ -437,5 +668,57 @@
     </div>
   </div>
 </section>
-<script> var isDeliveryPage = false; </script>
+<script>
+var isDeliveryPage = false;
+
+// Multi-Order Selection Enhancement
+$(document).ready(function() {
+    // Add "Select All" functionality
+    if ($('input[name="selected_orders[]"]').length > 1) {
+        var selectAllHtml = `
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="select_all_orders">
+                <label class="form-check-label" for="select_all_orders">
+                    <strong>Select All Orders</strong>
+                </label>
+            </div>
+        `;
+        $('input[name="selected_orders[]"]').first().closest('table').before(selectAllHtml);
+
+        // Select All functionality
+        $('#select_all_orders').on('change', function() {
+            var isChecked = $(this).is(':checked');
+            $('input[name="selected_orders[]"]:not(:disabled)').prop('checked', isChecked);
+        });
+
+        // Update Select All when individual checkboxes change
+        $('input[name="selected_orders[]"]').on('change', function() {
+            var totalCheckboxes = $('input[name="selected_orders[]"]:not(:disabled)').length;
+            var checkedCheckboxes = $('input[name="selected_orders[]"]:not(:disabled):checked').length;
+            $('#select_all_orders').prop('checked', totalCheckboxes === checkedCheckboxes);
+        });
+    }
+
+    // Show selected orders count
+    $('input[name="selected_orders[]"]').on('change', function() {
+        var selectedCount = $('input[name="selected_orders[]"]:checked').length;
+        var totalCount = $('input[name="selected_orders[]"]').length;
+
+        // Update or create status message
+        var statusMsg = `Selected ${selectedCount} of ${totalCount} orders for this delivery.`;
+        if ($('#order-selection-status').length) {
+            $('#order-selection-status').text(statusMsg);
+        } else {
+            $('input[name="selected_orders[]"]').first().closest('.form-group').append(
+                `<small id="order-selection-status" class="form-text text-muted">${statusMsg}</small>`
+            );
+        }
+    });
+
+    // Trigger initial count
+    if ($('input[name="selected_orders[]"]').length > 0) {
+        $('input[name="selected_orders[]"]').first().trigger('change');
+    }
+});
+</script>
 @endsection

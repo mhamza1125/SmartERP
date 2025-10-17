@@ -205,7 +205,8 @@
   var isIssuePage = false;
   var isIGroupPage = false;
   var ajaxIGUrl = "{{ route('ajaxIG') }}";
-  var ajaxPTUrl = "{{ route('ajaxPT') }}";
+  // var ajaxPTUrl = "{{ route('ajaxPT') }}";
+  var ajaxPTUrl = "{{ route('ajaxPTStock') }}";
   var ajaxPMUrl = "{{ route('ajaxPM') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
   var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";

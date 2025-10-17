@@ -56,12 +56,6 @@
                     @if($order['payment_terms'])
                     <tr><td><b>Payment Terms:</b> {{$order['payment_terms']}}</td></tr>
                     @endif
-                    @if($order['fi_no'])
-                    <tr><td><b>FI No:</b> {{$order['fi_no']}}</td></tr>
-                    @endif
-                    @if($order['rex_no'])
-                    <tr><td><b>REX No:</b> {{$order['rex_no']}}</td></tr>
-                    @endif
                     {{-- @if($order['expected_delivery_date'])
                     <tr><td><b>Expected Delivery:</b> {{$order['expected_delivery_date']}}</td></tr>
                     @endif --}}
@@ -120,6 +114,7 @@
                           <th>Size</th>
                           <th>Unit</th>
                           <th>Quantity</th>
+                          <th>Box Quantity</th>
                           <th>Price (Currency)</th>
                           <th>Exchange (Pkr)</th>
                           <th>Price (Pkr)</th>
@@ -142,6 +137,7 @@
                               <td>{{$item->hname}}</td>
                               <td>{{$item->uname}}</td>
                               <td>{{$item->quantity}}</td>
+                              <td>{{ $item->box_quantity ? number_format($item->box_quantity) . ' boxes' : 'N/A' }}</td>
                               <td>{{$item->price2}} {{$item->cname}}</td>
                               <td>{{$item->exchange}}</td>
                               <td>{{$item->price}}</td>
@@ -156,7 +152,7 @@
                           return $item->quantity * $item->price;
                         }); @endphp
                         <tr>
-                          <th colspan="9"></th>
+                          <th colspan="10"></th>
                           <th>Grand Total:</th>
                           <th>{{ number_format($total) }}</th>
                         </tr>
@@ -175,17 +171,17 @@
                         <tr>
                           <th>Sr.</th>
                           <th>Product</th>
-                          <th>Box Quantity</th>
+                          <th>Pieces/Boxes</th>
                         </tr>
                       </thead>
                       <tbody>
                         @if(isset($packingList['items']) && count($packingList['items']) > 0)
                           @php $index = 1; @endphp
-                          @foreach($packingList['items'] as $product => $boxQty)
+                          @foreach($packingList['items'] as $product => $data)
                             <tr>
                               <td>{{ $index++ }}</td>
                               <td>{{ $product }}</td>
-                              <td>{{ number_format($boxQty) }} boxes</td>
+                              <td>{{ number_format($data['quantity']) }} pcs / {{ number_format($data['boxes'], 2) }} boxes</td>
                             </tr>
                           @endforeach
                         @else
@@ -197,7 +193,7 @@
                       <tfoot>
                         <tr>
                           <th colspan="2">Total:</th>
-                          <th>{{ isset($packingList['total']) ? number_format($packingList['total']) : 0 }} boxes</th>
+                          <th>{{ isset($packingList['totalQuantity']) ? number_format($packingList['totalQuantity']) : 0 }} pcs / {{ isset($packingList['totalBoxes']) ? number_format($packingList['totalBoxes']) : 0 }} boxes</th>
                         </tr>
                       </tfoot>
                     </table>
@@ -230,15 +226,15 @@
                 <label><strong>Invoice Type</strong></label>
                 <div>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="invoice_type" id="commercial" value="commercial" checked>
-                    <label class="form-check-label" for="commercial">
-                      Commercial Invoice
+                    <input class="form-check-input" type="radio" name="invoice_type" id="performa" value="performa" checked>
+                    <label class="form-check-label" for="performa">
+                      Proforma Invoice
                     </label>
                   </div>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="invoice_type" id="performa" value="performa">
-                    <label class="form-check-label" for="performa">
-                      Proforma Invoice
+                    <input class="form-check-input" type="radio" name="invoice_type" id="production" value="production">
+                    <label class="form-check-label" for="production">
+                      Production Order
                     </label>
                   </div>
                 </div>
@@ -306,39 +302,42 @@ function generateInvoice() {
 
     // Validate invoice type selection
     if (!invoiceType) {
-        alert('Please select an invoice type (Commercial or Proforma)');
+        alert('Please select an invoice type (Proforma or Production Order)');
         return;
     }
 
-    // Validate bank selection
-    if (!bankId) {
+    // Validate bank selection (not required for production orders)
+    if (!bankId && invoiceType !== 'production') {
         alert('Please select a bank');
         return;
     }
 
-    // Get selected bank details
-    var selectedOption = $('#bank_select option:selected');
-    var bankDetails = {
-        title: selectedOption.data('title'),
-        account: selectedOption.data('account'),
-        iban: selectedOption.data('iban'),
-        address: selectedOption.data('address'),
-        branch: selectedOption.data('branch'),
-        swift: selectedOption.data('swift')
-    };
+    // Get selected bank details (not needed for production orders)
+    var bankDetails = null;
+    if (invoiceType !== 'production') {
+        var selectedOption = $('#bank_select option:selected');
+        bankDetails = {
+            title: selectedOption.data('title'),
+            account: selectedOption.data('account'),
+            iban: selectedOption.data('iban'),
+            address: selectedOption.data('address'),
+            branch: selectedOption.data('branch'),
+            swift: selectedOption.data('swift')
+        };
 
-    // Validate bank details
-    if (!bankDetails.title || !bankDetails.account) {
-        alert('Selected bank is missing required information. Please select a different bank.');
-        return;
+        // Validate bank details
+        if (!bankDetails.title || !bankDetails.account) {
+            alert('Selected bank is missing required information. Please select a different bank.');
+            return;
+        }
     }
 
     try {
         // Generate invoice based on type
-        if (invoiceType === 'commercial') {
-            printCommercialInvoice(bankDetails, includeSO);
-        } else if (invoiceType === 'performa') {
+        if (invoiceType === 'performa') {
             printPerformaInvoice(bankDetails, includeSO);
+        } else if (invoiceType === 'production') {
+            printProductionOrder();
         } else {
             alert('Invalid invoice type selected');
             return;
@@ -353,18 +352,18 @@ function generateInvoice() {
     }
 }
 
-function printCommercialInvoice(bankDetails, includeSO) {
-    console.log('printCommercialInvoice() called');
-    var title = 'Commercial Invoice';
+function printPerformaInvoice(bankDetails, includeSO) {
+    console.log('printPerformaInvoice() called');
+    var title = 'Proforma Invoice';
     var content = generateInvoiceContent(title, bankDetails, includeSO);
     console.log('Generated content length:', content.length);
     printInvoice(content, title);
 }
 
-function printPerformaInvoice(bankDetails, includeSO) {
-    console.log('printPerformaInvoice() called');
-    var title = 'Proforma Invoice';
-    var content = generateInvoiceContent(title, bankDetails, includeSO);
+function printProductionOrder() {
+    console.log('printProductionOrder() called');
+    var title = 'Production Order';
+    var content = generateProductionOrderContent();
     console.log('Generated content length:', content.length);
     printInvoice(content, title);
 }
@@ -391,10 +390,10 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
         var footerRow = table.querySelector('tfoot tr');
 
         if (headerRow) {
-            // Remove headers: Product Stage (3), Unit (4), Exchange (Pkr) (6), Price (Pkr) (7)
+            // Remove headers: Product Stage (3), Unit (5), Exchange (Pkr) (9), Price (Pkr) (10)
             var headers = headerRow.querySelectorAll('th');
-            if (headers[8]) headers[8].remove(); // Exchange (Pkr)
-            if (headers[7]) headers[7].remove(); // Price (Pkr)
+            if (headers[10]) headers[10].remove(); // Price (Pkr)
+            if (headers[9]) headers[9].remove(); // Exchange (Pkr)
             if (headers[5]) headers[5].remove(); // Unit
             if (headers[3]) headers[3].remove(); // Product Stage
         }
@@ -403,8 +402,8 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
         var bodyRows = table.querySelectorAll('tbody tr');
         bodyRows.forEach(function(row) {
             var cells = row.querySelectorAll('td');
-            if (cells[8]) cells[8].remove(); // Exchange (Pkr)
-            if (cells[7]) cells[7].remove(); // Price (Pkr)
+            if (cells[10]) cells[10].remove(); // Price (Pkr)
+            if (cells[9]) cells[9].remove(); // Exchange (Pkr)
             if (cells[5]) cells[5].remove(); // Unit
             if (cells[3]) cells[3].remove(); // Product Stage
         });
@@ -413,7 +412,7 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
         if (footerRow) {
             var footerCells = footerRow.querySelectorAll('th');
             if (footerCells[0]) {
-                footerCells[0].setAttribute('colspan', '5'); // Adjust colspan after removing columns
+                footerCells[0].setAttribute('colspan', '6'); // Adjust colspan after removing columns (was 10, now 6 after removing 4 columns)
             }
         }
     }
@@ -455,8 +454,92 @@ function generateInvoiceContent(invoiceType, bankDetails, includeSO) {
     return content;
 }
 
+function generateProductionOrderContent() {
+    // Get order information but exclude customer details, order number, and pricing
+    var orderTable = document.querySelector('.table.table-sm.table-striped');
+
+    // Create production order content without customer details and pricing
+    var content = '<div class="invoice-header" style="text-align: center; margin-bottom: 30px;"><h2>Production Order</h2></div>';
+
+    // Add basic order info (without order number and customer details)
+    content += '<div style="margin: 20px 0;">';
+    content += '<div style="display: flex; justify-content: space-between;">';
+    content += '<div style="width: 48%;">';
+    content += '<h3 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Production Information</h3>';
+    content += '<p><strong>Job No:</strong> {{$order["job_no"]}}</p>';
+    content += '<p><strong>Order Date:</strong> {{$order["order_date"]}}</p>';
+    @if($order['due_date'])
+    content += '<p><strong>Due Date:</strong> {{$order["due_date"]}}</p>';
+    @endif
+    content += '</div>';
+    content += '<div style="width: 48%;">';
+    content += '<h3 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Production Details</h3>';
+    @if($order['description'])
+    content += '<p><strong>Description:</strong></p>';
+    content += '<div style="border: 1px solid #ddd; padding: 10px; margin-top: 5px;">@php echo $order["description"] @endphp</div>';
+    @endif
+    content += '</div>';
+    content += '</div>';
+    content += '</div>';
+
+    // Add items table without pricing columns
+    if (orderTable) {
+        var clonedTable = orderTable.cloneNode(true);
+
+        // Remove price-related columns from header
+        var headerRow = clonedTable.querySelector('thead tr');
+        if (headerRow) {
+            var headers = headerRow.querySelectorAll('th');
+            // Remove Unit Price and Total columns (typically last 2 columns)
+            if (headers.length >= 2) {
+                headers[headers.length - 1].remove(); // Total
+                headers[headers.length - 2].remove(); // Unit Price
+            }
+        }
+
+        // Remove price-related columns from body rows
+        var bodyRows = clonedTable.querySelectorAll('tbody tr');
+        bodyRows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (cells.length >= 2) {
+                cells[cells.length - 1].remove(); // Total
+                cells[cells.length - 2].remove(); // Unit Price
+            }
+        });
+
+        content += clonedTable.outerHTML;
+    }
+
+    return content;
+}
+
 function printInvoice(content, title) {
     console.log('printInvoice() called with title:', title);
+
+    // Fetch company data and generate print document
+    fetch('/company/data')
+        .then(response => response.json())
+        .then(company => {
+            generateOrderPrintDocument(content, title, company);
+        })
+        .catch(error => {
+            console.error('Error fetching company data:', error);
+            // Fallback to default company data
+            const defaultCompany = {
+                name: 'Sajjadson Lab Equipment',
+                address: 'Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan',
+                phone: '+92 52 357 3727',
+                email: 'info@sajjadsonlab.com',
+                website: 'sajjadsonlab.com',
+                logo_path: 'assets/print-logo.png',
+                footer_text: 'Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan'
+            };
+            generateOrderPrintDocument(content, title, defaultCompany);
+        });
+}
+
+function generateOrderPrintDocument(content, title, company) {
+    console.log('generateOrderPrintDocument() called with title:', title);
     console.log('Opening print window...');
 
     var printWindow = window.open('', '_blank');
@@ -514,17 +597,17 @@ function printInvoice(content, title) {
         </head>
         <body>
             <div class="print-header">
-                <img src="/assets/print-logo.png" alt="Company Logo">
-                <h1>Sajjadson Lab Equipment</h1>
-                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
-                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
+                <img src="${window.location.origin}/${company.logo_path}" alt="Company Logo">
+                <h1>${company.name}</h1>
+                <p>${company.address}</p>
+                <p>Phone: ${company.phone} || Email: ${company.email} || Web: ${company.website}</p>
             </div>
             <div class="print-content">
                 ${content}
             </div>
             <div class="print-footer">
-                <p>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</p>
-                <p>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</p>
+                <p>${company.footer_text}</p>
+                <p>Phone: ${company.phone} || Email: ${company.email} || Web: ${company.website}</p>
             </div>
         </body>
         </html>

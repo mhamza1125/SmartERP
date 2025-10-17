@@ -29,9 +29,6 @@ class OrderRequest extends FormRequest
             'order_date' => 'required',
             'due_date' => 'nullable|date|after_or_equal:order_date',
             'payment_terms' => 'nullable|string',
-            'so_origin' => 'nullable|string',
-            'fi_no' => 'nullable|string|max:255',
-            'rex_no' => 'nullable|string|max:255',
             'order_status' => 'required',
             // Purchase Items
             'product_type_id.*' => 'required',

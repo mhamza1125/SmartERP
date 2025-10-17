@@ -19,6 +19,10 @@ class Delivery extends Model
         'tport_no',
         'delivery_method',
         'delivery_status',
+        'fi_no',
+        'rex_no',
+        'ntn',
+        'so_origin',
         'created_by',
         'updated_at',
     ];

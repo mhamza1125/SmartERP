@@ -21,7 +21,27 @@ class OrderItemRepository implements GlobalInterface
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
             ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
             ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
-            ->select('order_items.*', 'product_types.*', 'products.name', 'products.article_no', 'heads.name as hname', 'uhead.name as uname', 'shead.name as sname', 'chead.name as cname')
+            ->leftJoin('product_materials', function($join) {
+                $join->on('product_materials.product_type_id', '=', 'order_items.product_type_id')
+                     ->whereIn('product_materials.material_id', function($query) {
+                         // Get packing box material IDs (material_type_id = 61)
+                         $query->select('material_id')
+                               ->from('materials')
+                               ->where('material_type_id', 61);
+                     });
+            })
+            ->select(
+                'order_items.*',
+                'product_types.*',
+                'products.name',
+                'products.article_no',
+                'heads.name as hname',
+                'uhead.name as uname',
+                'shead.name as sname',
+                'chead.name as cname',
+                'product_materials.quantity as bqty'
+            )
+            ->selectRaw('CEIL(order_items.quantity * COALESCE(product_materials.quantity, 0)) as box_quantity')
             ->orderBy('product_types.product_id')
             ->orderBy('product_types.size_id')
             ->get();

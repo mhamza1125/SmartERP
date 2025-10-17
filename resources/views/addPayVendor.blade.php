@@ -105,12 +105,21 @@
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Amount</label>
+                    <label>Outstanding Balance</label>
+                    <input type="text" class="form-control" id="outstanding_balance" readonly placeholder="Select vendor to see balance">
+                    <small class="form-text text-muted">Positive amount = We owe vendor</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Payment Amount</label>
                     <input type="number" min="0" class="form-control" name="debit" required value="{{ old('debit') }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
                 </div>
+              </div>
+              <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>File / Images</label>
@@ -167,9 +176,49 @@
       updateDisplay();
   });
 
-  var isPayPage = false;
-  var isPayVendorPage = false;
+  var isPayPage = true;
+  var isPayVendorPage = true;
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
   var ajaxPurchaseUrl = "{{ route('ajaxPurchase') }}";
+  var ajaxBalanceUrl = "{{ route('ajaxBalance') }}";
+
+  $(document).ready(function() {
+    // Fetch balance when vendor is selected
+    $('#payee_id').on('change', function() {
+      var vendorId = $(this).val();
+      if (vendorId) {
+        $.ajax({
+          url: ajaxBalanceUrl,
+          type: "GET",
+          data: { tableId: vendorId, table: 'vendor' },
+          dataType: "json",
+          success: function(response) {
+            if (response.balance !== undefined) {
+              var balance = parseFloat(response.balance);
+              var balanceText = 'PKR ' + balance.toLocaleString();
+              if (balance > 0) {
+                balanceText += ' (We owe vendor)';
+                $('#outstanding_balance').removeClass('text-danger').addClass('text-success');
+              } else if (balance < 0) {
+                balanceText += ' (Vendor owes us)';
+                $('#outstanding_balance').removeClass('text-success').addClass('text-danger');
+              } else {
+                balanceText += ' (Balanced)';
+                $('#outstanding_balance').removeClass('text-success text-danger');
+              }
+              $('#outstanding_balance').val(balanceText);
+            } else {
+              $('#outstanding_balance').val('Error loading balance');
+            }
+          },
+          error: function() {
+            $('#outstanding_balance').val('Error loading balance');
+          }
+        });
+      } else {
+        $('#outstanding_balance').val('');
+      }
+    });
+  });
 </script>
 @endsection

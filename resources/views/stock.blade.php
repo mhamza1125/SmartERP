@@ -8,20 +8,7 @@
           <div class="card-header">
             <h4>Available Stock Table</h4>
             <div class="card-header-action">
-              {{-- <div class="btn-group">
-                <div class="dropdown">
-                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-print"></i> Print
-                  </button>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('Available Stock')">Print Page</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('all', 'Material Stock')">Print Material Stock</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('receive', 'Product Stock')">Print Product Stock</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('machine', 'Machine Material')">Print Machine Material</a>
-                  </div>
-                </div> --}}
                 <a href="{{ route('stock.add') }}" class="btn btn-primary">Issue Material</a>
-              {{-- </div> --}}
             </div>
           </div>
           <div class="card-body">

@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProductRequest;
 use App\Models\Product;
-use App\Repositories\CategoryRepository;
-use App\Repositories\HeadRepository;
-use App\Repositories\ImageRepository;
-use App\Repositories\MaterialRepository;
-use App\Repositories\ProductCostRepository;
-use App\Repositories\ProductMaterialRepository;
-use App\Repositories\ProductRepository;
-use App\Repositories\ProductTypeRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\HeadRepository;
+use App\Http\Requests\ProductRequest;
+use App\Repositories\ImageRepository;
+use App\Repositories\ProductRepository;
+use App\Repositories\CategoryRepository;
+use App\Repositories\MaterialRepository;
+use App\Repositories\StockItemRepository;
+use App\Repositories\ProductCostRepository;
+use App\Repositories\ProductTypeRepository;
+use App\Repositories\ProductMaterialRepository;
 
 class ProductController extends Controller
 {
@@ -26,6 +28,8 @@ class ProductController extends Controller
 
     protected $materialRepository;
 
+    protected $stockItemRepository;
+
     protected $productTypeRepository;
 
     protected $productCostRepository;
@@ -36,6 +40,7 @@ class ProductController extends Controller
         HeadRepository $headRepository,
         ImageRepository $imageRepository,
         ProductRepository $productRepository,
+        StockItemRepository $stockItemRepository,
         CategoryRepository $categoryRepository,
         MaterialRepository $materialRepository,
         ProductTypeRepository $productTypeRepository,
@@ -48,6 +53,7 @@ class ProductController extends Controller
         $this->productRepository = $productRepository;
         $this->categoryRepository = $categoryRepository;
         $this->materialRepository = $materialRepository;
+        $this->stockItemRepository = $stockItemRepository;
         $this->productTypeRepository = $productTypeRepository;
         $this->productCostRepository = $productCostRepository;
         $this->productMaterialRepository = $productMaterialRepository;
@@ -89,9 +95,48 @@ class ProductController extends Controller
         $stageIds = $request->input('stage_ids');
         $validatedData['stage_ids'] = $stageIds ? implode('|', $stageIds) : '0';
         $getId = $this->productRepository->store($validatedData);
+
+        // Store product types (sizes)
+        $productTypeIds = [];
         foreach ($request->input('size_id') as $size_id) {
             $productType = ['product_id' => $getId, 'size_id' => $size_id];
-            $this->productTypeRepository->store($productType);
+            $productTypeId = $this->productTypeRepository->store($productType);
+            $productTypeIds[] = $productTypeId;
+        }
+
+        // Create size and stage-specific opening stock entries
+        $openingStockSizeIds = $request->input('opening_stock_size_id', []);
+        $openingStockStageIds = $request->input('opening_stock_stage_id', []);
+        $openingStockQuantities = $request->input('opening_stock_quantity', []);
+
+        if (!empty($openingStockSizeIds) && !empty($openingStockStageIds) && !empty($openingStockQuantities)) {
+            // Create a mapping of size_id to product_type_id
+            $sizeToProductTypeMap = [];
+            foreach ($productTypeIds as $productTypeId) {
+                $productType = DB::table('product_types')->where('product_type_id', $productTypeId)->first();
+                if ($productType) {
+                    $sizeToProductTypeMap[$productType->size_id] = $productTypeId;
+                }
+            }
+
+            foreach ($openingStockSizeIds as $index => $sizeId) {
+                $stageId = $openingStockStageIds[$index] ?? null;
+                $quantity = $openingStockQuantities[$index] ?? 0;
+                $productTypeId = $sizeToProductTypeMap[$sizeId] ?? null;
+
+                if ($sizeId && $stageId && $quantity > 0 && $productTypeId) {
+                    $stockItem = [
+                        'stock_id' => '1', // Opening stock ID
+                        'product_type_id' => $productTypeId,
+                        'material_id' => '0',
+                        'quantity' => $quantity,
+                        'stage_id' => $stageId,
+                        'work_logs' => '0',
+                        'work_wages' => '0',
+                    ];
+                    $this->stockItemRepository->store($stockItem);
+                }
+            }
         }
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -121,6 +166,7 @@ class ProductController extends Controller
         $getMaterial = $this->productMaterialRepository->getAll($id);
         $material = $this->materialRepository->getMaterial($product['material_id']);
         $stage = $this->headRepository->getStage($product['stage_ids']);
+        $openingStock = $this->productRepository->getOpeningStock($id);
 
         return view('productInfo', [
             'product' => $product,
@@ -134,6 +180,7 @@ class ProductController extends Controller
             'getMaterial' => $getMaterial,
             'material' => $material,
             'stage' => $stage,
+            'openingStock' => $openingStock,
         ]);
     }
 
@@ -148,6 +195,7 @@ class ProductController extends Controller
         $pstage = $this->headRepository->getStage($id['stage_ids']);
         $material = $this->materialRepository->all();
         $pmaterial = $this->materialRepository->getMaterial($id['material_id']);
+        $openingStock = $this->productRepository->getOpeningStock($id->product_id);
 
         return view('editProduct', [
             'size' => $size,
@@ -159,6 +207,7 @@ class ProductController extends Controller
             'material' => $material,
             'pmaterial' => $pmaterial,
             'productType' => $productType,
+            'openingStock' => $openingStock,
         ]);
     }
 
@@ -174,6 +223,9 @@ class ProductController extends Controller
         $sizes = $request->input('size_id');
         $this->productTypeRepository->update($getId, $sizes);
 
+        // Update stage-specific opening stock
+        $this->updateStageSpecificOpeningStock($getId, $request);
+
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'product', 'products', $getId);
@@ -187,6 +239,51 @@ class ProductController extends Controller
         }
 
         return redirect()->route('product.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    private function updateStageSpecificOpeningStock($productId, $request)
+    {
+        // Delete existing opening stock entries for this product
+        $productTypeIds = $this->productTypeRepository->active($productId)->pluck('product_type_id');
+
+        foreach ($productTypeIds as $productTypeId) {
+            $this->stockItemRepository->deleteOpeningStock($productTypeId);
+        }
+
+        // Create new size and stage-specific opening stock entries
+        $openingStockSizeIds = $request->input('opening_stock_size_id', []);
+        $openingStockStageIds = $request->input('opening_stock_stage_id', []);
+        $openingStockQuantities = $request->input('opening_stock_quantity', []);
+
+        if (!empty($openingStockSizeIds) && !empty($openingStockStageIds) && !empty($openingStockQuantities)) {
+            // Create a mapping of size_id to product_type_id
+            $sizeToProductTypeMap = [];
+            foreach ($productTypeIds as $productTypeId) {
+                $productType = DB::table('product_types')->where('product_type_id', $productTypeId)->first();
+                if ($productType) {
+                    $sizeToProductTypeMap[$productType->size_id] = $productTypeId;
+                }
+            }
+
+            foreach ($openingStockSizeIds as $index => $sizeId) {
+                $stageId = $openingStockStageIds[$index] ?? null;
+                $quantity = $openingStockQuantities[$index] ?? 0;
+                $productTypeId = $sizeToProductTypeMap[$sizeId] ?? null;
+
+                if ($sizeId && $stageId && $quantity > 0 && $productTypeId) {
+                    $stockItem = [
+                        'stock_id' => '1', // Opening stock ID
+                        'product_type_id' => $productTypeId,
+                        'material_id' => '0',
+                        'quantity' => $quantity,
+                        'stage_id' => $stageId,
+                        'work_logs' => '0',
+                        'work_wages' => '0',
+                    ];
+                    $this->stockItemRepository->store($stockItem);
+                }
+            }
+        }
     }
 
     public function destroy(product $product)

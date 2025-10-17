@@ -84,7 +84,33 @@
                     @else
                       <blockquote> No Stages </blockquote>
                     @endif
-  
+
+                    @if($openingStock->count())
+                      <h5>Opening Stock</h5>
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Size</th>
+                            <th>Stage</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @foreach($openingStock as $item)
+                            <tr>
+                              <td>{{$loop->index + 1}}</td>
+                              <td>{{$item->size_name}}</td>
+                              <td>{{$item->stage_name}}</td>
+                              <td>{{$item->quantity}}</td>
+                            </tr>
+                          @endforeach
+                        </tbody>
+                      </table>
+                    @else
+                      <blockquote> No Opening Stock </blockquote>
+                    @endif
+
                     @if($material->count())
                       <h5>Product Materials</h5>
                       <table class="table table-sm">

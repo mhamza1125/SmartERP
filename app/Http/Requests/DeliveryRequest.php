@@ -25,7 +25,10 @@ class DeliveryRequest extends FormRequest
             // Stock Table
             'stock_no' => 'required|max:255', // Delivery No
             'stock_date' => 'required', // Delivery Date
-            'order_id' => 'required',
+            'order_id' => 'required_without:order_ids', // Required for single order delivery
+            'order_ids' => 'required_without:order_id|string', // Required for multi-order delivery (comma-separated)
+            'selected_orders' => 'nullable|array',
+            'selected_orders.*' => 'nullable|exists:orders,order_id',
             'employee_id' => 'required',
             'table_name' => 'required',
             'stock_type' => 'required',
@@ -38,6 +41,10 @@ class DeliveryRequest extends FormRequest
             'fport_no' => '',
             'delivery_method' => 'required',
             'delivery_status' => 'required',
+            'fi_no' => 'nullable|string|max:255',
+            'rex_no' => 'nullable|string|max:255',
+            'ntn' => 'nullable|string|max:255',
+            'so_origin' => 'nullable|string',
             // Tranaction Table
             'payee_id.*' => '',
             'bank_id.*' => '',

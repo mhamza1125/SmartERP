@@ -10,6 +10,7 @@ use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
 use App\Http\Requests\DeliveryRequest;
+use App\Repositories\CustomerRepository;
 use App\Repositories\DeliveryRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\DeliveryBoxRepository;
@@ -25,6 +26,8 @@ class DeliveryController extends Controller
 
     protected $stockRepository;
 
+    protected $customerRepository;
+
     protected $deliveryRepository;
 
     protected $stockItemRepository;
@@ -38,16 +41,19 @@ class DeliveryController extends Controller
         BankRepository $bankRepository,
         OrderRepository $orderRepository,
         StockRepository $stockRepository,
+        CustomerRepository $customerRepository,
         DeliveryRepository $deliveryRepository,
         StockItemRepository $stockItemRepository,
         DeliveryBoxRepository $deliveryBoxRepository,
         TransactionRepository $transactionRepository,
     ) {
-        $this->middleware(['auth', 'all']);
+        $this->middleware(['auth', 'all'])->except(['getCustomerOrders']);
+        $this->middleware('auth')->only(['getCustomerOrders']);
         $this->headRepository = $headRepository;
         $this->bankRepository = $bankRepository;
         $this->orderRepository = $orderRepository;
         $this->stockRepository = $stockRepository;
+        $this->customerRepository = $customerRepository;
         $this->deliveryRepository = $deliveryRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->deliveryBoxRepository = $deliveryBoxRepository;
@@ -58,9 +64,11 @@ class DeliveryController extends Controller
     {
         $this->authorize('access', Delivery::class);
         $delivery = $this->deliveryRepository->all();
+        $customers = $this->customerRepository->all();
 
         return view('delivery', [
             'delivery' => $delivery,
+            'customers' => $customers,
         ]);
     }
 
@@ -70,15 +78,36 @@ class DeliveryController extends Controller
         $this->authorize('create', Delivery::class);
     }
 
-    public function create2($id)
+    public function create2($id = null)
     {
-        // This is POST method
         $this->authorize('create', Delivery::class);
+
+        // Check if this is a multi-order delivery request
+        $customerId = request()->get('customer_id');
+        $orderIds = request()->get('order_ids');
+        $editDeliveryId = request()->get('edit_delivery_id');
+
+        if ($customerId && $orderIds) {
+            // Multi-order delivery (create or edit)
+            return $this->handleMultiOrderCreate($customerId, $orderIds, $editDeliveryId);
+        } elseif ($id) {
+            // Single order delivery
+            return $this->handleSingleOrderCreate($id);
+        } else {
+            return redirect()->route('delivery')->with('error', 'Invalid delivery request.');
+        }
+    }
+
+    private function handleSingleOrderCreate($id)
+    {
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->orderDelivery($id);
         $vehicle = $this->stockItemRepository->stockVehicle($id);
         $bank = $this->bankRepository->self();
         $expense = $this->headRepository->get('7');
+
+        // Get all orders for the same customer for multi-order delivery option
+        $customerOrders = $this->orderRepository->getOrder($order['customer_id']);
 
         return view('addDelivery', [
             'bank' => $bank,
@@ -86,6 +115,71 @@ class DeliveryController extends Controller
             'order' => $order,
             'stock' => $stock,
             'vehicle' => $vehicle,
+            'customerOrders' => $customerOrders,
+            'isMultiOrder' => false,
+        ]);
+    }
+
+    private function handleMultiOrderCreate($customerId, $orderIdsString, $editDeliveryId = null)
+    {
+        $orderIds = explode(',', $orderIdsString);
+
+        if (!$customerId || empty($orderIds)) {
+            return redirect()->route('delivery')->with('error', 'Invalid customer or orders selected.');
+        }
+
+        // Get customer details
+        $customer = $this->customerRepository->get($customerId);
+        if (!$customer) {
+            return redirect()->route('delivery')->with('error', 'Customer not found.');
+        }
+
+        // Get all selected orders
+        $orders = [];
+        $allOrderItems = [];
+
+        foreach ($orderIds as $orderId) {
+            $order = $this->orderRepository->get($orderId);
+            if ($order) {
+                $orders[] = $order;
+                $orderItems = $this->stockItemRepository->orderDelivery($orderId);
+                // Convert Collection to array before merging
+                $allOrderItems = array_merge($allOrderItems, $orderItems->toArray());
+            }
+        }
+
+        // Get other required data
+        $bank = $this->bankRepository->self();
+        $vehicle = $this->stockItemRepository->stockVehicle($orderIds[0]);
+        $expense = $this->headRepository->get('7');
+
+        // If this is an edit request, get existing delivery data
+        $existingDelivery = null;
+        $deliveryBox = null;
+        $deliveryItem = null;
+        $transaction = null;
+
+        if ($editDeliveryId) {
+            $existingDelivery = $this->deliveryRepository->get($editDeliveryId);
+            $deliveryBox = $this->deliveryBoxRepository->get($editDeliveryId);
+            $deliveryItem = $this->stockItemRepository->delivery($editDeliveryId);
+            $transaction = $this->transactionRepository->delivery($editDeliveryId);
+        }
+
+        return view('addDelivery', [
+            'customer' => $customer,
+            'orders' => $orders,
+            'orderItems' => $allOrderItems,
+            'bank' => $bank,
+            'vehicle' => $vehicle,
+            'expense' => $expense,
+            'isMultiOrder' => true,
+            'orderIds' => $orderIdsString,
+            'editMode' => !is_null($editDeliveryId),
+            'existingDelivery' => $existingDelivery,
+            'deliveryBox' => $deliveryBox,
+            'deliveryItem' => $deliveryItem,
+            'transaction' => $transaction,
         ]);
     }
 
@@ -95,6 +189,27 @@ class DeliveryController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+
+        // Handle multi-order delivery stock number generation
+        $orderIds = $request->input('order_ids');
+        if ($orderIds) {
+            // Multi-order delivery - generate special stock_no with multi-order pattern
+            $orderIdArray = explode(',', $orderIds);
+            $orderNumbers = [];
+
+            foreach ($orderIdArray as $orderId) {
+                $order = $this->orderRepository->get($orderId);
+                if ($order) {
+                    $orderNumbers[] = $order['order_no'];
+                }
+            }
+
+            // Create multi-order stock number with comma-separated order numbers
+            if (!empty($orderNumbers)) {
+                $validatedData['stock_no'] = 'Multi-Order: ' . implode(', ', $orderNumbers);
+            }
+        }
+
         // Stock Items / Delivery Items / Container Vehicles
         $ptid = $request->input('product_type_id');
         $quantities = $request->input('quantity');
@@ -116,7 +231,27 @@ class DeliveryController extends Controller
         // Insertion to DB
         $get = $this->deliveryRepository->store($validatedData);
         $validatedData['delivery_id'] = $get;
-        $this->orderRepository->update($request->input('order_id'), $orderStatus);
+
+        // Handle both single and multi-order deliveries
+        $orderIds = $request->input('order_ids');
+        $selectedOrders = $request->input('selected_orders', []);
+
+        if ($orderIds) {
+            // Multi-order delivery
+            $orderIdArray = explode(',', $orderIds);
+            foreach ($orderIdArray as $orderId) {
+                $this->orderRepository->update($orderId, $orderStatus);
+            }
+        } elseif (!empty($selectedOrders)) {
+            // Multiple orders selected via checkboxes
+            foreach ($selectedOrders as $orderId) {
+                $this->orderRepository->update($orderId, $orderStatus);
+            }
+        } else {
+            // Single order delivery (backward compatibility)
+            $this->orderRepository->update($request->input('order_id'), $orderStatus);
+        }
+
         $this->storeSI($getId, $ptid, $mid, $quantities, $stages); // Delivery Items
         $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
         $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
@@ -132,12 +267,144 @@ class DeliveryController extends Controller
         $transaction = $this->transactionRepository->delivery($id);
         $deliveryBox = $this->deliveryBoxRepository->get($id);
 
+        // Detect if this is a multi-order delivery
+        $isMultiOrder = $this->isMultiOrderDelivery($delivery);
+
+        // If it's a multi-order delivery, get additional information
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($delivery);
+        }
+
+        // Check if this is an edit request from delivery list page
+        if (request()->has('edit') && $isMultiOrder && count($relatedOrders) > 1) {
+            // Redirect to multi-order edit URL
+            $customerId = is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id;
+            $orderIds = collect($relatedOrders)->pluck('order_id')->implode(',');
+            return redirect()->route('delivery.add', [
+                'customer_id' => $customerId,
+                'order_ids' => $orderIds,
+                'edit_delivery_id' => $id
+            ]);
+        }
+
         return view('deliveryInfo', [
             'delivery' => $delivery,
             'deliveryBox' => $deliveryBox,
             'transaction' => $transaction,
             'deliveryItem' => $deliveryItem,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
+            'customerId' => is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id,
+            'deliveryId' => $id,
         ]);
+    }
+
+    private function isMultiOrderDelivery($delivery)
+    {
+        if (!$delivery) return false;
+
+        // Handle both array and object access
+        $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
+        $stockId = is_array($delivery) ? ($delivery['stock_id'] ?? null) : ($delivery->stock_id ?? null);
+
+        if (!$stockId) return false;
+
+        // Check if stock_no contains patterns suggesting multi-order
+        $hasMultiOrderPattern = strpos($stockNo, ',') !== false ||
+                               strpos($stockNo, 'Multi') !== false ||
+                               stripos($stockNo, 'combined') !== false;
+
+        if ($hasMultiOrderPattern) return true;
+
+        // Check if there are many distinct item types (suggesting multiple orders)
+        $distinctItemTypes = \DB::table('stock_items')
+            ->where('stock_id', $stockId)
+            ->distinct()
+            ->count(\DB::raw('CONCAT(product_type_id, "_", stage_id)'));
+
+        // If there are many distinct item types, likely multi-order
+        if ($distinctItemTypes > 3) return true;
+
+        return false;
+    }
+
+    /**
+     * Get related orders for a multi-order delivery
+     */
+    private function getRelatedOrdersForDelivery($delivery)
+    {
+        if (!$delivery) return [];
+
+        // Handle both array and object access
+        $customerId = is_array($delivery) ? ($delivery['customer_id'] ?? null) : ($delivery->customer_id ?? null);
+        $stockDate = is_array($delivery) ? ($delivery['stock_date'] ?? null) : ($delivery->stock_date ?? null);
+        $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
+        $stockId = is_array($delivery) ? ($delivery['stock_id'] ?? null) : ($delivery->stock_id ?? null);
+
+        if (!$customerId || !$stockId) return [];
+
+        try {
+            // Try to find orders that might be related to this delivery
+            // Method 1: Look for orders with similar dates and same customer
+            $relatedOrders = \DB::table('orders')
+                ->where('customer_id', $customerId)
+                ->where('order_date', '>=', \Carbon\Carbon::parse($stockDate ?? now())->subDays(30))
+                ->where('order_date', '<=', \Carbon\Carbon::parse($stockDate ?? now())->addDays(7))
+                ->where('order_status', '!=', 'Cancelled')
+                ->get();
+
+            // Method 2: If stock_no contains multi-order patterns, try to extract order numbers
+            if (strpos($stockNo, ',') !== false || stripos($stockNo, 'Multi-Order') !== false) {
+                $orderNumbers = [];
+
+                // Handle "Multi-Order: Order1, Order2" format
+                if (stripos($stockNo, 'Multi-Order:') !== false) {
+                    $orderPart = substr($stockNo, stripos($stockNo, ':') + 1);
+                    $orderNumbers = explode(',', $orderPart);
+                } else {
+                    // Handle direct comma-separated format
+                    $orderNumbers = explode(',', $stockNo);
+                }
+
+                $orderNumbers = array_map('trim', $orderNumbers);
+                $orderNumbers = array_filter($orderNumbers); // Remove empty values
+
+                if (!empty($orderNumbers)) {
+                    $ordersFromStockNo = \DB::table('orders')
+                        ->whereIn('order_no', $orderNumbers)
+                        ->get();
+
+                    if ($ordersFromStockNo->count() > 0) {
+                        return $ordersFromStockNo->toArray();
+                    }
+                }
+            }
+
+            // Method 3: Look for orders that have stock items in the same stock_id
+            $stockBasedOrders = \DB::table('orders')
+                ->join('stocks', 'stocks.order_id', '=', 'orders.order_id')
+                ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+                ->where('stock_items.stock_id', $stockId)
+                ->select('orders.*')
+                ->distinct()
+                ->get();
+
+            if ($stockBasedOrders->count() > 1) {
+                return $stockBasedOrders->toArray();
+            }
+
+            // Return the most likely related orders
+            return $relatedOrders->take(5)->toArray();
+
+        } catch (\Exception $e) {
+            $deliveryId = is_array($delivery) ? ($delivery['delivery_id'] ?? 'unknown') : ($delivery->delivery_id ?? 'unknown');
+            \Log::error('Error getting related orders for delivery', [
+                'delivery_id' => $deliveryId,
+                'error' => $e->getMessage()
+            ]);
+            return [];
+        }
     }
 
     public function edit($id)
@@ -152,6 +419,15 @@ class DeliveryController extends Controller
         $deliveryBox = $this->deliveryBoxRepository->get($id);
         $transaction = $this->transactionRepository->delivery($id);
 
+        // Detect if this is a multi-order delivery
+        $isMultiOrder = $this->isMultiOrderDelivery($order);
+
+        // If it's a multi-order delivery, get additional information
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($order);
+        }
+
         return view('editDelivery', [
             'bank' => $bank,
             'expense' => $expense,
@@ -161,6 +437,8 @@ class DeliveryController extends Controller
             'deliveryBox' => $deliveryBox,
             'deliveryItem' => $deliveryItem,
             'transaction' => $transaction,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
         ]);
     }
 
@@ -256,6 +534,21 @@ class DeliveryController extends Controller
                 ];
                 $this->deliveryBoxRepository->store($dBoxes);
             }
+        }
+    }
+
+    /**
+     * Get customer orders for AJAX request (for multi-order delivery modal)
+     */
+    public function getCustomerOrders($customerId)
+    {
+        try {
+            // Get non-completed/non-delivered orders for the customer
+            $orders = $this->orderRepository->getCustomerOrders($customerId);
+
+            return response()->json(['data' => $orders]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load customer orders'], 500);
         }
     }
 }
