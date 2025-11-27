@@ -108,6 +108,59 @@ class EmployeeController extends Controller
         ]);
     }
 
+    /**
+     * Print employee information
+     */
+    public function printEmployee($id)
+    {
+        $this->authorize('show', Employee::class);
+        $employee = $this->employeeRepository->get($id);
+        $image = $this->imageRepository->image('employees', $id);
+
+        return view('print.employee', [
+            'employee' => $employee,
+            'image' => $image,
+        ]);
+    }
+
+    /**
+     * Print employee ledger
+     */
+    public function printEmployeeLedger(Request $request, $id)
+    {
+        $this->authorize('show', Employee::class);
+        $this->authorize('show', Transaction::class);
+        $employee = $this->employeeRepository->get($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
+
+        // Get transaction data
+        if (! empty($dfrom) && ! empty($dto)) {
+            $all = $this->transactionRepository->eDetailFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
+        } else {
+            $detail = $this->transactionRepository->eDetail($id);
+        }
+
+        $totalCredit = $detail->sum('credit');
+        $totalDebit = $detail->sum('debit');
+        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+
+        return view('print.employee-ledger', [
+            'employee' => $employee,
+            'detail' => $detail,
+            'balance' => $balance,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+        ]);
+    }
+
     public function detail(Request $request, $id)
     {
         $this->authorize('show', Employee::class);

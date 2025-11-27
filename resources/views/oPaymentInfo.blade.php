@@ -9,9 +9,9 @@
             <h4>Customer Payment Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <button type="button" class="btn btn-info" onclick="printPage('Customer Payment Information')">
-                  <i class="fas fa-print"></i> Print
-                </button>
+                <a class="btn btn-info" href="{{ route('payment.print', $transaction['transaction_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ route('oPayment') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editOPayment', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>
@@ -22,6 +22,7 @@
               <div class="col-md-7">
                 <table class="table table-sm">
                   <tbody>
+                    <tr><td><b>Voucher No:</b> SSL-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
                     @if($transaction['bank_id'])
                     <tr><td><b>Received By:</b> {{$transaction['bname']}}</td></tr>
                     <tr><td><b>Account Title:</b> {{$transaction['account_title']}}</td></tr>
@@ -29,17 +30,17 @@
                     @else
                       <tr><td><b>Received By:</b> Cash Payment</td></tr>
                     @endif
-                    <tr><td><b>Net Amount Received:</b> {{number_format($transaction['credit'])}}</td></tr>
-                    @if($transaction['gross_amount'])
-                    <tr><td><b>Gross Amount (Customer Paid):</b> {{number_format($transaction['gross_amount'])}}</td></tr>
-                    @endif
-                    @if($transaction['fees_expenses'])
+                    @php
+                      $grossAmount = $transaction['debit'] ?? $transaction['credit'] ?? 0;
+                      $netAmount = $grossAmount - ($transaction['fees_expenses'] ?? 0);
+                    @endphp
+                    <tr><td><b>Amount Received:</b> {{number_format($grossAmount)}}</td></tr>
+                    <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($grossAmount) }}</td></tr>
+                    @if($transaction['fees_expenses'] && $transaction['fees_expenses'] > 0)
                     <tr><td><b>Fees/Expenses:</b> {{number_format($transaction['fees_expenses'])}}</td></tr>
+                    <tr><td><b>Net Amount (After Fees):</b> {{number_format($netAmount)}}</td></tr>
                     @endif
-                    @if($transaction['net_amount'])
-                    <tr><td><b>Net Amount (Calculated):</b> {{number_format($transaction['net_amount'])}}</td></tr>
-                    @endif
-                    @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>  
+                    @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif
                   </tbody>
                 </table>

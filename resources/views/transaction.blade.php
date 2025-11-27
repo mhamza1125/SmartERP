@@ -17,6 +17,7 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Voucher No</th>
                     <th>Date</th>
                     <th>Transaction</th>
                     <th>Transaction Type</th>
@@ -32,6 +33,7 @@
                       @unless($item->transaction_type == 'openingBalance')
                         <tr>
                           <td>{{$index++}}</td>
+                          <td>SSL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                           <td>{{$item->transaction_date}}</td>
                           <td>
                             {{ucfirst($item->transaction_to)}}

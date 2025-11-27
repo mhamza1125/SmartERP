@@ -139,6 +139,25 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * Print order information
+     */
+    public function printOrder($id)
+    {
+        $this->authorize('show', Order::class);
+        $order = $this->orderRepository->get($id);
+        $orderItem = $this->orderItemRepository->get($id);
+        $banks = $this->bankRepository->self();
+        $packingList = $this->getPackingList($id);
+
+        return view('print.order', [
+            'order' => $order,
+            'orderItem' => $orderItem,
+            'banks' => $banks,
+            'packingList' => $packingList,
+        ]);
+    }
+
     private function getPackingList($orderId)
     {
         // Get order items with box quantity factors to calculate theoretical packing list

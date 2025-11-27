@@ -71,14 +71,20 @@
                       @endif
                       @if($transaction->count())
                         @foreach($transaction as $item)
-                        @php $balance -= $item->debit; $balance += $item->credit; @endphp
+                        @php
+                          $balance += $item->debit;
+                          $balance -= $item->credit;
+                          // For cash ledger, display as-is (debit=inflow, credit=outflow)
+                          $displayDebit = $item->debit;
+                          $displayCredit = $item->credit;
+                        @endphp
                         <tr>
                           <td>{{$index++}}</td>
                           <td>{{$item->transaction_date}}</td>
                           <td>{{ucfirst($item->transaction_to)}}</td>
                           <td>{{ucfirst($item->transaction_type)}}</td>
-                          <td>{{isset($item->debit) ? number_format($item->debit) : ''}}</td>
-                          <td>{{isset($item->credit) ? number_format($item->credit) : ''}}</td>
+                          <td>{{isset($displayDebit) ? number_format($displayDebit) : ''}}</td>
+                          <td>{{isset($displayCredit) ? number_format($displayCredit) : ''}}</td>
                           <td>{{number_format($balance)}}</td>
                           <td>
                             @if($item->transaction_to == 'employee')

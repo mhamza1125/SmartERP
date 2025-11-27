@@ -14,9 +14,9 @@
                     <i class="fas fa-print"></i> Print
                   </button>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('Order Status')">Print Page</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('order', 'Order Details')">Print Order Details</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('dummy', 'Additional Details')">Print Additional Details</a>
+                    <a class="dropdown-item" href="{{ route('order.print', $order['order_id']) }}" target="_blank">
+                      <i class="fas fa-file-alt"></i> Order Status
+                    </a>
                   </div>
                 </div>
               </div>

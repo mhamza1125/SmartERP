@@ -74,7 +74,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Amount</label>
-                    <input type="number" min="0" class="form-control" name="debit" required value="{{$transaction['debit']}}">
+                    <input type="number" min="0" class="form-control" name="debit" required value="{{$transaction['credit'] ?? $transaction['debit']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>

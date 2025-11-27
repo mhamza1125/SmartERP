@@ -106,16 +106,12 @@ class DeliveryController extends Controller
         $bank = $this->bankRepository->self();
         $expense = $this->headRepository->get('7');
 
-        // Get all orders for the same customer for multi-order delivery option
-        $customerOrders = $this->orderRepository->getOrder($order['customer_id']);
-
         return view('addDelivery', [
             'bank' => $bank,
             'expense' => $expense,
             'order' => $order,
             'stock' => $stock,
             'vehicle' => $vehicle,
-            'customerOrders' => $customerOrders,
             'isMultiOrder' => false,
         ]);
     }
@@ -297,6 +293,36 @@ class DeliveryController extends Controller
             'relatedOrders' => $relatedOrders,
             'customerId' => is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id,
             'deliveryId' => $id,
+        ]);
+    }
+
+    /**
+     * Print delivery information
+     */
+    public function printDelivery($id)
+    {
+        $this->authorize('show', Delivery::class);
+        $delivery = $this->deliveryRepository->get($id);
+        $deliveryItem = $this->stockItemRepository->delivery($id);
+        $transaction = $this->transactionRepository->delivery($id);
+        $deliveryBox = $this->deliveryBoxRepository->get($id);
+
+        // Detect if this is a multi-order delivery
+        $isMultiOrder = $this->isMultiOrderDelivery($delivery);
+
+        // If it's a multi-order delivery, get additional information
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($delivery);
+        }
+
+        return view('print.delivery', [
+            'delivery' => $delivery,
+            'deliveryBox' => $deliveryBox,
+            'transaction' => $transaction,
+            'deliveryItem' => $deliveryItem,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
         ]);
     }
 

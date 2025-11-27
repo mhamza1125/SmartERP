@@ -193,7 +193,7 @@ class TransactionRepository implements GlobalInterface
         $tcredit = $transaction->tcredit ?? 0;
         $tdebit = $transaction->tdebit ?? 0;
 
-        return $tcredit - $tdebit;
+        return $tdebit - $tcredit;
     }
 
     public function bankBalance()
@@ -232,9 +232,7 @@ class TransactionRepository implements GlobalInterface
                 DB::raw('SUM(transactions.debit) AS tdebit'),
                 DB::raw('SUM(transactions.credit) AS tcredit'),
                 DB::raw('COALESCE(SUM(CAST(transactions.debit AS SIGNED) - CAST(transactions.credit AS SIGNED)), 0) as balance'))
-                // DB::raw('COALESCE(SUM(transactions.debit - transactions.credit), 0) as balance'))
             ->groupBy('banks.bank_id')
-            // ->havingRaw('balance = 0')
             ->first();
     }
 
@@ -248,7 +246,7 @@ class TransactionRepository implements GlobalInterface
             ->join('heads', 'heads.head_id', 'transactions.payee_id')
             ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
-            ->select('*', 'heads.name as hname', 'bhead.name as bname')
+            ->select('transactions.*', 'heads.name as hname', 'bhead.name as bname', 'banks.account', 'banks.account_title')
             ->first();
     }
 
@@ -260,7 +258,7 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
             ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
             ->join('employees', 'employees.employee_id', 'transactions.payee_id')
-            ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
+            ->select('transactions.*', 'employees.employee_no', 'employees.name', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title')
             ->first();
     }
 
@@ -273,7 +271,7 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
             ->join('vendors', 'vendors.vendor_id', 'transactions.payee_id')
             ->leftJoin('purchases', 'purchases.purchase_id', 'transactions.order_id')
-            ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
+            ->select('transactions.*', 'vendors.vendor_no', 'vendors.fname', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title', 'purchases.purchase_no')
             ->first();
     }
 
@@ -286,7 +284,7 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
             ->join('customers', 'customers.customer_id', 'transactions.payee_id')
             ->join('orders', 'orders.order_id', 'transactions.order_id')
-            ->select('*', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'transactions.description', 'transactions.bank_id', 'banks.account', 'banks.account_title')
+            ->select('transactions.*', 'customers.customer_no', 'customers.fname', 'orders.order_date', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title')
             ->first();
     }
 
@@ -300,7 +298,7 @@ class TransactionRepository implements GlobalInterface
         return Transaction::where('transaction_id', $id)
             ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
-            ->select('*', 'bhead.name as bname')
+            ->select('transactions.*', 'bhead.name as bname', 'banks.account', 'banks.account_title')
             ->first();
     }
 
@@ -463,15 +461,7 @@ class TransactionRepository implements GlobalInterface
             ->get();
 
         $transactions = \DB::table('transactions')
-            ->select(
-                'transactions.*',
-                'transactions.created_at as timestamp',
-                \DB::raw('CASE
-                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
-                    THEN transactions.gross_amount
-                    ELSE transactions.credit
-                END as credit')
-            )
+            ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_to', 'customer')
             ->get();
@@ -498,11 +488,7 @@ class TransactionRepository implements GlobalInterface
             ->where('transactions.transaction_to', 'customer')
             ->select(
                 \DB::raw('SUM(transactions.debit) as debit'),
-                \DB::raw('SUM(CASE
-                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
-                    THEN transactions.gross_amount
-                    ELSE transactions.credit
-                END) as credit')
+                \DB::raw('SUM(transactions.credit) as credit')
             )
             ->first();
 
@@ -520,15 +506,7 @@ class TransactionRepository implements GlobalInterface
             ->get();
 
         $transactions = \DB::table('transactions')
-            ->select(
-                'transactions.*',
-                'transactions.created_at as timestamp',
-                \DB::raw('CASE
-                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
-                    THEN transactions.gross_amount
-                    ELSE transactions.credit
-                END as credit')
-            )
+            ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.payee_id', $id)
             ->where('transactions.transaction_to', 'customer')
             ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
@@ -550,11 +528,7 @@ class TransactionRepository implements GlobalInterface
             ->where('transactions.transaction_to', 'customer')
             ->select(
                 \DB::raw('SUM(transactions.debit) as debit'),
-                \DB::raw('SUM(CASE
-                    WHEN transactions.gross_amount IS NOT NULL AND transactions.gross_amount > 0
-                    THEN transactions.gross_amount
-                    ELSE transactions.credit
-                END) as credit')
+                \DB::raw('SUM(transactions.credit) as credit')
             )
             ->first();
 

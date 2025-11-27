@@ -393,4 +393,131 @@ function generateInvoiceDocument(printWindow, content, title, company) {
     printWindow.document.close();
 }
 
+/**
+ * Professional Print System Functions
+ * Added for standardized printing across the application
+ */
+
+/**
+ * Open professional print view in new tab
+ */
+function openProfessionalPrint(url, title = 'Print Document') {
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+        printWindow.focus();
+    } else {
+        alert('Please allow popups for this site to open the print view.');
+    }
+}
+
+/**
+ * Print table with professional styling
+ */
+function printTableProfessional(tableId, title = 'Table Print') {
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error('Table not found:', tableId);
+        return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${title}</title>
+            <link rel="stylesheet" href="/assets/css/print.css">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20mm;
+                    font-size: 12px;
+                }
+                .document-title {
+                    text-align: center;
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                    text-transform: uppercase;
+                    border-bottom: 1px solid #333;
+                    padding-bottom: 10px;
+                }
+                .print-info {
+                    text-align: right;
+                    font-size: 10px;
+                    margin-bottom: 15px;
+                    color: #666;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                th, td {
+                    border: 1px solid #333;
+                    padding: 8px;
+                    text-align: left;
+                }
+                th {
+                    background-color: #f5f5f5;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                @media print {
+                    body { margin: 15mm; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="document-title">${title}</div>
+            <div class="print-info">
+                Print Date: ${new Date().toLocaleDateString()} |
+                Print Time: ${new Date().toLocaleTimeString()}
+            </div>
+            ${table.outerHTML}
+            <script>
+                window.onload = function() {
+                    window.print();
+                    window.onafterprint = function() {
+                        window.close();
+                    };
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+/**
+ * Disable auto-print behavior globally
+ * This function removes any auto-print scripts from the page
+ */
+function disableAutoPrint() {
+    // Remove any existing auto-print event listeners
+    window.removeEventListener('load', window.print);
+
+    // Override window.onload if it contains print
+    if (window.onload && window.onload.toString().includes('print')) {
+        window.onload = null;
+    }
+
+    // Find and disable any auto-print scripts
+    const scripts = document.querySelectorAll('script');
+    scripts.forEach(script => {
+        if (script.innerHTML.includes('window.onload') && script.innerHTML.includes('print')) {
+            script.innerHTML = script.innerHTML.replace(/window\.onload[^}]*}/g, '');
+        }
+    });
+}
+
+// Call disable auto-print when this script loads
+document.addEventListener('DOMContentLoaded', function () {
+    disableAutoPrint();
+});
+
 // End - Print Functionality

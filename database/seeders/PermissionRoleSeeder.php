@@ -25,7 +25,7 @@ class PermissionRoleSeeder extends Seeder
             'stocks', 'issuances', 'purchases', 'transactions', 'banks',
             'machines', 'orders', 'deliveries', 'customers', 'employees', 'vendors',
             'contractors', 'products', 'materials', 'attendance', 'payroll',
-            'reports', 'settings'
+            'reports', 'settings', 'assets'
         ];        
 
         $allPermissions = [];

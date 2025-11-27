@@ -1,10 +1,19 @@
 "use strict";
 
 $(function () {
-    chart1();
-    chart2();
-    chart3();
-    chart4();
+    // Only initialize charts if the chart elements exist on the page
+    if (document.querySelector("#chart1")) {
+        chart1();
+    }
+    if (document.querySelector("#chart2")) {
+        chart2();
+    }
+    if (document.querySelector("#chart3")) {
+        chart3();
+    }
+    if (document.querySelector("#chart4")) {
+        chart4();
+    }
 
     // select all on checkbox click
     $("[data-checkboxes]").each(function () {

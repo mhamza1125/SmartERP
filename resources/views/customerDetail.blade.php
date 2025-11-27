@@ -9,6 +9,9 @@
             <h4>Customer Detail</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <a class="btn btn-info" href="{{ route('customer.ledger.print', $customer['customer_id']) }}{{ !empty($dfrom) && !empty($dto) ? '?dfrom=' . $dfrom . '&dto=' . $dto : '' }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.addOPayment')}}" class="btn btn-primary">Receive</a>
               </div>
@@ -42,7 +45,7 @@
                         <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
                         <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
                       @endif
-                      <td><b>{{($balance < 0)? 'Receiveable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td>
+                      <td><b>{{($balance > 0)? 'Receivable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td></td>
                       {{-- <td><b>Payable Amount:</b> {{number_format($balance)}}</td> --}}
                     </tr>
                   </tbody>
@@ -70,8 +73,8 @@
                         <td>{{$index++}}</td>
                         <td>{{$dfrom}}</td>
                         <td>Opening Balance</td>
-                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ number_format($oBalance) }}</td>
                         <td></td>
                       </tr>
@@ -79,8 +82,11 @@
                     @if($detail->count())
                       @foreach($detail as $item)
                       @php
-                        isset($item->debit) ? $balance -= $item->debit : ''; 
-                        isset($item->credit) ? $balance += $item->credit : ''; 
+                        isset($item->debit) ? $balance -= $item->debit : '';
+                        isset($item->credit) ? $balance += $item->credit : '';
+                        // For customer ledger, display DB debit in Debit column and DB credit in Credit column (no reversal)
+                        $displayDebit = $item->debit ?? 0;
+                        $displayCredit = $item->credit ?? 0;
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
@@ -90,8 +96,8 @@
                           @elseif(isset($item->order_no)) Order - ({{$item->job_no}})
                           @else Unknown Type @endif
                         </td>
-                        <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
-                        <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
+                        <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>
+                        <td>{{ $displayCredit > 0 ? number_format($displayCredit) : '' }}</td>
                         <td>{{number_format($balance)}}</td>
                         <td>
                           @if(isset($item->transaction_type))

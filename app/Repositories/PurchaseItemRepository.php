@@ -18,7 +18,7 @@ class PurchaseItemRepository implements GlobalInterface
         return PurchaseItem::where('purchase_id', $id)
             ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
             ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->select('purchase_items.*', 'materials.name', 'materials.material_no', 'heads.name as hname')
+            ->select('purchase_items.*', 'materials.name', 'materials.material_no', 'heads.name as uname')
             ->get();
     }
 

@@ -30,7 +30,8 @@ class ReceiveRepository implements GlobalInterface
             ->join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
             ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-            ->select('receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 'receives.description as desc')
+            ->leftJoin('stocks', 'stocks.stock_id', '=', 'receives.receive_id')
+            ->select('receives.*', 'purchases.*', 'vendors.*', 'orders.job_no', 'receives.description as desc', 'stocks.stock_status')
             ->first();
     }
 

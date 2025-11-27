@@ -98,6 +98,24 @@ class ReturnController extends Controller
         ]);
     }
 
+    /**
+     * Print return information
+     */
+    public function printReturn($id)
+    {
+        $return = $this->returnRepository->get($id);
+        if($return['purchase_type'] == 'material'){
+            $returnMaterial = $this->returnMaterialRepository->get($id);
+        } else {
+            $returnMaterial = $this->returnMaterialRepository->get2($id);
+        }
+
+        return view('print.return', [
+            'return' => $return,
+            'returnMaterial' => $returnMaterial,
+        ]);
+    }
+
     public function edit($id)
     {
         $return = $this->returnRepository->get($id);

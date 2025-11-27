@@ -170,6 +170,42 @@ class PurchaseController extends Controller
         ]);
     }
 
+    /**
+     * Print purchase information
+     */
+    public function printPurchase($id)
+    {
+        $this->authorize('show', Purchase::class);
+        $purchase = $this->purchaseRepository->get($id);
+        $receiveTimes = $this->receiveMaterialRepository->times($id);
+        $returnTimes = $this->returnMaterialRepository->times($id);
+        $transaction = $this->transactionRepository->getPPayment($id);
+        if($purchase['purchase_type'] == 'material'){
+            $purchaseItem = $this->purchaseItemRepository->get($id);
+            $receiveSum = $this->receiveMaterialRepository->rSum($id);
+            $receiveAll = $this->receiveMaterialRepository->rAll($id);
+            $returnAll = $this->returnMaterialRepository->rAll($id);
+        } else {
+            $purchaseItem = $this->purchaseItemRepository->get2($id);
+            $receiveSum = $this->receiveMaterialRepository->rSum2($id);
+            $receiveAll = $this->receiveMaterialRepository->rAll2($id);
+            $returnAll = $this->returnMaterialRepository->rAll2($id);
+        }
+
+        return view('print.purchase', [
+            'purchase' => $purchase,
+            'transaction' => $transaction,
+            'purchaseItem' => $purchaseItem,
+            'receiveSum' => $receiveSum,
+            'receiveAll' => $receiveAll,
+            'receiveTimes' => $receiveTimes,
+            'count' => $receiveTimes->count(),
+            'returnAll' => $returnAll,
+            'returnTimes' => $returnTimes,
+            'count2' => $returnTimes->count(),
+        ]);
+    }
+
     // This is for Material Purchase
     public function edit(Purchase $id)
     {

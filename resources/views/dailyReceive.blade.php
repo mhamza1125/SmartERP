@@ -70,6 +70,13 @@
                       <td colspan="2"></td>
                       <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
                       <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
+                      <td>
+                        <div class="btn-group">
+                          <a class="btn btn-info" href="{{ route('rstock.daily.print', ['dfrom' => $dfrom, 'dto' => $dto, 'oid' => $oid, 'tid' => $tid, 'tname' => $tname]) }}" target="_blank">
+                            <i class="fas fa-file-alt"></i> Daily Receiving Report
+                          </a>
+                        </div>
+                      </td>
                     </tr>
                   </tbody>
                 </table>

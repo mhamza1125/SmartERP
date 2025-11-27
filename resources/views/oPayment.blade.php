@@ -17,11 +17,11 @@
                 <thead>
                   <tr>
                     <th>Sr.</th>
+                    <th>Voucher No</th>
                     <th>Date</th>
                     <th>Customer No</th>
                     <th>Order No</th>
-                    <th>Net Amount</th>
-                    <th>Gross Amount</th>
+                    <th>Amount</th>
                     <th>Fees</th>
                     <th>Action</th>
                   </tr>
@@ -31,11 +31,11 @@
                     @foreach($transaction as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
+                      <td>TXN-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                       <td>{{$item->transaction_date}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>{{$item->order_no}}</td>
                       <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
-                      <td>{{$item->gross_amount ? number_format($item->gross_amount) : 'N/A'}}</td>
                       <td>{{$item->fees_expenses ? number_format($item->fees_expenses) : 'N/A'}}</td>
                       <td>
                         <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
@@ -48,11 +48,11 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Voucher No</th>
                     <th>Date</th>
                     <th>Customer No</th>
                     <th>Order No</th>
-                    <th>Net Amount</th>
-                    <th>Gross Amount</th>
+                    <th>Amount</th>
                     <th>Fees</th>
                     <th>Action</th>
                   </tr>

@@ -109,24 +109,10 @@
               <!-- Payment Details Section -->
               <h6>Payment Details</h6>
               <div class="row">
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Gross Amount (Customer Payment)</label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="gross_amount" id="gross_amount" value="{{ $transaction['gross_amount'] ?? '' }}" placeholder="Total amount customer paid">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Fees/Expenses</label>
                     <input type="number" min="0" step="0.01" class="form-control" name="fees_expenses" id="fees_expenses" value="{{ $transaction['fees_expenses'] ?? '' }}" placeholder="Bank fees, processing charges, etc.">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Net Amount (Auto-calculated)</label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="net_amount" id="net_amount" value="{{ $transaction['net_amount'] ?? '' }}" readonly placeholder="Gross - Fees">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -157,27 +143,56 @@
   var isPayOrderPage = false;
   var ajaxOrderUrl = "{{ route('ajaxOrder') }}";
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
-
-  // Auto-calculate net amount and sync with credit field
-  function calculateNetAmount() {
-    const grossAmount = parseFloat(document.getElementById('gross_amount').value) || 0;
-    const feesExpenses = parseFloat(document.getElementById('fees_expenses').value) || 0;
-    const netAmount = grossAmount - feesExpenses;
-
-    document.getElementById('net_amount').value = netAmount.toFixed(2);
-    document.getElementById('credit').value = netAmount.toFixed(2);
-  }
+  var ajaxBalanceUrl = "{{ route('ajaxBalance') }}";
 
   // Add event listeners when document is ready
   document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('gross_amount').addEventListener('input', calculateNetAmount);
-    document.getElementById('fees_expenses').addEventListener('input', calculateNetAmount);
+    // Load balance on page load for edit mode
+    var customerId = $('#payee_id').val();
+    if (customerId) {
+      loadCustomerBalance(customerId);
+    }
 
-    // If credit is manually changed, update net_amount to match
-    document.getElementById('credit').addEventListener('input', function() {
-      const creditValue = parseFloat(this.value) || 0;
-      document.getElementById('net_amount').value = creditValue.toFixed(2);
+    // Fetch balance when customer is selected
+    $('#payee_id').on('change', function() {
+      var customerId = $(this).val();
+      if (customerId) {
+        loadCustomerBalance(customerId);
+      } else {
+        $('#outstanding_balance').val('');
+      }
     });
+
+    function loadCustomerBalance(customerId) {
+      $.ajax({
+        url: ajaxBalanceUrl,
+        type: "GET",
+        data: { tableId: customerId, table: 'customer' },
+        dataType: "json",
+        success: function(response) {
+          if (response.balance !== undefined) {
+            var balance = parseFloat(response.balance);
+            var balanceText = 'PKR ' + balance.toLocaleString();
+            if (balance > 0) {
+              balanceText += ' (Customer owes us)';
+              $('#outstanding_balance').removeClass('text-danger').addClass('text-success');
+            } else if (balance < 0) {
+              balanceText += ' (We owe customer)';
+              $('#outstanding_balance').removeClass('text-success').addClass('text-danger');
+            } else {
+              balanceText += ' (Balanced)';
+              $('#outstanding_balance').removeClass('text-success text-danger');
+            }
+            $('#outstanding_balance').val(balanceText);
+          } else {
+            $('#outstanding_balance').val('Error loading balance');
+          }
+        },
+        error: function() {
+          $('#outstanding_balance').val('Error loading balance');
+        }
+      });
+    }
   });
 </script>
 @endsection

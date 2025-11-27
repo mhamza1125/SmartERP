@@ -9,9 +9,9 @@
             <h4>Issuance Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <button type="button" class="btn btn-info" onclick="printPage('Machine Material Information')">
-                  <i class="fas fa-print"></i> Print
-                </button>
+                <a class="btn btn-info" href="{{ route('missue.print', $issue['stock_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ route('missue') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('mstock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
               </div>

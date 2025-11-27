@@ -19,9 +19,9 @@
                     <i class="fas fa-print"></i> Print
                   </button>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('Order Information')">Print Page</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('order-details', 'Order Details')">Print Order Details</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('packing-list', 'Packing List')">Print Packing List</a>
+                    <a class="dropdown-item" href="{{ route('order.print', $order['order_id']) }}" target="_blank">
+                      <i class="fas fa-file-alt"></i> Order Details
+                    </a>
                   </div>
                 </div>
               </div>
@@ -47,6 +47,7 @@
               <div class="col-md-5">
                 <table class="table table-sm">
                   <tbody>
+                    <tr><td><b>Voucher No:</b> TXN-{{ date('Y') }}-{{ str_pad($order['order_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
                     <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
@@ -155,6 +156,11 @@
                           <th colspan="10"></th>
                           <th>Grand Total:</th>
                           <th>{{ number_format($total) }}</th>
+                        </tr>
+                        <tr>
+                          <th colspan="10"></th>
+                          <th>Amount in Words:</th>
+                          <th>{{ numberToWordsWithCurrency($total) }}</th>
                         </tr>
                       </tfoot>
                     </table>

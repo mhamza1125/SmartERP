@@ -6,61 +6,127 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Bank Accounts Table</h4>
+            <h4>Bank Management</h4>
             <div class="card-header-action">
               <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>
             </div>
           </div>
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
-                <thead>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Bank Holder</th>
-                    <th>Account Title</th>
-                    <th>Account No</th>
-                    <th>Bank Type</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @if($bank->count())
-                    @foreach($bank as $item)
-                    <tr>
-                      <td>{{$loop->index + 1}}</td>
-                      <td>
-                        @if($item->bank_holder == 'employee')
-                          {{$item->employee_no}} - {{$item->name}}
-                        @elseif($item->bank_holder == 'vendor')
-                          {{$item->vendor_no}} - {{$item->fname}}
-                        @elseif($item->bank_holder == 'contractor')
-                          {{$item->vendor_no}} - {{$item->fname}}
-                        @elseif($item->bank_holder == 'customer')
-                          {{$item->customer_no}} - {{$item->cname}} {{$item->lname}}
-                        @else
-                          Admin / Self
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs" id="bankTabs" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" id="accounts-tab" data-toggle="tab" href="#accounts" role="tab" aria-controls="accounts" aria-selected="true">
+                  <i class="fas fa-university"></i> Bank Accounts
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="balances-tab" data-toggle="tab" href="#balances" role="tab" aria-controls="balances" aria-selected="false">
+                  <i class="fas fa-chart-line"></i> Bank Balances & Ledger
+                </a>
+              </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="bankTabsContent">
+              <!-- Bank Accounts Tab -->
+              <div class="tab-pane fade show active" id="accounts" role="tabpanel" aria-labelledby="accounts-tab">
+                <div class="mt-3">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Bank Holder</th>
+                          <th>Account Title</th>
+                          <th>Account No</th>
+                          <th>Bank Type</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if($bank->count())
+                          @foreach($bank as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>
+                              @if($item->bank_holder == 'employee')
+                                {{$item->employee_no}} - {{$item->name}}
+                              @elseif($item->bank_holder == 'vendor')
+                                {{$item->vendor_no}} - {{$item->fname}}
+                              @elseif($item->bank_holder == 'contractor')
+                                {{$item->vendor_no}} - {{$item->fname}}
+                              @elseif($item->bank_holder == 'customer')
+                                {{$item->customer_no}} - {{$item->cname}} {{$item->lname}}
+                              @else
+                                Admin / Self
+                              @endif
+                            </td>
+                            <td>{{$item->account_title}}</td>
+                            <td>{{$item->account}}</td>
+                            <td>{{$item->hname}}</td>
+                            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->bank_id}}">Edit</button></td>
+                          </tr>
+                          @endforeach
                         @endif
-                      </td>
-                      <td>{{$item->account_title}}</td>
-                      <td>{{$item->account}}</td>
-                      <td>{{$item->hname}}</td>           
-                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->bank_id}}">Edit</button></td>
-                    </tr>
-                    @endforeach
-                  @endif
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Bank Holder</th>
-                    <th>Account Title</th>
-                    <th>Account No</th>
-                    <th>Bank Type</th>
-                    <th>Action</th>
-                  </tr>
-                </tfoot>
-              </table>
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Bank Holder</th>
+                          <th>Account Title</th>
+                          <th>Account No</th>
+                          <th>Bank Type</th>
+                          <th>Action</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bank Balances Tab -->
+              <div class="tab-pane fade" id="balances" role="tabpanel" aria-labelledby="balances-tab">
+                <div class="mt-3">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="tableExportBalance" style="width:100%;">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Account Title</th>
+                          <th>Account No</th>
+                          <th>Bank Type</th>
+                          <th>Amount</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @if(isset($bankBalance) && $bankBalance->count())
+                          @foreach($bankBalance as $item)
+                          <tr>
+                            <td>{{$loop->index + 1}}</td>
+                            <td>{{$item->account_title}}</td>
+                            <td>{{$item->account}}</td>
+                            <td>{{$item->hname}}</td>
+                            <td>{{number_format($item->tdebit - $item->tcredit)}}</td>
+                            <td><a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a></td>
+                          </tr>
+                          @endforeach
+                        @endif
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Account Title</th>
+                          <th>Account No</th>
+                          <th>Bank Type</th>
+                          <th>Amount</th>
+                          <th>Action</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

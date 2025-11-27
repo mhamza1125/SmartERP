@@ -9,9 +9,9 @@
             <h4>Contractor Payment Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <button type="button" class="btn btn-info" onclick="printPage('Contractor Payment Information')">
-                  <i class="fas fa-print"></i> Print
-                </button>
+                <a class="btn btn-info" href="{{ route('payment.print', $transaction['transaction_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ route('vPayment') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editCPayment', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>
@@ -22,14 +22,18 @@
               <div class="col-md-7">
                 <table class="table table-sm">
                   <tbody>
-                      @if($transaction['bank_id'])
-                        <tr><td><b>Paid By:</b> {{$transaction['bname']}}</td></tr>
-                        <tr><td><b>Account Title:</b> {{$transaction['account_title']}}</td></tr>
-                        <tr><td><b>Account No:</b> {{$transaction['account']}}</td></tr>
-                      @else
-                        <tr><td><b>Paid By:</b> Cash Payment</td></tr>
-                      @endif
-                      <tr><td><b>Amount:</b> {{number_format($transaction['debit'] ?? $transaction['credit'])}}</td></tr>
+                    @if($transaction['bank_id'])
+                      <tr><td><b>Paid By:</b> {{$transaction['bname']}}</td></tr>
+                      <tr><td><b>Account Title:</b> {{$transaction['account_title']}}</td></tr>
+                      <tr><td><b>Account No:</b> {{$transaction['account']}}</td></tr>
+                    @else
+                      <tr><td><b>Paid By:</b> Cash Payment</td></tr>
+                    @endif
+                    @php
+                      $amount = $transaction['debit'] ?: ($transaction['credit'] ?: 0);
+                    @endphp
+                    <tr><td><b>Amount:</b> {{ number_format($amount) }}</td></tr>
+                    <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($amount) }}</td></tr>
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif
                   </tbody>

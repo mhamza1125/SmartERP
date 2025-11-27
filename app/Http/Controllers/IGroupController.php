@@ -100,6 +100,24 @@ class IGroupController extends Controller
         ]);
     }
 
+    /**
+     * Print item group information
+     */
+    public function printIGroup($id)
+    {
+        $stock = $this->stockItemRepository->stock();
+        $pstock = $this->stockItemRepository->pStock();
+        $igroup = $this->igroupRepository->get($id);
+        $igroupItem = $this->igroupItemRepository->get($id);
+
+        return view('print.igroup', [
+            'stock' => $stock,
+            'pstock' => $pstock,
+            'igroup' => $igroup,
+            'igroupItem' => $igroupItem,
+        ]);
+    }
+
     public function edit(IGroup $id)
     {
         $order = $this->orderRepository->active();

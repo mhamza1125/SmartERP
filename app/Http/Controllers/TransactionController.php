@@ -320,23 +320,71 @@ class TransactionController extends Controller
     public function store(TransactionRequest $request)
     {
         $validatedData = $request->validated();
-        if ($validatedData['transaction_type'] == 'receiveAdvance' ||
-            ($request->has('brs_type') && $request->input('brs_type') == 1)) {
+        // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
+        if ($validatedData['transaction_type'] == 'receiveAdvance') {
+            $validatedData['debit'] = $validatedData['credit'];
+            $validatedData['credit'] = null;
+        }
+        // For BRS type 2: swap debit to credit (cash outflow for BRS correction)
+        elseif ($request->has('brs_type') && $request->input('brs_type') == 2) {
+            $validatedData['credit'] = $validatedData['debit'];
+            $validatedData['debit'] = null;
+        }
+        // For BRS type 1: keep debit as debit (cash inflow increases balance)
+        elseif ($request->has('brs_type') && $request->input('brs_type') == 1) {
+            $validatedData['credit'] = null;
+        }
+
+        // For expense payments: swap debit/credit for Cashbook posting (cash outflow)
+        if ($validatedData['transaction_to'] == 'expense' &&
+            $validatedData['transaction_type'] == 'expense' &&
+            isset($validatedData['debit']) && $validatedData['debit'] > 0) {
             $validatedData['credit'] = $validatedData['debit'];
             $validatedData['debit'] = null;
         }
 
-        // if ($validatedData['bank_id'] != '0' && $validatedData['credit'] == '0') {
-        if ($validatedData['bank_id'] != '0' && $validatedData['debit'] == '0') {
+        // For ALL customer payments: ensure amount is in debit column (cash inflow)
+        if ($validatedData['transaction_to'] == 'customer') {
+            // Customer payments are cash inflows - should be in debit column
+            if (isset($validatedData['credit']) && $validatedData['credit'] > 0) {
+                // If amount is in credit, move it to debit
+                $validatedData['debit'] = $validatedData['credit'];
+                $validatedData['credit'] = null;
+            }
+            // Ensure credit is null for customer payments
+            $validatedData['credit'] = null;
+        }
+
+        // Determine if this is a cash outflow transaction (requires balance validation)
+        $isOutflowTransaction = in_array($validatedData['transaction_to'], ['employee', 'vendor', 'contractor', 'expense']) ||
+                               ($validatedData['transaction_to'] == 'brs' && $request->has('brs_type') && $request->input('brs_type') == 2);
+
+        // Determine if this is a cash inflow transaction (no balance validation needed)
+        $isInflowTransaction = ($validatedData['transaction_to'] == 'customer' && $validatedData['transaction_type'] == 'orderPayment') ||
+                              ($validatedData['transaction_type'] == 'receiveAdvance') ||
+                              ($validatedData['transaction_to'] == 'brs' && $request->has('brs_type') && $request->input('brs_type') == 1);
+
+        // Get current balance
+        if ($validatedData['bank_id'] != '0') {
+            // Bank account balance
             $transaction = $this->transactionRepository->bankBalance2($validatedData['bank_id']);
-            $balance = $transaction->tcredit - $transaction->tdebit;
+            $balance = ($transaction->tcredit ?? 0) - ($transaction->tdebit ?? 0);
         } else {
+            // Cash balance
             $balance = $this->transactionRepository->cashBalance();
         }
 
-        if ($balance < $validatedData['debit'] && $validatedData['credit'] == '0') {
-            return redirect()->back()->with(['fails' => 'Insufficient Balance Available'])->withInput();
+        // Validate balance only for outflow transactions
+        if ($isOutflowTransaction && !$isInflowTransaction) {
+            // For outflow transactions, check if we have sufficient balance
+            // Outflow amount is stored in 'credit' column
+            $outflowAmount = $validatedData['credit'] ?? 0;
+
+            if ($outflowAmount > 0 && $balance < $outflowAmount) {
+                return redirect()->back()->with(['fails' => 'Insufficient Balance Available'])->withInput();
+            }
         }
+        // For inflow transactions, skip balance validation entirely
 
         $getId = $this->transactionRepository->store($validatedData);
         if ($request->hasFile('image')) {
@@ -454,8 +502,8 @@ class TransactionController extends Controller
             $transaction = $this->transactionRepository->bankTransaction($id);
         }
         $bBalance = $this->transactionRepository->bankBalance2($id);
-        $balance = ($bBalance->tcredit ?? 0) - ($bBalance->tdebit ?? 0);
-        // $balance = $bBalance->tcredit - $bBalance->tdebit;
+        $balance = ($bBalance->tdebit ?? 0) - ($bBalance->tcredit ?? 0);
+        // $balance = $bBalance->tdebit - $bBalance->tcredit;
 
         return view('bankBalanceDetail', [
             'dto' => $dto,
@@ -553,12 +601,34 @@ class TransactionController extends Controller
 
     public function update(Request $request, $id)
     {
-        if ($request->input('transaction_type') == 'receiveAdvance' ||
-            ($request->has('brs_type') && $request->input('brs_type') == 1)) {
+        // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
+        if ($request->input('transaction_type') == 'receiveAdvance') {
+            $request->merge(['debit' => $request->input('credit'), 'credit' => null]);
+        }
+        // For BRS type 2: swap debit to credit (cash outflow for BRS correction)
+        elseif ($request->has('brs_type') && $request->input('brs_type') == 2) {
             $request->merge(['credit' => $request->input('debit'), 'debit' => null]);
-        } elseif ($request->has('brs_type') && $request->input('brs_type') == 2) {
+        }
+        // For BRS type 1: keep debit as debit (cash inflow increases balance)
+        elseif ($request->has('brs_type') && $request->input('brs_type') == 1) {
             $request->merge(['credit' => null]);
         }
+
+        // For expense payments: swap debit/credit for Cashbook posting (cash outflow)
+        if ($request->input('transaction_to') == 'expense' &&
+            $request->input('transaction_type') == 'expense' &&
+            $request->input('debit') > 0) {
+            $request->merge(['credit' => $request->input('debit'), 'debit' => null]);
+        }
+
+        // For order payments: ensure debit/credit are correct for Cashbook posting (cash inflow)
+        if ($request->input('transaction_to') == 'customer' &&
+            $request->input('transaction_type') == 'orderPayment' &&
+            $request->input('debit') > 0) {
+            $request->merge(['credit' => null]);
+            // debit already has the amount, no swap needed for orderPayment
+        }
+
         $getId = $this->transactionRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -586,4 +656,132 @@ class TransactionController extends Controller
     {
         $this->authorize('delete', Transaction::class);
     }
+
+    /**
+     * Get transaction data by type
+     */
+    private function getTransactionByType($id, $transactionTo)
+    {
+        switch ($transactionTo) {
+            case 'employee':
+                return $this->transactionRepository->getEPayment($id);
+            case 'vendor':
+                return $this->transactionRepository->getVPayment($id);
+            case 'contractor':
+                return $this->transactionRepository->getVPayment($id); // Uses same method as vendor
+            case 'customer':
+                return $this->transactionRepository->getOPayment($id);
+            case 'expense':
+                return $this->transactionRepository->getExpense($id);
+            case 'brs':
+                return $this->transactionRepository->getBRS($id);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Determine debit account based on transaction type
+     */
+    private function getDebitAccount($transaction)
+    {
+        if ($transaction['bank_id']) {
+            return $transaction['bname'] ?? 'Bank Account';
+        }
+
+        return 'CASH';
+    }
+
+    /**
+     * Determine credit account based on transaction type
+     */
+    private function getCreditAccount($transaction)
+    {
+        switch ($transaction['transaction_to']) {
+            case 'employee':
+                return ($transaction['employee_no'] ?? '') . ' - ' . ($transaction['name'] ?? 'Employee');
+            case 'vendor':
+                return ($transaction['vendor_no'] ?? '') . ' - ' . ($transaction['fname'] ?? 'Vendor');
+            case 'contractor':
+                return ($transaction['vendor_no'] ?? '') . ' - ' . ($transaction['fname'] ?? 'Contractor');
+            case 'customer':
+                return ($transaction['customer_no'] ?? '') . ' - ' . ($transaction['fname'] ?? 'Customer');
+            case 'expense':
+                return 'Expense Account';
+            default:
+                if ($transaction['payee_bank_id']) {
+                    return $transaction['rname'] ?? 'Payee Bank';
+                }
+                return 'CASH';
+        }
+    }
+
+    /**
+     * Print payment voucher using standard print template
+     */
+    public function printPayment($id)
+    {
+        $this->authorize('show', Transaction::class);
+
+        // First get basic transaction to determine type
+        $basicTransaction = Transaction::find($id);
+
+        if (!$basicTransaction) {
+            return redirect()->back()->with('error', 'Transaction not found');
+        }
+
+        // Get detailed transaction data based on type
+        $transaction = $this->getTransactionByType($id, $basicTransaction->transaction_to);
+
+        if (!$transaction) {
+            return redirect()->back()->with('error', 'Transaction details not found');
+        }
+
+        // Generate voucher number
+        $voucherNumber = 'TXN-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT);
+
+        return view('print.payment', [
+            'transaction' => $transaction,
+            'voucherNumber' => $voucherNumber,
+        ]);
+    }
+
+    /**
+     * Print expense voucher
+     */
+    public function printExpense($id)
+    {
+        $this->authorize('show', Transaction::class);
+        $expense = $this->transactionRepository->getExpense($id);
+
+        if (!$expense) {
+            return redirect()->back()->with('error', 'Expense not found');
+        }
+
+        return view('print.expense', [
+            'expense' => $expense,
+        ]);
+    }
+
+    /**
+     * Print BRS details
+     */
+    public function printBRS($id)
+    {
+        $this->authorize('show', Transaction::class);
+        $transaction = $this->transactionRepository->getBRS($id);
+
+        if (!$transaction) {
+            return redirect()->back()->with('error', 'BRS not found');
+        }
+
+        // Generate voucher number
+        $voucherNumber = 'TXN-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT);
+
+        return view('print.payment', [
+            'transaction' => $transaction,
+            'voucherNumber' => $voucherNumber,
+        ]);
+    }
+
 }

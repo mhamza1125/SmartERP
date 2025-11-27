@@ -52,6 +52,11 @@
                       <td><b>Material:</b> {{$item ? ($item->material_no . ' - ' . $item->name) : 'All'}}</td>
                       <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
                       <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
+                      <td>
+                        <a class="btn btn-info" href="{{ route('material.detail.print', ['dfrom' => $dfrom, 'dto' => $dto, 'material_id' => $mid]) }}" target="_blank">
+                          <i class="fas fa-file-alt"></i> Print
+                        </a>
+                      </td>
                     </tr>
                   </tbody>
                 </table>

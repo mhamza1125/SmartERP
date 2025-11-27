@@ -9,25 +9,21 @@
             <h4>Issuance Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                @if($count > 1)
-                  <div class="dropdown">
-                    <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
-                      <i class="fas fa-print"></i> Print
-                    </button>
-                    <div class="dropdown-menu">
-                      <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('Issuance Information')">Print All</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('all', 'Issuance Details')">Print Issuance</a>
-                      @for($i=1; $i<=$count; $i++)
-                        <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('tab-content-{{ $i }}', 'Receive Record {{ $i }}')">Print Receive {{ $i }}</a>
-                      @endfor
-                    </div>
-                  </div>
-                @else
-                  <button type="button" class="btn btn-info" onclick="printPage('Issuance Information')">
+                <div class="dropdown">
+                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
                     <i class="fas fa-print"></i> Print
                   </button>
-                @endif
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{{ route('issuance.print', $issue['stock_id']) }}" target="_blank">
+                      <i class="fas fa-file-alt"></i> Issuance Record
+                    </a>
+                    @for($i=1; $i<=$count; $i++)
+                      <a class="dropdown-item" href="{{ route('issuance.print', $issue['stock_id']) }}?receive={{ $i }}" target="_blank">
+                        <i class="fas fa-file-alt"></i> {{ $totalTimes[$i-1]['stock_no'] }}
+                      </a>
+                    @endfor
+                  </div>
+                </div>
               </div>
               <div class="btn-group">
                 <a href="{{ route('issue') }}" class="btn btn-primary">Back</a>

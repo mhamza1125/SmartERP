@@ -409,7 +409,10 @@ class StockRepository implements GlobalInterface
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'stocks.issue_for')
             ->leftJoin('heads as mhead', 'mhead.head_id', '=', 'machines.machine_type_id')
             ->select(
-                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id',
+                'stocks.*', 'sdate.stock_date as sdate', 'order_no', 'job_no',
+                'employees.employee_no', 'employees.phone1 as employee_phone', 'employees.address as employee_address',
+                'vendors.vendor_no', 'vendors.fname', 'vendors.phone1 as vendor_phone', 'vendors.address as vendor_address',
+                'employees.name', 'heads.name as hname', 'shead.name as sname', 'machines.*', 'mhead.name as mname', 'stocks.employee_id',
                 DB::raw('CASE WHEN rstock.stock_id IS NOT NULL THEN 1 ELSE 0 END AS has_received'))
             ->first();
     }

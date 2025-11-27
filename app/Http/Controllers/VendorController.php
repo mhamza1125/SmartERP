@@ -153,6 +153,84 @@ class VendorController extends Controller
         ]);
     }
 
+    /**
+     * Print vendor information
+     */
+    public function printVendor($id)
+    {
+        $this->authorize('show', Vendor::class);
+        $vendor = $this->vendorRepository->get($id);
+        $image = $this->imageRepository->image('vendors', $id);
+        $material = $this->materialRepository->getMaterial($vendor['material_id']);
+        $product = $this->productRepository->getProduct($vendor['product_id'] ?? '0');
+
+        return view('print.vendor', [
+            'material' => $material,
+            'product' => $product,
+            'vendor' => $vendor,
+            'image' => $image,
+        ]);
+    }
+
+    /**
+     * Print contractor information
+     */
+    public function printContractor($id)
+    {
+        $this->authorize('contractors_show', Vendor::class);
+        $vendor = $this->vendorRepository->get($id);
+        $image = $this->imageRepository->image('vendors', $id);
+
+        return view('print.contractor', [
+            'vendor' => $vendor,
+            'image' => $image,
+        ]);
+    }
+
+    /**
+     * Print vendor ledger
+     */
+    public function printVendorLedger(Request $request, $id)
+    {
+        $vendor = $this->vendorRepository->get($id);
+
+        if ($vendor['vendor_type']) {
+            $this->authorize('contractors_show', Vendor::class);
+        } else {
+            $this->authorize('show', Vendor::class);
+        }
+        $this->authorize('show', Transaction::class);
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
+
+        // Get transaction data
+        if (! empty($dfrom) && ! empty($dto)) {
+            $all = $this->transactionRepository->vDetailFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
+        } else {
+            $detail = $this->transactionRepository->vDetail($id);
+        }
+
+        $totalCredit = $detail->sum('credit');
+        $totalDebit = $detail->sum('debit');
+        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+
+        return view('print.vendor-ledger', [
+            'vendor' => $vendor,
+            'detail' => $detail,
+            'balance' => $balance,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+        ]);
+    }
+
     public function show2($id) // For Contractor
     {
         $this->authorize('contractors_show', Vendor::class);

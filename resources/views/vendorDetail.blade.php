@@ -9,6 +9,9 @@
             <h4>{{ $vendor['vendor_type'] == 0 ? 'Vendor':'Contractor'}} Detail</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <a class="btn btn-info" href="{{ route('vendor.ledger.print', $vendor['vendor_id']) }}{{ !empty($dfrom) && !empty($dto) ? '?dfrom=' . $dfrom . '&dto=' . $dto : '' }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.addVPayment')}}" class="btn btn-primary">Pay</a>
               </div>
@@ -72,8 +75,8 @@
                         <td>{{$index++}}</td>
                         <td>{{$dfrom}}</td>
                         <td>Opening Balance</td>
-                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ number_format($oBalance) }}</td>
                         <td></td>
                       </tr>
@@ -88,6 +91,9 @@
                           isset($item->debit) ? $balance -= $item->debit : '';
                           isset($item->credit) ? $balance += $item->credit : '';
                         }
+                        // For vendor ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
+                        $displayDebit = $item->credit ?? 0;
+                        $displayCredit = $item->debit ?? 0;
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
@@ -98,8 +104,8 @@
                           @elseif(isset($item->purchase_no)) Purchase - ({{$item->purchase_no}})
                           @else Unknown Type @endif
                         </td>
-                        <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
-                        <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
+                        <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>
+                        <td>{{ $displayCredit > 0 ? number_format($displayCredit) : '' }}</td>
                         <td>{{number_format($balance)}}</td>
                         <td>
                           @if(isset($item->transaction_type))

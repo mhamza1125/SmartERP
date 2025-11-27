@@ -233,8 +233,8 @@
                               </td>
                               <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut - $qty)}}</td>
                               <td>{{number_format($item->quantity - $item->stockOut + $qty)}}</td>
-                              <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
-                              <td>{{number_format($item->stockIn - $item->stockOut + $qty)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut + $qty)*$item->bqty, 2)}}</td>
+                              <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
+                              <td>{{number_format($item->stockIn - $item->stockOut + $qty)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut + $qty)*$item->bqty, 2)}} boxes</td>
                               <td class="form-group">
                                 <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$item->stockIn - $item->stockOut + $qty}}" data-bqty="{{$item->bqty}}" style="width:100px">
                               </td>
@@ -570,5 +570,5 @@
     </div>
   </div>
 </section>
-<script> var isDeliveryPage = false; </script>
+<script> var isDeliveryPage = false; // Disabled bqty validation for deliveries </script>
 @endsection

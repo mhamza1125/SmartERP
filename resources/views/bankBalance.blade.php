@@ -31,8 +31,8 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->account_title}}</td>
                       <td>{{$item->account}}</td>
-                      <td>{{$item->hname}}</td>           
-                      <td>{{number_format($item->tcredit - $item->tdebit)}}</td>
+                      <td>{{$item->hname}}</td>
+                      <td>{{number_format($item->tdebit - $item->tcredit)}}</td>
                       <td><a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a></td>
                     </tr>
                     @endforeach

@@ -8,7 +8,25 @@
           <div class="card-header">
             <h4>Available Stock Table</h4>
             <div class="card-header-action">
-                <a href="{{ route('stock.add') }}" class="btn btn-primary">Issue Material</a>
+                <div class="btn-group">
+                  <div class="dropdown">
+                    <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
+                      <i class="fas fa-print"></i> Print
+                    </button>
+                    <div class="dropdown-menu">
+                      <a class="dropdown-item" href="{{ route('stock.print') }}" target="_blank">
+                        <i class="fas fa-file-alt"></i> Material Stock
+                      </a>
+                      <a class="dropdown-item" href="{{ route('stock.print') }}?type=product" target="_blank">
+                        <i class="fas fa-file-alt"></i> Product Stock
+                      </a>
+                      <a class="dropdown-item" href="{{ route('stock.print') }}?type=machine" target="_blank">
+                        <i class="fas fa-file-alt"></i> Machine Material Stock
+                      </a>
+                    </div>
+                  </div>
+                  <a href="{{ route('stock.add') }}" class="btn btn-primary">Issue Material</a>
+                </div>
             </div>
           </div>
           <div class="card-body">

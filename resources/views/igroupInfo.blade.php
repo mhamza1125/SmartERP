@@ -9,9 +9,9 @@
             <h4>Issuance Group Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <button type="button" class="btn btn-info" onclick="printPage('Issuance Group Information')">
-                  <i class="fas fa-print"></i> Print
-                </button>
+                <a class="btn btn-info" href="{{ route('igroup.print', $igroup['igroup_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ route('igroup') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a>
               </div>

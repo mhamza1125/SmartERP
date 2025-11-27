@@ -1174,6 +1174,10 @@ $(document).ready(function () {
 
         // Initial calculation of totals on page load
         updateTotals();
+
+        // Note: bqty validation removed - deliveries now allowed for products without bqty defined
+        // The box quantity calculation functionality above remains for products that do have bqty defined
+
         // End - Box Quantity in Delivery
 
         // Start - Factory to Container Delivery
@@ -1552,6 +1556,13 @@ $(document).ready(function () {
         // Function to load products based on preselected order
         function loadProductsBasedOnOrder() {
             var orderId = $('#order_id').val();
+
+            // If "Default Issuance" is selected (orderId = 0), load all available products with stock
+            if (orderId == 0 || orderId === '') {
+                loadAllProductsWithStock();
+                return;
+            }
+
             $.ajax({
                 // Use original route for order-based products
                 url: ajaxPTUrl.replace('ajaxPTStock', 'ajaxPT'),
@@ -1561,10 +1572,34 @@ $(document).ready(function () {
                 success: function (response) {
                     $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
                     response.data.forEach(function (item) {
-                        var optionText = item.article_no + ' - Size ' + item.hname;
+                        // Handle undefined size names
+                        var sizeText = item.hname ? ' - Size ' + item.hname : (item.sname ? ' - Size ' + item.sname : '');
+                        var optionText = item.article_no + sizeText;
                         $('#product_type_id').append(new Option(optionText, item.product_type_id));
                     });
                     $('#product_type_id').trigger('change');
+                }
+            });
+        }
+
+        // Function to load all available products for Default Production
+        function loadAllProducts() {
+            $.ajax({
+                url: '/ajax/getAllProducts', // We'll need to create this route
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
+                    response.data.forEach(function (item) {
+                        // Handle undefined size names
+                        var sizeText = item.hname ? ' - Size ' + item.hname : (item.sname ? ' - Size ' + item.sname : '');
+                        var optionText = item.article_no + sizeText;
+                        $('#product_type_id').append(new Option(optionText, item.product_type_id));
+                    });
+                    $('#product_type_id').trigger('change');
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Failed to load all products:', textStatus, errorThrown);
                 }
             });
         }
@@ -1578,7 +1613,9 @@ $(document).ready(function () {
                 success: function (response) {
                     $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
                     response.data.forEach(function (item) {
-                        var optionText = item.article_no + ' - ' + item.name + ' (Size: ' + item.sname + ')';
+                        // Handle undefined size names
+                        var sizeText = item.sname ? ' (Size: ' + item.sname + ')' : '';
+                        var optionText = item.article_no + ' - ' + item.name + sizeText;
                         $('#product_type_id').append(new Option(optionText, item.product_type_id));
                     });
                     $('#product_type_id').trigger('change');

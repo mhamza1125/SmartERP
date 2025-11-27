@@ -14,19 +14,25 @@
                     <i class="fas fa-print"></i> Print
                   </button>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printPage('{{ isset($process) ? 'Process Material' : 'Purchase' }} Information')">Print All</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('all', '{{ isset($process) ? 'Process Material' : 'Purchase' }} Details')">Print {{ isset($process) ? 'Process' : 'Purchase' }}</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('receive', 'All Records')">Print All Records</a>
-                    <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('payment', 'Payment Records')">Print Payment Records</a>
+                    <a class="dropdown-item" href="{{ isset($process) ? route('mprocess.print', $purchase['purchase_id']) : route('purchase.print', $purchase['purchase_id']) }}" target="_blank">
+                      <i class="fas fa-file-alt"></i> {{ isset($process) ? 'Process Material' : 'Purchase Order' }}
+                    </a>
                     @if($count >= 1)
+                      <div class="dropdown-divider"></div>
+                      <span class="dropdown-header">Receiving Records</span>
                       @for($i=1; $i<=$count; $i++)
-                        <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('tab-content-{{ $i }}', 'Receive Record - {{$receiveTimes[$i-1]['receive_no']}}')">Print {{$receiveTimes[$i-1]['receive_no']}}</a>
+                        <a class="dropdown-item" href="{{ route('receive.print', $receiveTimes[$i-1]['receive_id']) }}" target="_blank">
+                          <i class="fas fa-file-alt"></i> {{ $receiveTimes[$i-1]['receive_no'] }}
+                        </a>
                       @endfor
                     @endif
                     @if($count2 >= 1)
+                      <div class="dropdown-divider"></div>
+                      <span class="dropdown-header">Return Records</span>
                       @for($i=1; $i<=$count2; $i++)
-                        <a class="dropdown-item" href="javascript:void(0)" onclick="printTab('rtab-content-{{ $i }}', 'Return Record - {{$returnTimes[$i-1]['return_no']}}')">Print {{$returnTimes[$i-1]['return_no']}}</a>
+                        <a class="dropdown-item" href="{{ route('return.print', $returnTimes[$i-1]['return_id']) }}" target="_blank">
+                          <i class="fas fa-file-alt"></i> {{ $returnTimes[$i-1]['return_no'] }}
+                        </a>
                       @endfor
                     @endif
                   </div>

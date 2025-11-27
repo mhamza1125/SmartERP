@@ -46,7 +46,16 @@ class StockItemRepository implements GlobalInterface
             ->leftjoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->select('*', 'product_types.*', 'products.name', 'products.article_no', 'shead.name as hname', 'uhead.name as uname', 'sthead.name as sname', 'puhead.name as puname', 'materials.name as mname')
+            ->leftJoin('product_materials', function($join) {
+                $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
+                     ->whereIn('product_materials.material_id', function($query) {
+                         // Get packing box material IDs (material_type_id = 61)
+                         $query->select('material_id')
+                               ->from('materials')
+                               ->where('material_type_id', 61);
+                     });
+            })
+            ->select('*', 'product_types.*', 'products.name', 'products.article_no', 'shead.name as hname', 'uhead.name as uname', 'sthead.name as sname', 'puhead.name as puname', 'materials.name as mname', 'product_materials.quantity as bqty')
             ->orderBy('products.product_id')
             ->get();
 
@@ -239,11 +248,12 @@ class StockItemRepository implements GlobalInterface
 
     public function times($id)
     {
-        // Used By StockInfo
+        // Used By StockInfo - Get receive records with dates and status
         return StockItem::where('stocks.issue_id', $id)
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->groupBy('stocks.stock_id')
-            ->select('stocks.stock_id', 'stock_no')->get();
+            ->select('stocks.stock_id', 'stocks.stock_no', 'stocks.stock_date as receive_date', 'stocks.stock_status')
+            ->get();
     }
 
     public function workLog($id)
@@ -671,7 +681,7 @@ class StockItemRepository implements GlobalInterface
                 'stock_items.stage_id', // Just stage_id from stock_items
                 'uhead.name as uname',
                 'order_items.quantity',
-                'product_materials.quantity as bqty'
+                DB::raw('COALESCE(product_materials.quantity, 0) as bqty')
             )
             ->selectRaw('
                 (
@@ -693,13 +703,16 @@ class StockItemRepository implements GlobalInterface
             ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
             ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id') // Only on stock_items.stage_id
-            ->join('product_materials', 'product_materials.product_type_id', '=', 'product_types.product_type_id')
-            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->leftJoin('product_materials', 'product_materials.product_type_id', '=', 'product_types.product_type_id')
+            ->leftJoin('materials', 'materials.material_id', '=', 'product_materials.material_id')
             ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
                 $join->on('purchase_sub.product_type_id', '=', 'product_types.product_type_id')
                     ->whereColumn('purchase_sub.product_stage_id', '=', 'stock_items.stage_id');
             })
-            ->where('materials.material_type_id', 61) // Box
+            ->where(function($query) {
+                $query->where('materials.material_type_id', 61) // Box
+                      ->orWhereNull('materials.material_type_id'); // Include products without bqty defined
+            })
             ->where('order_items.order_id', $id)
             ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
             ->where('stock_items.material_id', 0)
@@ -712,7 +725,7 @@ class StockItemRepository implements GlobalInterface
                 'sthead.name',
                 'uhead.name',
                 'order_items.quantity',
-                'product_materials.quantity'
+                DB::raw('COALESCE(product_materials.quantity, 0)')
             )
             ->get();
     }

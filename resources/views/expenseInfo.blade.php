@@ -9,9 +9,9 @@
             <h4>Expense Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <button type="button" class="btn btn-info" onclick="printPage('Expense Information')">
-                  <i class="fas fa-print"></i> Print
-                </button>
+                <a class="btn btn-info" href="{{ route('expense.print', $transaction['transaction_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ route('expense') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editExpense', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>
@@ -22,6 +22,7 @@
               <div class="col-md-7">
                 <table class="table table-sm">
                   <tbody>
+                      <tr><td><b>Voucher No:</b> TXN-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
                       @if($transaction['bank_id'])
                         <tr><td><b>Paid By:</b> {{$transaction['bname']}}</td></tr>
                         <tr><td><b>Account Title:</b> {{$transaction['account_title']}}</td></tr>
@@ -29,7 +30,12 @@
                       @else
                         <tr><td><b>Paid By:</b> Cash Payment</td></tr>
                       @endif
-                      <tr><td><b>Amount:</b> {{number_format($transaction['debit'])}}</td></tr>
+                      @php
+                        // For expense transactions, the amount is stored in credit column (cash outflow)
+                        $expenseAmount = $transaction['credit'] ?? $transaction['debit'] ?? 0;
+                      @endphp
+                      <tr><td><b>Amount:</b> {{number_format($expenseAmount)}}</td></tr>
+                      <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($expenseAmount) }}</td></tr>
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif
                   </tbody>

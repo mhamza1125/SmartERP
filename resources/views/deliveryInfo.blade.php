@@ -9,14 +9,9 @@
             <h4>Delivery Info @if(isset($isMultiOrder) && $isMultiOrder) <span class="badge badge-secondary ml-2">Multi-Order</span> @endif</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <button type="button" class="btn {{ isset($isMultiOrder) && $isMultiOrder ? 'btn-light' : 'btn-info' }} dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="fas fa-print"></i> Print
-                </button>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item" href="#" onclick="printPage('Delivery Information')">Delivery Info</a>
-                  <a class="dropdown-item" href="#" onclick="printCommercialInvoice(true, true)">Commercial Invoice</a>
-                  <a class="dropdown-item" href="#" onclick="printPackingList()">Packing List</a>
-                </div>
+                <a class="btn btn-info" href="{{ route('delivery.print', $deliveryId) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ route('delivery') }}" class="btn {{ isset($isMultiOrder) && $isMultiOrder ? 'btn-light' : 'btn-primary' }}">Back</a>
                 @php
                   $deliveryId = is_array($delivery) ? $delivery['delivery_id'] : $delivery->delivery_id;

@@ -85,7 +85,7 @@ class CustomerController extends Controller
 
         return redirect()->route('customer.show', $getId)->with('success', 'Record Inserted Successfully');
     }
-
+    
     public function show($id)
     {
         $this->authorize('show', Customer::class);
@@ -93,6 +93,21 @@ class CustomerController extends Controller
         $image = $this->imageRepository->image('customers', $id);
 
         return view('customerInfo', [
+            'customer' => $customer,
+            'image' => $image,
+        ]);
+    }
+
+    /**
+     * Print customer information
+     */
+    public function printCustomer($id)
+    {
+        $this->authorize('show', Customer::class);
+        $customer = $this->customerRepository->get($id);
+        $image = $this->imageRepository->image('customers', $id);
+
+        return view('print.customer', [
             'customer' => $customer,
             'image' => $image,
         ]);
@@ -120,6 +135,41 @@ class CustomerController extends Controller
         $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
 
         return view('customerDetail', [
+            'customer' => $customer,
+            'detail' => $detail,
+            'balance' => $balance,
+            'oBalance' => $oBalance,
+            'cBalance' => $cBalance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+        ]);
+    }
+
+    /**
+     * Print customer ledger
+     */
+    public function printCustomerLedger(Request $request, $id)
+    {
+        $this->authorize('show', Customer::class);
+        $this->authorize('show', Transaction::class);
+        $customer = $this->customerRepository->get($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $oBalance = 0; // Opening Balance
+        $cBalance = 0; // Closing Balance
+        if (! empty($dfrom) && ! empty($dto)) {
+            $all = $this->transactionRepository->cDetailFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $oBalance = $all['opening_balance'];
+            $cBalance = $all['closing_balance'];
+        } else {
+            $detail = $this->transactionRepository->cDetail($id);
+        }
+        $totalCredit = $detail->sum('credit');
+        $totalDebit = $detail->sum('debit');
+        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+
+        return view('print.customer-ledger', [
             'customer' => $customer,
             'detail' => $detail,
             'balance' => $balance,

@@ -76,8 +76,8 @@
                   <div class="form-group">
                     <label>Issuance For Orders</label>
                     <select class="form-control select2" name="order_id" id="order_id" required>
-                      {{-- <option value="0" selected>Default Issuance</option> --}}
-                      <option value="" selected disabled>Select Order</option>
+                      <option value="0" selected>Default Issuance</option>
+                      <option value="" disabled>Select Order</option>
                       @if($order->count())
                         @foreach($order as $item)
                           <option value="{{$item->order_id}}" {{ old('order_id') == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
@@ -90,7 +90,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Issuance Groups</label>
-                    <select class="form-control select2" name="igroup_id" id="igroup_id" required>
+                    <select class="form-control select2" name="igroup_id" id="igroup_id">
                       {{-- <option value="0" selected>Default Issuance</option> --}}
                       <option value="" selected disabled>Select Group</option>
                       @if($igroup->count())

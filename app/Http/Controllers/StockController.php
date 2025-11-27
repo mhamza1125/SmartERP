@@ -69,7 +69,7 @@ class StockController extends Controller
     ) {
         $this->middleware(['auth', 'all'])->except([
             'ajaxPM', 'ajaxPT', 'ajaxPTStock', 'ajaxPC', 'ajaxPS',
-            'ajaxIG', 'ajaxMQty', 'ajaxAMQty', 'ajaxATMQty'
+            'ajaxIG', 'ajaxMQty', 'ajaxAMQty', 'ajaxATMQty', 'getAllProducts'
         ]);
         $this->headRepository = $headRepository;
         $this->imageRepository = $imageRepository;
@@ -98,6 +98,25 @@ class StockController extends Controller
         return view('stock', [
             'stock' => $stock,
             'pstock' => $pstock,
+        ]);
+    }
+
+    /**
+     * Print stock report
+     */
+    public function printStock(Request $request)
+    {
+        $this->authorize('stocks_access', Stock::class);
+
+        // Available Stock
+        $stock = $this->stockItemRepository->stock();
+        $pstock = $this->stockItemRepository->pStock();
+        $type = $request->query('type', 'all'); // 'all', 'product', or 'machine'
+
+        return view('print.stock-report', [
+            'stock' => $stock,
+            'pstock' => $pstock,
+            'type' => $type,
         ]);
     }
 
@@ -210,6 +229,26 @@ class StockController extends Controller
         })->values();
 
         return response()->json(['data' => $groupedProducts]);
+    }
+
+    public function getAllProducts(Request $request)
+    {
+        // Ajax All Product Types - For Default Production
+        $products = DB::table('product_types')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads as size', 'size.head_id', '=', 'product_types.size_id')
+            ->where('product_types.product_type_status', '1')
+            ->where('products.product_status', '1')
+            ->select(
+                'product_types.product_type_id',
+                'products.article_no',
+                'products.name',
+                'size.name as hname'
+            )
+            ->orderBy('products.article_no')
+            ->get();
+
+        return response()->json(['data' => $products]);
     }
 
     public function ajaxIG(Request $request)
@@ -495,6 +534,45 @@ class StockController extends Controller
         ]);
     }
 
+    /**
+     * Print daily issuance report
+     */
+    public function printDailyIssue(Request $request)
+    {
+        $this->authorize('show', Stock::class);
+        // Daily / Filtered Issuance
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $tname = $request->input('table_name');
+        $oid = $request->input('order_id');
+        $tid = $request->input('employee_id');
+
+        if (! empty($dfrom) && ! empty($dto)) {
+            $issueItem = $this->stockItemRepository->dailyIssueFilter($dfrom, $dto, $tname, $tid, $oid);
+        } else {
+            $issueItem = $this->stockItemRepository->dailyIssue();
+        }
+
+        $average = [];
+        foreach ($issueItem as $item) {
+            if ($item->material_id) {
+                $key = $item->product_type_id.'|'.$item->ifname;
+                $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
+                $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
+            }
+        }
+
+        return view('print.dailyIssue', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'oid' => $oid,
+            'tid' => $tid,
+            'tname' => $tname,
+            'average' => $average,
+            'issueItem' => $issueItem,
+        ]);
+    }
+
     public function dailyReceive(Request $request)
     {
         $this->authorize('show', Stock::class);
@@ -522,6 +600,35 @@ class StockController extends Controller
             'order' => $order,
             'vendor' => $vendor,
             'employee' => $employee,
+            'issueItem' => $issueItem,
+        ]);
+    }
+
+    /**
+     * Print daily receive report
+     */
+    public function printDailyReceive(Request $request)
+    {
+        $this->authorize('show', Stock::class);
+        // Daily / Filtered Receiving
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $tname = $request->input('table_name');
+        $oid = $request->input('order_id');
+        $tid = $request->input('employee_id');
+
+        if (! empty($dfrom) && ! empty($dto)) {
+            $issueItem = $this->stockItemRepository->dailyReceiveFilter($dfrom, $dto, $tname, $tid, $oid);
+        } else {
+            $issueItem = $this->stockItemRepository->dailyReceive();
+        }
+
+        return view('print.dailyReceive', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'oid' => $oid,
+            'tid' => $tid,
+            'tname' => $tname,
             'issueItem' => $issueItem,
         ]);
     }
@@ -663,6 +770,62 @@ class StockController extends Controller
 
         return view('receiveIssueInfo', [
             'head' => $head,
+            'issue' => $issue,
+            'issueItem' => $issueItem,
+        ]);
+    }
+
+    /**
+     * Print issuance information
+     */
+    public function printIssuance($id)
+    {
+        $this->authorize('show', Stock::class);
+        $head = $this->headRepository->get('14');
+        $issue = $this->stockRepository->get($id);
+        $issueItem = $this->stockItemRepository->getAvg($id);
+        $issueAll = $this->stockItemRepository->getAll($id);
+        $issueSum = $this->stockItemRepository->getSum($id);
+        $totalTimes = $this->stockItemRepository->times($id);
+
+        return view('print.issuance', [
+            'head' => $head,
+            'issue' => $issue,
+            'issueItem' => $issueItem,
+            'issueAll' => $issueAll,
+            'issueSum' => $issueSum,
+            'totalTimes' => $totalTimes,
+            'count' => $totalTimes->count(),
+        ]);
+    }
+
+    /**
+     * Print receive issuance information
+     */
+    public function printReceiveIssuance($id)
+    {
+        $this->authorize('show', Stock::class);
+        $head = $this->headRepository->get('14');
+        $issue = $this->stockRepository->get($id);
+        $issueItem = $this->stockItemRepository->get($id);
+
+        return view('print.receive-issuance', [
+            'head' => $head,
+            'issue' => $issue,
+            'issueItem' => $issueItem,
+        ]);
+    }
+
+    /**
+     * Print machine material issuance information
+     */
+    public function printMachineIssuance($id)
+    {
+        $this->authorize('show', Stock::class);
+        $issue = $this->stockRepository->get($id);
+        $issueItem = $this->stockItemRepository->getMM($id);
+
+        return view('print.machine-issuance', [
             'issue' => $issue,
             'issueItem' => $issueItem,
         ]);

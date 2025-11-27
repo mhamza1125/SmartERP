@@ -9,6 +9,9 @@
             <h4>Employee Detail</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <a class="btn btn-info" href="{{ route('employee.ledger.print', $employee['employee_id']) }}{{ !empty($dfrom) && !empty($dto) ? '?dfrom=' . $dfrom . '&dto=' . $dto : '' }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.addEPayment')}}" class="btn btn-primary">Pay</a>
               </div>
@@ -72,8 +75,8 @@
                         <td>{{$index++}}</td>
                         <td>{{$dfrom}}</td>
                         <td>Opening Balance</td>
-                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
+                        <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ number_format($oBalance) }}</td>
                         <td></td>
                       </tr>
@@ -85,13 +88,34 @@
                           isset($item->debit) ? $balance -= $item->debit : '';
                           isset($item->credit) ? $balance += $item->credit : '';
                         }
+                        // For employee ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
+                        $displayDebit = $item->credit ?? 0;
+                        $displayCredit = $item->debit ?? 0;
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
                         <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
-                        <td>{{ isset($item->transaction_type) ? ucfirst($item->transaction_type) : 'Purchase Order' }}</td>
-                        <td>{{ isset($item->debit) ? number_format($item->debit) : '' }}</td>
-                        <td>{{ isset($item->credit) ? number_format($item->credit) : '' }}</td>
+                        <td>
+                          @if(isset($item->transaction_type))
+                            @switch($item->transaction_type)
+                              @case('advance')
+                                Give Loan
+                                @break
+                              @case('receiveAdvance')
+                                Receive Loan Repayment
+                                @break
+                              @case('salaryAdvance')
+                                Salary Advance
+                                @break
+                              @default
+                                {{ ucfirst($item->transaction_type) }}
+                            @endswitch
+                          @else
+                            Purchase Order
+                          @endif
+                        </td>
+                        <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>
+                        <td>{{ $displayCredit > 0 ? number_format($displayCredit) : '' }}</td>
                         <td>{{number_format($balance)}}</td>
                         <td>
                           @if($item->transaction_type == 'openingBalance')

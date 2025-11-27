@@ -5,7 +5,7 @@
     <div class="row">
       <div class="col-12">
         <div class="card">
-          <div class="card-header {{ isset($isMultiOrder) && $isMultiOrder ? 'bg-info text-white' : '' }}">
+          <div class="card-header">
             <h4>
               @if(isset($isMultiOrder) && $isMultiOrder)
                 <i class="fas fa-shipping-fast"></i>
@@ -160,68 +160,6 @@
                 </div>
               </div>
 
-              <!-- Multi-Order Delivery Section -->
-              <h5 class="mt-3">Multi-Order Delivery (Optional)</h5>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Select Additional Orders from Same Customer</label>
-                    <div class="card bg-light">
-                      <div class="card-body">
-                        <i class="fas fa-info-circle"></i> You can select multiple orders from the same customer to create a combined delivery.
-                      </div>
-                    </div>
-                    @if(isset($customerOrders) && $customerOrders->count() > 1)
-                      <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                          <thead>
-                            <tr>
-                              <th width="50">Select</th>
-                              <th>Order No</th>
-                              <th>Job No</th>
-                              <th>Order Date</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @foreach($customerOrders as $customerOrder)
-                              <tr>
-                                <td>
-                                  <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="selected_orders[]" value="{{$customerOrder->order_id}}"
-                                           id="order_{{$customerOrder->order_id}}"
-                                           {{$customerOrder->order_id == $order['order_id'] ? 'checked disabled' : ''}}>
-                                    <label class="form-check-label" for="order_{{$customerOrder->order_id}}"></label>
-                                  </div>
-                                </td>
-                                <td>{{$customerOrder->order_no}}</td>
-                                <td>{{$customerOrder->job_no}}</td>
-                                <td>{{$customerOrder->order_date}}</td>
-                                <td>
-                                  @if($customerOrder->order_status == 1) <span class="badge badge-warning">Pending</span>
-                                  @elseif($customerOrder->order_status == 2) <span class="badge badge-info">Processing</span>
-                                  @elseif($customerOrder->order_status == 3) <span class="badge badge-secondary">On Hold</span>
-                                  @elseif($customerOrder->order_status == 4) <span class="badge badge-primary">Partially Delivered</span>
-                                  @elseif($customerOrder->order_status == 5) <span class="badge badge-success">Delivered</span>
-                                  @elseif($customerOrder->order_status == 6) <span class="badge badge-dark">Completed</span>
-                                  @elseif($customerOrder->order_status == 7) <span class="badge badge-danger">Cancelled</span>
-                                  @else <span class="badge badge-light">Unknown</span>
-                                  @endif
-                                </td>
-                              </tr>
-                            @endforeach
-                          </tbody>
-                        </table>
-                      </div>
-                    @else
-                      <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> No other orders found for this customer.
-                      </div>
-                    @endif
-                  </div>
-                </div>
-              </div>
-
               <h6 class="mt-2">Shipping From</h6>
               <div class="row">
                 <div class="col-md-6">
@@ -361,8 +299,8 @@
                                 </td>
                                 <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
                                 <td>{{number_format($item->quantity - $item->stockOutDelivered)}}</td>
-                                <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
-                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
+                                <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
+                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
                                   <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
                                 </td>
@@ -393,8 +331,8 @@
                                 </td>
                                 <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
                                 <td>{{number_format($item->quantity - $item->stockOutDelivered)}}</td>
-                                <td>{{number_format(1/$item->bqty)}} {{$item->uname}}</td>
-                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}}</td>
+                                <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
+                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
                                   <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
                                 </td>
@@ -669,7 +607,7 @@
   </div>
 </section>
 <script>
-var isDeliveryPage = false;
+var isDeliveryPage = true;
 
 // Multi-Order Selection Enhancement
 $(document).ready(function() {

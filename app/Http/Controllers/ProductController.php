@@ -184,6 +184,36 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Print product information
+     */
+    public function printProduct($id)
+    {
+        $this->authorize('show', Product::class);
+        $product = $this->productRepository->get($id);
+        $size = $this->productTypeRepository->active($id);
+        $pcost = $this->productCostRepository->get($id);
+        $pWages = $pcost->where('table_name', 'general')->sum('amount');
+        $totalMaterial = $this->productMaterialRepository->times($id);
+        $getMaterial = $this->productMaterialRepository->getAll($id);
+        $material = $this->materialRepository->getMaterial($product['material_id']);
+        $stage = $this->headRepository->getStage($product['stage_ids']);
+        $openingStock = $this->productRepository->getOpeningStock($id);
+
+        return view('print.product', [
+            'product' => $product,
+            'size' => $size,
+            'pcost' => $pcost,
+            'pWages' => $pWages,
+            'totalMaterial' => $totalMaterial,
+            'countMaterial' => $totalMaterial->count(),
+            'getMaterial' => $getMaterial,
+            'material' => $material,
+            'stage' => $stage,
+            'openingStock' => $openingStock,
+        ]);
+    }
+
     public function edit(Product $id)
     {
         $this->authorize('edit', Product::class);

@@ -94,6 +94,24 @@ class ReceiveController extends Controller
         ]);
     }
 
+    /**
+     * Print receive information
+     */
+    public function printReceive($id)
+    {
+        $receive = $this->receiveRepository->get($id);
+        if($receive['purchase_type'] == 'material'){
+            $receiveMaterial = $this->receiveMaterialRepository->get($id);
+        } else {
+            $receiveMaterial = $this->receiveMaterialRepository->get2($id);
+        }
+
+        return view('print.receive', [
+            'receive' => $receive,
+            'receiveMaterial' => $receiveMaterial,
+        ]);
+    }
+
     public function edit($id)
     {
         $receive = $this->receiveRepository->get($id);

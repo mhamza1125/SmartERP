@@ -20,7 +20,7 @@ class MachineRepository implements GlobalInterface
         return Machine::where('machines.machine_id', $id)
             ->join('heads', 'heads.head_id', '=', 'machines.machine_type_id')
             ->leftJoin('employees', 'employees.employee_id', '=', 'machines.employee_id')
-            ->select('*', 'employees.name', 'heads.name as hname')
+            ->select('machines.*', 'employees.name as employee_name', 'heads.name as machine_type')
             ->first();
     }
 

@@ -65,7 +65,14 @@ class PurchaseRepository implements GlobalInterface
 
     public function get($id)
     {
-        // Checking If it is received or not
+        // Getting Without Check
+        return Purchase::where('purchase_id', $id)
+            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+            ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1', 'vendors.vendor_no')
+            ->first();
+
+        // Checking If it is received or not (Don't know why it's removed by Augmnt)
         return Purchase::where('purchases.purchase_id', $id)
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->leftJoin('receives', 'receives.purchase_id', '=', 'purchases.purchase_id')
@@ -75,12 +82,6 @@ class PurchaseRepository implements GlobalInterface
             ->groupBy('purchases.purchase_id')
             ->first();
 
-        // Getting Without Check
-        return Purchase::where('purchase_id', $id)
-            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-            ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-            ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1')
-            ->first();
     }
 
     public function getPurchase($id)

@@ -33,9 +33,9 @@ class OrderItemRepository implements GlobalInterface
             ->select(
                 'order_items.*',
                 'product_types.*',
-                'products.name',
+                'products.name as pname',
                 'products.article_no',
-                'heads.name as hname',
+                'heads.name as name',
                 'uhead.name as uname',
                 'shead.name as sname',
                 'chead.name as cname',

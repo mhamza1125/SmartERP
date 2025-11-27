@@ -128,6 +128,34 @@ class MProcessController extends Controller
         ]);
     }
 
+    /**
+     * Print material process information
+     */
+    public function printMProcess($id)
+    {
+        $purchase = $this->purchaseRepository->get($id);
+        $purchaseItem = $this->mprocessRepository->get($id);
+        $receiveSum = $this->receiveMaterialRepository->rSum($id);
+        $receiveAll = $this->receiveMaterialRepository->rAll($id);
+        $receiveTimes = $this->receiveMaterialRepository->times($id);
+        $returnAll = $this->returnMaterialRepository->rAll($id);
+        $returnTimes = $this->returnMaterialRepository->times($id);
+        $transaction = $this->transactionRepository->getPPayment($id);
+
+        return view('print.mprocess', [
+            'purchase' => $purchase,
+            'transaction' => $transaction,
+            'purchaseItem' => $purchaseItem,
+            'receiveSum' => $receiveSum,
+            'receiveAll' => $receiveAll,
+            'receiveTimes' => $receiveTimes,
+            'count' => $receiveTimes->count(),
+            'returnAll' => $returnAll,
+            'returnTimes' => $returnTimes,
+            'count2' => $returnTimes->count(),
+        ]);
+    }
+
     public function edit(Purchase $id)
     {
         $order = $this->orderRepository->active();

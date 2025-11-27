@@ -49,9 +49,13 @@ class BankController extends Controller
         $bank = $this->bankRepository->all();
         $head = $this->headRepository->get('6');
 
+        // Also get bank balance data for the ledger tab
+        $bankBalance = $this->transactionRepository->bankBalance();
+
         return view('bank', [
             'bank' => $bank,
             'head' => $head,
+            'bankBalance' => $bankBalance,
         ]);
     }
 

@@ -99,6 +99,21 @@ class MaterialController extends Controller
         ]);
     }
 
+    /**
+     * Print material information
+     */
+    public function printMaterial($id)
+    {
+        $this->authorize('show', Material::class);
+        $material = $this->materialRepository->get($id);
+        $image = $this->imageRepository->image('materials', $id);
+
+        return view('print.material', [
+            'material' => $material,
+            'image' => $image,
+        ]);
+    }
+
     // public function edit(Material $id){
     public function edit($id)
     {
@@ -131,6 +146,32 @@ class MaterialController extends Controller
         }
 
         return view('materialDetail', [
+            'dto' => $dto,
+            'dfrom' => $dfrom,
+            'mid' => $mid,
+            'material' => $material,
+            'materialItem' => $materialItem,
+        ]);
+    }
+
+    /**
+     * Print material detail report
+     */
+    public function printMaterialDetail(Request $request)
+    {
+        $this->authorize('show', Material::class);
+        // Material Ledger
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $mid = $request->input('material_id');
+        $material = $this->materialRepository->all();
+        if (! empty($dfrom) && ! empty($dto)) {
+            $materialItem = $this->materialRepository->ledgerFilter($dfrom, $dto, $mid);
+        } else {
+            $materialItem = $this->materialRepository->ledger();
+        }
+
+        return view('print.materialDetail', [
             'dto' => $dto,
             'dfrom' => $dfrom,
             'mid' => $mid,

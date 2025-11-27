@@ -82,6 +82,21 @@ class MachineController extends Controller
         ]);
     }
 
+    /**
+     * Print machine information
+     */
+    public function printMachine($id)
+    {
+        $this->authorize('show', Machine::class);
+        $image = $this->imageRepository->image('machines', $id);
+        $machine = $this->machineRepository->get($id);
+
+        return view('print.machine', [
+            'image' => $image,
+            'machine' => $machine,
+        ]);
+    }
+
     public function edit($id)
     {
         $this->authorize('edit', Machine::class);

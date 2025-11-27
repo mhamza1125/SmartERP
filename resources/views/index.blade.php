@@ -114,18 +114,27 @@
             </li>
             @endcan
 
-            {{-- Bank / Cash Section --}}
-            @can('access', App\Models\Bank::class)
+            @canany(['access'], [App\Models\Bank::class, App\Models\Asset::class])
             <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Bank / Cash</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li>
-                <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li>
-                <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
-              </ul>
+                <a href="#" class="menu-toggle nav-link has-dropdown">
+                    <i data-feather="briefcase"></i><span>Bank / Cash</span>
+                </a>
+
+                <ul class="dropdown-menu">
+                    {{-- Bank / Cash Section --}}
+                    @can('access', App\Models\Bank::class)
+                        <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li>
+                        <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li>
+                        <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
+                    @endcan
+
+                    {{-- Assets Section --}}
+                    @can('access', App\Models\Asset::class)
+                        <li><a class="nav-link" href="{{ route('asset') }}">Assets</a></li>
+                    @endcan
+                </ul>
             </li>
-            @endcan
+            @endcanany
 
             {{-- Machines Section --}}
             @can('access', App\Models\Machine::class)
@@ -209,6 +218,7 @@
                   data-feather="briefcase"></i><span>Attendance / Payroll</span></a>
               <ul class="dropdown-menu">
                 @can('access', App\Models\Transaction::class)
+                  <li><a class="nav-link" href="{{ route('payroll.index') }}">Monthly Payroll</a></li>
                   <li><a class="nav-link" href="{{ route('wages') }}">Work Wages</a></li>
                 @endcan
                 @can('access', App\Models\Attendance::class)
@@ -374,6 +384,7 @@
   <!-- JS Libraies -->
   <script src="{{ URL::asset('assets/bundles/izitoast/js/iziToast.min.js') }}"></script>
   {{-- <script src="{{ URL::asset('assets/bundles/apexcharts/apexcharts.min.js') }}"></script> --}}
+  <script src="{{ URL::asset('assets/bundles/sweetalert/sweetalert.min.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/select2/dist/js/select2.full.min.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/summernote/summernote-bs4.js') }}"></script>

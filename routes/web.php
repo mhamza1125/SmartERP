@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\MachineController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MProcessController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCostController;
 use App\Http\Controllers\ProductMaterialController;
@@ -108,6 +110,15 @@ Route::post('/employee/{id}', [EmployeeController::class, 'update'])->name('empl
 Route::get('/eLedger/{id}', [EmployeeController::class, 'detail'])->name('employee.detail');
 Route::post('/eLedger/{id}', [EmployeeController::class, 'detail'])->name('employee.filter');
 
+// Payroll
+Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+Route::get('/payroll/create', [PayrollController::class, 'create'])->name('payroll.create');
+Route::post('/payroll', [PayrollController::class, 'store'])->name('payroll.store');
+Route::get('/payroll/{month}/info', [PayrollController::class, 'info'])->name('payroll.info');
+Route::get('/payroll/{month}/edit', [PayrollController::class, 'edit'])->name('payroll.edit');
+Route::put('/payroll/{month}', [PayrollController::class, 'update'])->name('payroll.update');
+Route::get('/payroll/bank-balance/{bankId}', [PayrollController::class, 'getBankBalance'])->name('payroll.bankBalance');
+
 // Vendor
 // Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
 Route::get('/vendor', [VendorController::class, 'vendor'])->name('vendor');
@@ -132,6 +143,7 @@ Route::get('/editMaterial/{id}', [MaterialController::class, 'edit'])->name('mat
 Route::post('/material/{id}', [MaterialController::class, 'update'])->name('material.update');
 Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
 Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
+Route::get('/materialDetail/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
 
 // Machine
 Route::get('/machine', [MachineController::class, 'index'])->name('machine');
@@ -237,6 +249,7 @@ Route::get('/stock', [StockController::class, 'index'])->name('stock');
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
 Route::get('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.daily');
 Route::post('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.filter');
+Route::get('/dailyIssue/print', [StockController::class, 'printDailyIssue'])->name('stock.daily.print');
 Route::get('/addIssue', [StockController::class, 'create'])->name('stock.add');
 Route::get('/addGIssue', [StockController::class, 'gcreate'])->name('stock.gadd');
 Route::post('/gissue', [StockController::class, 'gstore'])->name('stock.gstore');
@@ -247,6 +260,7 @@ Route::post('/issue/{id}', [StockController::class, 'update'])->name('stock.upda
 Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Product Material
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
 Route::get('/ajaxPTStock', [StockController::class, 'ajaxPTStock'])->name('ajaxPTStock'); //Product Type with Stock
+Route::get('/ajax/getAllProducts', [StockController::class, 'getAllProducts'])->name('ajax.getAllProducts'); //All Product Types
 Route::get('/ajaxPC', [StockController::class, 'ajaxPC'])->name('ajaxPC'); //Product Cost
 Route::get('/ajaxPS', [StockController::class, 'ajaxPS'])->name('ajaxPS'); //Product Stage
 Route::get('/ajaxIG', [StockController::class, 'ajaxIG'])->name('ajaxIG'); //Issuance Group
@@ -259,11 +273,13 @@ Route::get('/issueMM', [StockController::class, 'issue2'])->name('missue');
 Route::get('/addIMM', [StockController::class, 'create2'])->name('mstock.add');
 Route::get('/issueMM/{id}', [StockController::class, 'show2'])->name('mstock.show');
 Route::get('/editIMM/{id}', [StockController::class, 'edit2'])->name('mstock.edit');
+Route::get('/issueMM/print/{id}', [StockController::class, 'printMachineIssuance'])->name('missue.print');
 
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
 Route::get('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.daily');
 Route::post('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.filter');
+Route::get('/dailyReceive/print', [StockController::class, 'printDailyReceive'])->name('rstock.daily.print');
 Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::post('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
@@ -328,6 +344,31 @@ Route::get('/addOPayment', [TransactionController::class, 'createOPayment'])->na
 Route::get('/oPayment/{id}', [TransactionController::class, 'showOPayment'])->name('transaction.showOPayment');
 Route::get('/editOPayment/{id}', [TransactionController::class, 'editOPayment'])->name('transaction.editOPayment');
 
+// Standard Print Routes
+Route::get('/order/print/{id}', [OrderController::class, 'printOrder'])->name('order.print');
+Route::get('/payment/print/{id}', [TransactionController::class, 'printPayment'])->name('payment.print');
+Route::get('/delivery/print/{id}', [DeliveryController::class, 'printDelivery'])->name('delivery.print');
+Route::get('/product/print/{id}', [ProductController::class, 'printProduct'])->name('product.print');
+Route::get('/issuance/print/{id}', [StockController::class, 'printIssuance'])->name('issuance.print');
+Route::get('/receive-issuance/print/{id}', [StockController::class, 'printReceiveIssuance'])->name('receive-issuance.print');
+Route::get('/purchase/print/{id}', [PurchaseController::class, 'printPurchase'])->name('purchase.print');
+Route::get('/receive/print/{id}', [ReceiveController::class, 'printReceive'])->name('receive.print');
+Route::get('/return/print/{id}', [ReturnController::class, 'printReturn'])->name('return.print');
+Route::get('/mprocess/print/{id}', [MProcessController::class, 'printMProcess'])->name('mprocess.print');
+Route::get('/igroup/print/{id}', [IGroupController::class, 'printIGroup'])->name('igroup.print');
+Route::get('/machine/print/{id}', [MachineController::class, 'printMachine'])->name('machine.print');
+Route::get('/customer/print/{id}', [CustomerController::class, 'printCustomer'])->name('customer.print');
+Route::get('/employee/print/{id}', [EmployeeController::class, 'printEmployee'])->name('employee.print');
+Route::get('/vendor/print/{id}', [VendorController::class, 'printVendor'])->name('vendor.print');
+Route::get('/contractor/print/{id}', [VendorController::class, 'printContractor'])->name('contractor.print');
+Route::get('/material/print/{id}', [MaterialController::class, 'printMaterial'])->name('material.print');
+Route::get('/stock/print', [StockController::class, 'printStock'])->name('stock.print');
+Route::get('/cLedger/print/{id}', [CustomerController::class, 'printCustomerLedger'])->name('customer.ledger.print');
+Route::get('/eLedger/print/{id}', [EmployeeController::class, 'printEmployeeLedger'])->name('employee.ledger.print');
+Route::get('/vLedger/print/{id}', [VendorController::class, 'printVendorLedger'])->name('vendor.ledger.print');
+Route::get('/expense/print/{id}', [TransactionController::class, 'printExpense'])->name('expense.print');
+Route::get('/brs/print/{id}', [TransactionController::class, 'printBRS'])->name('brs.print');
+
 // Bank
 Route::get('/bank', [BankController::class, 'index'])->name('bank');
 Route::get('/addBank', [BankController::class, 'create'])->name('bank.add');
@@ -343,6 +384,15 @@ Route::post('/delivery-return', [DeliveryReturnController::class, 'store'])->nam
 Route::get('/delivery-return/{id}', [DeliveryReturnController::class, 'show'])->name('delivery-return.show');
 Route::get('/delivery-return/{id}/edit', [DeliveryReturnController::class, 'edit'])->name('delivery-return.edit');
 Route::post('/delivery-return/{id}', [DeliveryReturnController::class, 'update'])->name('delivery-return.update');
+
+// Assets
+Route::get('/asset', [AssetController::class, 'index'])->name('asset');
+Route::get('/addAsset', [AssetController::class, 'create'])->name('asset.add');
+Route::post('/asset', [AssetController::class, 'store'])->name('asset.store');
+Route::get('/asset/{id}', [AssetController::class, 'show'])->name('asset.show');
+Route::get('/editAsset/{id}', [AssetController::class, 'edit'])->name('asset.edit');
+Route::post('/asset/{id}', [AssetController::class, 'update'])->name('asset.update');
+Route::delete('/asset/{id}', [AssetController::class, 'destroy'])->name('asset.destroy');
 
 // Company
 Route::get('/company/data', [CompanyController::class, 'getCompanyData'])->name('company.data');
