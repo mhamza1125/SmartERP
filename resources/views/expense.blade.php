@@ -19,22 +19,34 @@
                     <th>Sr.</th>
                     <th>Voucher No</th>
                     <th>Date</th>
-                    <th>Expsense Head</th>
+                    <th>Expense Head</th>
                     <th>Payment Type</th>
-                    <th>Amount</th>
+                    <th>Debit (Reversal)</th>
+                    <th>Credit (Incurred)</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   @if($transaction->count())
+                    @php
+                      $totalDebit = 0;
+                      $totalCredit = 0;
+                    @endphp
                     @foreach($transaction as $item)
+                    @php
+                      $debit = $item->debit ?? 0;
+                      $credit = $item->credit ?? 0;
+                      $totalDebit += $debit;
+                      $totalCredit += $credit;
+                    @endphp
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>TXN-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                      <td>SSL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                       <td>{{$item->transaction_date}}</td>
                       <td>{{$item->name}}</td>
                       <td>{{$item->bank_id ? 'Bank Payment':'Cash Payment'}}</td>
-                      <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
+                      <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>
+                      <td class="text-right">{{ $credit > 0 ? number_format($credit, 2) : '-' }}</td>
                       <td>
                         <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('transaction.editExpense', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -44,14 +56,11 @@
                   @endif
                 </tbody>
                 <tfoot>
-                  <tr>
-                    <th>Sr.</th>
-                    <th>Voucher No</th>
-                    <th>Date</th>
-                    <th>Expsense Head</th>
-                    <th>Payment Type</th>
-                    <th>Amount</th>
-                    <th>Action</th>
+                  <tr style="background-color: #f5f5f5; font-weight: bold;">
+                    <th colspan="5" class="text-right">Total:</th>
+                    <th class="text-right">{{ number_format($totalDebit, 2) }}</th>
+                    <th class="text-right">{{ number_format($totalCredit, 2) }}</th>
+                    <th></th>
                   </tr>
                 </tfoot>
               </table>

@@ -314,6 +314,7 @@ Route::get('/editEPayment/{id}', [TransactionController::class, 'editEPayment'])
 Route::get('/vPayment', [TransactionController::class, 'vPayment'])->name('vPayment');
 Route::get('/cPayment', [TransactionController::class, 'cPayment'])->name('cPayment');
 Route::get('/ajaxPurchase', [TransactionController::class, 'ajaxPurchase'])->name('ajaxPurchase'); //Purchases
+Route::get('/ajaxPayee', [TransactionController::class, 'ajaxPayee'])->name('ajaxPayee'); //Payees for General Voucher
 Route::get('/vPayment/{id}', [TransactionController::class, 'showVPayment'])->name('transaction.showVPayment');
 Route::get('/cPayment/{id}', [TransactionController::class, 'showCPayment'])->name('transaction.showCPayment');
 Route::get('/addVPayment', [TransactionController::class, 'createVPayment'])->name('transaction.addVPayment');
@@ -325,6 +326,8 @@ Route::get('/expense', [TransactionController::class, 'expense'])->name('expense
 Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name('transaction.addExpense');
 Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name('transaction.showExpense');
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
+// Transaction General Voucher
+Route::get('/addGeneralVoucher', [TransactionController::class, 'createGeneralVoucher'])->name('transaction.addGeneralVoucher');
 // Transaction BRS
 // Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
 Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRS');

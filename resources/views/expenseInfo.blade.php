@@ -22,7 +22,7 @@
               <div class="col-md-7">
                 <table class="table table-sm">
                   <tbody>
-                      <tr><td><b>Voucher No:</b> TXN-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
+                      <tr><td><b>Voucher No:</b> SLE-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
                       @if($transaction['bank_id'])
                         <tr><td><b>Paid By:</b> {{$transaction['bname']}}</td></tr>
                         <tr><td><b>Account Title:</b> {{$transaction['account_title']}}</td></tr>

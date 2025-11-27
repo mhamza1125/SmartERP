@@ -110,6 +110,7 @@
                 <li><a class="nav-link" href="{{ route('cPayment') }}">Contractor</a></li>
                 <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
                 <li><a class="nav-link" href="{{ route('oPayment') }}">Customer Order</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">General Voucher</a></li>
               </ul>
             </li>
             @endcan

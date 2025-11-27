@@ -56,7 +56,28 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Entry Type</label>
+                    @php
+                      $isDebit = isset($transaction['debit']) && $transaction['debit'] > 0;
+                      $expenseType = $isDebit ? 'debit' : 'credit';
+                    @endphp
+                    <div class="custom-control custom-radio">
+                      <input type="radio" id="creditRadio" name="expense_type" class="custom-control-input" value="credit" {{ $expenseType === 'credit' ? 'checked' : '' }}>
+                      <label class="custom-control-label" for="creditRadio">
+                        Expense Incurred (Credit)
+                      </label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                      <input type="radio" id="debitRadio" name="expense_type" class="custom-control-input" value="debit" {{ $expenseType === 'debit' ? 'checked' : '' }}>
+                      <label class="custom-control-label" for="debitRadio">
+                        Expense Reversal (Debit)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Cash / Bank (if any)</label>
                     <select class="form-control select2" name="bank_id" required>
@@ -71,10 +92,10 @@
                     <div class="invalid-feedback">Select Cash / Bank</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Amount</label>
-                    <input type="number" min="0" class="form-control" name="debit" required value="{{$transaction['credit'] ?? $transaction['debit']}}">
+                    <input type="number" min="0" step="0.01" class="form-control" name="amount" required value="{{$transaction['credit'] ?? $transaction['debit']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>

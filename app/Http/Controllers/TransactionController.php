@@ -245,6 +245,13 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function createGeneralVoucher()
+    {
+        $this->authorize('create', Transaction::class);
+
+        return view('addGeneralVoucher');
+    }
+
     public function ajaxBank(Request $request)
     {
         $table = $request->input('table');
@@ -317,6 +324,32 @@ class TransactionController extends Controller
         return response()->json(['data' => $purchase]);
     }
 
+    public function ajaxPayee(Request $request)
+    {
+        $type = $request->input('type');
+        $payees = [];
+
+        if ($type === 'vendor') {
+            $payees = $this->vendorRepository->vendor()->map(function ($vendor) {
+                return [
+                    'id' => $vendor->vendor_id,
+                    'no' => $vendor->vendor_no,
+                    'name' => $vendor->fname,
+                ];
+            })->toArray();
+        } elseif ($type === 'contractor') {
+            $payees = $this->vendorRepository->worker()->map(function ($contractor) {
+                return [
+                    'id' => $contractor->vendor_id,
+                    'no' => $contractor->vendor_no,
+                    'name' => $contractor->fname,
+                ];
+            })->toArray();
+        }
+
+        return response()->json($payees);
+    }
+
     public function store(TransactionRequest $request)
     {
         $validatedData = $request->validated();
@@ -335,12 +368,29 @@ class TransactionController extends Controller
             $validatedData['credit'] = null;
         }
 
-        // For expense payments: swap debit/credit for Cashbook posting (cash outflow)
+        // For generalVoucher: keep debit as debit (charge to vendor/contractor reduces payable)
+        if ($validatedData['transaction_to'] == 'generalVoucher') {
+            // Determine if payee is vendor or contractor based on payee_type
+            $payeeType = $request->input('payee_type');
+            $validatedData['transaction_to'] = $payeeType; // Set to 'vendor' or 'contractor'
+            $validatedData['credit'] = null; // Keep debit only
+        }
+
+        // For expense payments: handle debit/credit based on expense_type
         if ($validatedData['transaction_to'] == 'expense' &&
-            $validatedData['transaction_type'] == 'expense' &&
-            isset($validatedData['debit']) && $validatedData['debit'] > 0) {
-            $validatedData['credit'] = $validatedData['debit'];
-            $validatedData['debit'] = null;
+            $validatedData['transaction_type'] == 'expense') {
+            $expenseType = $request->input('expense_type', 'credit');
+            $amount = $request->input('amount', 0);
+
+            if ($expenseType === 'credit') {
+                // Expense incurred: store as credit (cash outflow)
+                $validatedData['credit'] = $amount;
+                $validatedData['debit'] = null;
+            } else {
+                // Expense reversal: store as debit (cash inflow)
+                $validatedData['debit'] = $amount;
+                $validatedData['credit'] = null;
+            }
         }
 
         // For ALL customer payments: ensure amount is in debit column (cash inflow)
@@ -614,11 +664,19 @@ class TransactionController extends Controller
             $request->merge(['credit' => null]);
         }
 
-        // For expense payments: swap debit/credit for Cashbook posting (cash outflow)
+        // For expense payments: handle debit/credit based on expense_type
         if ($request->input('transaction_to') == 'expense' &&
-            $request->input('transaction_type') == 'expense' &&
-            $request->input('debit') > 0) {
-            $request->merge(['credit' => $request->input('debit'), 'debit' => null]);
+            $request->input('transaction_type') == 'expense') {
+            $expenseType = $request->input('expense_type', 'credit');
+            $amount = $request->input('amount', 0);
+
+            if ($expenseType === 'credit') {
+                // Expense incurred: store as credit (cash outflow)
+                $request->merge(['credit' => $amount, 'debit' => null]);
+            } else {
+                // Expense reversal: store as debit (cash inflow)
+                $request->merge(['debit' => $amount, 'credit' => null]);
+            }
         }
 
         // For order payments: ensure debit/credit are correct for Cashbook posting (cash inflow)
