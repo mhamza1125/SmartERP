@@ -31,7 +31,13 @@
                       <tr><td><b>Received By:</b> Cash Payment</td></tr>
                     @endif
                     @php
-                      $grossAmount = $transaction['debit'] ?? $transaction['credit'] ?? 0;
+                      // Properly handle null and zero values in both debit and credit columns
+                      $grossAmount = 0;
+                      if (isset($transaction['debit']) && $transaction['debit'] > 0) {
+                          $grossAmount = $transaction['debit'];
+                      } elseif (isset($transaction['credit']) && $transaction['credit'] > 0) {
+                          $grossAmount = $transaction['credit'];
+                      }
                       $netAmount = $grossAmount - ($transaction['fees_expenses'] ?? 0);
                     @endphp
                     <tr><td><b>Amount Received:</b> {{number_format($grossAmount)}}</td></tr>

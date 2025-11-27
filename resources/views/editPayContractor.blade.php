@@ -21,7 +21,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <input type="hidden" name="transaction_to" required value="contractor" id="transaction_to">
-                    <input type="hidden" name="debit" required value="0">
+                    <input type="hidden" name="credit" required value="0">
                     <label>Contractor</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Contractor</option>
@@ -39,6 +39,7 @@
                   <div class="form-group">
                     <label>Payment Type</label>
                     <select class="form-control" name="transaction_type" required id="transaction_type">
+                      <option value="wages" {{ $transaction['transaction_type'] == 'wages' ? 'selected' : '' }}>Wages</option>
                       <option value="advance" {{ $transaction['transaction_type'] == 'advance' ? 'selected' : '' }}>Give Loan</option>
                       <option value="receiveAdvance" {{ $transaction['transaction_type'] == 'receiveAdvance' ? 'selected' : '' }}>Receive Loan</option>
                     </select>
@@ -96,7 +97,7 @@
                   <div class="form-group">
                     <label>Amount</label>
 
-                    <input type="number" min="0" class="form-control" name="credit" required value="{{$transaction['credit'] ?? $transaction['debit']}}">
+                    <input type="number" min="0" class="form-control" name="debit" required value="{{$transaction['debit'] ?? $transaction['credit']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>

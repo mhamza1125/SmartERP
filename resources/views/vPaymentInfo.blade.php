@@ -31,7 +31,13 @@
                       <tr><td><b>Paid By:</b> Cash Payment</td></tr>
                     @endif
                     @php
-                      $amount = $transaction['debit'] ?: ($transaction['credit'] ?: 0);
+                      // Properly handle null and zero values in both debit and credit columns
+                      $amount = 0;
+                      if (isset($transaction['debit']) && $transaction['debit'] > 0) {
+                          $amount = $transaction['debit'];
+                      } elseif (isset($transaction['credit']) && $transaction['credit'] > 0) {
+                          $amount = $transaction['credit'];
+                      }
                     @endphp
                     <tr><td><b>Amount:</b> {{ number_format($amount) }}</td></tr>
                     <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($amount) }}</td></tr>

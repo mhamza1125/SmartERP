@@ -393,6 +393,17 @@ class TransactionController extends Controller
             }
         }
 
+        // For vendor and contractor payments: swap debit to credit for Cashbook posting (cash outflow)
+        // Vendor/Contractor ledger stores in debit (reduces liability), Cashbook stores in credit (cash outflow)
+        if (in_array($validatedData['transaction_to'], ['vendor', 'contractor']) &&
+            in_array($validatedData['transaction_type'], ['payment', 'wages', 'advance'])) {
+            // Swap debit to credit for Cashbook posting (cash outflow)
+            if (isset($validatedData['debit']) && $validatedData['debit'] > 0) {
+                $validatedData['credit'] = $validatedData['debit'];
+                $validatedData['debit'] = null;
+            }
+        }
+
         // For ALL customer payments: ensure amount is in debit column (cash inflow)
         if ($validatedData['transaction_to'] == 'customer') {
             // Customer payments are cash inflows - should be in debit column
@@ -676,6 +687,16 @@ class TransactionController extends Controller
             } else {
                 // Expense reversal: store as debit (cash inflow)
                 $request->merge(['debit' => $amount, 'credit' => null]);
+            }
+        }
+
+        // For vendor and contractor payments: swap debit to credit for Cashbook posting (cash outflow)
+        // Vendor/Contractor ledger stores in debit (reduces liability), Cashbook stores in credit (cash outflow)
+        if (in_array($request->input('transaction_to'), ['vendor', 'contractor']) &&
+            in_array($request->input('transaction_type'), ['payment', 'wages', 'advance'])) {
+            // Swap debit to credit for Cashbook posting (cash outflow)
+            if ($request->input('debit') > 0) {
+                $request->merge(['credit' => $request->input('debit'), 'debit' => null]);
             }
         }
 

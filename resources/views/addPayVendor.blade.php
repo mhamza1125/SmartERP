@@ -21,7 +21,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <input type="hidden" name="transaction_to" required value="vendor" id="transaction_to">
-                    <input type="hidden" name="debit" required value="0">
+                    <input type="hidden" name="credit" required value="0">
                     <label>Vendor</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Vendor</option>
@@ -39,6 +39,7 @@
                   <div class="form-group">
                     <label>Payment Type</label>
                     <select class="form-control" name="transaction_type" required id="transaction_type">
+                      <option value="payment" {{ old('transaction_type') == 'payment' ? 'selected' : '' }}>Payment</option>
                       <option value="advance" {{ old('transaction_type') == 'advance' ? 'selected' : '' }}>Give Loan</option>
                       <option value="receiveAdvance" {{ old('transaction_type') == 'receiveAdvance' ? 'selected' : '' }}>Receive Loan</option>
                     </select>
@@ -69,7 +70,7 @@
                     <label>Receiver Cash / Bank (if any)</label>
                     <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
                       <option value="0" selected>Cash Payment</option>
-                      //Ajax Options 
+                      {{-- //Ajax Options  --}}
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Cash / Bank</div>
@@ -111,7 +112,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Payment Amount</label>
-                    <input type="number" min="0" class="form-control" name="credit" required value="{{ old('credit') }}">
+                    <input type="number" min="0" class="form-control" name="debit" required value="{{ old('debit') }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>

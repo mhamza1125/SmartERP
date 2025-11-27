@@ -31,8 +31,15 @@
                         <tr><td><b>Paid By:</b> Cash Payment</td></tr>
                       @endif
                       @php
-                        // For expense transactions, the amount is stored in credit column (cash outflow)
-                        $expenseAmount = $transaction['credit'] ?? $transaction['debit'] ?? 0;
+                        // Properly handle null and zero values in both debit and credit columns
+                        // For expense incurred: stored in credit column
+                        // For expense reversal: stored in debit column
+                        $expenseAmount = 0;
+                        if (isset($transaction['credit']) && $transaction['credit'] > 0) {
+                            $expenseAmount = $transaction['credit'];
+                        } elseif (isset($transaction['debit']) && $transaction['debit'] > 0) {
+                            $expenseAmount = $transaction['debit'];
+                        }
                       @endphp
                       <tr><td><b>Amount:</b> {{number_format($expenseAmount)}}</td></tr>
                       <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($expenseAmount) }}</td></tr>

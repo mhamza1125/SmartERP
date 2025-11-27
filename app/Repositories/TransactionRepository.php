@@ -313,8 +313,9 @@ class TransactionRepository implements GlobalInterface
         //     ->get();
 
         // Vendor Ledger - Amount of Received Purchase Items
+        // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchases = \DB::table('purchases')
-            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
@@ -349,12 +350,13 @@ class TransactionRepository implements GlobalInterface
     public function vDetailFilter($id, $dfrom, $dto)
     {
         // Vendor Ledger - Before Date From
+        // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchasesBefore = \DB::table('purchases')
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
             ->where('purchases.purchase_date', '<', $dfrom)
-            ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
+            ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
             ->first();
 
         $purchaseReturnsBefore = \DB::table('returns')
@@ -381,8 +383,9 @@ class TransactionRepository implements GlobalInterface
         $openingBalance = $totalCreditBefore - $totalDebitBefore;
 
         // Vendor Ledger - Between Date From and Date To
+        // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchases = \DB::table('purchases')
-            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
@@ -412,12 +415,13 @@ class TransactionRepository implements GlobalInterface
         $transactionsBetween = $purchases->concat($purchaseReturns)->concat($transactions)->sortBy('timestamp');
 
         // Vendor Ledger - After Date To
+        // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchasesAfter = \DB::table('purchases')
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
             ->where('purchases.purchase_date', '>', $dto)
-            ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
+            ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
             ->first();
 
         $purchaseReturnsAfter = \DB::table('returns')
