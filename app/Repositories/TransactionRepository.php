@@ -73,6 +73,25 @@ class TransactionRepository implements GlobalInterface
             ->get();
     }
 
+    public function generalVoucher()
+    {
+        return Transaction::where('transaction_type', 'generalVoucher')
+            ->leftJoin('vendors', function ($join) {
+                $join->on('transactions.payee_id', '=', 'vendors.vendor_id')
+                    ->whereIn('transactions.transaction_to', ['vendor', 'contractor']);
+            })
+            ->leftJoin('employees', function ($join) {
+                $join->on('transactions.payee_id', '=', 'employees.employee_id')
+                    ->where('transactions.transaction_to', '=', 'employee');
+            })
+            ->leftJoin('customers', function ($join) {
+                $join->on('transactions.payee_id', '=', 'customers.customer_id')
+                    ->where('transactions.transaction_to', '=', 'customer');
+            })
+            ->orderBy('transactions.created_at', 'desc')
+            ->get();
+    }
+
     public function delivery($id)
     {
         // Delivery Expense
@@ -91,6 +110,7 @@ class TransactionRepository implements GlobalInterface
     {
         return Transaction::where('transactions.bank_id', '0')
             ->where('transaction_type', '!=', 'openingBalance')
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->orderBy('created_at')
             ->get();
     }
@@ -101,6 +121,7 @@ class TransactionRepository implements GlobalInterface
         $transactionsBefore = \DB::table('transactions')
             ->where('transactions.bank_id', '0')
             ->where('transaction_type', '!=', 'openingBalance')
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->where('transaction_date', '<', $dfrom)
             ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
             ->first();
@@ -113,6 +134,7 @@ class TransactionRepository implements GlobalInterface
         $transactionsBetween = \DB::table('transactions')
             ->where('transactions.bank_id', '0')
             ->where('transaction_type', '!=', 'openingBalance')
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->whereBetween('transaction_date', [$dfrom, $dto])
             ->orderBy('created_at')
             ->get();
@@ -121,6 +143,7 @@ class TransactionRepository implements GlobalInterface
         $transactionsAfter = \DB::table('transactions')
             ->where('transactions.bank_id', '0')
             ->where('transaction_type', '!=', 'openingBalance')
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->where('transaction_date', '>', $dto)
             ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
             ->first();
@@ -139,6 +162,7 @@ class TransactionRepository implements GlobalInterface
     public function bankTransaction($id)
     {
         return Transaction::where('transactions.bank_id', $id)
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->orderBy('created_at')
             ->get();
     }
@@ -148,6 +172,7 @@ class TransactionRepository implements GlobalInterface
         // Transactions Before Date From
         $transactionsBefore = \DB::table('transactions')
             ->where('transactions.bank_id', $id)
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->where('transaction_date', '<', $dfrom)
             ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
             ->first();
@@ -159,6 +184,7 @@ class TransactionRepository implements GlobalInterface
         // Transactions Between Date From and Date To
         $transactionsBetween = \DB::table('transactions')
             ->where('transactions.bank_id', $id)
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->whereBetween('transaction_date', [$dfrom, $dto])
             ->orderBy('created_at')
             ->get();
@@ -166,6 +192,7 @@ class TransactionRepository implements GlobalInterface
         // Transactions After Date To
         $transactionsAfter = \DB::table('transactions')
             ->where('transactions.bank_id', $id)
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->where('transaction_date', '>', $dto)
             ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
             ->first();
@@ -184,6 +211,7 @@ class TransactionRepository implements GlobalInterface
     public function cashBalance()
     {
         $transaction = Transaction::where('transactions.bank_id', '0')
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->select('*',
                 DB::raw('SUM(transactions.debit) AS tdebit'),
                 DB::raw('SUM(transactions.credit) AS tcredit'))
@@ -201,6 +229,7 @@ class TransactionRepository implements GlobalInterface
         // Banks Balance All
         return DB::table('banks')->where('banks.banker_id', '0')
             ->leftJoin('transactions', 'banks.bank_id', '=', 'transactions.bank_id')
+            ->where('transactions.ledger_flag', '!=', 0)  // Exclude general vouchers
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->select('banks.*', 'heads.name as hname',
                 DB::raw('SUM(transactions.debit) AS tdebit'),
@@ -214,6 +243,7 @@ class TransactionRepository implements GlobalInterface
 
         // Dosen't show the Banks with 0 Transactions
         return Transaction::where('transactions.bank_id', '>', '0')
+            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
             ->join('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->select('*', 'transactions.bank_id', 'heads.name as hname',
@@ -227,6 +257,7 @@ class TransactionRepository implements GlobalInterface
     {
         return DB::table('banks')->where('banks.bank_id', $id)
             ->leftJoin('transactions', 'banks.bank_id', '=', 'transactions.bank_id')
+            ->where('transactions.ledger_flag', '!=', 0)  // Exclude general vouchers
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->select('banks.*', 'heads.name as hname',
                 DB::raw('SUM(transactions.debit) AS tdebit'),
@@ -285,6 +316,27 @@ class TransactionRepository implements GlobalInterface
             ->join('customers', 'customers.customer_id', 'transactions.payee_id')
             ->join('orders', 'orders.order_id', 'transactions.order_id')
             ->select('transactions.*', 'customers.customer_no', 'customers.fname', 'orders.order_date', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title')
+            ->first();
+    }
+
+    public function getGeneralVoucher($id) // General Voucher
+    {
+        return Transaction::where('transaction_id', $id)
+            ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
+            ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
+            ->leftJoin('vendors', function ($join) {
+                $join->on('transactions.payee_id', '=', 'vendors.vendor_id')
+                    ->whereIn('transactions.transaction_to', ['vendor', 'contractor']);
+            })
+            ->leftJoin('employees', function ($join) {
+                $join->on('transactions.payee_id', '=', 'employees.employee_id')
+                    ->where('transactions.transaction_to', '=', 'employee');
+            })
+            ->leftJoin('customers', function ($join) {
+                $join->on('transactions.payee_id', '=', 'customers.customer_id')
+                    ->where('transactions.transaction_to', '=', 'customer');
+            })
+            ->select('transactions.*', 'vendors.vendor_no', 'vendors.fname as vendor_name', 'employees.employee_no', 'employees.name as employee_name', 'customers.customer_no', 'customers.fname as customer_name', 'bhead.name as bname', 'banks.account', 'banks.account_title')
             ->first();
     }
 

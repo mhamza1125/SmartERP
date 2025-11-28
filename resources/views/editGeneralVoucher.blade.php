@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Add General Voucher</h4>
+            <h4>Edit General Voucher</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -14,8 +14,9 @@
             </div>
           </div>
           <div class="card-body">
-            <form action="{{ route('transaction.store') }}" method="POST" class="needs-validation" novalidate="">
+            <form action="{{ route('transaction.update', $transaction->transaction_id) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
+              @method('POST')
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
@@ -25,11 +26,11 @@
                     <input type="hidden" name="bank_id" required value="0">
                     <label>Payee Type</label>
                     <select class="form-control select2" name="payee_type" required>
-                      <option value="" selected disabled>Select Payee Type</option>
-                      <option value="vendor">Vendor</option>
-                      <option value="contractor">Contractor</option>
-                      <option value="employee">Employee</option>
-                      <option value="customer">Customer</option>
+                      <option value="" disabled>Select Payee Type</option>
+                      <option value="vendor" @if($transaction->transaction_to == 'vendor') selected @endif>Vendor</option>
+                      <option value="contractor" @if($transaction->transaction_to == 'contractor') selected @endif>Contractor</option>
+                      <option value="employee" @if($transaction->transaction_to == 'employee') selected @endif>Employee</option>
+                      <option value="customer" @if($transaction->transaction_to == 'customer') selected @endif>Customer</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Payee Type</div>
@@ -44,7 +45,7 @@
                         <option value="" selected disabled>Select Vendor</option>
                         @if($vendor->count())
                           @foreach($vendor as $item)
-                            <option value="{{$item->vendor_id}}">{{$item->vendor_no}} - {{$item->fname}}</option>
+                            <option value="{{$item->vendor_id}}" @if($transaction->payee_id == $item->vendor_id && $transaction->transaction_to == 'vendor') selected @endif>{{$item->vendor_no}} - {{$item->fname}}</option>
                           @endforeach
                         @endif
                       </select>
@@ -56,7 +57,7 @@
                         <option value="" selected disabled>Select Contractor</option>
                         @if($contractor->count())
                           @foreach($contractor as $item)
-                            <option value="{{$item->vendor_id}}">{{$item->vendor_no}} - {{$item->fname}}</option>
+                            <option value="{{$item->vendor_id}}" @if($transaction->payee_id == $item->vendor_id && $transaction->transaction_to == 'contractor') selected @endif>{{$item->vendor_no}} - {{$item->fname}}</option>
                           @endforeach
                         @endif
                       </select>
@@ -68,7 +69,7 @@
                         <option value="" selected disabled>Select Employee</option>
                         @if($employee->count())
                           @foreach($employee as $item)
-                            <option value="{{$item->employee_id}}">{{$item->employee_no}} - {{$item->name}}</option>
+                            <option value="{{$item->employee_id}}" @if($transaction->payee_id == $item->employee_id && $transaction->transaction_to == 'employee') selected @endif>{{$item->employee_no}} - {{$item->name}}</option>
                           @endforeach
                         @endif
                       </select>
@@ -80,7 +81,7 @@
                         <option value="" selected disabled>Select Customer</option>
                         @if($customer->count())
                           @foreach($customer as $item)
-                            <option value="{{$item->customer_id}}">{{$item->customer_no}} - {{$item->fname}}</option>
+                            <option value="{{$item->customer_id}}" @if($transaction->payee_id == $item->customer_id && $transaction->transaction_to == 'customer') selected @endif>{{$item->customer_no}} - {{$item->fname}}</option>
                           @endforeach
                         @endif
                       </select>
@@ -95,17 +96,20 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Voucher Date</label>
-                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
+                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction->transaction_date}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Voucher Type</label>
+                    @php
+                      $voucherType = ($transaction->debit > 0) ? 'debit' : 'credit';
+                    @endphp
                     <select class="form-control select2" name="voucher_type" required>
-                      <option value="" selected disabled>Select Voucher Type</option>
-                      <option value="debit" {{ old('voucher_type') == 'debit' ? 'selected' : '' }}>Debit Voucher (Charge to Payee)</option>
-                      <option value="credit" {{ old('voucher_type') == 'credit' ? 'selected' : '' }}>Credit Voucher (Credit to Payee)</option>
+                      <option value="" disabled>Select Voucher Type</option>
+                      <option value="debit" @if($voucherType == 'debit') selected @endif>Debit Voucher (Charge to Payee)</option>
+                      <option value="credit" @if($voucherType == 'credit') selected @endif>Credit Voucher (Credit to Payee)</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Voucher Type</div>
@@ -116,7 +120,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label id="amountLabel">Amount</label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="amount" required value="{{ old('amount') }}">
+                    <input type="number" min="0" step="0.01" class="form-control" name="amount" required value="{{ abs($transaction->debit ?? $transaction->credit) }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
@@ -126,7 +130,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description / Reason</label>
-                    <textarea class="form-control" name="description" rows="4" required>{{old('description')}}</textarea>
+                    <textarea class="form-control" name="description" rows="4" required>{{$transaction->description}}</textarea>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Description</div>
                   </div>
@@ -134,7 +138,7 @@
               </div>
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
-                  <button class="btn btn-primary" type="submit">Submit</button>
+                  <button class="btn btn-primary" type="submit">Update</button>
                 </div>
               </div>
             </form>

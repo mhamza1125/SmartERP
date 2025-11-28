@@ -158,6 +158,32 @@
                         @endif
                     </span>
                 </div>
+            @elseif($transaction['transaction_type'] == 'generalVoucher')
+                @if($transaction['transaction_to'] == 'vendor')
+                    <div class="info-row">
+                        <span class="info-label">Vendor:</span>
+                        <span class="info-value">{{ $transaction['vendor_no'] ?? '' }} - {{ $transaction['vendor_name'] ?? $transaction['fname'] ?? 'N/A' }}</span>
+                    </div>
+                @elseif($transaction['transaction_to'] == 'contractor')
+                    <div class="info-row">
+                        <span class="info-label">Contractor:</span>
+                        <span class="info-value">{{ $transaction['vendor_no'] ?? '' }} - {{ $transaction['vendor_name'] ?? $transaction['fname'] ?? 'N/A' }}</span>
+                    </div>
+                @elseif($transaction['transaction_to'] == 'employee')
+                    <div class="info-row">
+                        <span class="info-label">Employee:</span>
+                        <span class="info-value">{{ $transaction['employee_no'] ?? '' }} - {{ $transaction['employee_name'] ?? $transaction['name'] ?? 'N/A' }}</span>
+                    </div>
+                @elseif($transaction['transaction_to'] == 'customer')
+                    <div class="info-row">
+                        <span class="info-label">Customer:</span>
+                        <span class="info-value">{{ $transaction['customer_no'] ?? '' }} - {{ $transaction['customer_name'] ?? $transaction['fname'] ?? 'N/A' }}</span>
+                    </div>
+                @endif
+                <div class="info-row">
+                    <span class="info-label">Charge Description:</span>
+                    <span class="info-value">{{ $transaction['description'] ?? 'General Voucher Charge' }}</span>
+                </div>
             @endif
 
             @if($transaction['bank_id'])

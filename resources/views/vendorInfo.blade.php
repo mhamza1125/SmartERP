@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Vendor Info</h4>
             <div class="card-header-action">
-              <div class="btn-group">=
+              <div class="btn-group">
                 <a class="btn btn-info" href="{{ route('vendor.print', $vendor['vendor_id']) }}" target="_blank">
                   <i class="fas fa-file-alt"></i> Print
                 </a>

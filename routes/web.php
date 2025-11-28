@@ -327,7 +327,10 @@ Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name
 Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name('transaction.showExpense');
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
 // Transaction General Voucher
+Route::get('/generalVoucher', [TransactionController::class, 'generalVoucher'])->name('generalVoucher');
 Route::get('/addGeneralVoucher', [TransactionController::class, 'createGeneralVoucher'])->name('transaction.addGeneralVoucher');
+Route::get('/generalVoucher/{id}', [TransactionController::class, 'showGeneralVoucher'])->name('transaction.showGeneralVoucher');
+Route::get('/editGeneralVoucher/{id}', [TransactionController::class, 'editGeneralVoucher'])->name('transaction.editGeneralVoucher');
 // Transaction BRS
 // Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
 Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRS');

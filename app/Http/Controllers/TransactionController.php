@@ -245,11 +245,30 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function generalVoucher()
+    {
+        $this->authorize('access', Transaction::class);
+        $transaction = $this->transactionRepository->generalVoucher();
+
+        return view('generalVoucher', [
+            'transaction' => $transaction,
+        ]);
+    }
+
     public function createGeneralVoucher()
     {
         $this->authorize('create', Transaction::class);
+        $vendor = $this->vendorRepository->vendor();
+        $contractor = $this->vendorRepository->worker();
+        $employee = $this->employeeRepository->all();
+        $customer = $this->customerRepository->all();
 
-        return view('addGeneralVoucher');
+        return view('addGeneralVoucher', [
+            'vendor' => $vendor,
+            'contractor' => $contractor,
+            'employee' => $employee,
+            'customer' => $customer,
+        ]);
     }
 
     public function ajaxBank(Request $request)
@@ -345,6 +364,22 @@ class TransactionController extends Controller
                     'name' => $contractor->fname,
                 ];
             })->toArray();
+        } elseif ($type === 'employee') {
+            $payees = $this->employeeRepository->all()->map(function ($employee) {
+                return [
+                    'id' => $employee->employee_id,
+                    'no' => $employee->employee_no,
+                    'name' => $employee->name,
+                ];
+            })->toArray();
+        } elseif ($type === 'customer') {
+            $payees = $this->customerRepository->all()->map(function ($customer) {
+                return [
+                    'id' => $customer->customer_id,
+                    'no' => $customer->customer_no,
+                    'name' => $customer->fname,
+                ];
+            })->toArray();
         }
 
         return response()->json($payees);
@@ -368,12 +403,31 @@ class TransactionController extends Controller
             $validatedData['credit'] = null;
         }
 
-        // For generalVoucher: keep debit as debit (charge to vendor/contractor reduces payable)
+        // For generalVoucher: handle debit/credit based on voucher type
         if ($validatedData['transaction_to'] == 'generalVoucher') {
-            // Determine if payee is vendor or contractor based on payee_type
+            // Determine if payee is vendor, contractor, employee, or customer based on payee_type
             $payeeType = $request->input('payee_type');
-            $validatedData['transaction_to'] = $payeeType; // Set to 'vendor' or 'contractor'
-            $validatedData['credit'] = null; // Keep debit only
+            $validatedData['transaction_to'] = $payeeType; // Set to 'vendor', 'contractor', 'employee', or 'customer'
+
+            // Get the voucher type and amount
+            $voucherType = $request->input('voucher_type', 'debit');
+            $amount = $request->input('amount', 0);
+
+            if ($voucherType === 'debit') {
+                // Debit Voucher (Charge to Payee): Store in credit column
+                // This represents a charge/bill that hasn't been paid yet
+                $validatedData['credit'] = $amount;
+                $validatedData['debit'] = null;
+            } else {
+                // Credit Voucher (Credit to Payee): Store in debit column
+                // This represents a credit/allowance that hasn't been settled yet
+                $validatedData['debit'] = $amount;
+                $validatedData['credit'] = null;
+            }
+
+            // Set ledger_flag=0 so general vouchers don't appear in Cash/Bank ledgers
+            // They will only appear in payee ledgers (Vendor/Contractor/Employee/Customer)
+            $validatedData['ledger_flag'] = 0;
         }
 
         // For expense payments: handle debit/credit based on expense_type
@@ -395,6 +449,7 @@ class TransactionController extends Controller
 
         // For vendor and contractor payments: swap debit to credit for Cashbook posting (cash outflow)
         // Vendor/Contractor ledger stores in debit (reduces liability), Cashbook stores in credit (cash outflow)
+        // BUT NOT for general vouchers (transaction_type = 'generalVoucher')
         if (in_array($validatedData['transaction_to'], ['vendor', 'contractor']) &&
             in_array($validatedData['transaction_type'], ['payment', 'wages', 'advance'])) {
             // Swap debit to credit for Cashbook posting (cash outflow)
@@ -405,7 +460,9 @@ class TransactionController extends Controller
         }
 
         // For ALL customer payments: ensure amount is in debit column (cash inflow)
-        if ($validatedData['transaction_to'] == 'customer') {
+        // BUT NOT for general vouchers (transaction_type = 'generalVoucher')
+        if ($validatedData['transaction_to'] == 'customer' &&
+            $validatedData['transaction_type'] != 'generalVoucher') {
             // Customer payments are cash inflows - should be in debit column
             if (isset($validatedData['credit']) && $validatedData['credit'] > 0) {
                 // If amount is in credit, move it to debit
@@ -454,7 +511,10 @@ class TransactionController extends Controller
             }
         }
 
-        if ($request->input('transaction_to') == 'employee') {
+        // Check if this is a general voucher (transaction_type = 'generalVoucher')
+        if ($request->input('transaction_type') == 'generalVoucher') {
+            return redirect()->route('transaction.showGeneralVoucher', $getId)->with('success', 'Record Inserted Successfully');
+        } elseif ($request->input('transaction_to') == 'employee') {
             return redirect()->route('transaction.showEPayment', $getId)->with('success', 'Record Inserted Successfully');
         } elseif ($request->input('transaction_to') == 'vendor') {
             return redirect()->route('transaction.showVPayment', $getId)->with('success', 'Record Inserted Successfully');
@@ -531,6 +591,18 @@ class TransactionController extends Controller
         $transaction = $this->transactionRepository->getOPayment($id);
 
         return view('oPaymentInfo', [
+            'transaction' => $transaction,
+            'image' => $image,
+        ]);
+    }
+
+    public function showGeneralVoucher($id)
+    {
+        $this->authorize('show', Transaction::class);
+        $image = $this->imageRepository->image('transactions', $id);
+        $transaction = $this->transactionRepository->getGeneralVoucher($id);
+
+        return view('generalVoucherInfo', [
             'transaction' => $transaction,
             'image' => $image,
         ]);
@@ -636,6 +708,23 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function editGeneralVoucher(Transaction $id)
+    {
+        $this->authorize('edit', Transaction::class);
+        $vendor = $this->vendorRepository->vendor();
+        $contractor = $this->vendorRepository->worker();
+        $employee = $this->employeeRepository->all();
+        $customer = $this->customerRepository->all();
+
+        return view('editGeneralVoucher', [
+            'transaction' => $id,
+            'vendor' => $vendor,
+            'contractor' => $contractor,
+            'employee' => $employee,
+            'customer' => $customer,
+        ]);
+    }
+
     public function editExpense(Transaction $id)
     {
         $this->authorize('edit', Transaction::class);
@@ -675,6 +764,18 @@ class TransactionController extends Controller
             $request->merge(['credit' => null]);
         }
 
+        // For generalVoucher: handle debit/credit based on payee type
+        if ($request->input('transaction_to') == 'generalVoucher') {
+            // Determine if payee is vendor, contractor, employee, or customer based on payee_type
+            $payeeType = $request->input('payee_type');
+            $request->merge(['transaction_to' => $payeeType]); // Set to 'vendor', 'contractor', 'employee', or 'customer'
+
+            // For vendor/contractor: keep debit as debit (charge to them reduces payable)
+            // For employee: keep debit as debit (charge to them reduces payable)
+            // For customer: keep debit as debit (charge to them increases receivable)
+            $request->merge(['credit' => null]); // Keep debit only for all types
+        }
+
         // For expense payments: handle debit/credit based on expense_type
         if ($request->input('transaction_to') == 'expense' &&
             $request->input('transaction_type') == 'expense') {
@@ -692,6 +793,7 @@ class TransactionController extends Controller
 
         // For vendor and contractor payments: swap debit to credit for Cashbook posting (cash outflow)
         // Vendor/Contractor ledger stores in debit (reduces liability), Cashbook stores in credit (cash outflow)
+        // BUT NOT for general vouchers (transaction_type = 'generalVoucher')
         if (in_array($request->input('transaction_to'), ['vendor', 'contractor']) &&
             in_array($request->input('transaction_type'), ['payment', 'wages', 'advance'])) {
             // Swap debit to credit for Cashbook posting (cash outflow)
@@ -701,6 +803,7 @@ class TransactionController extends Controller
         }
 
         // For order payments: ensure debit/credit are correct for Cashbook posting (cash inflow)
+        // BUT NOT for general vouchers (transaction_type = 'generalVoucher')
         if ($request->input('transaction_to') == 'customer' &&
             $request->input('transaction_type') == 'orderPayment' &&
             $request->input('debit') > 0) {
@@ -714,7 +817,10 @@ class TransactionController extends Controller
                 $this->storeImage($file, 'transaction', 'transactions', $id);
             }
         }
-        if ($request->input('transaction_to') == 'employee') {
+        // Check if this is a general voucher (transaction_type = 'generalVoucher')
+        if ($request->input('transaction_type') == 'generalVoucher') {
+            return redirect()->route('transaction.showGeneralVoucher', $id)->with('success', 'Record Updated Successfully');
+        } elseif ($request->input('transaction_to') == 'employee') {
             return redirect()->route('transaction.showEPayment', $id)->with('success', 'Record Updated Successfully');
         } elseif ($request->input('transaction_to') == 'vendor') {
             return redirect()->route('transaction.showVPayment', $id)->with('success', 'Record Updated Successfully');
@@ -754,6 +860,8 @@ class TransactionController extends Controller
                 return $this->transactionRepository->getExpense($id);
             case 'brs':
                 return $this->transactionRepository->getBRS($id);
+            case 'generalVoucher':
+                return $this->transactionRepository->getGeneralVoucher($id);
             default:
                 return null;
         }

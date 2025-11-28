@@ -29,9 +29,12 @@ class TransactionRequest extends FormRequest
             'order_id' => '',
             'debit' => '',
             'credit' => '',
+            'amount' => '',
             'fees_expenses' => 'nullable|numeric|min:0',
             'payee_id' => '',
             'payee_bank_id' => '',
+            'payee_type' => '',
+            'voucher_type' => '',
             'description' => '',
         ];
     }

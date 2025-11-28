@@ -47,7 +47,7 @@
                         <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
                         <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
                       @endif
-                      <td><b>{{($balance < 0)? 'Receiveable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td>
+                      <td><b>{{($balance > 0)? 'Receiveable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td>
                       {{-- <td><b>Payable Amount:</b> {{number_format($balance)}}</td> --}}
                     </tr>
                   </tbody>

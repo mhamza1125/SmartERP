@@ -124,7 +124,7 @@
                 <ul class="dropdown-menu">
                     {{-- Bank / Cash Section --}}
                     @can('access', App\Models\Bank::class)
-                        <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li>
+                        {{-- <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li> --}}
                         <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li>
                         <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
                     @endcan

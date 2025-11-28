@@ -2688,3 +2688,71 @@ $(document).ready(function () {
     }
 });
 // End - Pay Order Payment Script
+
+// Start - General Voucher Script
+$(document).ready(function () {
+    if (typeof isGeneralVoucherPage !== 'undefined') {
+        function togglePayeeSections() {
+            var selected = $('select[name="payee_type"]').val();
+
+            // Reset all payee_id selects when not active
+            if (selected != 'vendor') {
+                $('#vendor select[name="payee_id"]').val('').trigger('change');
+            }
+            if (selected != 'contractor') {
+                $('#contractor select[name="payee_id"]').val('').trigger('change');
+            }
+            if (selected != 'employee') {
+                $('#employee select[name="payee_id"]').val('').trigger('change');
+            }
+            if (selected != 'customer') {
+                $('#customer select[name="payee_id"]').val('').trigger('change');
+            }
+
+            // Hide all payee sections first
+            $('#vendor, #contractor, #employee, #customer').hide();
+
+            // Show the selected payee section
+            if (selected == 'vendor') {
+                $('#vendor').show();
+            } else if (selected == 'contractor') {
+                $('#contractor').show();
+            } else if (selected == 'employee') {
+                $('#employee').show();
+            } else if (selected == 'customer') {
+                $('#customer').show();
+            }
+        }
+
+        // Initialize on page load
+        togglePayeeSections();
+
+        // Run on selection change
+        $('select[name="payee_type"]').change(function () {
+            togglePayeeSections();
+        });
+
+        // Custom form validation for payee_id
+        $('form').on('submit', function (e) {
+            var payeeType = $('select[name="payee_type"]').val();
+            var payeeId = $('select[name="payee_id"]:visible').val();
+
+            // Validate payee type is selected
+            if (!payeeType) {
+                e.preventDefault();
+                alert('Please select a Payee Type');
+                return false;
+            }
+
+            // Validate payee is selected
+            if (!payeeId) {
+                e.preventDefault();
+                alert('Please select a Payee');
+                return false;
+            }
+
+            return true;
+        });
+    }
+});
+// End - General Voucher Script

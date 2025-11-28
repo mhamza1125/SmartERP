@@ -19,6 +19,7 @@ class Transaction extends Model
         'debit',
         'credit',
         'fees_expenses',
+        'ledger_flag',
         'payee_id',
         'payee_bank_id',
         'bank_id',
