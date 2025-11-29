@@ -9,16 +9,9 @@
             <h4>BRS Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <div class="dropdown">
-                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
-                    <i class="fas fa-print"></i> Print
-                  </button>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{ route('brs.print', $transaction['transaction_id']) }}" target="_blank">
-                      <i class="fas fa-file-alt"></i> BRS Details
-                    </a>
-                  </div>
-                </div>
+                <a class="btn btn-info" href="{{ route('brs.print', $transaction['transaction_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editBRS', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>

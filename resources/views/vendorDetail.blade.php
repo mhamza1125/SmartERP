@@ -84,16 +84,17 @@
                     @if($detail->count())
                     @foreach($detail as $item)
                       @php
-                        // Include wages in balance calculation
-                        if (isset($item->transaction_type) && $item->transaction_type == 'wages') {
-                          isset($item->debit) ? $balance -= $item->debit : '';
-                        } else {
-                          isset($item->debit) ? $balance -= $item->debit : '';
-                          isset($item->credit) ? $balance += $item->credit : '';
-                        }
-                        // For vendor ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
-                        $displayDebit = $item->credit ?? 0;
-                        $displayCredit = $item->debit ?? 0;
+                        // For vendor/contractor ledger (liability account):
+                        // DB debit (displayed as Credit) = purchases/work done, increases liability = ADD to balance
+                        // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
+                        // Include ALL transaction types - no filtering
+                        $debit = $item->debit ?? 0;
+                        $credit = $item->credit ?? 0;
+                        $balance += $debit - $credit;
+
+                        // For vendor/contractor ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
+                        $displayDebit = $credit;
+                        $displayCredit = $debit;
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>

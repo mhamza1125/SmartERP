@@ -91,31 +91,40 @@
                 @php
                     $debit = $transaction->debit ?? 0;
                     $credit = $transaction->credit ?? 0;
-                    $runningBalance += $credit - $debit;
-                    // For customer ledger, display DB debit in Debit column and DB credit in Credit column (no reversal)
-                    $displayDebit = $debit;
-                    $displayCredit = $credit;
+
+                    // For customer ledger:
+                    // - Deliveries (stored in debit) should display in Debit column
+                    // - Payments (stored in debit) should display in Credit column
+                    $isPayment = isset($transaction->transaction_type) && $transaction->transaction_type == 'orderPayment';
+
+                    if ($isPayment) {
+                        // Payment: stored in debit, but display in credit column
+                        $displayDebit = 0;
+                        $displayCredit = $debit;
+                        $runningBalance += $debit; // Payment increases balance (reduces receivable)
+                    } else {
+                        // Delivery: stored in debit, display in debit column
+                        $displayDebit = $debit;
+                        $displayCredit = $credit;
+                        $runningBalance += $credit - $debit;
+                    }
                 @endphp
                 <tr>
-                    <td>{{ $transaction->transaction_date ?? 'N/A' }}</td>
+                    <td>{{ $transaction->stock_date ?? $transaction->transaction_date ?? 'N/A' }}</td>
                     <td>
                         @if(isset($transaction->transaction_id))
                             TXN-{{ date('Y') }}-{{ str_pad($transaction->transaction_id, 4, '0', STR_PAD_LEFT) }}
-                        @elseif(isset($transaction->order_no))
-                            {{ $transaction->order_no }}
-                        @elseif(isset($transaction->delivery_no))
-                            {{ $transaction->delivery_no }}
+                        @elseif(isset($transaction->stock_no))
+                            {{ $transaction->stock_no }}
                         @else
                             -
                         @endif
                     </td>
                     <td>
-                        @if(isset($transaction->description))
-                            {{ $transaction->description }}
-                        @elseif(isset($transaction->order_no))
-                            Order: {{ $transaction->order_no }}
-                        @elseif(isset($transaction->delivery_no))
-                            Delivery: {{ $transaction->delivery_no }}
+                        @if(isset($transaction->transaction_type))
+                            {{ ucfirst($transaction->transaction_type) }}
+                        @elseif(isset($transaction->stock_no))
+                            Delivery: {{ $transaction->stock_no }}
                         @else
                             Transaction
                         @endif

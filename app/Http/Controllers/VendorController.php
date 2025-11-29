@@ -216,9 +216,20 @@ class VendorController extends Controller
             $detail = $this->transactionRepository->vDetail($id);
         }
 
-        $totalCredit = $detail->sum('credit');
-        $totalDebit = $detail->sum('debit');
-        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+        // Get wages data for contractors (vendor_type = 1)
+        if ($vendor['vendor_type'] == 1) {
+            $wages = $this->getContractorWages($id, $dfrom, $dto);
+            // Merge wages with transactions and sort by date
+            $detail = $this->mergeWagesWithTransactions($detail, $wages);
+        }
+
+        // For vendor/contractor ledger (liability account):
+        // DB debit (displayed as Credit) = purchases/work done, increases liability = ADD to balance
+        // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
+        // Include ALL transaction types - no filtering
+        $totalDebit = $detail->sum('debit') ?? 0;
+        $totalCredit = $detail->sum('credit') ?? 0;
+        $balance = $oBalance + $totalDebit - $totalCredit;
 
         return view('print.vendor-ledger', [
             'vendor' => $vendor,
@@ -276,10 +287,13 @@ class VendorController extends Controller
             $detail = $this->mergeWagesWithTransactions($detail, $wages);
         }
 
-        $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
-        $totalDebit = $detail->whereIn('transaction_type', ['wages'])->sum('debit') +
-                     $detail->where('transaction_type', '!=', 'wages')->sum('debit');
-        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+        // For vendor/contractor ledger (liability account):
+        // DB debit (displayed as Credit) = purchases/work done, increases liability = ADD to balance
+        // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
+        // Include ALL transaction types - no filtering
+        $totalDebit = $detail->sum('debit') ?? 0;
+        $totalCredit = $detail->sum('credit') ?? 0;
+        $balance = $oBalance + $totalDebit - $totalCredit;
 
         return view('vendorDetail', [
             'vendor' => $vendor,

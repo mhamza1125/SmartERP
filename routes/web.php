@@ -405,7 +405,7 @@ Route::get('/company/data', [CompanyController::class, 'getCompanyData'])->name(
 Route::get('/company', [CompanyController::class, 'index'])->name('company');
 Route::get('/addCompany', [CompanyController::class, 'create'])->name('company.add');
 Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
-Route::get('/company/{id}', [CompanyController::class, 'show'])->name('company.show');
-Route::get('/editCompany/{id}', [CompanyController::class, 'edit'])->name('company.edit');
-Route::post('/company/{id}', [CompanyController::class, 'update'])->name('company.update');
-Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->name('company.destroy');
+Route::get('/company/{company}', [CompanyController::class, 'show'])->name('company.show');
+Route::get('/editCompany/{company}', [CompanyController::class, 'edit'])->name('company.edit');
+Route::post('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
+Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');

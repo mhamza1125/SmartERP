@@ -20,7 +20,7 @@
               <div class="row">
                 <input type="hidden" name="transaction_to" required value="customer" id="transaction_to">
                 <input type="hidden" name="transaction_type" required value="orderPayment">
-                <input type="hidden" name="debit" required value="0">
+                <input type="hidden" name="credit" required value="0">
                 <div class="col-md-6">
                   <div class="form-group">          
                     <label>Customer</label>
@@ -99,7 +99,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Net Amount Received <span class="text-danger">*</span></label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="credit" id="credit" required value="{{ old('credit') }}">
+                    <input type="number" min="0" step="0.01" class="form-control" name="debit" id="debit" required value="{{ old('debit') }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>

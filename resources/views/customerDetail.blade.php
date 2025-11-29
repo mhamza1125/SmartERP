@@ -82,18 +82,30 @@
                     @if($detail->count())
                       @foreach($detail as $item)
                       @php
-                        isset($item->debit) ? $balance -= $item->debit : '';
-                        isset($item->credit) ? $balance += $item->credit : '';
-                        // For customer ledger, display DB debit in Debit column and DB credit in Credit column (no reversal)
-                        $displayDebit = $item->debit ?? 0;
-                        $displayCredit = $item->credit ?? 0;
+                        // For customer ledger:
+                        // - Deliveries (stored in debit) should display in Debit column
+                        // - Payments (stored in debit) should display in Credit column
+                        $isPayment = isset($item->transaction_type) && $item->transaction_type == 'orderPayment';
+
+                        if ($isPayment) {
+                          // Payment: stored in debit, but display in credit column
+                          $displayDebit = 0;
+                          $displayCredit = $item->debit ?? 0;
+                          $balance += $item->debit; // Payment increases balance (reduces receivable)
+                        } else {
+                          // Delivery: stored in debit, display in debit column
+                          $displayDebit = $item->debit ?? 0;
+                          $displayCredit = $item->credit ?? 0;
+                          isset($item->debit) ? $balance -= $item->debit : '';
+                          isset($item->credit) ? $balance += $item->credit : '';
+                        }
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
-                        <td>{{ isset($item->order_date) ? $item->order_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
+                        <td>{{ isset($item->stock_date) ? $item->stock_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
                         <td>
                           @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
-                          @elseif(isset($item->order_no)) Order - ({{$item->job_no}})
+                          @elseif(isset($item->stock_no)) Delivery - ({{$item->stock_no}})
                           @else Unknown Type @endif
                         </td>
                         <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>
@@ -106,8 +118,8 @@
                             @else
                               <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @endif
-                          @elseif(isset($item->order_no))
-                          <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
+                          @elseif(isset($item->stock_no))
+                          <a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>
                           @endif
                         </td>
                       </tr>

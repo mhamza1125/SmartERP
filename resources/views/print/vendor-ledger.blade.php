@@ -77,8 +77,14 @@
                 @php
                     $debit = $transaction->debit ?? 0;
                     $credit = $transaction->credit ?? 0;
-                    $runningBalance += $credit - $debit;
-                    // For vendor ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
+
+                    // For vendor/contractor ledger (liability account):
+                    // DB debit (displayed as Credit) = purchases/work done, increases liability = ADD to balance
+                    // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
+                    // Include ALL transaction types - no filtering
+                    $runningBalance += $debit - $credit;
+
+                    // For vendor/contractor ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
                     $displayDebit = $credit;
                     $displayCredit = $debit;
                 @endphp

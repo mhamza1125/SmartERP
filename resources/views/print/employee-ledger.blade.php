@@ -81,7 +81,13 @@
                 @php
                     $debit = $transaction->debit ?? 0;
                     $credit = $transaction->credit ?? 0;
-                    $runningBalance += $credit - $debit;
+
+                    // For employee ledger (liability account):
+                    // DB debit (displayed as Credit) = work done, increases liability = ADD to balance
+                    // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
+                    // Include ALL transaction types - no filtering
+                    $runningBalance += $debit - $credit;
+
                     // For employee ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
                     $displayDebit = $credit;
                     $displayCredit = $debit;
@@ -108,6 +114,9 @@
                                 @break
                               @case('salaryAdvance')
                                 Salary Advance
+                                @break
+                              @case('salary')
+                                Monthly Salary{{ isset($transaction->description) ? ' - ' . $transaction->description : '' }}
                                 @break
                               @default
                                 @if(isset($transaction->description))

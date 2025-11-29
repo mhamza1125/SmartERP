@@ -295,9 +295,13 @@ class TransactionController extends Controller
             switch ($table) {
                 case 'customer':
                     $detail = $this->transactionRepository->cDetail($tableId);
-                    $totalCredit = $detail->sum('credit');
-                    $totalDebit = $detail->sum('debit');
-                    $balance = $totalCredit - $totalDebit; // Positive = customer owes us
+                    // For customer ledger:
+                    // - Deliveries are stored in debit column (customer owes us)
+                    // - Payments are stored in debit column (cash inflow to us)
+                    // Balance = Total Deliveries - Total Payments
+                    $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('debit');
+                    $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('debit');
+                    $balance = $totalDeliveries - $totalPayments; // Positive = customer owes us
                     break;
 
                 case 'employee':
@@ -464,11 +468,6 @@ class TransactionController extends Controller
         if ($validatedData['transaction_to'] == 'customer' &&
             $validatedData['transaction_type'] != 'generalVoucher') {
             // Customer payments are cash inflows - should be in debit column
-            if (isset($validatedData['credit']) && $validatedData['credit'] > 0) {
-                // If amount is in credit, move it to debit
-                $validatedData['debit'] = $validatedData['credit'];
-                $validatedData['credit'] = null;
-            }
             // Ensure credit is null for customer payments
             $validatedData['credit'] = null;
         }
@@ -803,10 +802,9 @@ class TransactionController extends Controller
         }
 
         // For order payments: ensure debit/credit are correct for Cashbook posting (cash inflow)
-        // BUT NOT for general vouchers (transaction_type = 'generalVoucher')
+        // Customer payments are cash inflows - should be in debit column
         if ($request->input('transaction_to') == 'customer' &&
-            $request->input('transaction_type') == 'orderPayment' &&
-            $request->input('debit') > 0) {
+            $request->input('transaction_type') == 'orderPayment') {
             $request->merge(['credit' => null]);
             // debit already has the amount, no swap needed for orderPayment
         }

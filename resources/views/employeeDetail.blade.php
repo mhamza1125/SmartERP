@@ -84,13 +84,17 @@
                     @if($detail->count())
                       @foreach($detail as $item)
                       @php
-                        if (isset($item->transaction_type) && in_array($item->transaction_type, ['advance', 'receiveAdvance', 'openingBalance', 'wages'])) {
-                          isset($item->debit) ? $balance -= $item->debit : '';
-                          isset($item->credit) ? $balance += $item->credit : '';
-                        }
+                        // For employee ledger (liability account):
+                        // DB debit (displayed as Credit) = work done, increases liability = ADD to balance
+                        // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
+                        // Include ALL transaction types - no filtering
+                        $debit = $item->debit ?? 0;
+                        $credit = $item->credit ?? 0;
+                        $balance += $debit - $credit;
+
                         // For employee ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
-                        $displayDebit = $item->credit ?? 0;
-                        $displayCredit = $item->debit ?? 0;
+                        $displayDebit = $credit;
+                        $displayCredit = $debit;
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
@@ -106,6 +110,12 @@
                                 @break
                               @case('salaryAdvance')
                                 Salary Advance
+                                @break
+                              @case('salary')
+                                Monthly Salary
+                                @if(isset($item->description))
+                                  <br><small class="text-muted">{{ $item->description }}</small>
+                                @endif
                                 @break
                               @default
                                 {{ ucfirst($item->transaction_type) }}
@@ -137,6 +147,8 @@
                                 @endif
                               </div>
                             </div>
+                          @elseif($item->transaction_type == 'salary')
+                            <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                           @else
                             <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                           @endif

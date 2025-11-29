@@ -31,7 +31,7 @@
                     @foreach($transaction as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>TXN-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                      <td>SLL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                       <td>{{$item->transaction_date}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>{{$item->order_no}}</td>
