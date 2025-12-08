@@ -275,6 +275,31 @@ Route::get('/issueMM/{id}', [StockController::class, 'show2'])->name('mstock.sho
 Route::get('/editIMM/{id}', [StockController::class, 'edit2'])->name('mstock.edit');
 Route::get('/issueMM/print/{id}', [StockController::class, 'printMachineIssuance'])->name('missue.print');
 
+// PTC (Process Travel Card)
+Route::get('/ptc', [StockController::class, 'ptcList'])->name('ptc');
+Route::get('/ptc/create', [StockController::class, 'ptcCreate'])->name('ptc.create');
+Route::post('/ptc/store', [StockController::class, 'ptcStore'])->name('ptc.store');
+Route::get('/ptc/{id}', [StockController::class, 'ptcShow'])->name('ptc.show');
+Route::get('/ptc/{id}/edit', [StockController::class, 'ptcEdit'])->name('ptc.edit');
+Route::put('/ptc/{id}', [StockController::class, 'ptcUpdate'])->name('ptc.update');
+// PTC Issuance (separate page)
+Route::get('/ptc/{id}/issue', [StockController::class, 'ptcIssueForm'])->name('ptc.issue.form');
+Route::post('/ptc/{id}/issue', [StockController::class, 'ptcIssueStore'])->name('ptc.issue.store');
+Route::get('/ptc/{id}/issue/{issuanceId}/edit', [StockController::class, 'ptcIssueEdit'])->name('ptc.issue.edit');
+Route::put('/ptc/{id}/issue/{issuanceId}', [StockController::class, 'ptcIssueUpdate'])->name('ptc.issue.update');
+// PTC Receiving (separate page)
+Route::get('/ptc/{id}/receive', [StockController::class, 'ptcReceiveForm'])->name('ptc.receive.form');
+Route::get('/ptc/{id}/receive/{issuanceId}', [StockController::class, 'ptcReceiveFromIssuance'])->name('ptc.receive.issuance');
+Route::post('/ptc/{id}/receive', [StockController::class, 'ptcReceiveStore'])->name('ptc.receive.store');
+// PTC Stage Advancement (manual)
+Route::post('/ptc/{id}/next-stage', [StockController::class, 'ptcNextStage'])->name('ptc.next.stage');
+Route::post('/ptc/{id}/close', [StockController::class, 'ptcClose'])->name('ptc.close');
+// Legacy move stage route (kept for backward compatibility)
+Route::get('/ptc/{id}/move', [StockController::class, 'ptcMoveStageForm'])->name('ptc.move.form');
+Route::post('/ptc/{id}/move', [StockController::class, 'ptcMoveStage'])->name('ptc.move');
+Route::get('/ajaxPtcProducts', [StockController::class, 'ajaxPtcProducts'])->name('ajaxPtcProducts');
+Route::get('/ajaxPtcStages', [StockController::class, 'ajaxPtcStages'])->name('ajaxPtcStages');
+
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
 Route::get('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.daily');

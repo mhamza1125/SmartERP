@@ -81,44 +81,57 @@
                   </table>
                 </div>
               </div>
-              {{-- Product Stock --}}
-              <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
+              {{-- Product Stock (Grouped by Product/Size with Stage Modal) --}}
+              <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">
                 <div class="table-responsive">
-                  <table class="table table-sm table-striped" id="tableExport1" style="width:100%;">                    
+                  <table class="table table-sm table-striped" id="tableExport1" style="width:100%;">
                     <thead>
                       <tr>
                         <th>Sr.</th>
                         <th>Article No</th>
                         <th>Item / Product</th>
                         <th>Size</th>
-                        <th>Stage</th>
-                        <th>Quantity</th>
+                        <th>Total Stock</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       @if($pstock->count())
-                        @php $product_id = 0; $size = 0; @endphp
-                        @foreach($pstock as $item)
-                        @if($item->stockIn - $item->stockOut != 0)
+                        @php
+                          // Group stock by product_type_id to show one row per product/size
+                          $groupedPstock = $pstock->groupBy('product_type_id');
+                          $rowIndex = 1;
+                          $prevProductId = 0;
+                        @endphp
+                        @foreach($groupedPstock as $productTypeId => $stageItems)
+                          @php
+                            $firstItem = $stageItems->first();
+                            // Calculate total stock across all stages
+                            $totalStock = $stageItems->sum(function($item) {
+                              return $item->stockIn - $item->stockOut;
+                            });
+                            // Skip if total stock is zero
+                            if($totalStock == 0) continue;
+                          @endphp
                           <tr>
-                            <td>{{$loop->index + 1}}</td>
-                            @if($item->product_id == $product_id)
+                            <td>{{ $rowIndex++ }}</td>
+                            @if($firstItem->product_id == $prevProductId)
                               <td colspan="2"></td>
                             @else
-                              <td>{{$item->article_no}}</td>
-                              <td>{{$item->name}}</td>
+                              <td>{{ $firstItem->article_no }}</td>
+                              <td>{{ $firstItem->name }}</td>
                             @endif
-                            @if($item->sname == $size && $item->product_id == $product_id)
-                              <td></td>
-                            @else
-                              <td>{{$item->sname}}</td>
-                            @endif
-                            {{-- <td>{{$item->article_no}} - Size {{$item->sname}}</td> --}}
-                            <td>{{$item->stname}}</td>
-                            <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}}</td>                  
+                            <td>{{ $firstItem->sname }}</td>
+                            <td>
+                              <span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span>
+                            </td>
+                            <td>
+                              <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#stageModal{{ $productTypeId }}">
+                                <i class="fas fa-layer-group"></i> View Stages ({{ $stageItems->count() }})
+                              </button>
+                            </td>
                           </tr>
-                        @endif
-                        @php $product_id = $item->product_id; $size = $item->sname @endphp
+                          @php $prevProductId = $firstItem->product_id; @endphp
                         @endforeach
                       @endif
                     </tbody>
@@ -128,8 +141,8 @@
                         <th>Article No</th>
                         <th>Item / Product</th>
                         <th>Size</th>
-                        <th>Stage</th>
-                        <th>Quantity</th>
+                        <th>Total Stock</th>
+                        <th>Actions</th>
                       </tr>
                     </tfoot>
                   </table>
@@ -180,4 +193,78 @@
     </div>
   </div>
 </section>
+
+<!-- Stage Detail Modals for Product Stock -->
+@if($pstock->count())
+  @php $groupedPstockForModals = $pstock->groupBy('product_type_id'); @endphp
+  @foreach($groupedPstockForModals as $productTypeId => $stageItems)
+    @php
+      $firstItem = $stageItems->first();
+      $totalStock = $stageItems->sum(function($item) { return $item->stockIn - $item->stockOut; });
+      if($totalStock == 0) continue;
+    @endphp
+    <div class="modal fade" id="stageModal{{ $productTypeId }}" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-layer-group"></i> Stage Breakdown: {{ $firstItem->article_no }} - {{ $firstItem->name }} ({{ $firstItem->sname }})
+            </h5>
+            <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info mb-3">
+              <strong>Product:</strong> {{ $firstItem->name }} |
+              <strong>Article:</strong> {{ $firstItem->article_no }} |
+              <strong>Size:</strong> {{ $firstItem->sname }} |
+              <strong>Total Stock:</strong> {{ number_format($totalStock) }} {{ $firstItem->uname }}
+            </div>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Sr.</th>
+                    <th>Stage</th>
+                    <th>Stock In</th>
+                    <th>Stock Out</th>
+                    <th>Available</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($stageItems as $stageIdx => $stageItem)
+                    @php $stageStock = $stageItem->stockIn - $stageItem->stockOut; @endphp
+                    @if($stageStock != 0)
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td><span class="badge badge-primary">{{ $stageItem->stname ?? 'N/A' }}</span></td>
+                        <td>{{ number_format($stageItem->stockIn) }}</td>
+                        <td>{{ number_format($stageItem->stockOut) }}</td>
+                        <td>
+                          @if($stageStock > 0)
+                            <span class="badge badge-success">{{ number_format($stageStock) }} {{ $stageItem->uname }}</span>
+                          @else
+                            <span class="badge badge-danger">{{ number_format($stageStock) }} {{ $stageItem->uname }}</span>
+                          @endif
+                        </td>
+                      </tr>
+                    @endif
+                  @endforeach
+                </tbody>
+                <tfoot>
+                  <tr class="table-info">
+                    <th colspan="4" class="text-right">Total:</th>
+                    <th><span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span></th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  @endforeach
+@endif
 @endsection

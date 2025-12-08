@@ -74,11 +74,12 @@
                   data-feather="briefcase"></i><span>Stock / Issuance</span></a>
               <ul class="dropdown-menu">
                 @can('stocks_access', App\Models\Stock::class)
-                  <li><a class="nav-link" href="{{ route('stock') }}">Available</a></li>
+                  <li><a class="nav-link" href="{{ route('stock') }}">Stock</a></li>
                 @endcan
                 @can('access', App\Models\Stock::class)
-                  <li><a class="nav-link" href="{{ route('issue') }}">Issue</a></li>
-                  <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
+                  <li><a class="nav-link" href="{{ route('ptc') }}">PTC</a></li>
+                  <li><a class="nav-link" href="{{ route('issue') }}">Issuance</a></li>
+                  {{-- <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li> --}}
                   <li><a class="nav-link" href="{{ route('igroup') }}">Group / Lot</a></li>
                 @endcan
               </ul>

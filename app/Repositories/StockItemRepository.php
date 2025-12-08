@@ -419,12 +419,24 @@ class StockItemRepository implements GlobalInterface
 
 
     public function pStock()
-    {        
-        // Subquery: purchase-based received/returned quantities (for products only)
+    {
+        // Subquery 1: Stock-based quantities grouped by product_type_id and stage_id
+        $stockSub = DB::table('stock_items')
+            ->select(
+                'stock_items.product_type_id',
+                'stock_items.stage_id',
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+            )
+            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->where('stock_items.material_id', '=', 0)
+            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
+
+        // Subquery 2: Purchase-based received/returned quantities (for products only)
         $purchaseSub = DB::table('purchase_items')
             ->select(
                 'purchase_items.product_type_id',
-                'purchase_items.product_stage_id',
+                'purchase_items.product_stage_id as stage_id',
                 DB::raw('SUM(receive_materials.approved_qty) as total_received'),
                 DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
             )
@@ -433,52 +445,49 @@ class StockItemRepository implements GlobalInterface
             ->where('purchase_items.material_id', 0)
             ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
 
-        // Main Query - Fixed to properly handle purchase-only products
-        return DB::table('product_types')
-            ->select('product_types.product_type_id', 'products.name', 'products.article_no', 'shead.name as sname',
-                DB::raw('COALESCE(stock_items.stage_id, purchase_sub.product_stage_id) as stage_id'),
-                'sthead.name as stname', 'sthead.head_id as sthead_id', 'uhead.name as uname', 'products.product_id',
-                DB::raw('
-                    COALESCE(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0)
-                    + COALESCE(purchase_sub.total_received, 0)
-                    - COALESCE(purchase_sub.total_returned, 0) AS stockIn'),
-                DB::raw('COALESCE(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) AS stockOut')
+        // Combine stock and purchase data using UNION approach via raw SQL for proper aggregation
+        // First get all unique product_type_id + stage_id combinations from both sources
+        $combinedSub = DB::table(DB::raw("(
+            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
+            FROM ({$stockSub->toSql()}) as stock_data
+            UNION ALL
+            SELECT product_type_id, stage_id, 0 as stockIn, 0 as stockOut, total_received as purchase_received, total_returned as purchase_returned
+            FROM ({$purchaseSub->toSql()}) as purchase_data
+        ) as combined_data"))
+            ->mergeBindings($stockSub)
+            ->mergeBindings($purchaseSub)
+            ->select(
+                'product_type_id',
+                'stage_id',
+                DB::raw('SUM(stockIn) + SUM(purchase_received) - SUM(purchase_returned) as stockIn'),
+                DB::raw('SUM(stockOut) as stockOut')
             )
+            ->groupBy('product_type_id', 'stage_id');
+
+        // Main Query - Join aggregated data with product info
+        return DB::table(DB::raw("({$combinedSub->toSql()}) as agg_stock"))
+            ->mergeBindings($combinedSub)
+            ->select(
+                'agg_stock.product_type_id',
+                'products.name',
+                'products.article_no',
+                'shead.name as sname',
+                'agg_stock.stage_id',
+                'sthead.name as stname',
+                'sthead.head_id as sthead_id',
+                'uhead.name as uname',
+                'products.product_id',
+                'agg_stock.stockIn',
+                'agg_stock.stockOut'
+            )
+            ->join('product_types', 'product_types.product_type_id', '=', 'agg_stock.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->leftJoin('stock_items', function ($join) {
-                $join->on('stock_items.product_type_id', '=', 'product_types.product_type_id')
-                    ->where('stock_items.material_id', '=', 0);
-            })
-            ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
-                $join->on('purchase_sub.product_type_id', '=', 'product_types.product_type_id');
-            })
-            ->leftJoin('heads as sthead', function ($join) {
-                $join->on('sthead.head_id', '=', DB::raw('COALESCE(stock_items.stage_id, purchase_sub.product_stage_id)'));
-            })
+            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'agg_stock.stage_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->whereRaw('(stock_items.product_type_id IS NOT NULL OR purchase_sub.product_type_id IS NOT NULL)')
-            ->groupBy(
-                'product_types.product_type_id',
-                DB::raw('COALESCE(stock_items.stage_id, purchase_sub.product_stage_id)'),
-                'products.name', 'products.article_no', 'shead.name', 'sthead.name', 'sthead.head_id', 'uhead.name', 'products.product_id',
-                'purchase_sub.total_received', 'purchase_sub.total_returned'
-            )
-            ->get();
-        
-        // Available Product Stock (Without Product Purchase)
-        return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'sthead.head_id as sthead_id', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
-            ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
-            ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->where('stock_items.material_id', '=', 0)
-            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+            ->orderBy('products.product_id')
+            ->orderBy('product_types.size_id')
+            ->orderBy('agg_stock.stage_id')
             ->get();
     }
 
@@ -637,13 +646,17 @@ class StockItemRepository implements GlobalInterface
 
     public function orderStatus($id)
     {
-        // Order Current Status
+        // Order Current Status - includes ordered quantity from order_items
         return StockItem::select('stock_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
             ->selectRaw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn')
             ->selectRaw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+            ->selectRaw('MAX(order_items.quantity) as ordered_qty')
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->join('order_items', 'order_items.product_type_id', '=', 'product_types.product_type_id')
+            ->join('order_items', function ($join) use ($id) {
+                $join->on('order_items.product_type_id', '=', 'product_types.product_type_id')
+                     ->where('order_items.order_id', '=', $id);
+            })
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')

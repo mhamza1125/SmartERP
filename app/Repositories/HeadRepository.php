@@ -82,6 +82,29 @@ class HeadRepository implements GlobalInterface
         return $orderedStages;
     }
 
+    /**
+     * Get heads by array of IDs, maintaining order
+     */
+    public function getByIds(array $ids)
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+
+        $heads = Head::whereIn('heads.head_id', $ids)->get();
+
+        // Maintain order from input array
+        $orderedHeads = collect();
+        foreach ($ids as $id) {
+            $head = $heads->where('head_id', $id)->first();
+            if ($head) {
+                $orderedHeads->push($head);
+            }
+        }
+
+        return $orderedHeads;
+    }
+
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();

@@ -2126,6 +2126,457 @@ $(document).ready(function () {
 });
 // End - Issue Material Script
 
+// Start - PTC (Process Travel Card) Script
+$(document).ready(function () {
+    if (typeof isPtcPage !== 'undefined') {
+        // Initialize select2
+        $('.select2').select2();
+
+        // Getting Table name for employee/vendor
+        $('#employee_id').on('change select2:select', function () {
+            var tableName = $(this).find('option:selected').data('type');
+            $('#table_name').val(tableName);
+        });
+
+        // Function to update available material stock
+        function updateAvailableStock(materialId) {
+            var totalQuantityInTable = 0;
+            $('#items-table tbody tr').each(function () {
+                var rowMaterialId = $(this).find('input[name="material_id[]"]').val();
+                if (rowMaterialId == materialId) {
+                    totalQuantityInTable += parseFloat($(this).find('input[name="quantity[]"]').val()) || 0;
+                }
+            });
+
+            var stockItem = stockData.find(item => item.material_id == materialId);
+            if (stockItem) {
+                var availableStock = parseFloat(stockItem.total_received || 0) + parseFloat(stockItem.stockIn || 0)
+                    - parseFloat(stockItem.total_returned || 0) - parseFloat(stockItem.stockOut || 0)
+                    - totalQuantityInTable;
+                $('#available_stock').val(parseFloat(availableStock.toFixed(4)));
+            } else {
+                $('#available_stock').val(0);
+            }
+        }
+
+        // Function to update available product stock for PTC
+        function updateAvailablePStock() {
+            var selectedStageIds = $('#stage_id').val();
+
+            if (!selectedStageIds || !ptcProductTypeId || ptcProductTypeId == '0') {
+                $('#available_pstock').val(0);
+                return;
+            }
+
+            var minAvailableStock = Infinity;
+
+            selectedStageIds.forEach(function (stageId) {
+                var totalQuantityInTable = 0;
+                $('#items-table tbody tr').each(function () {
+                    var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
+                    var rowStageId = $(this).find('input[name="stage_id[]"]').val();
+                    if (rowProductId == ptcProductTypeId && rowStageId == stageId) {
+                        totalQuantityInTable += parseInt($(this).find('input[name="quantity[]"]').val()) || 0;
+                    }
+                });
+
+                var stockItem = pstockData.find(item => item.product_type_id == ptcProductTypeId && item.stage_id == stageId);
+                if (stockItem) {
+                    var availableStock = parseInt(stockItem.stockIn || 0) - parseInt(stockItem.stockOut || 0) - totalQuantityInTable;
+                    minAvailableStock = Math.min(minAvailableStock, availableStock);
+                } else {
+                    minAvailableStock = Math.min(minAvailableStock, 0);
+                }
+            });
+
+            $('#available_pstock').val(isFinite(minAvailableStock) ? minAvailableStock : 0);
+        }
+
+        // Event listener for select2:select event on material ID
+        $('#material_id').on('select2:select', function (e) {
+            var selectedMaterialId = e.params.data.id;
+            updateAvailableStock(selectedMaterialId);
+        });
+
+        // Also handle regular change event for material_id
+        $('#material_id').on('change', function () {
+            var materialId = $(this).val();
+            if (materialId) {
+                updateAvailableStock(materialId);
+
+                // Material Quantity Tracking for PTC Creation/Issuance Page (addPTC)
+                if (typeof isPtcIssuancePage !== 'undefined' && typeof ajaxMQtyUrl !== 'undefined') {
+                    var ptcOrderId = typeof orderId !== 'undefined' ? orderId : 0;
+                    var ptcProductId = typeof ptcProductTypeId !== 'undefined' ? ptcProductTypeId : 0;
+
+                    // If no order (Default PTC), show N/A since we can't calculate requirements
+                    if (!ptcOrderId || ptcOrderId == '0' || ptcOrderId == 0) {
+                        $('#materialQty').val('N/A - No Order');
+                        $('#articleQty').val('N/A - No Order');
+                        $('#articleTQty').val('N/A - No Order');
+                        return;
+                    }
+
+                    // Required | Issued | To Issue (Complete Order)
+                    $.ajax({
+                        url: ajaxMQtyUrl,
+                        type: "GET",
+                        data: { materialId: materialId, orderId: ptcOrderId },
+                        dataType: "json",
+                        success: function (response) {
+                            $('#materialQty').val(response.data);
+                        },
+                    });
+                    // Required | Issued | To Issue (Selected Article)
+                    $.ajax({
+                        url: ajaxAMQtyUrl,
+                        type: "GET",
+                        data: { materialId: materialId, orderId: ptcOrderId, productId: ptcProductId },
+                        dataType: "json",
+                        success: function (response) {
+                            $('#articleQty').val(response.data);
+                        },
+                    });
+                    // Required | Issued | To Issue (Selected Article Size)
+                    $.ajax({
+                        url: ajaxATMQtyUrl,
+                        type: "GET",
+                        data: { materialId: materialId, orderId: ptcOrderId, productId: ptcProductId },
+                        dataType: "json",
+                        success: function (response) {
+                            $('#articleTQty').val(response.data);
+                        },
+                    });
+                }
+            } else {
+                $('#available_stock').val('');
+            }
+        });
+
+        // Update available product stock when stage_id changes
+        $('#stage_id').on('change', function () {
+            updateAvailablePStock();
+        });
+
+        // Function to update serial numbers
+        function updateSerialNumbers() {
+            $('#items-table tbody tr:not(#hiddentr)').each(function (index) {
+                $(this).find('td:first').text(index + 1);
+            });
+        }
+
+        // Add material to table
+        $('#addBtnMaterial').on('click', function () {
+            var materialId = $('#material_id').val();
+            var materialText = $('#material_id option:selected').text();
+            var parts = materialText.split('|');
+            var materialName = parts[0] ? parts[0].trim() : '';
+            var materialUnit = parts[1] ? parts[1].trim() : '';
+            var quantity = parseFloat($('#quantityMaterial').val()) || 0;
+            var availableStock = parseFloat($('#available_stock').val()) || 0;
+
+            if (!materialId || quantity <= 0) {
+                alert('Please select a material and enter a valid quantity.');
+                return;
+            }
+
+            if (quantity > availableStock) {
+                alert('Quantity cannot exceed available stock.');
+                return;
+            }
+
+            // Check for duplicate
+            var exists = false;
+            $('#items-table tbody tr').each(function () {
+                if ($(this).find('input[name="material_id[]"]').val() == materialId &&
+                    $(this).find('input[name="product_type_id[]"]').val() == '0') {
+                    exists = true;
+                    return false;
+                }
+            });
+
+            if (exists) {
+                alert('Material already added.');
+                return;
+            }
+
+            var srNo = $('#items-table tbody tr').length + 1;
+            var newRow = '<tr>' +
+                '<td>' + srNo + '</td>' +
+                '<td>Material<input type="hidden" name="product_type_id[]" value="0"><input type="hidden" name="stage_id[]" value="0"></td>' +
+                '<td>' + materialName + '<input type="hidden" name="material_id[]" value="' + materialId + '"></td>' +
+                '<td>' + quantity + ' ' + materialUnit + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
+                '<td><button type="button" class="btn btn-danger deleteRow">X</button></td>' +
+                '</tr>';
+
+            $('#items-table tbody').append(newRow);
+
+            // Reset fields and update available stock
+            $('#material_id').val(null).trigger('change');
+            $('#quantityMaterial').val('');
+            $('#available_stock').val('');
+            updateSerialNumbers();
+        });
+
+        // Add product stage to table
+        $('#addBtnStage').on('click', function () {
+            var stageIds = $('#stage_id').val() || [];
+            var quantity = parseInt($('#quantityStage').val()) || 0;
+
+            if (!stageIds.length || quantity <= 0) {
+                alert('Please select at least one stage and enter a valid quantity.');
+                return;
+            }
+
+            var availableStock = parseInt($('#available_pstock').val()) || 0;
+            if (quantity > availableStock) {
+                alert('Quantity cannot exceed available stock.');
+                return;
+            }
+
+            // Check for duplicates and add rows
+            for (var i = 0; i < stageIds.length; i++) {
+                var stageId = stageIds[i];
+                var stageName = $('#stage_id option[value="' + stageId + '"]').text();
+                var isDuplicate = false;
+
+                $('#items-table tbody tr').each(function () {
+                    var existingProductId = $(this).find('input[name="product_type_id[]"]').val();
+                    var existingStageId = $(this).find('input[name="stage_id[]"]').val();
+                    if (existingProductId == ptcProductTypeId && existingStageId == stageId) {
+                        isDuplicate = true;
+                        return false;
+                    }
+                });
+
+                if (isDuplicate) {
+                    alert('Stage "' + stageName + '" is already added to the table.');
+                    return;
+                }
+
+                var srNo = $('#items-table tbody tr').length + 1;
+                var newRow = '<tr>' +
+                    '<td>' + srNo + '</td>' +
+                    '<td>' + ptcProductName + '<input type="hidden" name="product_type_id[]" value="' + ptcProductTypeId + '"><input type="hidden" name="material_id[]" value="0"></td>' +
+                    '<td>' + stageName + '<input type="hidden" name="stage_id[]" value="' + stageId + '"></td>' +
+                    '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
+                    '<td><button type="button" class="btn btn-danger deletepRow">X</button></td>' +
+                    '</tr>';
+
+                $('#items-table tbody').append(newRow);
+            }
+
+            // Reset fields and update available stock
+            $('#stage_id').val(null).trigger('change');
+            $('#quantityStage').val('');
+            $('#available_pstock').val('');
+            updateSerialNumbers();
+        });
+
+        // Delete row - material
+        $(document).on('click', '.deleteRow', function () {
+            $(this).closest('tr').remove();
+            updateSerialNumbers();
+            // Update available stock after removing the row
+            var materialId = $('#material_id').val();
+            if (materialId) {
+                updateAvailableStock(materialId);
+            }
+        });
+
+        // Delete row - product
+        $(document).on('click', '.deletepRow', function () {
+            $(this).closest('tr').remove();
+            updateSerialNumbers();
+            updateAvailablePStock();
+        });
+    }
+});
+// End - PTC Script
+
+// Start - PTC Move Stage Script (Receive + Issue)
+// Also used for separate Issuance and Receiving pages
+$(document).ready(function () {
+    if (typeof isPtcMoveStage !== 'undefined' || typeof isPtcIssuancePage !== 'undefined' || typeof isPtcReceivingPage !== 'undefined') {
+
+        // Initialize select2
+        $('.select2').select2();
+
+        function initializeSelect2() {
+            $('.select2').select2();
+        }
+
+        // Getting Table name for employee/vendor
+        $('#employee_id').on('change select2:select', function () {
+            var tableName = $(this).find('option:selected').data('type');
+            $('#table_name').val(tableName);
+        });
+
+        // ============== RECEIVE SECTION HANDLERS ==============
+
+        // Material selection for receive
+        $('#r_material_id').on('change select2:select', function () {
+            var selectedOption = $(this).val();
+            if (!selectedOption) return;
+            var parts = selectedOption.split('|');
+            var materialId = parts[0];
+            var productId = parts[1];
+            updateReceiveableStock(materialId, productId);
+        });
+
+        // Calculate receiveable stock
+        function updateReceiveableStock(materialId, productId) {
+            var totalQuantityInTable = 0;
+            $('#receive-table tbody tr').each(function () {
+                var rowMaterialId = $(this).find('input[name="r_material_id[]"]').val();
+                var rowProductId = $(this).find('input[name="r_product_type_id[]"]').val();
+                if (rowMaterialId === materialId && rowProductId === productId) {
+                    totalQuantityInTable += parseFloat($(this).find('input[name="r_quantity[]"]').val()) || 0;
+                }
+            });
+
+            var issueItem = issueItems.find(item => item.material_id && item.material_id.toString() === materialId && item.product_type_id.toString() === productId);
+            var rstockItem = rstock.find(item => item.material_id && item.material_id.toString() === materialId && item.product_type_id.toString() === productId);
+            var rqty = rstockItem ? parseFloat(rstockItem.rqty) : 0;
+
+            if (issueItem) {
+                var availableStock = parseFloat(issueItem.quantity) - totalQuantityInTable - rqty;
+                $('#receiveable_stock').val(parseFloat(availableStock.toFixed(4)));
+            } else {
+                $('#receiveable_stock').val(0);
+            }
+        }
+
+        // Product type change - load stages and costs
+        $('#r_product_type_id').on('change select2:select', function () {
+            var productId = $(this).val();
+            // Load stages
+            $.ajax({
+                url: ajaxPSUrl,
+                type: "GET",
+                data: { productId: productId },
+                dataType: "json",
+                success: function (response) {
+                    $('#r_stage_id').empty().append('<option disabled selected>Select Stage</option>');
+                    response.data.forEach(function (item) {
+                        $('#r_stage_id').append(new Option(item.name, item.head_id));
+                    });
+                    // Add Rejected option for product receiving (head_id=105)
+                    $('#r_stage_id').append('<option value="105">Rejected</option>');
+                    initializeSelect2();
+                },
+            });
+            // Load costs
+            $.ajax({
+                url: ajaxPCUrl,
+                type: "GET",
+                data: { productId: productId },
+                dataType: "json",
+                success: function (response) {
+                    $('#r_pcost_id').empty().append('<option disabled>Select Work Log</option>');
+                    $('#r_pcost_id').append('<option value="0">None</option>');
+                    response.data.forEach(function (item) {
+                        $('#r_pcost_id').append(new Option(item.hname, item.head_id));
+                    });
+                    initializeSelect2();
+                },
+            });
+        });
+
+        // Add material to receive table
+        $('#addBtnReceiveMaterial').click(function () {
+            var selectedOption = $('#r_material_id option:selected').val();
+            if (!selectedOption) return;
+            var selectedValues = selectedOption.split('|');
+            var materialId = selectedValues[0];
+            var productId = selectedValues[1];
+            var materialText = $('#r_material_id option:selected').text();
+            var materialName = materialText.split('|')[0].trim();
+            var selectedId = $('#r_material_id');
+            var selectedOpt = selectedId.find('option:selected');
+            var previousDisabled = selectedOpt.prevAll('option[disabled]:first').text();
+            var previousDisabledValues = previousDisabled.split('|');
+            var articleNo = previousDisabledValues[0].replace('========== ', '').trim();
+            var articleSize = previousDisabledValues[1] ? previousDisabledValues[1].replace('Size ', '').trim() : '';
+            var productName = articleNo + ' - Size ' + articleSize;
+            var quantity = parseFloat($('#r_quantityMaterial').val());
+            var availableStock = parseFloat($('#receiveable_stock').val());
+
+            if (!materialId || !quantity) {
+                alert("Please select a material and enter quantity.");
+                return;
+            }
+            if (quantity > availableStock) {
+                alert("Quantity cannot be greater than receiveable stock.");
+                return;
+            }
+
+            var srNo = $('#receive-table tbody tr').length + 1;
+            var markup = '<tr>' +
+                '<td>' + srNo + '</td>' +
+                '<td>' + productName + '<input type="hidden" name="r_material_id[]" value="' + materialId + '"><input type="hidden" name="r_product_type_id[]" value="' + productId + '"></td>' +
+                '<td>' + materialName + '<input type="hidden" name="r_stage_id[]" value="0"></td>' +
+                '<td>None<input type="hidden" name="r_work_logs[]" value="0"></td>' +
+                '<td>' + quantity + '<input type="hidden" name="r_quantity[]" value="' + quantity + '"></td>' +
+                '<td><button type="button" class="btn btn-danger deleteReceiveRow">X</button></td>' +
+                '</tr>';
+
+            $('#receive-table tbody').append(markup);
+            $('#receiveable_stock').val(availableStock - quantity);
+            $('#r_quantityMaterial').val('');
+            updateReceiveSerialNumbers();
+        });
+
+        // Add product to receive table
+        $('#addBtnReceiveProduct').click(function () {
+            var productId = $('#r_product_type_id').val();
+            var productName = $('#r_product_type_id option:selected').text();
+            var stageId = $('#r_stage_id').val();
+            var stageName = $('#r_stage_id option:selected').text();
+            var quantity = parseInt($('#r_quantityProduct').val());
+            var selectedOptions = $('#r_pcost_id').val() || [];
+            var selectedOptionsText = selectedOptions.map(function (option) {
+                return $('#r_pcost_id option[value="' + option + '"]').text();
+            });
+            var selectedOptionsString = selectedOptionsText.join(', ') || 'None';
+            var idsString = selectedOptions.join('|') || '0';
+
+            if (!productId || !quantity || !stageId) {
+                alert("Please select a product, stage, and enter quantity.");
+                return;
+            }
+
+            var srNo = $('#receive-table tbody tr').length + 1;
+            var markup = '<tr>' +
+                '<td>' + srNo + '</td>' +
+                '<td>' + productName + '<input type="hidden" name="r_product_type_id[]" value="' + productId + '"><input type="hidden" name="r_material_id[]" value="0"></td>' +
+                '<td>' + stageName + '<input type="hidden" name="r_stage_id[]" value="' + stageId + '"></td>' +
+                '<td>' + selectedOptionsString + '<input type="hidden" name="r_work_logs[]" value="' + idsString + '"></td>' +
+                '<td>' + quantity + '<input type="hidden" name="r_quantity[]" value="' + quantity + '"></td>' +
+                '<td><button type="button" class="btn btn-danger deleteReceiveRow">X</button></td>' +
+                '</tr>';
+
+            $('#receive-table tbody').append(markup);
+            $('#r_quantityProduct').val('');
+            $('#r_pcost_id').val(null).trigger('change');
+            updateReceiveSerialNumbers();
+        });
+
+        // Delete receive row
+        $(document).on('click', '.deleteReceiveRow', function () {
+            $(this).closest('tr').remove();
+            updateReceiveSerialNumbers();
+        });
+
+        function updateReceiveSerialNumbers() {
+            $('#receive-table tbody tr').each(function (index) {
+                $(this).find('td:first').text(index + 1);
+            });
+        }
+    }
+});
+// End - PTC Move Stage Script
+
 // Start - Receive Issue Material Script
 $(document).ready(function () {
     if (typeof isReceiveIssuePage !== 'undefined') {
@@ -2190,6 +2641,52 @@ $(document).ready(function () {
             var materialId = parts[0];
             var productId = parts[1];
             updateAvailableStock(materialId, productId);
+
+            // Material Quantity Tracking for PTC Issuance Page
+            if (typeof isPtcIssuancePage !== 'undefined' && typeof ajaxMQtyUrl !== 'undefined') {
+                var ptcOrderId = typeof orderId !== 'undefined' ? orderId : 0;
+                // For PTC pages, use ptcProductTypeId instead of productId from dropdown
+                var ptcProductId = typeof ptcProductTypeId !== 'undefined' ? ptcProductTypeId : productId;
+
+                // If no order (Default PTC), show N/A since we can't calculate requirements
+                if (!ptcOrderId || ptcOrderId == '0' || ptcOrderId == 0) {
+                    $('#materialQty').val('N/A - No Order');
+                    $('#articleQty').val('N/A - No Order');
+                    $('#articleTQty').val('N/A - No Order');
+                    return;
+                }
+
+                // Required | Issued | To Issue (Complete Order)
+                $.ajax({
+                    url: ajaxMQtyUrl,
+                    type: "GET",
+                    data: { materialId: materialId, orderId: ptcOrderId },
+                    dataType: "json",
+                    success: function (response) {
+                        $('#materialQty').val(response.data);
+                    },
+                });
+                // Required | Issued | To Issue (Selected Article)
+                $.ajax({
+                    url: ajaxAMQtyUrl,
+                    type: "GET",
+                    data: { materialId: materialId, orderId: ptcOrderId, productId: ptcProductId },
+                    dataType: "json",
+                    success: function (response) {
+                        $('#articleQty').val(response.data);
+                    },
+                });
+                // Required | Issued | To Issue (Selected Article Size)
+                $.ajax({
+                    url: ajaxATMQtyUrl,
+                    type: "GET",
+                    data: { materialId: materialId, orderId: ptcOrderId, productId: ptcProductId },
+                    dataType: "json",
+                    success: function (response) {
+                        $('#articleTQty').val(response.data);
+                    },
+                });
+            }
         });
 
         // Function to update available stock, It shows only issued Material Qty
@@ -2756,3 +3253,106 @@ $(document).ready(function () {
     }
 });
 // End - General Voucher Script
+
+// Start - PTC (Process Travel Card) Script
+$(document).ready(function () {
+    if (typeof ajaxPtcProductsUrl !== 'undefined') {
+        var $orderSelect = $('#modal_order_id');
+        var $productSelect = $('#modal_product_type_id');
+        var $startStageSelect = $('#modal_start_stage_id');
+        var $endStageSelect = $('#modal_end_stage_id');
+        var $submitBtn = $('#modalSubmitBtn');
+        var stagesData = [];
+
+        // Function to validate form and enable/disable submit button
+        function validatePtcForm() {
+            var productId = $productSelect.val();
+            var startStageId = $startStageSelect.val();
+            var endStageId = $endStageSelect.val();
+
+            if (productId && startStageId && endStageId) {
+                // Validate that end stage comes after or equals start stage
+                var startIndex = stagesData.findIndex(s => s.head_id == startStageId);
+                var endIndex = stagesData.findIndex(s => s.head_id == endStageId);
+                if (startIndex <= endIndex) {
+                    $submitBtn.prop('disabled', false);
+                    return;
+                }
+            }
+            $submitBtn.prop('disabled', true);
+        }
+
+        // Load products when order changes
+        $orderSelect.on('change', function () {
+            var orderId = $(this).val();
+            $productSelect.empty().append('<option value="" disabled selected>Loading...</option>');
+            $startStageSelect.empty().append('<option value="" disabled selected>Select Start Stage</option>');
+            $endStageSelect.empty().append('<option value="" disabled selected>Select End Stage</option>');
+            $submitBtn.prop('disabled', true);
+            stagesData = [];
+
+            $.ajax({
+                url: ajaxPtcProductsUrl,
+                type: "GET",
+                data: { order_id: orderId },
+                dataType: "json",
+                success: function (response) {
+                    $productSelect.empty().append('<option value="" disabled selected>Select Product</option>');
+                    if (response.data && response.data.length > 0) {
+                        response.data.forEach(function (item) {
+                            var optionText = item.product_name + ' - ' + item.size_name;
+                            $productSelect.append(new Option(optionText, item.product_type_id));
+                        });
+                    }
+                    initializeSelect2();
+                },
+                error: function () {
+                    $productSelect.empty().append('<option value="" disabled selected>Error loading products</option>');
+                }
+            });
+        });
+
+        // Load stages when product changes
+        $productSelect.on('change', function () {
+            var productTypeId = $(this).val();
+            $startStageSelect.empty().append('<option value="" disabled selected>Loading...</option>');
+            $endStageSelect.empty().append('<option value="" disabled selected>Loading...</option>');
+            $submitBtn.prop('disabled', true);
+            stagesData = [];
+
+            $.ajax({
+                url: ajaxPtcStagesUrl,
+                type: "GET",
+                data: { product_type_id: productTypeId },
+                dataType: "json",
+                success: function (response) {
+                    $startStageSelect.empty().append('<option value="" disabled selected>Select Start Stage</option>');
+                    $endStageSelect.empty().append('<option value="" disabled selected>Select End Stage</option>');
+                    if (response.data && response.data.length > 0) {
+                        stagesData = response.data;
+                        response.data.forEach(function (item) {
+                            $startStageSelect.append(new Option(item.name, item.head_id));
+                            $endStageSelect.append(new Option(item.name, item.head_id));
+                        });
+                        // Auto-select first stage as start and last stage as end
+                        if (response.data.length > 0) {
+                            $startStageSelect.val(response.data[0].head_id);
+                            $endStageSelect.val(response.data[response.data.length - 1].head_id);
+                        }
+                    }
+                    initializeSelect2();
+                    validatePtcForm();
+                },
+                error: function () {
+                    $startStageSelect.empty().append('<option value="" disabled selected>Error loading stages</option>');
+                    $endStageSelect.empty().append('<option value="" disabled selected>Error loading stages</option>');
+                }
+            });
+        });
+
+        // Validate on stage change
+        $startStageSelect.on('change', validatePtcForm);
+        $endStageSelect.on('change', validatePtcForm);
+    }
+});
+// End - PTC (Process Travel Card) Script

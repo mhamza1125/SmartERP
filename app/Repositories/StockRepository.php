@@ -438,6 +438,76 @@ class StockRepository implements GlobalInterface
         return 'R'.$count + 1;
     }
 
+    /**
+     * Generate PTC Number in format: YYMMNNN (e.g., 2512001)
+     * Stores only the numeric portion - display adds 'PTC-' prefix
+     */
+    public function ptcRefNo()
+    {
+        $yearMonth = Carbon::now()->format('ym');
+        $count = Stock::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->where('is_ptc_master', 1)
+            ->count();
+        $threeDigitNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+        return $yearMonth . $threeDigitNumber;
+    }
+
+    /**
+     * Generate Issuance Number relative to PTC (e.g., 001, 002, 003)
+     * Stores only the sequential number - display adds 'I' prefix
+     */
+    public function issueRefNo($ptcId)
+    {
+        // Count existing issuances for this PTC (excluding the initial master issuance)
+        $count = Stock::where('ptc_id', $ptcId)
+            ->where('stock_type', 2)
+            ->count();
+
+        return str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Generate Receiving Number relative to Issuance
+     * Format: R{seq}-I{issuanceStockNo} (e.g., R1-I001, R2-I001)
+     * This ensures uniqueness across all receivings
+     */
+    public function receiveRefNo($issueId)
+    {
+        // Get the issuance's stock_no for uniqueness
+        $issuance = Stock::find($issueId);
+        $issuanceNo = $issuance ? $issuance->stock_no : $issueId;
+
+        // Count existing receivings for this issuance
+        $count = Stock::where('issue_id', $issueId)
+            ->where('stock_type', 1)
+            ->count();
+
+        // Return unique format: R{seq}-I{issuanceNo}
+        return 'R' . ($count + 1) . '-I' . $issuanceNo;
+    }
+
+    /**
+     * Get Issuance sequence number from PTC for a specific issuance
+     * Used for display purposes to show R1-I001 format
+     */
+    public function getIssuanceSeqNo($ptcId, $issuanceId)
+    {
+        // Get all issuances for this PTC ordered by creation date
+        $issuances = Stock::where(function($query) use ($ptcId) {
+                $query->where('ptc_id', $ptcId)
+                      ->orWhere('stock_id', $ptcId);
+            })
+            ->where('stock_type', 2)
+            ->orderBy('created_at')
+            ->pluck('stock_id')
+            ->toArray();
+
+        $position = array_search($issuanceId, $issuances);
+        return $position !== false ? str_pad($position + 1, 3, '0', STR_PAD_LEFT) : '001';
+    }
+
     public function receivingIssue($id, $empId)
     {
         // Add / Edit Receiving Issuance
