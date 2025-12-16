@@ -240,9 +240,9 @@
                     <th style="width: 50%">Description</th>
                     <th style="width: 50%">
                         @if($transaction['debit'] > 0)
-                            Decrease Amount
+                        Increase Amount
                         @else
-                            Increase Amount
+                        Decrease Amount
                         @endif
                     </th>
                 </tr>
@@ -250,16 +250,6 @@
             <tbody>
                 <tr>
                     <td>Bank Reconciliation Adjustment</td>
-                    <td class="text-right amount">
-                        @if($transaction['debit'] > 0)
-                            {{ number_format($transaction['debit'], 2) }}
-                        @else
-                            {{ number_format($transaction['credit'], 2) }}
-                        @endif
-                    </td>
-                </tr>
-                <tr>
-                    <td>{{ $transaction['bname'] ?? 'Bank Account' }}</td>
                     <td class="text-right amount">
                         @if($transaction['debit'] > 0)
                             {{ number_format($transaction['debit'], 2) }}
@@ -298,29 +288,34 @@
                             {{ $transaction['description'] ?? 'Payment Transaction' }}
                         @endif
                     </td>
-                    <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
                     <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
+                    <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
                 </tr>
                 @if($transaction['bank_id'])
                 <tr>
                     <td>{{ $transaction['bname'] ?? 'Bank Account' }}</td>
-                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
                     <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
+                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
                 </tr>
                 @else
                 <tr>
                     <td>Cash Account</td>
-                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
                     <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
+                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
                 </tr>
                 @endif
             </tbody>
             <tfoot>
-                <tr style="font-weight: bold; background-color: #f5f5f5;">
-                    <td class="text-right">Total:</td>
-                    <td class="text-right amount">{{ number_format($transaction['debit'] ?? $transaction['credit'] ?? 0, 2) }}</td>
-                    <td class="text-right amount">{{ number_format($transaction['credit'] ?? $transaction['debit'] ?? 0, 2) }}</td>
-                </tr>
+           <tr style="font-weight: bold; background-color: #f5f5f5;">
+                <td class="text-right">Total:</td>
+                <td class="text-right amount">
+                    {{ number_format(!empty($transaction['debit']) && $transaction['debit'] != 0 ? $transaction['debit'] : (!empty($transaction['credit']) && $transaction['credit'] != 0 ? $transaction['credit'] : 0), 2) }}
+                </td>
+                <td class="text-right amount">
+                    {{ number_format(!empty($transaction['debit']) && $transaction['debit'] != 0 ? $transaction['debit'] : (!empty($transaction['credit']) && $transaction['credit'] != 0 ? $transaction['credit'] : 0), 2) }}
+                </td>
+            </tr>
+
             </tfoot>
         </table>
     @endif
