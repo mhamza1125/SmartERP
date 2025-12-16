@@ -70,30 +70,40 @@
               <a href="{{ route('dashboard') }}" class="nav-link"><i data-feather="monitor"></i><span>Dashboard</span></a>
             </li>
 
-            {{-- Stock / Issuance Section --}}
-            @can('stocks_access', App\Models\Stock::class)
+            {{-- Production Section (Stock + Machines) --}}
+            @if(auth()->user()->can('stocks_access', App\Models\Stock::class) || 
+                auth()->user()->can('access', App\Models\Stock::class) || 
+                auth()->user()->can('access', App\Models\Machine::class))
             <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Stock / Issuance</span></a>
-              <ul class="dropdown-menu">
-                @can('stocks_access', App\Models\Stock::class)
-                  <li><a class="nav-link" href="{{ route('stock') }}">Stock</a></li>
-                @endcan
-                @can('access', App\Models\Stock::class)
-                  <li><a class="nav-link" href="{{ route('ptc') }}">PTC</a></li>
-                  <li><a class="nav-link" href="{{ route('issue') }}">Issuance</a></li>
-                  <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
-                  <li><a class="nav-link" href="{{ route('igroup') }}">Group / Lot</a></li>
-                @endcan
-              </ul>
+                <a href="#" class="menu-toggle nav-link has-dropdown">
+                    <i data-feather="briefcase"></i><span>Production</span>
+                </a>
+                <ul class="dropdown-menu">
+                    {{-- Stock links --}}
+                    @can('stocks_access', App\Models\Stock::class)
+                        <li><a class="nav-link" href="{{ route('stock') }}">Inventory Stock</a></li>
+                    @endcan
+                    @can('access', App\Models\Stock::class)
+                        <li><a class="nav-link" href="{{ route('ptc') }}">PTC</a></li>
+                        <li><a class="nav-link" href="{{ route('issue') }}">Issuance</a></li>
+                        <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
+                        <li><a class="nav-link" href="{{ route('igroup') }}">Groups / Lots</a></li>
+                    @endcan
+
+                    {{-- Machines links --}}
+                    @can('access', App\Models\Machine::class)
+                        <li><a class="nav-link" href="{{ route('machine') }}">Machines</a></li>
+                        <li><a class="nav-link" href="{{ route('missue') }}">Material Issuance</a></li>
+                    @endcan
+                </ul>
             </li>
-            @endcan
+            @endif
 
             {{-- Purchase Orders Section --}}
             @can('access', App\Models\Purchase::class)
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Purchase Orders</span></a>
+                  data-feather="briefcase"></i><span>Purchasing</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
                 <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
@@ -102,6 +112,66 @@
             </li>
             @endcan
 
+            {{-- Customer Orders Section --}}
+            @can('access', App\Models\Order::class)
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>Orders / Deliveries</span></a>
+              <ul class="dropdown-menu">
+                <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
+                @can('access', App\Models\Delivery::class)
+                  <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
+                @endcan
+              </ul>
+            </li>
+            @endcan
+
+            {{-- Products / Materials Section --}}
+            @if(auth()->user()->can('access', App\Models\Product::class) || 
+                auth()->user()->can('access', App\Models\Material::class))
+            <li class="dropdown">
+                <a href="#" class="menu-toggle nav-link has-dropdown">
+                    <i data-feather="box"></i><span>Products / Materials</span>
+                </a>
+                <ul class="dropdown-menu">
+                    {{-- Products links --}}
+                    @can('access', App\Models\Product::class)
+                        <li><a class="nav-link" href="{{ route('product') }}">Products</a></li>
+                        <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
+                        <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing / Wages</a></li>
+                    @endcan
+
+                    {{-- Materials links --}}
+                    @can('access', App\Models\Material::class)
+                        <li><a class="nav-link" href="{{ route('material') }}">Materials</a></li>
+                        <li><a class="nav-link" href="{{ route('mprocess') }}">Material Processing</a></li>
+                    @endcan
+                </ul>
+            </li>
+            @endif
+
+            {{-- People Management Section --}}
+            @if(Gate::allows('access', App\Models\Customer::class) || Gate::allows('access', App\Models\Employee::class) || Gate::allows('access', App\Models\Vendor::class) || Gate::allows('contractors_access', App\Models\Vendor::class))
+            <li class="dropdown">
+              <a href="#" class="menu-toggle nav-link has-dropdown"><i
+                  data-feather="briefcase"></i><span>People</span></a>
+              <ul class="dropdown-menu">
+                @can('access', App\Models\Customer::class)
+                  <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
+                @endcan
+                @can('access', App\Models\Employee::class)
+                  <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
+                @endcan
+                @can('access', App\Models\Vendor::class)
+                  <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
+                @endcan
+                @can('contractors_access', App\Models\Vendor::class)
+                  <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
+                @endcan
+              </ul>
+            </li>
+            @endif
+
             {{-- Transactions Section --}}
             @can('access', App\Models\Transaction::class)
             <li class="dropdown">
@@ -109,12 +179,12 @@
                   data-feather="briefcase"></i><span>Transactions</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">General Voucher</a></li>
                 <li><a class="nav-link" href="{{ route('ePayment') }}">Employee</a></li>
                 <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor</a></li>
                 <li><a class="nav-link" href="{{ route('cPayment') }}">Contractor</a></li>
                 <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
                 <li><a class="nav-link" href="{{ route('oPayment') }}">Customer Order</a></li>
-                <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">General Voucher</a></li>
               </ul>
             </li>
             @endcan
@@ -122,7 +192,7 @@
             @canany(['access'], [App\Models\Bank::class, App\Models\Asset::class])
             <li class="dropdown">
                 <a href="#" class="menu-toggle nav-link has-dropdown">
-                    <i data-feather="briefcase"></i><span>Bank / Cash</span>
+                    <i data-feather="briefcase"></i><span>Bank / Assets</span>
                 </a>
 
                 <ul class="dropdown-menu">
@@ -141,78 +211,6 @@
             </li>
             @endcanany
 
-            {{-- Machines Section --}}
-            @can('access', App\Models\Machine::class)
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Machines</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('machine') }}">Machine</a></li>
-                <li><a class="nav-link" href="{{ route('missue') }}">Material Issuance</a></li>
-              </ul>
-            </li>
-            @endcan
-
-            {{-- Customer Orders Section --}}
-            @can('access', App\Models\Order::class)
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Customer Orders</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
-                @can('access', App\Models\Delivery::class)
-                  <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
-                @endcan
-              </ul>
-            </li>
-            @endcan
-            {{-- People Management Section --}}
-            @if(Gate::allows('access', App\Models\Customer::class) || Gate::allows('access', App\Models\Employee::class) || Gate::allows('access', App\Models\Vendor::class) || Gate::allows('contractors_access', App\Models\Vendor::class))
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>People Management</span></a>
-              <ul class="dropdown-menu">
-                @can('access', App\Models\Customer::class)
-                  <li><a class="nav-link" href="{{ route('customer') }}">Customer</a></li>
-                @endcan
-                @can('access', App\Models\Employee::class)
-                  <li><a class="nav-link" href="{{ route('employee') }}">Employee</a></li>
-                @endcan
-                @can('access', App\Models\Vendor::class)
-                  <li><a class="nav-link" href="{{ route('vendor') }}">Vendor</a></li>
-                @endcan
-                @can('contractors_access', App\Models\Vendor::class)
-                  <li><a class="nav-link" href="{{ route('contractor') }}">Contractor</a></li>
-                @endcan
-              </ul>
-            </li>
-            @endif
-
-            {{-- Products Section --}}
-            @can('access', App\Models\Product::class)
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Products</span></a>
-              <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('product') }}">Product</a></li>
-                <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
-                <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing / Wages</a></li>
-              </ul>
-            </li>
-            @endcan
-
-            {{-- Materials Section --}}
-            @can('access', App\Models\Material::class)
-            <li class="dropdown">
-              <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                data-feather="briefcase"></i><span>Materials</span></a>
-                <ul class="dropdown-menu">
-                  <li><a class="nav-link" href="{{ route('material') }}">Materials</a></li>
-                  <li><a class="nav-link" href="{{ route('mprocess') }}">Material Processing</a></li>
-              </ul>
-            </li>
-            @endcan
-
             {{-- Attendance / Payroll Section --}}
             @if (
                 auth()->user()->can('access', App\Models\Attendance::class) ||
@@ -220,7 +218,7 @@
             )
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
-                  data-feather="briefcase"></i><span>Attendance / Payroll</span></a>
+                  data-feather="briefcase"></i><span>HR / Payroll</span></a>
               <ul class="dropdown-menu">
                 @can('access', App\Models\Transaction::class)
                   <li><a class="nav-link" href="{{ route('payroll.index') }}">Monthly Payroll</a></li>
