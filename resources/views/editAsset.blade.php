@@ -33,10 +33,26 @@
                 </div>
               </div>
               <div class="form-group row mb-4">
-                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Quantity <span class="text-danger">*</span></label>
+                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Transaction Type <span class="text-danger">*</span></label>
                 <div class="col-sm-12 col-md-7">
-                  <input type="number" class="form-control @error('quantity') is-invalid @enderror" name="quantity" value="{{ old('quantity', $asset->quantity) }}" min="1" required>
-                  @error('quantity')
+                  <select class="form-control @error('transaction_type') is-invalid @enderror" name="transaction_type" required>
+                    <option value="">Select Transaction Type</option>
+                    <option value="purchase" {{ old('transaction_type', $asset->transaction_type) == 'purchase' ? 'selected' : '' }}>Purchase (Acquisition)</option>
+                    <option value="sale" {{ old('transaction_type', $asset->transaction_type) == 'sale' ? 'selected' : '' }}>Sale (Disposal)</option>
+                    <option value="depreciation" {{ old('transaction_type', $asset->transaction_type) == 'depreciation' ? 'selected' : '' }}>Depreciation</option>
+                    <option value="writeoff" {{ old('transaction_type', $asset->transaction_type) == 'writeoff' ? 'selected' : '' }}>Write-off</option>
+                    <option value="adjustment" {{ old('transaction_type', $asset->transaction_type) == 'adjustment' ? 'selected' : '' }}>Adjustment</option>
+                  </select>
+                  @error('transaction_type')
+                    <span class="invalid-feedback">{{ $message }}</span>
+                  @enderror
+                </div>
+              </div>
+              <div class="form-group row mb-4">
+                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Transaction Date <span class="text-danger">*</span></label>
+                <div class="col-sm-12 col-md-7">
+                  <input type="date" class="form-control @error('transaction_date') is-invalid @enderror" name="transaction_date" value="{{ old('transaction_date', $asset->transaction_date?->format('Y-m-d')) }}" required>
+                  @error('transaction_date')
                     <span class="invalid-feedback">{{ $message }}</span>
                   @enderror
                 </div>
@@ -44,8 +60,17 @@
               <div class="form-group row mb-4">
                 <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Amount <span class="text-danger">*</span></label>
                 <div class="col-sm-12 col-md-7">
-                  <input type="number" step="0.01" class="form-control @error('amount') is-invalid @enderror" name="amount" value="{{ old('amount', $asset->amount) }}" min="0" required>
+                  <input type="number" step="0.01" class="form-control @error('amount') is-invalid @enderror" name="amount" value="{{ old('amount', $asset->debit ?? $asset->credit) }}" min="0" required>
                   @error('amount')
+                    <span class="invalid-feedback">{{ $message }}</span>
+                  @enderror
+                </div>
+              </div>
+              <div class="form-group row mb-4">
+                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Description</label>
+                <div class="col-sm-12 col-md-7">
+                  <textarea class="form-control @error('description') is-invalid @enderror" name="description" rows="3">{{ old('description', $asset->description) }}</textarea>
+                  @error('description')
                     <span class="invalid-feedback">{{ $message }}</span>
                   @enderror
                 </div>
@@ -70,8 +95,8 @@
               <div class="form-group row mb-4">
                 <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>
                 <div class="col-sm-12 col-md-7">
-                  <button type="submit" class="btn btn-primary">Update</button>
-                  <a href="{{ route('asset.show', $asset->asset_id) }}" class="btn btn-secondary">Cancel</a>
+                  <button type="submit" class="btn btn-primary">Update Transaction</button>
+                  <a href="{{ route('asset.show', $asset->asset_name) }}" class="btn btn-secondary">Cancel</a>
                 </div>
               </div>
             </form>

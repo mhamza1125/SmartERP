@@ -153,6 +153,21 @@
                   </div>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Product Components (Other Products Used in Manufacturing)</label>
+                    <div id="product-components-container">
+                      <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Add other finished products that are used as components in manufacturing this product.
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-product-component">
+                      <i class="fas fa-plus"></i> Add Product Component
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div id="attachmentContainer">
                 <div class="row attachment-row">
                   <div class="col-md-6">
@@ -468,6 +483,61 @@ $(document).ready(function() {
     // Update opening stock options when size or stage selection changes
     $('#size_id, #stage_ids_select').on('change', function() {
         updateOpeningStockOptions();
+    });
+});
+
+// Product Components Management
+$(document).ready(function() {
+    var productComponentCounter = 0;
+    var productTypes = @json($productTypes ?? []);
+
+    // Build product options HTML
+    function getProductOptions() {
+        var options = '<option value="">Select Product</option>';
+        productTypes.forEach(function(product) {
+            options += '<option value="' + product.product_type_id + '">' +
+                product.article_no + ' - ' + product.name + ' (' + product.hname + ')</option>';
+        });
+        return options;
+    }
+
+    // Add product component row
+    $('#add-product-component').click(function() {
+        var productOptions = getProductOptions();
+
+        var row = `
+            <div class="row product-component-row mb-2" data-index="${productComponentCounter}">
+                <div class="col-md-6">
+                    <select class="form-control select2-product-component" name="component_product_type_id[]" required>
+                        ${productOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" step="0.001" class="form-control" name="component_quantity[]" placeholder="Quantity" min="0.001" value="1" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-sm btn-danger remove-product-component">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        `;
+
+        $('#product-components-container').append(row);
+
+        // Initialize Select2 for the new dropdown
+        $('.select2-product-component').last().select2({
+            placeholder: 'Select Product',
+            allowClear: true,
+            width: '100%'
+        });
+
+        productComponentCounter++;
+    });
+
+    // Remove product component row
+    $(document).on('click', '.remove-product-component', function() {
+        $(this).closest('.product-component-row').remove();
     });
 });
 </script>

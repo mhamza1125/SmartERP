@@ -45,20 +45,20 @@
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>
                         <div class="btn-group">
-                            <button class="btn <?php 
+                            <button class="btn <?php
                                 if($item->delivery_status == 1){ echo 'btn-warning'; $status = 'Pending'; }
-                                elseif($item->delivery_status == 2){ echo 'btn-success'; $status = 'Delivered'; }
-                                elseif($item->delivery_status == 3){ echo 'btn-danger'; $status = 'Returned'; }
-                                elseif($item->delivery_status == 4){ echo 'btn-danger'; $status = 'Disputed'; }
+                                elseif($item->delivery_status == 2){ echo 'btn-info'; $status = 'Dispatched'; }
+                                elseif($item->delivery_status == 3){ echo 'btn-success'; $status = 'Delivered'; }
+                                elseif($item->delivery_status == 4){ echo 'btn-danger'; $status = 'Returned'; }
                                 else{ echo 'btn-danger'; $status = 'Unknown'; }
                                ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                               {{$status}}
                             </button>
                             <div class="dropdown-menu">
                               <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '1']) }}">Pending</a>
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '2']) }}">Delivered</a>
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '3']) }}">Returned</a>
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '4']) }}">Disputed</a>
+                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '2']) }}">Dispatched</a>
+                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '3']) }}">Delivered</a>
+                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '4']) }}">Returned</a>
                             </div>
                           </div>
                       </td>
@@ -73,7 +73,7 @@
                         @else
                           <a href="{{ route('delivery.edit', $item->delivery_id) }}" class="btn btn-primary btn-sm">Edit</a>
                         @endif
-                        @if($item->delivery_status == 2)
+                        @if($item->delivery_status == 3)
                           <a href="{{ route('delivery-return.create', $item->delivery_id) }}" class="btn btn-warning btn-sm">Return</a>
                         @endif
                       </td>

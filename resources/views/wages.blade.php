@@ -6,11 +6,11 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Wages - Employee / Vendor</h4>
+            <h4>Wages - Employee / Contractor</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ route('transaction.addEPayment') }}" class="btn btn-primary">Pay Employee</a>
-                <a href="{{ route('transaction.addVPayment') }}" class="btn btn-primary">Pay Vendor</a>
+                <a href="{{ route('transaction.addCPayment') }}" class="btn btn-primary">Pay Contractor</a>
               </div>
             </div>
           </div>
@@ -20,7 +20,7 @@
                 <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="true">Employee Wages</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Vendor Wages</a>
+                <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Contractor Wages</a>
               </li>
             </ul> 
             
@@ -70,7 +70,7 @@
                     <thead>
                       <tr>
                         <th>Sr.</th>
-                        <th>Vendor</th>
+                        <th>Contractor</th>
                         <th>Wages (Pkr)</th>
                         <th>Advance (Pkr)</th>
                         <th>Action</th>

@@ -103,6 +103,7 @@ class StockRepository implements GlobalInterface
             ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
+            ->whereNotIn('stocks.table_name', ['delivery', 'delivery_returns'])
             ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
                 DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
             )

@@ -11,7 +11,9 @@ class AssetController extends Controller
     public function index()
     {
         $this->authorize('access', Asset::class);
-        $assets = Asset::all();
+
+        // Get asset summary with net values
+        $assets = Asset::getAssetSummary();
 
         return view('asset', [
             'assets' => $assets,
@@ -31,7 +33,9 @@ class AssetController extends Controller
 
         $validated = $request->validate([
             'asset_name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:1',
+            'transaction_type' => 'required|in:purchase,sale,depreciation,writeoff,adjustment',
+            'description' => 'nullable|string',
+            'transaction_date' => 'required|date',
             'amount' => 'required|numeric|min:0',
             'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
@@ -41,23 +45,49 @@ class AssetController extends Controller
             $attachment = $request->file('attachment')->store('assets', 'public');
         }
 
+        // Determine debit or credit based on transaction type
+        $debit = null;
+        $credit = null;
+
+        if (in_array($validated['transaction_type'], ['purchase', 'adjustment'])) {
+            // Purchase and positive adjustments increase asset value (debit)
+            $debit = $validated['amount'];
+        } else {
+            // Sale, depreciation, writeoff decrease asset value (credit)
+            $credit = $validated['amount'];
+        }
+
         Asset::create([
             'asset_name' => $validated['asset_name'],
-            'quantity' => $validated['quantity'],
-            'amount' => $validated['amount'],
+            'transaction_type' => $validated['transaction_type'],
+            'description' => $validated['description'],
+            'transaction_date' => $validated['transaction_date'],
+            'debit' => $debit,
+            'credit' => $credit,
             'attachment' => $attachment,
         ]);
 
-        return redirect()->route('asset')->with('success', 'Asset created successfully');
+        return redirect()->route('asset')->with('success', 'Asset transaction recorded successfully');
     }
 
-    public function show($id)
+    public function show($assetName)
     {
         $this->authorize('show', Asset::class);
-        $asset = Asset::findOrFail($id);
+
+        // Get all transactions for this asset
+        $transactions = Asset::getAssetLedger($assetName);
+
+        if ($transactions->isEmpty()) {
+            abort(404, 'Asset not found');
+        }
+
+        // Calculate net asset value
+        $netValue = Asset::calculateAssetValue($assetName);
 
         return view('assetInfo', [
-            'asset' => $asset,
+            'assetName' => $assetName,
+            'transactions' => $transactions,
+            'netValue' => $netValue,
         ]);
     }
 
@@ -78,7 +108,9 @@ class AssetController extends Controller
 
         $validated = $request->validate([
             'asset_name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:1',
+            'transaction_type' => 'required|in:purchase,sale,depreciation,writeoff,adjustment',
+            'description' => 'nullable|string',
+            'transaction_date' => 'required|date',
             'amount' => 'required|numeric|min:0',
             'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
@@ -90,9 +122,29 @@ class AssetController extends Controller
             $validated['attachment'] = $request->file('attachment')->store('assets', 'public');
         }
 
-        $asset->update($validated);
+        // Determine debit or credit based on transaction type
+        $debit = null;
+        $credit = null;
 
-        return redirect()->route('asset.show', $asset->asset_id)->with('success', 'Asset updated successfully');
+        if (in_array($validated['transaction_type'], ['purchase', 'adjustment'])) {
+            // Purchase and positive adjustments increase asset value (debit)
+            $debit = $validated['amount'];
+        } else {
+            // Sale, depreciation, writeoff decrease asset value (credit)
+            $credit = $validated['amount'];
+        }
+
+        $asset->update([
+            'asset_name' => $validated['asset_name'],
+            'transaction_type' => $validated['transaction_type'],
+            'description' => $validated['description'],
+            'transaction_date' => $validated['transaction_date'],
+            'debit' => $debit,
+            'credit' => $credit,
+            'attachment' => $validated['attachment'] ?? $asset->attachment,
+        ]);
+
+        return redirect()->route('asset.show', $asset->asset_name)->with('success', 'Asset transaction updated successfully');
     }
 
     public function destroy($id)
@@ -106,7 +158,19 @@ class AssetController extends Controller
 
         $asset->delete();
 
-        return redirect()->route('asset')->with('success', 'Asset deleted successfully');
+        return redirect()->route('asset')->with('success', 'Asset transaction deleted successfully');
+    }
+
+    /**
+     * Add a new transaction to an existing asset
+     */
+    public function addTransaction($assetName)
+    {
+        $this->authorize('create', Asset::class);
+
+        return view('addAssetTransaction', [
+            'assetName' => $assetName,
+        ]);
     }
 }
 

@@ -97,6 +97,21 @@ class ProductCostController extends Controller
         ]);
     }
 
+    /**
+     * Print product cost information
+     */
+    public function printProductCost($id)
+    {
+        $this->authorize('show', Product::class);
+        $product = $this->productRepository->get($id);
+        $productCost = $this->productCostRepository->get($id);
+
+        return view('print.product-cost', [
+            'product' => $product,
+            'productCost' => $productCost,
+        ]);
+    }
+
     public function edit($id)
     {
         $this->authorize('edit', Product::class);

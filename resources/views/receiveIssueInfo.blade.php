@@ -50,8 +50,9 @@
                   <thead>
                     <tr>
                       <th>Sr.</th>
+                      <th>Type</th>
                       <th>Article No</th>
-                      <th>Material / Stage</th>
+                      <th>Material / Stage / Component</th>
                       <th>Work Done</th>
                       <th>Quantity</th>
                     </tr>
@@ -62,8 +63,19 @@
                         @if($item->quantity)
                         <tr>
                           <td>{{$loop->index + 1}}</td>
-                          <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                          <td>{{($item->name)? $item->name:$item->stage}}</td>
+                          @if($item->component_product_type_id)
+                            <td><span class="badge badge-warning">Component</span></td>
+                            <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                            <td>{{$item->component_article_no}} - {{$item->component_name}}</td>
+                          @elseif($item->material_id > 0)
+                            <td><span class="badge badge-info">Material</span></td>
+                            <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                            <td>{{$item->name}}</td>
+                          @else
+                            <td><span class="badge badge-success">Product</span></td>
+                            <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                            <td>{{$item->stage}}</td>
+                          @endif
                           <td>
                             @foreach(explode('|', $item->work_logs) as $index => $work)
                               @php
@@ -86,8 +98,9 @@
                   <tfoot>
                     <tr>
                       <th>Sr.</th>
+                      <th>Type</th>
                       <th>Article No</th>
-                      <th>Material / Stage</th>
+                      <th>Material / Stage / Component</th>
                       <th>Work Done</th>
                       <th>Quantity</th>
                     </tr>

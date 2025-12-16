@@ -131,21 +131,15 @@
                           @if($item->transaction_type == 'openingBalance')
                             <a href="#" class="btn btn-info btn-sm">View</a>
                           @elseif($item->transaction_type == 'wages')
-                            <div>
-                              <span class="badge badge-success mb-1">{{ $item->stock_no ?? 'N/A' }}</span><br>
-                              <small class="text-muted">
-                                <strong>{{ $item->item_count ?? 1 }} items</strong> - Total Wages: {{ number_format($item->debit) }}
-                              </small><br>
-                              <div class="btn-group mt-1">
-                                @if(isset($item->stock_id))
-                                  <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-xs">View</a>
-                                @endif
-                                @if(isset($item->wage_details) && !empty($item->wage_details) && isset($item->stock_id))
-                                  <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#wagesModal{{ $item->stock_id }}">
-                                    <i class="fas fa-info-circle"></i> Info
-                                  </button>
-                                @endif
-                              </div>
+                            <div class="btn-group mt-1">
+                              @if(isset($item->stock_id))
+                                <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
+                              @endif
+                              @if(isset($item->wage_details) && !empty($item->wage_details) && isset($item->stock_id))
+                                <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#wagesModal{{ $item->stock_id }}">
+                                  <i class="fas fa-info-circle"></i> Info
+                                </button>
+                              @endif
                             </div>
                           @elseif($item->transaction_type == 'salary')
                             <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>

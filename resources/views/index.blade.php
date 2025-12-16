@@ -47,9 +47,12 @@
               <div class="dropdown-title">Hello {{ auth()->user()->name }}</div>
               <a href="{{ route('user') }}" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile </a>
               <div class="dropdown-divider"></div>
-              <a href="#" class="dropdown-item has-icon text-danger"> <i class="fas fa-sign-out-alt"></i>
-                Logout
-              </a>
+              <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                @csrf
+                <button type="submit" class="dropdown-item has-icon text-danger" style="background: none; border: none; cursor: pointer; width: 100%; text-align: left;">
+                  <i class="fas fa-sign-out-alt ml-1">&nbsp Logout</i> 
+                </button>
+              </form>
             </div>
           </li>
         </ul>
@@ -79,7 +82,7 @@
                 @can('access', App\Models\Stock::class)
                   <li><a class="nav-link" href="{{ route('ptc') }}">PTC</a></li>
                   <li><a class="nav-link" href="{{ route('issue') }}">Issuance</a></li>
-                  {{-- <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li> --}}
+                  <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
                   <li><a class="nav-link" href="{{ route('igroup') }}">Group / Lot</a></li>
                 @endcan
               </ul>

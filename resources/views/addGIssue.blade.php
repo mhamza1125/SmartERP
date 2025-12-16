@@ -44,23 +44,27 @@
                   </div>
                 </div>
                 <div class="col-md-5">
-                  <div class="form-group">                    
-                    <label>Employee / Vendor</label>
+                  <div class="form-group">
+                    <label>Employee / Contractor</label>
                     <select class="form-control select2" name="employee_id" id="employee_id" required>
-                      <option value="" selected disabled>Select Employee / Vendor</option>
+                      <option value="" selected disabled>Select Employee / Contractor</option>
                       @if($employee->count())
+                        <optgroup label="Employees">
                         @foreach($employee as $item)
                           <option data-type="employee" value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}</option>
                         @endforeach
+                        </optgroup>
                       @endif
                       @if($vendor->count())
+                        <optgroup label="Contractors">
                         @foreach($vendor as $item)
                           <option data-type="vendor" value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
+                        </optgroup>
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee / Vendor</div>
+                    <div class="invalid-feedback">Select Employee / Contractor</div>
                   </div>
                 </div>
                 <div class="col-md-2">

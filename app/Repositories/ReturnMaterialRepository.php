@@ -42,7 +42,9 @@ class ReturnMaterialRepository implements GlobalInterface
         // Used by PurchaseInfo
         return ReturnMaterial::where('purchase_items.purchase_id', $id)
             ->join('returns', 'returns.return_id', '=', 'return_materials.return_id')
-            ->join('receive_materials', 'receive_materials.receive_material_id', 'return_materials.receive_material_id')
+            ->join('receive_materials', function ($join) {
+                $join->on('receive_materials.receive_material_id', '=', 'return_materials.receive_material_id');
+            })
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
             ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
@@ -57,12 +59,14 @@ class ReturnMaterialRepository implements GlobalInterface
         // Used by PurchaseInfo for Product Purchase
         return ReturnMaterial::where('purchase_items.purchase_id', $id)
             ->join('returns', 'returns.return_id', '=', 'return_materials.return_id')
-            ->join('receive_materials', 'receive_materials.receive_material_id', 'return_materials.receive_material_id')
+            ->join('receive_materials', function ($join) {
+                $join->on('receive_materials.receive_material_id', '=', 'return_materials.receive_material_id');
+            })
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->join('product_types', 'product_types.product_type_id', '=', 'purchase_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id') 
+            ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
             ->select('purchase_items.quantity', 'return_materials.quantity as rqty', 'return_materials.created_at', 'return_material_id', 'returns.return_no', 'purchase_items.purchase_item_id',  'products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname', 'receive_materials.*', 'return_materials.remarks')
             ->get();
     }

@@ -207,6 +207,8 @@ class MProcessController extends Controller
 
             $purchaseItem = [
                 'purchase_id' => $getId,
+                'product_type_id' => 0,
+                'product_stage_id' => 0,
                 'material_id' => $bmaterial,
                 'price' => $price,
                 'quantity' => $bquantity,

@@ -52,15 +52,6 @@
                     <tr><td><b>Employee:</b> {{$transaction['employee_no']}} - {{$transaction['name']}}</td></tr>
                     <tr><td><b>Pay Date:</b> {{$transaction['transaction_date']}}</td></tr>
                     <tr><td><b>Payment Type:</b> {{ucfirst($transaction['transaction_type'])}}</td></tr>
-                      @if($transaction['payee_bank_id'])
-                      <tr>
-                        <tr><td><b>Received By:</b> {{$transaction['rname']}}</td></tr>
-                        <tr><td><b>Account Title:</b> {{$transaction['raccount_title']}}</td></tr>
-                        <tr><td><b>Account No:</b> {{$transaction['raccount']}}</td></tr>
-                      </tr>
-                      @else
-                        <tr><td><b>Received By:</b> Cash Payment</td></tr>
-                      @endif
                   </tbody>
                 </table>
               </div>

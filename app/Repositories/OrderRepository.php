@@ -14,8 +14,9 @@ class OrderRepository implements GlobalInterface
 
     public function active()
     {
-        // Adding / Editing Purchases
-        return Order::where('order_status', '<', '6')
+        // Only Confirmed orders (status = 2) for issuance/PTC dropdowns
+        // Draft (1), Dispatched (3), Delivered (4), Cancelled (5) are excluded
+        return Order::where('order_status', '=', '2')
             ->orderBy('orders.created_at', 'desc')->get();
     }
 
@@ -39,9 +40,10 @@ class OrderRepository implements GlobalInterface
 
     public function getCustomerOrders($customerId)
     {
-        // Get non-completed/non-delivered orders for multi-order delivery
+        // Get only Confirmed orders for multi-order delivery
+        // Only Confirmed (2) orders can be used for delivery creation
         return Order::where('orders.customer_id', $customerId)
-            ->where('order_status', '<', 6) // Not completed
+            ->where('order_status', '=', 2) // Only Confirmed orders
             ->whereNotExists(function ($query) {
                 $query->select('deliveries.delivery_id')
                       ->from('deliveries')
@@ -54,12 +56,11 @@ class OrderRepository implements GlobalInterface
             ->get()
             ->map(function ($order) {
                 $statusMap = [
-                    1 => 'Pending',
+                    1 => 'Draft',
                     2 => 'Confirmed',
-                    3 => 'In Production',
-                    4 => 'Ready',
-                    5 => 'Partial Delivery',
-                    6 => 'Completed'
+                    3 => 'Dispatched',
+                    4 => 'Delivered',
+                    5 => 'Cancelled'
                 ];
                 $order->status = $statusMap[$order->order_status] ?? 'Unknown';
                 return $order;

@@ -42,18 +42,11 @@ class PurchaseItemRepository implements GlobalInterface
         return PurchaseItem::where('purchase_id', $id)
             ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
             ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', 'receive_materials.receive_material_id')
+            ->leftJoin('return_materials', function ($join) {
+                $join->on('return_materials.receive_material_id', '=', 'receive_materials.receive_material_id');
+            })
             ->select('purchase_items.*', 'materials.name', 'materials.material_no')
             ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received, COALESCE(SUM(return_materials.quantity), 0) as returned')
-            ->groupBy('purchase_items.purchase_item_id')
-            ->get();
-
-        // Receive Purchase Items Without Return Calculation
-        return PurchaseItem::where('purchase_id', $id)
-            ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->select('purchase_items.*', 'materials.name', 'materials.material_no')
-            ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received')
             ->groupBy('purchase_items.purchase_item_id')
             ->get();
     }
@@ -67,7 +60,9 @@ class PurchaseItemRepository implements GlobalInterface
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
             ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
             ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', 'receive_materials.receive_material_id')
+            ->leftJoin('return_materials', function ($join) {
+                $join->on('return_materials.receive_material_id', '=', 'receive_materials.receive_material_id');
+            })
             ->select('purchase_items.*', 'products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname')
             ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received, COALESCE(SUM(return_materials.quantity), 0) as returned')
             ->groupBy('purchase_items.purchase_item_id')

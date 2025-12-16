@@ -58,63 +58,148 @@ class TransactionController extends Controller
         $this->transactionRepository = $transactionRepository;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('access', Transaction::class);
-        $transaction = $this->transactionRepository->all();
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $transaction = $this->transactionRepository->filterByDate($dfrom, $dto);
+        } else {
+            $transaction = $this->transactionRepository->all();
+        }
 
         return view('transaction', [
             'transaction' => $transaction,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
         ]);
     }
 
-    public function oPayment()
+    public function oPayment(Request $request)
     {
         $this->authorize('access', Transaction::class);
-        $transaction = $this->transactionRepository->oPayment();
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $customer_id = $request->input('customer_id');
+
+        if (!empty($dfrom) && !empty($dto) || !empty($customer_id)) {
+            $transaction = $this->transactionRepository->oPaymentFilter($dfrom, $dto, $customer_id);
+        } else {
+            $transaction = $this->transactionRepository->oPayment();
+        }
+
+        $customers = $this->customerRepository->all();
 
         return view('oPayment', [
             'transaction' => $transaction,
+            'customers' => $customers,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+            'customer_id' => $customer_id,
         ]);
     }
 
-    public function ePayment()
+    public function ePayment(Request $request)
     {
         $this->authorize('access', Transaction::class);
-        $transaction = $this->transactionRepository->ePayment();
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $employee_id = $request->input('employee_id');
+
+        if (!empty($dfrom) && !empty($dto) || !empty($employee_id)) {
+            $transaction = $this->transactionRepository->ePaymentFilter($dfrom, $dto, $employee_id);
+        } else {
+            $transaction = $this->transactionRepository->ePayment();
+        }
+
+        $employees = $this->employeeRepository->all();
 
         return view('ePayment', [
             'transaction' => $transaction,
+            'employees' => $employees,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+            'employee_id' => $employee_id,
         ]);
     }
 
-    public function vPayment()
+    public function vPayment(Request $request)
     {
         $this->authorize('access', Transaction::class);
-        $transaction = $this->transactionRepository->vPayment();
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $vendor_id = $request->input('vendor_id');
+
+        if (!empty($dfrom) && !empty($dto) || !empty($vendor_id)) {
+            $transaction = $this->transactionRepository->vPaymentFilter($dfrom, $dto, $vendor_id);
+        } else {
+            $transaction = $this->transactionRepository->vPayment();
+        }
+
+        $vendors = $this->vendorRepository->all()->where('vendor_type', '0');
 
         return view('vPayment', [
             'transaction' => $transaction,
+            'vendors' => $vendors,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+            'vendor_id' => $vendor_id,
         ]);
     }
 
-    public function cPayment()
+    public function cPayment(Request $request)
     {
         $this->authorize('access', Transaction::class);
-        $transaction = $this->transactionRepository->cPayment();
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $contractor_id = $request->input('contractor_id');
+
+        if (!empty($dfrom) && !empty($dto) || !empty($contractor_id)) {
+            $transaction = $this->transactionRepository->cPaymentFilter($dfrom, $dto, $contractor_id);
+        } else {
+            $transaction = $this->transactionRepository->cPayment();
+        }
+
+        $contractors = $this->vendorRepository->all()->where('vendor_type', '1');
 
         return view('cPayment', [
             'transaction' => $transaction,
+            'contractors' => $contractors,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+            'contractor_id' => $contractor_id,
         ]);
     }
 
-    public function expense()
+    public function expense(Request $request)
     {
         $this->authorize('access', Transaction::class);
-        $transaction = $this->transactionRepository->expense();
+
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $head_id = $request->input('head_id');
+
+        if (!empty($dfrom) && !empty($dto) || !empty($head_id)) {
+            $transaction = $this->transactionRepository->expenseFilter($dfrom, $dto, $head_id);
+        } else {
+            $transaction = $this->transactionRepository->expense();
+        }
+
+        $heads = $this->headRepository->get('7');
 
         return view('expense', [
             'transaction' => $transaction,
+            'heads' => $heads,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+            'head_id' => $head_id,
         ]);
     }
 
@@ -313,10 +398,13 @@ class TransactionController extends Controller
 
                 case 'vendor':
                     $detail = $this->transactionRepository->vDetail($tableId);
-                    $totalCredit = $detail->where('transaction_type', '!=', 'wages')->sum('credit');
-                    $totalDebit = $detail->whereIn('transaction_type', ['wages'])->sum('debit') +
-                                 $detail->where('transaction_type', '!=', 'wages')->sum('debit');
-                    $balance = $totalCredit - $totalDebit; // Positive = we owe vendor/contractor
+                    // For vendor/contractor ledger (liability account):
+                    // DB debit (purchases/work) = increases liability = ADD to balance
+                    // DB credit (payments/returns) = decreases liability = SUBTRACT from balance
+                    // Include ALL transaction types - no filtering
+                    $totalDebit = $detail->sum('debit') ?? 0;
+                    $totalCredit = $detail->sum('credit') ?? 0;
+                    $balance = $totalDebit - $totalCredit; // Positive = we owe vendor/contractor
                     break;
 
                 default:
@@ -949,7 +1037,7 @@ class TransactionController extends Controller
     }
 
     /**
-     * Print BRS details
+     * Print Balance Adjustment details
      */
     public function printBRS($id)
     {
@@ -957,7 +1045,7 @@ class TransactionController extends Controller
         $transaction = $this->transactionRepository->getBRS($id);
 
         if (!$transaction) {
-            return redirect()->back()->with('error', 'BRS not found');
+            return redirect()->back()->with('error', 'Balance Adjustment not found');
         }
 
         // Generate voucher number

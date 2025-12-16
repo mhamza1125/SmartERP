@@ -77,10 +77,10 @@
                         <tr>
                           <td>{{ $loop->index + 1 }}</td>
                           <td class="form-group">
-                            @if($purchase['purchase_type'] == 'material')
-                                {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                            @if($purchase['purchase_type'] == 'product')
+                              {{ $item->article_no ?? '' }} - Size {{ $item->hname ?? '' }} - {{ $item->sname ?? '' }}
                             @else
-                                {{ $item->article_no ?? '' }} - Size {{ $item->hname ?? '' }} - {{ $item->sname ?? '' }}
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
                             @endif
                             <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
                           </td>

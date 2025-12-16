@@ -73,10 +73,10 @@
                           {{-- <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}</td> --}}
                           <td>
-                            @if($receive['purchase_type'] == 'material')
-                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                            @else
+                            @if($receive['purchase_type'] == 'product')
                               {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
+                            @else
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
                             @endif
                           </td>
                           <td>{{$item->hname}}</td>

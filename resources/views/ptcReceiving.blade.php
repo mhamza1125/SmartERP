@@ -62,7 +62,7 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Received From (Employee / Vendor) <span class="text-danger">*</span></label>
+                    <label>Received From (Employee / Contractor) <span class="text-danger">*</span></label>
                     @if($issuance ?? false)
                       <input type="text" class="form-control" readonly
                         value="{{ $issuance->table_name === 'employee' ? $issuance->employee_no . ' - ' . $issuance->employee_name : $issuance->vendor_no . ' - ' . $issuance->vendor_name }}">
@@ -70,16 +70,20 @@
                       <input type="hidden" name="table_name" value="{{ $issuance->table_name }}">
                     @else
                       <select class="form-control select2" name="employee_id" id="employee_id" required>
-                        <option value="" selected disabled>Select Employee / Vendor</option>
+                        <option value="" selected disabled>Select Employee / Contractor</option>
                         @if($employees->count())
+                          <optgroup label="Employees">
                           @foreach($employees as $item)
                             <option data-type="employee" value="{{ $item->employee_id }}">{{ $item->employee_no }} - {{ $item->name }}</option>
                           @endforeach
+                          </optgroup>
                         @endif
                         @if($vendors->count())
+                          <optgroup label="Contractors">
                           @foreach($vendors as $item)
                             <option data-type="vendor" value="{{ $item->vendor_id }}">{{ $item->vendor_no }} - {{ $item->fname }}</option>
                           @endforeach
+                          </optgroup>
                         @endif
                       </select>
                       <input type="hidden" id="table_name" name="table_name">
@@ -190,6 +194,47 @@
                 </div>
               </div>
 
+              {{-- Component Product Type Receive Section --}}
+              @if(isset($issuedComponents) && $issuedComponents->count())
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Component Products (Issued)</label>
+                    <select class="form-control select2" name="r_component_product_type_id" id="r_component_product_type_id">
+                      <option value="" disabled selected>Select Component Product</option>
+                      @foreach($issuedComponents as $component)
+                        @if($component->receivable_quantity > 0)
+                          <option value="{{ $component->component_product_type_id }}"
+                            data-receivable="{{ $component->receivable_quantity }}"
+                            data-unit="{{ $component->component_unit ?? 'Pcs' }}">
+                            {{ $component->component_article_no }} - {{ $component->component_name }} ({{ $component->component_size }}) | Receivable: {{ number_format($component->receivable_quantity) }}
+                          </option>
+                        @endif
+                      @endforeach
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label for="component_receivable_stock">Receivable Stock</label>
+                    <input type="text" class="form-control" id="component_receivable_stock" name="component_receivable_stock" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" step="1" class="form-control" name="r_quantityComponent" placeholder="0" id="r_quantityComponent">
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Add</label><br>
+                    <button type="button" id="addBtnReceiveComponent" class="btn btn-success">Add</button>
+                  </div>
+                </div>
+              </div>
+              @endif
+
               {{-- Receive Items Table with Tabs --}}
               <div class="row">
                 <div class="col-md-12">
@@ -227,8 +272,9 @@
                         <thead>
                           <tr>
                             <th>Sr.</th>
+                            <th>Type</th>
                             <th>Item / Product</th>
-                            <th>Material / Stage</th>
+                            <th>Material / Stage / Component</th>
                             <th>Quantity</th>
                             <th>Average</th>
                           </tr>
@@ -238,8 +284,19 @@
                             @foreach($issueItem as $item)
                               <tr>
                                 <td>{{$loop->index + 1}}</td>
-                                <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                                <td>{{($item->name)? $item->name:$item->stage}}</td>
+                                @if($item->component_product_type_id)
+                                  <td><span class="badge badge-warning">Component</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->component_article_no}} - {{$item->component_name}} ({{$item->component_size}})</td>
+                                @elseif($item->material_id > 0)
+                                  <td><span class="badge badge-info">Material</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->name}}</td>
+                                @else
+                                  <td><span class="badge badge-success">Product</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->stage}}</td>
+                                @endif
                                 <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                                 <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }} Units</td>
                               </tr>
@@ -254,8 +311,9 @@
                         <thead>
                           <tr>
                             <th>Sr.</th>
+                            <th>Type</th>
                             <th>Article No</th>
-                            <th>Material / Stage</th>
+                            <th>Material / Stage / Component</th>
                             <th>Quantity</th>
                           </tr>
                         </thead>
@@ -264,8 +322,19 @@
                             @foreach($issueSum as $item)
                               <tr>
                                 <td>{{$loop->index + 1}}</td>
-                                <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                                <td>{{($item->name)? $item->name:$item->stage}}</td>
+                                @if($item->component_product_type_id)
+                                  <td><span class="badge badge-warning">Component</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->component_article_no}} - {{$item->component_name}} ({{$item->component_size}})</td>
+                                @elseif($item->material_id > 0)
+                                  <td><span class="badge badge-info">Material</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->name}}</td>
+                                @else
+                                  <td><span class="badge badge-success">Product</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->stage}}</td>
+                                @endif
                                 <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                               </tr>
                             @endforeach
@@ -343,6 +412,74 @@ var ajaxPCUrl = "{{ route('ajaxPC') }}";
 var ajaxPSUrl = "{{ route('ajaxPS') }}";
 var ptcProductTypeId = '{{ $product ? $product->product_type_id : 0 }}';
 var ptcProductName = '{{ $product ? $product->name . " - " . $product->size_name : "N/A" }}';
+
+// Component Product Type Receiving
+$(document).ready(function() {
+  // Update receivable stock when component is selected
+  $('#r_component_product_type_id').on('change', function() {
+    var selected = $(this).find(':selected');
+    var receivable = selected.data('receivable') || 0;
+    var unit = selected.data('unit') || 'Pcs';
+    $('#component_receivable_stock').val(receivable + ' ' + unit);
+    $('#r_quantityComponent').val('').attr('max', receivable);
+  });
+
+  // Add component to receive table
+  $('#addBtnReceiveComponent').on('click', function() {
+    var componentSelect = $('#r_component_product_type_id');
+    var componentId = componentSelect.val();
+    var quantity = parseFloat($('#r_quantityComponent').val()) || 0;
+
+    if (!componentId || quantity <= 0) {
+      alert('Please select a component and enter a valid quantity');
+      return;
+    }
+
+    var selected = componentSelect.find(':selected');
+    var receivable = parseFloat(selected.data('receivable')) || 0;
+    var componentText = selected.text().split(' | ')[0]; // Get component name without receivable info
+    var unit = selected.data('unit') || 'Pcs';
+
+    if (quantity > receivable) {
+      alert('Quantity cannot exceed receivable stock (' + receivable + ')');
+      return;
+    }
+
+    // Add to receive table
+    var rowCount = $('#receive-table tbody tr').length + 1;
+    var row = '<tr>' +
+      '<td>' + rowCount + '</td>' +
+      '<td>' + componentText + ' <span class="badge badge-info">Component</span></td>' +
+      '<td>-</td>' +
+      '<td>-</td>' +
+      '<td>' + quantity + ' ' + unit +
+        '<input type="hidden" name="r_quantity[]" value="' + quantity + '">' +
+        '<input type="hidden" name="r_product_type_id[]" value="0">' +
+        '<input type="hidden" name="r_material_id[]" value="0">' +
+        '<input type="hidden" name="r_stage_id[]" value="0">' +
+        '<input type="hidden" name="r_work_logs[]" value="0">' +
+        '<input type="hidden" name="r_component_product_type_id[]" value="' + componentId + '">' +
+      '</td>' +
+      '<td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fas fa-trash"></i></button></td>' +
+      '</tr>';
+
+    $('#receive-table tbody').append(row);
+
+    // Update receivable quantity in dropdown
+    var newReceivable = receivable - quantity;
+    selected.data('receivable', newReceivable);
+    if (newReceivable <= 0) {
+      selected.remove();
+    } else {
+      selected.text(componentText + ' | Receivable: ' + newReceivable);
+    }
+
+    // Reset inputs
+    componentSelect.val('').trigger('change');
+    $('#component_receivable_stock').val('');
+    $('#r_quantityComponent').val('');
+  });
+});
 </script>
 @endsection
 

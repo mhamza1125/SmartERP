@@ -38,6 +38,16 @@
                   </div>
                 </div>
               @endif
+              <div class="dropdown d-inline mr-2">
+                <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <a class="dropdown-item" href="{{ route('ptc.print', $ptc->stock_id) }}" target="_blank">
+                    <i class="fas fa-file-pdf text-danger"></i> Print PTC
+                  </a>
+                </div>
+              </div>
               <a href="{{ route('ptc') }}" class="btn btn-primary">Back</a>
             </div>
           </div>
@@ -354,7 +364,10 @@
                   @forelse($movementItems[$movement->stock_id] ?? [] as $item)
                     <tr>
                       <td>{{ $modalRowIndex++ }}</td>
-                      @if($item->material_id > 0)
+                      @if($item->component_product_type_id)
+                        <td><span class="badge badge-warning">Component</span></td>
+                        <td>{{ $item->component_article_no ?? '' }} - {{ $item->component_name ?? 'N/A' }} ({{ $item->component_size ?? '' }})</td>
+                      @elseif($item->material_id > 0)
                         <td><span class="badge badge-info">Material</span></td>
                         <td>{{ $item->material_name ?? 'N/A' }}</td>
                       @else
@@ -416,7 +429,10 @@
               @forelse($movementItems[$ptc->stock_id] ?? [] as $item)
                 <tr>
                   <td>{{ $modalRowIndex++ }}</td>
-                  @if($item->material_id > 0)
+                  @if($item->component_product_type_id)
+                    <td><span class="badge badge-warning">Component</span></td>
+                    <td>{{ $item->component_article_no ?? '' }} - {{ $item->component_name ?? 'N/A' }} ({{ $item->component_size ?? '' }})</td>
+                  @elseif($item->material_id > 0)
                     <td><span class="badge badge-info">Material</span></td>
                     <td>{{ $item->material_name ?? 'N/A' }}</td>
                   @else
@@ -495,7 +511,10 @@
                         @forelse($movementItems[$receiving->stock_id] ?? [] as $item)
                           <tr>
                             <td>{{ $recRowIndex++ }}</td>
-                            @if($item->material_id > 0)
+                            @if($item->component_product_type_id)
+                              <td><span class="badge badge-warning">Component</span></td>
+                              <td>{{ $item->component_article_no ?? '' }} - {{ $item->component_name ?? 'N/A' }} ({{ $item->component_size ?? '' }})</td>
+                            @elseif($item->material_id > 0)
                               <td><span class="badge badge-info">Material</span></td>
                               <td>{{ $item->material_name ?? 'N/A' }}</td>
                             @else

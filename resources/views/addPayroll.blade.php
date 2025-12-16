@@ -87,8 +87,6 @@
                       <th>Employee No</th>
                       <th>Employee Name</th>
                       <th class="text-right">Monthly Salary</th>
-                      <th class="text-right">Salary Advance</th>
-                      <th class="text-right">Deduct Advance</th>
                       <th class="text-right">Outstanding Loan</th>
                       <th class="text-right">Deduct Loan</th>
                       <th class="text-right">Net Payable</th>
@@ -105,21 +103,6 @@
                         <td>{{ $data['employee']->employee_no }}</td>
                         <td>{{ $data['employee']->name }}</td>
                         <td class="text-right">{{ number_format($data['salary'], 2) }}</td>
-                        <td class="text-right">
-                          @if($data['salary_advance'] > 0)
-                            <span class="badge badge-warning">{{ number_format($data['salary_advance'], 2) }}</span>
-                          @else
-                            -
-                          @endif
-                        </td>
-                        <td class="text-right">
-                          <input type="number" step="0.01" min="0" max="{{ $data['salary_advance'] }}" class="form-control form-control-sm text-right advance-deduction"
-                                 name="advance_deductions[{{ $data['employee']->employee_id }}]"
-                                 value="0"
-                                 placeholder="0.00"
-                                 data-employee-id="{{ $data['employee']->employee_id }}"
-                                 data-salary-advance="{{ $data['salary_advance'] }}">
-                        </td>
                         <td class="text-right">
                           @if($data['loans_pending'] > 0)
                             <span class="badge badge-danger">{{ number_format($data['loans_pending'], 2) }}</span>
@@ -147,7 +130,7 @@
                       </tr>
                     @empty
                       <tr>
-                        <td colspan="11" class="text-center">No salary employees found</td>
+                        <td colspan="9" class="text-center">No salary employees found</td>
                       </tr>
                     @endforelse
                   </tbody>
@@ -181,17 +164,6 @@
     checkboxes.forEach(cb => cb.checked = checkbox.checked);
   }
 
-  // Update salary amount when deductions change
-  function updateSalaryAmount(employeeId) {
-    const baseSalary = parseFloat(document.querySelector(`[data-employee-id="${employeeId}"][data-base-salary]`).dataset.baseSalary) || 0;
-    const advanceDeduction = parseFloat(document.querySelector(`[data-employee-id="${employeeId}"].advance-deduction`).value) || 0;
-    const loanDeduction = parseFloat(document.querySelector(`[data-employee-id="${employeeId}"].loan-deduction`).value) || 0;
-
-    const salaryInput = document.querySelector(`[data-employee-id="${employeeId}"].salary-input`);
-    const newSalary = baseSalary + advanceDeduction + loanDeduction;
-    salaryInput.value = newSalary.toFixed(2);
-  }
-
   // Calculate total payroll amount
   function calculateTotalPayroll() {
     let total = 0;
@@ -201,16 +173,6 @@
     });
     return total;
   }
-
-  // Add event listeners for deduction inputs
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.advance-deduction, .loan-deduction').forEach(input => {
-      input.addEventListener('change', function() {
-        const employeeId = this.dataset.employeeId;
-        updateSalaryAmount(employeeId);
-      });
-    });
-  });
 
   // Handle form submission
   document.getElementById('payrollForm').addEventListener('submit', function(e) {

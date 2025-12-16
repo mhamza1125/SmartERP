@@ -44,23 +44,27 @@
                   </div>
                 </div>
                 <div class="col-md-5">
-                  <div class="form-group">                    
-                    <label>Employee / Vendor</label>
+                  <div class="form-group">
+                    <label>Employee / Contractor</label>
                     <select class="form-control select2" name="employee_id" id="employee_id" required>
-                      <option value="" selected disabled>Select Employee / Vendor</option>
+                      <option value="" selected disabled>Select Employee / Contractor</option>
                       @if($employee->count())
+                        <optgroup label="Employees">
                         @foreach($employee as $item)
                           <option data-type="employee" value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}</option>
                         @endforeach
+                        </optgroup>
                       @endif
                       @if($vendor->count())
+                        <optgroup label="Contractors">
                         @foreach($vendor as $item)
                           <option data-type="vendor" value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
+                        </optgroup>
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee / Vendor</div>
+                    <div class="invalid-feedback">Select Employee / Contractor</div>
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -130,10 +134,40 @@
                 </div>
               </div>
 
+              {{-- Product Components Section (always visible) --}}
+              <div class="row" id="product-components-row">
+                <div class="col-md-5">
+                  <div class="form-group">
+                    <label>Product Components <small class="text-muted">(Other products used in manufacturing)</small></label>
+                    <select class="form-control select2" name="component_id" id="component_id">
+                      <option value="" disabled selected>Select Product Component</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Available Stock</label>
+                    <input type="text" class="form-control" id="available_component_stock" name="available_component_stock" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" step="0.001" class="form-control" name="quantityComponent" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Add</label> <br>
+                    <button type="button" id="addBtnComponent" class="btn btn-primary">Add</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Complete Order)</label>  
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Complete Order)</label>
                     <input type="text" class="form-control" id="materialQty" readonly>
                   </div>
                 </div>
@@ -251,7 +285,7 @@
   </div>
 </section>
 <script>
-  var isIssuePage = false;
+  var isIssuePage = true;
   var stockData = @json($stock);
   var pstockData = @json($pstock);
   var ajaxIGUrl = "{{ route('ajaxIG') }}"; // Temp

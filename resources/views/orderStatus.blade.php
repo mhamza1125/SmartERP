@@ -9,20 +9,10 @@
             <h4>Order Status</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <div class="dropdown">
-                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-print"></i> Print
-                  </button>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{ route('order.print', $order['order_id']) }}" target="_blank">
-                      <i class="fas fa-file-alt"></i> Order Status
-                    </a>
-                  </div>
-                </div>
-              </div>
-              <div class="btn-group">
+                <a class="btn btn-info" href="{{ route('order.print', $order['order_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Print
+                </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('purchase.add')}}" class="btn btn-primary" target="_blank">Purchase</a>
                 <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>
               </div>
             </div>
@@ -43,16 +33,12 @@
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
                     <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
-                    <tr><td><b>Order Status:</b> 
-                      @if($order['order_status'] == 1) <span class="badge badge-warning">Pending</span>
-                      @elseif($order['order_status'] == 2) <span class="badge badge-success">Processing</span>
-                      @elseif($order['order_status'] == 3) <span class="badge badge-warning">On Hold</span>
-                      @elseif($order['order_status'] == 4) <span class="badge badge-success">Partially Delivered</span>
-                      @elseif($order['order_status'] == 5) <span class="badge badge-success">Delivered</span>
-                      @elseif($order['order_status'] == 6) <span class="badge badge-success">Completed</span>
-                      @elseif($order['order_status'] == 7) <span class="badge badge-danger">Canceled</span>
-                      @elseif($order['order_status'] == 8) <span class="badge badge-danger">Returned</span>
-                      @elseif($order['order_status'] == 9) <span class="badge badge-warning">Disputed</span>
+                    <tr><td><b>Order Status:</b>
+                      @if($order['order_status'] == 1) <span class="badge badge-secondary">Draft</span>
+                      @elseif($order['order_status'] == 2) <span class="badge badge-success">Confirmed</span>
+                      @elseif($order['order_status'] == 3) <span class="badge badge-info">Dispatched</span>
+                      @elseif($order['order_status'] == 4) <span class="badge badge-primary">Delivered</span>
+                      @elseif($order['order_status'] == 5) <span class="badge badge-danger">Cancelled</span>
                       @else @endif
                     </td></tr>
                   </tbody>

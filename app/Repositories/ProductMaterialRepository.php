@@ -144,4 +144,99 @@ class ProductMaterialRepository implements GlobalInterface
     public function delete($id)
     {
     }
+
+    /**
+     * Get material components for a product type
+     */
+    public function getMaterialComponents($productTypeId)
+    {
+        return ProductMaterial::where('product_materials.product_type_id', $productTypeId)
+            ->where(function($query) {
+                $query->where('component_type', 'material')
+                      ->orWhereNull('component_type');
+            })
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
+            ->select('product_materials.*', 'materials.*', 'heads.name as hname')
+            ->get();
+    }
+
+    /**
+     * Get product components for a product type
+     */
+    public function getProductComponents($productTypeId)
+    {
+        return ProductMaterial::where('product_materials.product_type_id', $productTypeId)
+            ->where('component_type', 'product')
+            ->join('product_types', 'product_types.product_type_id', '=', 'product_materials.component_product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
+            ->select('product_materials.*', 'product_types.product_type_id as component_pt_id',
+                'products.article_no', 'products.name as product_name', 'heads.name as size_name')
+            ->get();
+    }
+
+    /**
+     * Store a product component
+     */
+    public function storeProductComponent(array $data)
+    {
+        $data['component_type'] = 'product';
+        $data['created_by'] = auth()->id();
+        $store = ProductMaterial::create($data);
+        return $store->product_material_id;
+    }
+
+    /**
+     * Update product components for a product type
+     */
+    public function updateProductComponents($productTypeId, array $productIds, array $quantities)
+    {
+        // Get existing product components
+        $existingItems = ProductMaterial::where('product_type_id', $productTypeId)
+            ->where('component_type', 'product')
+            ->get();
+
+        // Delete items not in the new list
+        foreach ($existingItems as $existingItem) {
+            if (!in_array($existingItem->component_product_type_id, $productIds)) {
+                $existingItem->delete();
+            }
+        }
+
+        // Update or create new items
+        foreach ($productIds as $key => $componentProductTypeId) {
+            if (empty($componentProductTypeId)) continue;
+
+            $quantity = $quantities[$key] ?? 1;
+            $productMaterial = [
+                'product_type_id' => $productTypeId,
+                'component_type' => 'product',
+                'component_product_type_id' => $componentProductTypeId,
+                'quantity' => $quantity,
+            ];
+
+            $existing = ProductMaterial::where('product_type_id', $productTypeId)
+                ->where('component_type', 'product')
+                ->where('component_product_type_id', $componentProductTypeId)
+                ->first();
+
+            if ($existing) {
+                $existing->update($productMaterial);
+            } else {
+                $productMaterial['created_by'] = auth()->id();
+                ProductMaterial::create($productMaterial);
+            }
+        }
+    }
+
+    /**
+     * Delete all product components for a product type
+     */
+    public function deleteProductComponents($productTypeId)
+    {
+        ProductMaterial::where('product_type_id', $productTypeId)
+            ->where('component_type', 'product')
+            ->delete();
+    }
 }

@@ -53,18 +53,22 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Issue To (Employee / Vendor) <span class="text-danger">*</span></label>
+                    <label>Issue To (Employee / Contractor) <span class="text-danger">*</span></label>
                     <select class="form-control select2" name="employee_id" id="employee_id" required>
-                      <option value="" disabled>Select Employee / Vendor</option>
+                      <option value="" disabled>Select Employee / Contractor</option>
                       @if($employees->count())
+                        <optgroup label="Employees">
                         @foreach($employees as $item)
                           <option data-type="employee" value="{{ $item->employee_id }}" {{ $issuance->table_name == 'employee' && $issuance->employee_id == $item->employee_id ? 'selected' : '' }}>{{ $item->employee_no }} - {{ $item->name }}</option>
                         @endforeach
+                        </optgroup>
                       @endif
                       @if($vendors->count())
+                        <optgroup label="Contractors">
                         @foreach($vendors as $item)
                           <option data-type="vendor" value="{{ $item->vendor_id }}" {{ $issuance->table_name == 'vendor' && $issuance->employee_id == $item->vendor_id ? 'selected' : '' }}>{{ $item->vendor_no }} - {{ $item->fname }}</option>
                         @endforeach
+                        </optgroup>
                       @endif
                     </select>
                     <input type="hidden" id="table_name" name="table_name" value="{{ $issuance->table_name }}">
@@ -99,7 +103,9 @@
                       <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>
-                          @if($item->material_id > 0)
+                          @if($item->component_product_type_id)
+                            <span class="badge badge-info">Component:</span> {{ $item->component_article_no ?? '' }} - {{ $item->component_name ?? '' }}
+                          @elseif($item->material_id > 0)
                             {{ $item->mname ?? 'Material #'.$item->material_id }}
                           @else
                             {{ $item->name ?? 'Product' }} - {{ $item->sname ?? 'Size' }}

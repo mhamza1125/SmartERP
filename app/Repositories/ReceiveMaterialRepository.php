@@ -65,7 +65,9 @@ class ReceiveMaterialRepository implements GlobalInterface
 
         // Used by PurchaseInfo Recieving / Return Sum, Working Good but showing error when single receiving have multiple returns
         return ReceiveMaterial::where('purchase_items.purchase_id', $id)
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', 'receive_materials.receive_material_id')
+            ->leftJoin('return_materials', function ($join) {
+                $join->on('return_materials.receive_material_id', '=', 'receive_materials.receive_material_id');
+            })
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
             ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')

@@ -93,6 +93,21 @@ class ProductMaterialController extends Controller
         ]);
     }
 
+    /**
+     * Print product material information
+     */
+    public function printProductMaterial($id)
+    {
+        $this->authorize('show', Product::class);
+        $productType = $this->productTypeRepository->get($id);
+        $productMaterial = $this->productMaterialRepository->get($id);
+
+        return view('print.productMaterial', [
+            'productType' => $productType,
+            'productMaterial' => $productMaterial,
+        ]);
+    }
+
     public function edit($id)
     {
         $this->authorize('edit', Product::class);

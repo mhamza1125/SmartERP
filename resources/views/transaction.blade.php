@@ -12,6 +12,35 @@
             </div>
           </div>
           <div class="card-body">
+            {{-- Date Filter Form --}}
+            <form action="{{ route('transaction.filter') }}" method="POST" class="needs-validation col-md-12 mb-3" novalidate="">
+              @csrf
+              <div class="row">
+                <div class="form-group col-md-4">
+                  <label>Date From</label>
+                  <input type="text" class="form-control datepicker" name="dfrom" value="{{$dfrom ?? ''}}" required>
+                  <div class="valid-feedback">Good job!</div>
+                </div>
+                <div class="form-group col-md-4">
+                  <label>Date To</label>
+                  <input type="text" class="form-control datepicker" name="dto" value="{{$dto ?? ''}}" required>
+                  <div class="valid-feedback">Good job!</div>
+                </div>
+                <div class="form-group col-md-4 mt-4">
+                  <button class="btn btn-primary mt-2" type="submit">Filter</button>
+                  @if(!empty($dfrom) && !empty($dto))
+                    <a href="{{ route('transaction') }}" class="btn btn-secondary mt-2">Clear</a>
+                  @endif
+                </div>
+              </div>
+            </form>
+
+            @if(!empty($dfrom) && !empty($dto))
+              <div class="alert alert-info">
+                <strong>Filtered Results:</strong> Showing transactions from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+              </div>
+            @endif
+
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>

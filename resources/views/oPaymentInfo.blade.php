@@ -57,15 +57,6 @@
                     <tr><td><b>Customer:</b> {{$transaction['customer_no']}} - {{$transaction['fname']}}</td></tr>
                     <tr><td><b>Pay Date:</b> {{$transaction['transaction_date']}}</td></tr>
                     <tr><td><b>Order No:</b> {{$transaction['order_no']}}</td></tr>
-                      @if($transaction['payee_bank_id'])
-                      <tr>
-                        <tr><td><b>Paid By:</b> {{$transaction['rname']}}</td></tr>
-                        <tr><td><b>Account Title:</b> {{$transaction['raccount_title']}}</td></tr>
-                        <tr><td><b>Account No:</b> {{$transaction['raccount']}}</td></tr>
-                      </tr>
-                      @else
-                        <tr><td><b>Paid By:</b> Cash Payment</td></tr>
-                      @endif
                   </tbody>
                 </table>
               </div>

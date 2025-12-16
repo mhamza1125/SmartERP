@@ -56,30 +56,16 @@
         <div class="info-row">
             <span class="info-label">Order Status:</span>
             <span class="info-value">
-                @if($order['order_status'] == 1) <span class="badge badge-warning">Pending</span>
-                @elseif($order['order_status'] == 2) <span class="badge badge-success">Processing</span>
-                @elseif($order['order_status'] == 3) <span class="badge badge-warning">On Hold</span>
-                @elseif($order['order_status'] == 4) <span class="badge badge-success">Partially Delivered</span>
-                @elseif($order['order_status'] == 5) <span class="badge badge-success">Delivered</span>
-                @elseif($order['order_status'] == 6) <span class="badge badge-success">Completed</span>
-                @elseif($order['order_status'] == 7) <span class="badge badge-danger">Canceled</span>
-                @elseif($order['order_status'] == 8) <span class="badge badge-danger">Returned</span>
-                @elseif($order['delivery_status'] == 9) <span class="badge badge-warning">Disputed</span>
+                @if($order['order_status'] == 1) <span class="badge badge-secondary">Draft</span>
+                @elseif($order['order_status'] == 2) <span class="badge badge-success">Confirmed</span>
+                @elseif($order['order_status'] == 3) <span class="badge badge-info">Dispatched</span>
+                @elseif($order['order_status'] == 4) <span class="badge badge-primary">Delivered</span>
+                @elseif($order['order_status'] == 5) <span class="badge badge-danger">Cancelled</span>
                 @else <span class="badge badge-secondary">Unknown</span> @endif
             </span>
         </div>
     </div>
 </div>
-
-{{-- Statement of Origin --}}
-@if(isset($order['so_origin']) && !empty($order['so_origin']))
-<div class="info-section avoid-break">
-    <h3>Statement of Origin</h3>
-    <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {!! nl2br(e($order['so_origin'])) !!}
-    </div>
-</div>
-@endif
 
 {{-- Order Items Table --}}
 @if(isset($orderItem) && $orderItem->count() > 0)
@@ -89,8 +75,8 @@
         <thead>
             <tr>
                 <th style="width: 8%">Sr.</th>
-                <th style="width: 25%">Product</th>
                 <th style="width: 15%">Article No</th>
+                <th style="width: 25%">Product</th>
                 <th style="width: 17%">Size</th>
                 <th style="width: 10%">Quantity</th>
                 <th style="width: 12%">Rate</th>
@@ -106,8 +92,8 @@
                     @if($item->product_id == $product_id)
                         <td colspan="2"></td>
                     @else
-                        <td>{{ $item->article_no }} - {{ $item->pname }}</td>
                         <td class="text-center">{{ $item->article_no }}</td>
+                        <td class="text-center">{{ $item->pname }}</td>
                         @php $product_id = $item->product_id; @endphp
                     @endif
                     <td class="text-center">{{ $item->name }}</td>
@@ -125,7 +111,7 @@
 {{-- Order Totals --}}
 @php
 $total = $orderItem->sum(function($item) {
-    return $item->quantity * $item->rate;
+    return $item->quantity * ($item->price ?? 0);
 });
 @endphp
 <div class="totals-section avoid-break">

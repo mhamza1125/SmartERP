@@ -12,6 +12,55 @@
             </div>
           </div>
           <div class="card-body">
+            {{-- Filter Form --}}
+            <form action="{{ route('oPayment.filter') }}" method="POST" class="needs-validation col-md-12 mb-3" novalidate="">
+              @csrf
+              <div class="row">
+                <div class="form-group col-md-3">
+                  <label>Date From</label>
+                  <input type="text" class="form-control datepicker" name="dfrom" value="{{$dfrom ?? ''}}">
+                </div>
+                <div class="form-group col-md-3">
+                  <label>Date To</label>
+                  <input type="text" class="form-control datepicker" name="dto" value="{{$dto ?? ''}}">
+                </div>
+                <div class="form-group col-md-4">
+                  <label>Customer</label>
+                  <select class="form-control select2" name="customer_id">
+                    <option value="">All Customers</option>
+                    @foreach($customers as $customer)
+                      <option value="{{ $customer->customer_id }}" {{ (isset($customer_id) && $customer_id == $customer->customer_id) ? 'selected' : '' }}>
+                        {{ $customer->customer_no }} - {{ $customer->fname }} {{ $customer->lname }}
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="form-group col-md-2 mt-4">
+                  <button class="btn btn-primary mt-2" type="submit">Filter</button>
+                  @if(!empty($dfrom) || !empty($dto) || !empty($customer_id))
+                    <a href="{{ route('oPayment') }}" class="btn btn-secondary mt-2">Clear</a>
+                  @endif
+                </div>
+              </div>
+            </form>
+
+            @if(!empty($dfrom) || !empty($dto) || !empty($customer_id))
+              <div class="alert alert-info">
+                <strong>Filtered Results:</strong>
+                @if(!empty($dfrom) && !empty($dto))
+                  Showing payments from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+                @endif
+                @if(!empty($customer_id))
+                  @php
+                    $selectedCustomer = $customers->firstWhere('customer_id', $customer_id);
+                  @endphp
+                  @if($selectedCustomer)
+                    for customer: {{ $selectedCustomer->customer_no }} - {{ $selectedCustomer->fname }} {{ $selectedCustomer->lname }}
+                  @endif
+                @endif
+              </div>
+            @endif
+
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>

@@ -89,8 +89,8 @@
                   <div class="form-group">
                     <label>Payable / Receiveable</label>
                     <select class="form-control" name="balance_type" required>
-                      <option value="credit" {{ old('balance_type') == 'credit' ? 'selected' : '' }}>Payable</option>
-                      <option value="debit" {{ old('balance_type') == 'debit' ? 'selected' : '' }}>Receiveable</option>
+                      <option value="credit" {{ old('balance_type') == 'credit' ? 'selected' : '' }}>Receiveable</option>
+                      <option value="debit" {{ old('balance_type') == 'debit' ? 'selected' : '' }}>Payable</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>

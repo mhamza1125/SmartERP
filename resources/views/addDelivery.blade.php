@@ -130,29 +130,25 @@
                     <label>Order Status</label>
                     <select class="form-control select2" name="order_status" required>
                       <option value="" selected disabled>Select Order Status</option>
-                      <option value="1">Pending</option>
-                      <option value="2">Processing</option>
-                      <option value="3">On Hold</option>
-                      <option value="4">Partially Delivered</option>
-                      <option value="5">Delivered</option>
-                      <option value="6">Completed</option>
-                      <option value="7">Cancelled</option>
-                      <option value="8">Returned</option>
-                      <option value="9">Disputed</option>
+                      <option value="1">Draft</option>
+                      <option value="2" selected>Confirmed</option>
+                      <option value="3">Dispatched</option>
+                      <option value="4">Delivered</option>
+                      <option value="5">Cancelled</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Order Status</div>
                   </div>
-                </div>                
+                </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Delivery Status</label>
                     <select class="form-control select2" name="delivery_status" required>
                       <option value="" selected disabled>Select Delivery Status</option>
-                      <option value="1">Pending</option>
-                      <option value="2">Delivered</option>
-                      <option value="3">Returned</option>
-                      <option value="4">Disputed</option>
+                      <option value="1" selected>Pending</option>
+                      <option value="2">Dispatched</option>
+                      <option value="3">Delivered</option>
+                      <option value="4">Returned</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Delivery Status</div>
@@ -199,39 +195,25 @@
 
               <h6 class="mt-4">Commercial Invoice Information</h6>
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>FI No <small class="text-muted">(Optional)</small></label>
                     <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{old('fi_no')}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>REX No <small class="text-muted">(Optional)</small></label>
                     <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{old('rex_no')}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>NTN <small class="text-muted">(Optional)</small></label>
                     <input type="text" class="form-control" name="ntn" placeholder="NTN Number" value="{{old('ntn')}}">
                     <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Delivery Status</label>
-                    <select class="form-control select2" name="delivery_status" required>
-                      <option value="" selected disabled>Select Status</option>
-                      <option value="1">Pending</option>
-                      <option value="2">In Transit</option>
-                      <option value="3">Delivered</option>
-                      <option value="4">Cancelled</option>
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Delivery Status</div>
                   </div>
                 </div>
               </div>
@@ -302,7 +284,7 @@
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                                 <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" data-remaining="{{$item->quantity - $item->stockOutDelivered}}" style="width:100px">
                                 </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
@@ -334,7 +316,7 @@
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                                 <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" style="width:100px">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" data-remaining="{{$item->quantity - $item->stockOutDelivered}}" style="width:100px">
                                 </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>

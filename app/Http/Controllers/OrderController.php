@@ -158,6 +158,49 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * Print production order
+     */
+    public function printProduction($id)
+    {
+        $this->authorize('show', Order::class);
+        $order = $this->orderRepository->get($id);
+        $orderItem = $this->orderItemRepository->get($id);
+
+        return view('print.order-production', [
+            'order' => $order,
+            'orderItem' => $orderItem,
+        ]);
+    }
+
+    /**
+     * Print proforma invoice
+     */
+    public function printProforma($id)
+    {
+        $this->authorize('show', Order::class);
+        $order = $this->orderRepository->get($id);
+        $orderItem = $this->orderItemRepository->get($id);
+
+        // Get bank details if bank_id is provided in query parameter
+        $bankDetails = null;
+        if (request()->has('bank_id')) {
+            $bankDetailsObj = DB::table('banks')
+                ->where('bank_id', request()->input('bank_id'))
+                ->first();
+            // Convert stdClass object to array for view compatibility
+            if ($bankDetailsObj) {
+                $bankDetails = (array) $bankDetailsObj;
+            }
+        }
+
+        return view('print.order-proforma', [
+            'order' => $order,
+            'orderItem' => $orderItem,
+            'bankDetails' => $bankDetails,
+        ]);
+    }
+
     private function getPackingList($orderId)
     {
         // Get order items with box quantity factors to calculate theoretical packing list
@@ -254,6 +297,13 @@ class OrderController extends Controller
     public function edit(Order $id)
     {
         $this->authorize('edit', Order::class);
+
+        // Prevent editing Dispatched (3), Delivered (4), or Cancelled (5) orders
+        if (in_array($id->order_status, [3, 4, 5])) {
+            return redirect()->route('order.show', $id->order_id)
+                ->with('fails', 'Cannot edit orders with status: Dispatched, Delivered, or Cancelled');
+        }
+
         $head = $this->headRepository->get('16');
         $customer = $this->customerRepository->all();
         $product = $this->productRepository->activeTypes();
@@ -276,6 +326,13 @@ class OrderController extends Controller
 
         // Get current order to check if customer changed
         $currentOrder = Order::findOrFail($id);
+
+        // Prevent updating Dispatched (3), Delivered (4), or Cancelled (5) orders
+        if (in_array($currentOrder->order_status, [3, 4, 5])) {
+            return redirect()->route('order.show', $id)
+                ->with('fails', 'Cannot update orders with status: Dispatched, Delivered, or Cancelled');
+        }
+
         $requestData = $request->input();
 
         // If customer changed, regenerate job number
@@ -303,6 +360,15 @@ class OrderController extends Controller
 
     public function updateStatus($id, $status)
     {
+        // Get current order
+        $currentOrder = Order::findOrFail($id);
+
+        // Prevent status changes for Dispatched (3), Delivered (4), or Cancelled (5) orders
+        if (in_array($currentOrder->order_status, [3, 4, 5])) {
+            return redirect()->route('order')
+                ->with('fails', 'Cannot change status of Dispatched, Delivered, or Cancelled orders');
+        }
+
         $orderStatus = ['order_status' => $status];
         $this->orderRepository->update($id, $orderStatus);
 

@@ -12,11 +12,22 @@
                 <a class="btn btn-info" href="{{ route('delivery.print', $deliveryId) }}" target="_blank">
                   <i class="fas fa-file-alt"></i> Print
                 </a>
-                <a href="{{ route('delivery') }}" class="btn {{ isset($isMultiOrder) && $isMultiOrder ? 'btn-light' : 'btn-primary' }}">Back</a>
                 @php
                   $deliveryId = is_array($delivery) ? $delivery['delivery_id'] : $delivery->delivery_id;
                   $customerId = is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id;
+                  // Check if packing list exists
+                  $packingList = \App\Models\PackingList::where('delivery_id', $deliveryId)->first();
                 @endphp
+                @if($packingList)
+                  <a href="{{ route('packingList.show', $packingList->packing_list_id) }}" class="btn btn-success">
+                    <i class="fas fa-box"></i> View Packing List
+                  </a>
+                @else
+                  <a href="{{ route('packingList.create', $deliveryId) }}" class="btn btn-success">
+                    <i class="fas fa-box"></i> Create Packing List
+                  </a>
+                @endif
+                <a href="{{ route('delivery') }}" class="btn {{ isset($isMultiOrder) && $isMultiOrder ? 'btn-light' : 'btn-primary' }}">Back</a>
                 @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
                   @php
                     $orderIds = collect($relatedOrders)->pluck('order_id')->implode(',');
@@ -82,11 +93,11 @@
                       @elseif($delivery['delivery_method'] == 2) Air Freight 
                       @elseif($delivery['delivery_method'] == 3) Road Transport 
                       @else Unknown @endif</td></tr>
-                    <tr><td><b>Delivery Status:</b> 
+                    <tr><td><b>Delivery Status:</b>
                       @if($delivery['delivery_status'] == 1) <span class="badge badge-warning">Pending</span>
-                      @elseif($delivery['delivery_status'] == 2) <span class="badge badge-success">Delivered</span>
-                      @elseif($delivery['delivery_status'] == 3) <span class="badge badge-danger">Returned</span>
-                      @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Disputed</span>
+                      @elseif($delivery['delivery_status'] == 2) <span class="badge badge-info">Dispatched</span>
+                      @elseif($delivery['delivery_status'] == 3) <span class="badge badge-success">Delivered</span>
+                      @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Returned</span>
                       @else @endif
                     </td></tr>
                     @if($delivery['fi_no'])

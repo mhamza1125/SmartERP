@@ -8,25 +8,22 @@
           <div class="card-header">
             <h4>Available Stock Table</h4>
             <div class="card-header-action">
-                <div class="btn-group">
-                  <div class="dropdown">
-                    <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
-                      <i class="fas fa-print"></i> Print
-                    </button>
-                    <div class="dropdown-menu">
-                      <a class="dropdown-item" href="{{ route('stock.print') }}" target="_blank">
-                        <i class="fas fa-file-alt"></i> Material Stock
-                      </a>
-                      <a class="dropdown-item" href="{{ route('stock.print') }}?type=product" target="_blank">
-                        <i class="fas fa-file-alt"></i> Product Stock
-                      </a>
-                      <a class="dropdown-item" href="{{ route('stock.print') }}?type=machine" target="_blank">
-                        <i class="fas fa-file-alt"></i> Machine Material Stock
-                      </a>
-                    </div>
-                  </div>
-                  <a href="{{ route('stock.add') }}" class="btn btn-primary">Issue Material</a>
+              <div class="dropdown">
+                <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="{{ route('stock.print') }}" target="_blank">
+                    <i class="fas fa-file-alt"></i> Material Stock
+                  </a>
+                  <a class="dropdown-item" href="{{ route('stock.print') }}?type=product" target="_blank">
+                    <i class="fas fa-file-alt"></i> Product Stock
+                  </a>
+                  <a class="dropdown-item" href="{{ route('stock.print') }}?type=machine" target="_blank">
+                    <i class="fas fa-file-alt"></i> Machine Material Stock
+                  </a>
                 </div>
+              </div>
             </div>
           </div>
           <div class="card-body">
@@ -63,8 +60,13 @@
                           <tr>
                             <td>{{$loopIndex++}}</td>
                             <td>{{$item->material_no}}</td>
-                            <td>{{$item->name}}</td>
-                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>                  
+                            <td>
+                              {{$item->name}}
+                              @if($item->location)
+                                <sub style="color: #6c757d;">{{$item->location}}</sub>
+                              @endif
+                            </td>
+                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>
                           </tr>
                           @endunless
                         @endforeach
@@ -106,12 +108,13 @@
                         @foreach($groupedPstock as $productTypeId => $stageItems)
                           @php
                             $firstItem = $stageItems->first();
-                            // Calculate total stock across all stages
+                            // Calculate total stock across all stages, excluding rejection stock (head_id = 105)
                             $totalStock = $stageItems->sum(function($item) {
+                              // Exclude rejection stock from total count
+                              if(($item->sthead_id ?? $item->stage_id) == 105) return 0;
                               return $item->stockIn - $item->stockOut;
                             });
-                            // Skip if total stock is zero
-                            if($totalStock == 0) continue;
+                            // Show all products including zero stock
                           @endphp
                           <tr>
                             <td>{{ $rowIndex++ }}</td>
@@ -123,7 +126,11 @@
                             @endif
                             <td>{{ $firstItem->sname }}</td>
                             <td>
-                              <span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span>
+                              @if($totalStock > 0)
+                                <span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span>
+                              @else
+                                <span class="badge badge-secondary">0 {{ $firstItem->uname }}</span>
+                              @endif
                             </td>
                             <td>
                               <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#stageModal{{ $productTypeId }}">
@@ -168,8 +175,13 @@
                           <tr>
                             <td>{{$loopIndex++}}</td>
                             <td>{{$item->material_no}}</td>
-                            <td>{{$item->name}}</td>
-                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>                  
+                            <td>
+                              {{$item->name}}
+                              @if($item->location)
+                                <sub style="color: #6c757d;">{{$item->location}}</sub>
+                              @endif
+                            </td>
+                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>
                           </tr>
                           @endunless
                         @endforeach
@@ -200,8 +212,17 @@
   @foreach($groupedPstockForModals as $productTypeId => $stageItems)
     @php
       $firstItem = $stageItems->first();
-      $totalStock = $stageItems->sum(function($item) { return $item->stockIn - $item->stockOut; });
-      if($totalStock == 0) continue;
+      // Calculate total stock excluding rejection stock (head_id = 105)
+      $totalStock = $stageItems->sum(function($item) {
+        if(($item->sthead_id ?? $item->stage_id) == 105) return 0;
+        return $item->stockIn - $item->stockOut;
+      });
+      // Calculate rejection stock separately for display
+      $rejectionStock = $stageItems->sum(function($item) {
+        if(($item->sthead_id ?? $item->stage_id) == 105) return $item->stockIn - $item->stockOut;
+        return 0;
+      });
+      // Show all products including zero stock
     @endphp
     <div class="modal fade" id="stageModal{{ $productTypeId }}" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-lg" role="document">
@@ -217,7 +238,10 @@
               <strong>Product:</strong> {{ $firstItem->name }} |
               <strong>Article:</strong> {{ $firstItem->article_no }} |
               <strong>Size:</strong> {{ $firstItem->sname }} |
-              <strong>Total Stock:</strong> {{ number_format($totalStock) }} {{ $firstItem->uname }}
+              <strong>Usable Stock:</strong> {{ number_format($totalStock) }} {{ $firstItem->uname }}
+              @if($rejectionStock != 0)
+                | <strong class="text-warning">Rejection:</strong> {{ number_format($rejectionStock) }} {{ $firstItem->uname }}
+              @endif
             </div>
             <div class="table-responsive">
               <table class="table table-striped table-bordered">
@@ -233,28 +257,34 @@
                 <tbody>
                   @foreach($stageItems as $stageIdx => $stageItem)
                     @php $stageStock = $stageItem->stockIn - $stageItem->stockOut; @endphp
-                    @if($stageStock != 0)
-                      <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td><span class="badge badge-primary">{{ $stageItem->stname ?? 'N/A' }}</span></td>
-                        <td>{{ number_format($stageItem->stockIn) }}</td>
-                        <td>{{ number_format($stageItem->stockOut) }}</td>
-                        <td>
-                          @if($stageStock > 0)
-                            <span class="badge badge-success">{{ number_format($stageStock) }} {{ $stageItem->uname }}</span>
-                          @else
-                            <span class="badge badge-danger">{{ number_format($stageStock) }} {{ $stageItem->uname }}</span>
-                          @endif
-                        </td>
-                      </tr>
-                    @endif
+                    <tr>
+                      <td>{{ $loop->iteration }}</td>
+                      <td><span class="badge badge-primary">{{ $stageItem->stname ?? 'N/A' }}</span></td>
+                      <td>{{ number_format($stageItem->stockIn) }}</td>
+                      <td>{{ number_format($stageItem->stockOut) }}</td>
+                      <td>
+                        @if($stageStock > 0)
+                          <span class="badge badge-success">{{ number_format($stageStock) }} {{ $stageItem->uname }}</span>
+                        @elseif($stageStock < 0)
+                          <span class="badge badge-danger">{{ number_format($stageStock) }} {{ $stageItem->uname }}</span>
+                        @else
+                          <span class="badge badge-secondary">0 {{ $stageItem->uname }}</span>
+                        @endif
+                      </td>
+                    </tr>
                   @endforeach
                 </tbody>
                 <tfoot>
                   <tr class="table-info">
-                    <th colspan="4" class="text-right">Total:</th>
+                    <th colspan="4" class="text-right">Usable Stock:</th>
                     <th><span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span></th>
                   </tr>
+                  @if($rejectionStock != 0)
+                  <tr class="table-warning">
+                    <th colspan="4" class="text-right">Rejection Stock (Excluded):</th>
+                    <th><span class="badge badge-warning">{{ number_format($rejectionStock) }} {{ $firstItem->uname }}</span></th>
+                  </tr>
+                  @endif
                 </tfoot>
               </table>
             </div>

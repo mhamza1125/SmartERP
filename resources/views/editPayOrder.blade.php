@@ -21,6 +21,7 @@
                 <input type="hidden" name="transaction_to" required value="customer" id="transaction_to">
                 <input type="hidden" name="transaction_type" required value="orderPayment">
                 <input type="hidden" name="credit" required value="0">
+                <input type="hidden" name="payee_bank_id" required value="0">
                 <div class="col-md-6">
                   <div class="form-group">          
                     <label>Customer</label>
@@ -36,7 +37,7 @@
                     <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                   <div class="form-group">
                     <label>Receiver Cash / Bank (if any)</label>
                     <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
@@ -46,7 +47,7 @@
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Cash / Bank</div>
                   </div>
-                </div>
+                </div> --}}
                 <div class="col-md-6">
                   <div class="form-group">          
                     <label>Order</label>

@@ -44,28 +44,32 @@
                 </div>
                 <div class="col-md-5">
                   <div class="form-group">
-                    <label>Employee</label>
+                    <label>Employee / Contractor</label>
                     <select class="form-control select2" name="employee_id" id="employee_id" required>
-                      <option value="" selected disabled>Select Employee / Vendor</option>
+                      <option value="" selected disabled>Select Employee / Contractor</option>
                       @if($employee->count())
+                        <optgroup label="Employees">
                         @foreach($employee as $item)
-                          <option data-type="employee" value="{{$item->employee_id}}" 
+                          <option data-type="employee" value="{{$item->employee_id}}"
                                   {{ ($issue['table_name'] == 'employee' && $issue['employee_id'] == $item->employee_id) ? 'selected' : '' }}>
                             {{$item->employee_no}} - {{$item->name}}
                           </option>
                         @endforeach
+                        </optgroup>
                       @endif
                       @if($vendor->count())
+                        <optgroup label="Contractors">
                         @foreach($vendor as $item)
-                          <option data-type="vendor" value="{{$item->vendor_id}}" 
+                          <option data-type="vendor" value="{{$item->vendor_id}}"
                                   {{ ($issue['table_name'] == 'vendor' && $issue['employee_id'] == $item->vendor_id) ? 'selected' : '' }}>
                             {{$item->vendor_no}} - {{$item->fname}}
                           </option>
                         @endforeach
+                        </optgroup>
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Employee / Vendor</div>
+                    <div class="invalid-feedback">Select Employee / Contractor</div>
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -134,22 +138,52 @@
                 </div>
               </div>
 
+              {{-- Product Components Section --}}
+              <div class="row" id="product-components-row" style="display: none;">
+                <div class="col-md-5">
+                  <div class="form-group">
+                    <label>Product Components <small class="text-muted">(Other products used in manufacturing)</small></label>
+                    <select class="form-control select2" name="component_id" id="component_id">
+                      <option value="" disabled selected>Select Product Component</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Available Stock</label>
+                    <input type="text" class="form-control" id="available_component_stock" name="available_component_stock" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" step="0.001" class="form-control" name="quantityComponent" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Add</label> <br>
+                    <button type="button" id="addBtnComponent" class="btn btn-primary">Add</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Complete Order)</label>  
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Complete Order)</label>
                     <input type="text" class="form-control" id="materialQty" readonly>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Selected Article)</label>  
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Selected Article)</label>
                     <input type="text" class="form-control" id="articleQty" readonly placeholder="0  |  0  |  0">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Selected Article Size)</label>  
+                    <label>Required &nbsp|&nbsp Issued &nbsp|&nbsp To Issue (Selected Article Size)</label>
                     <input type="text" class="form-control" id="articleTQty" readonly>
                   </div>
                 </div>
@@ -227,27 +261,43 @@
                             <td>{{$item->article_no}} - Size {{$item->sname}}
                               <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
                               <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}">
+                              <input type="hidden" name="component_id[]" value="{{$item->component_product_type_id ?? ''}}">
                             </td>
-                            <td>@if($item->material_id){{$item->material_no}} - {{$item->name}}
-                              <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
-                              @else{{$item->stage}}<input type="hidden" name="material_id[]" value="0">@endif
+                            <td>
+                              @if($item->component_product_type_id)
+                                <span class="badge badge-info">Component:</span> {{$item->component_article_no ?? ''}} - {{$item->component_name ?? ''}}
+                                <input type="hidden" name="material_id[]" value="0">
+                              @elseif($item->material_id)
+                                {{$item->material_no}} - {{$item->name}}
+                                <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
+                              @else
+                                {{$item->stage}}
+                                <input type="hidden" name="material_id[]" value="0">
+                              @endif
                             </td>
                             <td>{{$item->quantity}}
                               <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                             </td>
-                            <td>@if($item->material_id)
-                              <button class="deleteRow btn btn-danger">X</button>
-                              @else <button class="deletepRow btn btn-danger">X</button>@endif</td>
+                            <td>
+                              @if($item->component_product_type_id)
+                                <button class="deleteComponentRow btn btn-danger">X</button>
+                              @elseif($item->material_id)
+                                <button class="deleteRow btn btn-danger">X</button>
+                              @else
+                                <button class="deletepRow btn btn-danger">X</button>
+                              @endif
+                            </td>
                           </tr>
                           <tr id="hiddentr" class="dnone">
                             <td colspan="5">
                               <input type="hidden" name="hidden_product_type_id[]" value="{{$item->product_type_id}}">
                               <input type="hidden" name="hidden_stage_id[]" value="{{$item->stage_id}}">
+                              <input type="hidden" name="hidden_component_id[]" value="{{$item->component_product_type_id ?? ''}}">
                               @if($item->material_id)
                               <input type="hidden" name="hidden_material_id[]" value="{{$item->material_id}}">
                               @else<input type="hidden" name="hidden_material_id[]" value="0">@endif
                               <input type="hidden" name="hidden_quantity[]" value="{{$item->quantity}}">
-                            </td>                            
+                            </td>
                           </tr>
                         @endforeach
                       @endif

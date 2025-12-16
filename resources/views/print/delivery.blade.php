@@ -84,9 +84,9 @@
             <span class="info-label">Delivery Status:</span>
             <span class="info-value">
                 @if($delivery['delivery_status'] == 1) <span class="badge badge-warning">Pending</span>
-                @elseif($delivery['delivery_status'] == 2) <span class="badge badge-success">Delivered</span>
-                @elseif($delivery['delivery_status'] == 3) <span class="badge badge-danger">Returned</span>
-                @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Disputed</span>
+                @elseif($delivery['delivery_status'] == 2) <span class="badge badge-info">Dispatched</span>
+                @elseif($delivery['delivery_status'] == 3) <span class="badge badge-success">Delivered</span>
+                @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Returned</span>
                 @else <span class="badge badge-secondary">Unknown</span> @endif
             </span>
         </div>
@@ -139,8 +139,8 @@
         <thead>
             <tr>
                 <th style="width: 8%">Sr.</th>
-                <th style="width: 30%">Product</th>
                 <th style="width: 15%">Article No</th>
+                <th style="width: 30%">Product</th>
                 <th style="width: 15%">Size</th>
                 <th style="width: 12%">Delivered</th>
                 <th style="width: 10%">Boxes</th>
@@ -151,8 +151,8 @@
                 @foreach($deliveryItem as $item)
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
-                    <td>{{ $item->article_no }} - {{ $item->name }}</td>
                     <td class="text-center">{{ $item->article_no }}</td>
+                    <td class="text-center">{{ $item->name }}</td>
                     <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
                     <td class="text-right">{{ number_format($item->quantity) }}</td>
                     <td class="text-right">{{ number_format(ceil($item->quantity * ($item->bqty ?? 1))) }}</td>

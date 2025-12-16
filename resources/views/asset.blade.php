@@ -26,9 +26,10 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Asset Name</th>
-                    <th class="text-right">Quantity</th>
-                    <th class="text-right">Amount</th>
-                    <th>Attachment</th>
+                    <th class="text-right">Total Debit</th>
+                    <th class="text-right">Total Credit</th>
+                    <th class="text-right">Net Value</th>
+                    <th>Last Transaction</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -37,38 +38,37 @@
                     <tr>
                       <td>{{ $loop->index + 1 }}</td>
                       <td>{{ $item->asset_name }}</td>
-                      <td class="text-right">{{ $item->quantity }}</td>
-                      <td class="text-right">{{ number_format($item->amount, 2) }}</td>
-                      <td>
-                        @if($item->attachment)
-                          <a href="{{ asset('storage/' . $item->attachment) }}" target="_blank" class="btn btn-sm btn-info">
-                            <i class="fas fa-download"></i>
-                          </a>
+                      <td class="text-right">{{ number_format($item->total_debit, 2) }}</td>
+                      <td class="text-right">{{ number_format($item->total_credit, 2) }}</td>
+                      <td class="text-right">
+                        @if($item->net_value > 0)
+                          <span class="badge badge-success">{{ number_format($item->net_value, 2) }}</span>
+                        @elseif($item->net_value < 0)
+                          <span class="badge badge-danger">{{ number_format($item->net_value, 2) }}</span>
                         @else
-                          -
+                          <span class="badge badge-secondary">{{ number_format($item->net_value, 2) }}</span>
                         @endif
                       </td>
+                      <td>{{ $item->last_transaction_date ?? 'N/A' }}</td>
                       <td>
-                        <a href="{{ route('asset.show', $item->asset_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('asset.edit', $item->asset_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <form action="{{ route('asset.destroy', $item->asset_id) }}" method="POST" style="display:inline;">
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
-                        </form>
+                        <a href="{{ route('asset.show', $item->asset_name) }}" class="btn btn-info btn-sm">View Ledger</a>
                       </td>
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="6" class="text-center">No assets found</td>
+                      <td colspan="7" class="text-center">No assets found</td>
                     </tr>
                   @endforelse
                 </tbody>
                 <tfoot>
                   @if($assets->count())
                     <tr style="background-color: #f5f5f5; font-weight: bold;">
-                      <td colspan="3" class="text-right">Total Assets Value:</td>
-                      <td class="text-right">{{ number_format($assets->sum('amount'), 2) }}</td>
+                      <td colspan="2" class="text-right">Total:</td>
+                      <td class="text-right">{{ number_format($assets->sum('total_debit'), 2) }}</td>
+                      <td class="text-right">{{ number_format($assets->sum('total_credit'), 2) }}</td>
+                      <td class="text-right">
+                        <span class="badge badge-success">{{ number_format($assets->sum('net_value'), 2) }}</span>
+                      </td>
                       <td colspan="2"></td>
                     </tr>
                   @endif

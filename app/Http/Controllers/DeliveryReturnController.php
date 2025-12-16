@@ -144,6 +144,21 @@ class DeliveryReturnController extends Controller
         ]);
     }
 
+    /**
+     * Print delivery return information
+     */
+    public function printDeliveryReturn($id)
+    {
+        $this->authorize('show', Delivery::class);
+        $return = $this->deliveryReturnRepository->get($id);
+        $returnItems = $this->deliveryReturnItemRepository->get($id);
+
+        return view('print.delivery-return', [
+            'return' => $return,
+            'returnItems' => $returnItems,
+        ]);
+    }
+
     public function edit($id)
     {
         $this->authorize('edit', Delivery::class);

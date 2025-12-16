@@ -83,20 +83,31 @@
         <thead>
             <tr>
                 <th>Sr.</th>
+                <th>Type</th>
                 <th>Article No</th>
-                <th>Material / Stage</th>
+                <th>Material / Stage / Component</th>
                 <th>Work Done</th>
                 <th>Quantity</th>
                 <th>Unit</th>
-                <th>Status</th>
             </tr>
         </thead>
         <tbody>
             @foreach($issueItem as $item)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
-                <td>{{ $item->name ?? $item->stage ?? 'N/A' }}</td>
+                @if($item->component_product_type_id)
+                    <td><span class="badge badge-warning">Component</span></td>
+                    <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
+                    <td>{{ $item->component_article_no ?? 'N/A' }} - {{ $item->component_name ?? 'N/A' }}</td>
+                @elseif($item->material_id > 0)
+                    <td><span class="badge badge-info">Material</span></td>
+                    <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
+                    <td>{{ $item->name ?? 'N/A' }}</td>
+                @else
+                    <td><span class="badge badge-success">Product</span></td>
+                    <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
+                    <td>{{ $item->stage ?? 'N/A' }}</td>
+                @endif
                 <td>
                     @if(isset($item->work_logs) && $item->work_logs)
                         @foreach(explode('|', $item->work_logs) as $index => $work)
@@ -113,21 +124,13 @@
                 </td>
                 <td class="text-right">{{ number_format($item->quantity ?? 0) }}</td>
                 <td>{{ $item->uname ?? $item->puname ?? 'N/A' }}</td>
-                <td>
-                    @if(isset($item->received) && $item->received)
-                        <span class="badge badge-success">Received</span>
-                    @else
-                        <span class="badge badge-warning">Pending</span>
-                    @endif
-                </td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="5" class="text-right"><strong>Total Items:</strong></td>
+                <td colspan="6" class="text-right"><strong>Total Items:</strong></td>
                 <td class="text-right"><strong>{{ $issueItem->count() }}</strong></td>
-                <td></td>
             </tr>
         </tfoot>
     </table>

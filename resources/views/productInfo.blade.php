@@ -138,7 +138,35 @@
                     @else
                       <blockquote> No Materials </blockquote>
                     @endif
-  
+
+                    @if(isset($productComponents) && $productComponents->count())
+                      <h5>Product Components (Other Products Used in Manufacturing)</h5>
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Sr.</th>
+                            <th>Article No</th>
+                            <th>Product Name</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @foreach($productComponents as $component)
+                            <tr>
+                              <td>{{$loop->index + 1}}</td>
+                              <td>{{$component->article_no}}</td>
+                              <td>{{$component->product_name}}</td>
+                              <td>{{$component->size_name}}</td>
+                              <td>{{$component->quantity}}</td>
+                            </tr>
+                          @endforeach
+                        </tbody>
+                      </table>
+                    @else
+                      <blockquote> No Product Components </blockquote>
+                    @endif
+
                     @if($image->count())
                       <h5>Images</h5>
                       <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

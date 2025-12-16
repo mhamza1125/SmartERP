@@ -83,6 +83,7 @@
                       <th class="text-right">Monthly Salary</th>
                       <th class="text-right">Outstanding Loan</th>
                       <th class="text-right">Deduct Loan</th>
+                      <th class="text-right">Net Payable</th>
                       <th class="text-right">Actual Salary Paid <span class="text-danger">*</span></th>
                     </tr>
                   </thead>
@@ -98,19 +99,20 @@
                         <td class="text-right">{{ number_format($data['salary'], 2) }}</td>
                         <td class="text-right">
                           @if($data['loans_pending'] > 0)
-                            <span class="badge badge-danger">{{ number_format($data['loans_pending'], 2) }}</span>
+                            <span class="badge badge-danger">{{ number_format($data['loans_pending'] + $data['loan_deduction_amount'], 2) }}</span>
                           @else
                             -
                           @endif
                         </td>
                         <td class="text-right">
-                          <input type="number" step="0.01" min="0" max="{{ $data['loans_pending'] }}" class="form-control form-control-sm text-right loan-deduction"
+                          <input type="number" step="0.01" min="0" max="{{ $data['loans_pending'] + $data['loan_deduction_amount'] }}" class="form-control form-control-sm text-right loan-deduction"
                                  name="loan_deductions[{{ $data['employee']->employee_id }}]"
-                                 value="0"
+                                 value="{{ $data['loan_deduction_amount'] }}"
                                  placeholder="0.00"
                                  data-employee-id="{{ $data['employee']->employee_id }}"
                                  data-loans-pending="{{ $data['loans_pending'] }}">
                         </td>
+                        <td class="text-right font-weight-bold">{{ number_format($data['salary'] - $data['loans_pending'], 2) }}</td>
                         <td class="text-right">
                           <input type="number" step="0.01" min="0" class="form-control form-control-sm text-right salary-input"
                                  name="salary_amounts[{{ $data['employee']->employee_id }}]"
@@ -122,7 +124,7 @@
                       </tr>
                     @empty
                       <tr>
-                        <td colspan="8" class="text-center">No salary employees found</td>
+                        <td colspan="9" class="text-center">No salary employees found</td>
                       </tr>
                     @endforelse
                   </tbody>
@@ -152,16 +154,6 @@
     checkboxes.forEach(cb => cb.checked = checkbox.checked);
   }
 
-  // Update salary amount when loan deduction changes
-  function updateSalaryAmount(employeeId) {
-    const baseSalary = parseFloat(document.querySelector(`[data-employee-id="${employeeId}"][data-base-salary]`).dataset.baseSalary) || 0;
-    const loanDeduction = parseFloat(document.querySelector(`[data-employee-id="${employeeId}"].loan-deduction`).value) || 0;
-
-    const salaryInput = document.querySelector(`[data-employee-id="${employeeId}"].salary-input`);
-    const newSalary = baseSalary - loanDeduction;
-    salaryInput.value = newSalary.toFixed(2);
-  }
-
   // Calculate total payroll amount
   function calculateTotalPayroll() {
     let total = 0;
@@ -171,16 +163,6 @@
     });
     return total;
   }
-
-  // Add event listeners for loan deduction inputs
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.loan-deduction').forEach(input => {
-      input.addEventListener('change', function() {
-        const employeeId = this.dataset.employeeId;
-        updateSalaryAmount(employeeId);
-      });
-    });
-  });
 
   // Handle form submission
   const payrollFormHandler = function(e) {

@@ -48,7 +48,7 @@
                 <span class="info-label">Transaction Type:</span>
                 <span class="info-value">
                     @if($transaction['transaction_to'] == 'brs')
-                        Bank Reconciliation Statement
+                        Balance Adjustment
                     @elseif($transaction['transaction_to'] == 'employee')
                         @if($transaction['transaction_type'] == 'salary')
                             Salary Payment
@@ -148,7 +148,7 @@
                 </div>
             @elseif($transaction['transaction_to'] == 'brs')
                 <div class="info-row">
-                    <span class="info-label">BRS Type:</span>
+                    <span class="info-label">Adjustment Type:</span>
                     <span class="info-value">
                         {{-- This is temporary reversed --}}
                         @if($transaction['debit'] < 0)
@@ -233,7 +233,7 @@
 <div class="avoid-break" style="margin-top: -25px">
     <h3>Payment Details</h3>
     @if($transaction['transaction_to'] == 'brs')
-        {{-- BRS: Show only one column based on BRS type --}}
+        {{-- Balance Adjustment: Show only one column based on adjustment type --}}
         <table class="print-table">
             <thead>
                 <tr>
@@ -341,25 +341,6 @@
 <div class="amount-words avoid-break" style="margin-top: 8px; margin-bottom: 8px;">
     <div class="amount-words-label">Amount in Words:</div>
     <div>{{ numberToWordsWithCurrency(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0) }}</div>
-</div>
-@endif
-
-{{-- Payee Bank Details (if applicable) --}}
-@if(isset($transaction['payee_bank_id']) && $transaction['payee_bank_id'])
-<div class="info-section avoid-break" style="margin-top: 8px; margin-bottom: 8px;">
-    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px;">Payee Bank Details:</div>
-    <div class="info-row" style="margin-bottom: 2px;">
-        <span class="info-label" style="font-size: 10px;">Bank:</span>
-        <span class="info-value" style="font-size: 10px;">{{ $transaction['rname'] ?? 'N/A' }}</span>
-    </div>
-    <div class="info-row" style="margin-bottom: 2px;">
-        <span class="info-label" style="font-size: 10px;">Account No:</span>
-        <span class="info-value" style="font-size: 10px;">{{ $transaction['raccount'] ?? 'N/A' }}</span>
-    </div>
-    <div class="info-row">
-        <span class="info-label" style="font-size: 10px;">Account Title:</span>
-        <span class="info-value" style="font-size: 10px;">{{ $transaction['raccount_title'] ?? 'N/A' }}</span>
-    </div>
 </div>
 @endif
 

@@ -93,21 +93,19 @@ class PayrollController extends Controller
         foreach ($employees as $employee) {
             $salary = $employee->salary ?? 0;
 
-            // Calculate current salary advance balance (all time, not just this month)
-            // Salary advances are stored as debit in salaryAdvance transactions
-            $totalSalaryAdvances = Transaction::where('payee_id', $employee->employee_id)
+            // Calculate opening balance from transactions table
+            // Opening Balance = credit - debit from openingBalance transaction
+            // (credit means employee owes us, debit means we owe employee)
+            $openingBalanceTransaction = Transaction::where('payee_id', $employee->employee_id)
                 ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'salaryAdvance')
-                ->sum('debit');
+                ->where('transaction_type', 'openingBalance')
+                ->first();
 
-            // Deduct salary advance recoveries (stored as credit in receiveAdvance with description containing "Salary Advance")
-            // For now, we'll track deductions through salary transactions that include advance deductions
-            $salaryAdvanceRecovered = 0;
-            // This will be calculated when processing payroll with deductions
+            $openingBalance = 0;
+            if ($openingBalanceTransaction) {
+                $openingBalance = ($openingBalanceTransaction->credit ?? 0) - ($openingBalanceTransaction->debit ?? 0);
+            }
 
-            $salaryAdvance = max(0, $totalSalaryAdvances - $salaryAdvanceRecovered);
-
-            // Calculate current outstanding loan balance (all time)
             // Loans are stored as credit in 'advance' transactions (cash outflow)
             $totalLoansGiven = Transaction::where('payee_id', $employee->employee_id)
                 ->where('transaction_to', 'employee')
@@ -120,14 +118,13 @@ class PayrollController extends Controller
                 ->where('transaction_type', 'receiveAdvance')
                 ->sum('debit');
 
-            $loansPending = max(0, $totalLoansGiven - $loanRepaymentsMade);
+            $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepaymentsMade);
 
             $payrollData[] = [
                 'employee' => $employee,
                 'salary' => $salary,
-                'salary_advance' => $salaryAdvance,
                 'loans_pending' => $loansPending,
-                'net_salary' => $salary - $salaryAdvance - $loansPending,
+                'net_salary' => $salary - $loansPending,
             ];
         }
 
@@ -156,8 +153,6 @@ class PayrollController extends Controller
             'employee_ids.*' => 'exists:employees,employee_id',
             'salary_amounts' => 'required|array',
             'salary_amounts.*' => 'numeric|min:0',
-            'advance_deductions' => 'nullable|array',
-            'advance_deductions.*' => 'numeric|min:0',
             'loan_deductions' => 'nullable|array',
             'loan_deductions.*' => 'numeric|min:0',
         ]);
@@ -181,7 +176,6 @@ class PayrollController extends Controller
 
         foreach ($employees as $employee) {
             $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
-            $advanceDeduction = (float) ($validated['advance_deductions'][$employee->employee_id] ?? 0);
             $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
 
             if ($salaryAmount > 0) {
@@ -200,23 +194,6 @@ class PayrollController extends Controller
                 $this->transactionRepository->store($transactionData);
                 $transactionCount++;
                 $totalAmount += $salaryAmount;
-            }
-
-            // Process salary advance deduction
-            if ($advanceDeduction > 0) {
-                $advanceDeductionData = [
-                    'payee_id' => $employee->employee_id,
-                    'bank_id' => $bankId,
-                    'transaction_to' => 'employee',
-                    'transaction_type' => 'receiveAdvance',
-                    'transaction_date' => $paymentDate,
-                    'debit' => $advanceDeduction,  // receiveAdvance stores as debit (cash inflow)
-                    'credit' => null,
-                    'payee_bank_id' => 0,
-                    'description' => 'Salary Advance Recovery - ' . $monthLabel,
-                ];
-
-                $this->transactionRepository->store($advanceDeductionData);
             }
 
             // Process loan deduction
@@ -263,6 +240,15 @@ class PayrollController extends Controller
             ->get()
             ->keyBy('payee_id');
 
+        // Get all loan deduction transactions for this month
+        $existingLoanDeductions = Transaction::where('transaction_type', 'receiveAdvance')
+            ->where('transaction_to', 'employee')
+            ->where('description', 'like', '%Loan Repayment%')
+            ->whereYear('transaction_date', $selectedDate->year)
+            ->whereMonth('transaction_date', $selectedDate->month)
+            ->get()
+            ->keyBy('payee_id');
+
         // Get all salary-based employees
         $employees = $this->employeeRepository->salary();
 
@@ -278,7 +264,19 @@ class PayrollController extends Controller
         foreach ($employees as $employee) {
             $salary = $employee->salary ?? 0;
 
-            // Calculate current outstanding loan balance (all time)
+            // Calculate opening balance from transactions table
+            // Opening Balance = credit - debit from openingBalance transaction
+            // (credit means employee owes us, debit means we owe employee)
+            $openingBalanceTransaction = Transaction::where('payee_id', $employee->employee_id)
+                ->where('transaction_to', 'employee')
+                ->where('transaction_type', 'openingBalance')
+                ->first();
+
+            $openingBalance = 0;
+            if ($openingBalanceTransaction) {
+                $openingBalance = ($openingBalanceTransaction->credit ?? 0) - ($openingBalanceTransaction->debit ?? 0);
+            }
+
             // Loans are stored as credit in 'advance' transactions (cash outflow)
             $totalLoansGiven = Transaction::where('payee_id', $employee->employee_id)
                 ->where('transaction_to', 'employee')
@@ -291,12 +289,18 @@ class PayrollController extends Controller
                 ->where('transaction_type', 'receiveAdvance')
                 ->sum('debit');
 
-            $loansPending = max(0, $totalLoansGiven - $loanRepaymentsMade);
+            $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepaymentsMade);
 
-            // Get existing transaction amount if it exists
+            // Get existing salary transaction amount if it exists
             $paidAmount = 0;
             if (isset($existingTransactions[$employee->employee_id])) {
                 $paidAmount = $existingTransactions[$employee->employee_id]->credit ?? 0;
+            }
+
+            // Get existing loan deduction amount if it exists
+            $loanDeductionAmount = 0;
+            if (isset($existingLoanDeductions[$employee->employee_id])) {
+                $loanDeductionAmount = $existingLoanDeductions[$employee->employee_id]->debit ?? 0;
             }
 
             $payrollData[] = [
@@ -305,6 +309,7 @@ class PayrollController extends Controller
                 'loans_pending' => $loansPending,
                 'paid_amount' => $paidAmount,
                 'is_paid' => $paidAmount > 0,
+                'loan_deduction_amount' => $loanDeductionAmount,
             ];
         }
 

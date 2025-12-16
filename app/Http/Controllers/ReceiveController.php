@@ -46,10 +46,11 @@ class ReceiveController extends Controller
     public function create($id)
     {
         $purchase = $this->purchaseRepository->get($id);
-        if($purchase['purchase_type'] == 'material'){
-            $purchaseItem = $this->purchaseItemRepository->receive($id);
-        }else{
+        if($purchase['purchase_type'] == 'product'){
             $purchaseItem = $this->purchaseItemRepository->receiveProducts($id);
+        }else{
+            // For material and mProcess
+            $purchaseItem = $this->purchaseItemRepository->receive($id);
         }
         $count = $this->receiveRepository->refNo($id);
 
@@ -82,10 +83,11 @@ class ReceiveController extends Controller
     public function show($id)
     {
         $receive = $this->receiveRepository->get($id);
-        if($receive['purchase_type'] == 'material'){
-            $receiveMaterial = $this->receiveMaterialRepository->get($id);
-        } else {
+        if($receive['purchase_type'] == 'product'){
             $receiveMaterial = $this->receiveMaterialRepository->get2($id);
+        } else {
+            // For material and mProcess
+            $receiveMaterial = $this->receiveMaterialRepository->get($id);
         }
 
         return view('receiveInfo', [
@@ -100,10 +102,11 @@ class ReceiveController extends Controller
     public function printReceive($id)
     {
         $receive = $this->receiveRepository->get($id);
-        if($receive['purchase_type'] == 'material'){
-            $receiveMaterial = $this->receiveMaterialRepository->get($id);
-        } else {
+        if($receive['purchase_type'] == 'product'){
             $receiveMaterial = $this->receiveMaterialRepository->get2($id);
+        } else {
+            // For material and mProcess
+            $receiveMaterial = $this->receiveMaterialRepository->get($id);
         }
 
         return view('print.receive', [
@@ -116,12 +119,13 @@ class ReceiveController extends Controller
     {
         $receive = $this->receiveRepository->get($id);
         $date = $this->purchaseRepository->get($receive['purchase_id']);
-        if($receive['purchase_type'] == 'material'){
-            $receiveMaterial = $this->receiveMaterialRepository->get($id);
-            $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
-        }else{
+        if($receive['purchase_type'] == 'product'){
             $receiveMaterial = $this->receiveMaterialRepository->get2($id);
             $purchaseItem = $this->purchaseItemRepository->editReceive2($receive['purchase_id'], $id);
+        }else{
+            // For material and mProcess
+            $receiveMaterial = $this->receiveMaterialRepository->get($id);
+            $purchaseItem = $this->purchaseItemRepository->editReceive($receive['purchase_id'], $id);
         }
         return view('editReceive', [
             'date' => $date,

@@ -54,15 +54,6 @@
                     @if($transaction['purchase_no'])<tr>
                       <td><b>Purchase No:</b> {{$transaction['purchase_no']}}</td>
                     </tr>@endif
-                      @if($transaction['payee_bank_id'])
-                      <tr>
-                        <tr><td><b>Received By:</b> {{$transaction['rname']}}</td></tr>
-                        <tr><td><b>Account Title:</b> {{$transaction['raccount_title']}}</td></tr>
-                        <tr><td><b>Account No:</b> {{$transaction['raccount']}}</td></tr>
-                      </tr>
-                      @else
-                        <tr><td><b>Received By:</b> Cash Payment</td></tr>
-                      @endif
                   </tbody>
                 </table>
               </div>

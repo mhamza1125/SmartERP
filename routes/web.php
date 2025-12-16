@@ -29,6 +29,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\DeliveryReturnController;
+use App\Http\Controllers\PackingListController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------------------
@@ -188,6 +189,15 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/ajax/customer-orders/{customer_id}', [DeliveryController::class, 'getCustomerOrders'])->name('ajax.customer-orders');
 });
 
+// Packing List
+Route::get('/packingList', [PackingListController::class, 'index'])->name('packingList');
+Route::get('/packingList/create/{delivery_id}', [PackingListController::class, 'create'])->name('packingList.create');
+Route::post('/packingList', [PackingListController::class, 'store'])->name('packingList.store');
+Route::get('/packingList/{id}', [PackingListController::class, 'show'])->name('packingList.show');
+Route::get('/packingList/{order_id}/print', [PackingListController::class, 'printPackingList'])->name('packingList.print');
+Route::get('/editPackingList/{id}', [PackingListController::class, 'edit'])->name('packingList.edit');
+Route::post('/packingList/{id}', [PackingListController::class, 'update'])->name('packingList.update');
+
 // Product Material
 Route::get('/productMaterial', [ProductMaterialController::class, 'index'])->name('productMaterial');
 // Route::get('/addProductMaterial', [ProductMaterialController::class, 'create'])->name('productMaterial.add');
@@ -280,6 +290,7 @@ Route::get('/ptc', [StockController::class, 'ptcList'])->name('ptc');
 Route::get('/ptc/create', [StockController::class, 'ptcCreate'])->name('ptc.create');
 Route::post('/ptc/store', [StockController::class, 'ptcStore'])->name('ptc.store');
 Route::get('/ptc/{id}', [StockController::class, 'ptcShow'])->name('ptc.show');
+Route::get('/ptc/{id}/print', [StockController::class, 'printPTC'])->name('ptc.print');
 Route::get('/ptc/{id}/edit', [StockController::class, 'ptcEdit'])->name('ptc.edit');
 Route::put('/ptc/{id}', [StockController::class, 'ptcUpdate'])->name('ptc.update');
 // PTC Issuance (separate page)
@@ -320,11 +331,13 @@ Route::get('/productCost', [ProductCostController::class, 'index'])->name('produ
 Route::get('/addProductCost', [ProductCostController::class, 'create'])->name('productCost.add');
 Route::post('/productCost', [ProductCostController::class, 'store'])->name('productCost.store');
 Route::get('/productCost/{id}', [ProductCostController::class, 'show'])->name('productCost.show');
+Route::get('/productCost/print/{id}', [ProductCostController::class, 'printProductCost'])->name('productCost.print');
 Route::get('/editProductCost/{id}', [ProductCostController::class, 'edit'])->name('productCost.edit');
 Route::post('/productCost/{id}', [ProductCostController::class, 'update'])->name('productCost.update');
 
 // Transaction
 Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction');
+Route::post('/transaction/filter', [TransactionController::class, 'index'])->name('transaction.filter');
 Route::get('/ajaxBank', [TransactionController::class, 'ajaxBank'])->name('ajaxBank'); //Bank Account
 Route::get('/ajaxBalance', [TransactionController::class, 'ajaxBalance'])->name('ajaxBalance'); //Balance
 Route::post('/transaction', [TransactionController::class, 'store'])->name('transaction.store');
@@ -332,12 +345,15 @@ Route::get('/transaction/{id}', [TransactionController::class, 'show'])->name('t
 Route::post('/transaction/{id}', [TransactionController::class, 'update'])->name('transaction.update');
 // Transaction Employee
 Route::get('/ePayment', [TransactionController::class, 'ePayment'])->name('ePayment');
+Route::post('/ePayment', [TransactionController::class, 'ePayment'])->name('ePayment.filter');
 Route::get('/addEPayment', [TransactionController::class, 'createEPayment'])->name('transaction.addEPayment');
 Route::get('/ePayment/{id}', [TransactionController::class, 'showEPayment'])->name('transaction.showEPayment');
 Route::get('/editEPayment/{id}', [TransactionController::class, 'editEPayment'])->name('transaction.editEPayment');
 // Transaction Vendor
 Route::get('/vPayment', [TransactionController::class, 'vPayment'])->name('vPayment');
+Route::post('/vPayment', [TransactionController::class, 'vPayment'])->name('vPayment.filter');
 Route::get('/cPayment', [TransactionController::class, 'cPayment'])->name('cPayment');
+Route::post('/cPayment', [TransactionController::class, 'cPayment'])->name('cPayment.filter');
 Route::get('/ajaxPurchase', [TransactionController::class, 'ajaxPurchase'])->name('ajaxPurchase'); //Purchases
 Route::get('/ajaxPayee', [TransactionController::class, 'ajaxPayee'])->name('ajaxPayee'); //Payees for General Voucher
 Route::get('/vPayment/{id}', [TransactionController::class, 'showVPayment'])->name('transaction.showVPayment');
@@ -348,6 +364,7 @@ Route::get('/editVPayment/{id}', [TransactionController::class, 'editVPayment'])
 Route::get('/editCPayment/{id}', [TransactionController::class, 'editCPayment'])->name('transaction.editCPayment');
 // Transaction Expense
 Route::get('/expense', [TransactionController::class, 'expense'])->name('expense');
+Route::post('/expense', [TransactionController::class, 'expense'])->name('expense.filter');
 Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name('transaction.addExpense');
 Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name('transaction.showExpense');
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
@@ -356,7 +373,7 @@ Route::get('/generalVoucher', [TransactionController::class, 'generalVoucher'])-
 Route::get('/addGeneralVoucher', [TransactionController::class, 'createGeneralVoucher'])->name('transaction.addGeneralVoucher');
 Route::get('/generalVoucher/{id}', [TransactionController::class, 'showGeneralVoucher'])->name('transaction.showGeneralVoucher');
 Route::get('/editGeneralVoucher/{id}', [TransactionController::class, 'editGeneralVoucher'])->name('transaction.editGeneralVoucher');
-// Transaction BRS
+// Transaction Balance Adjustment
 // Route::get('/brs', [TransactionController::class, 'brs'])->name('brs');
 Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRS');
 Route::get('/BRS/{id}', [TransactionController::class, 'showBRS'])->name('transaction.showBRS');
@@ -370,6 +387,7 @@ Route::post('/cashBalance', [TransactionController::class, 'cashBalance'])->name
 
 // Order Payment
 Route::get('/oPayment', [TransactionController::class, 'oPayment'])->name('oPayment');
+Route::post('/oPayment', [TransactionController::class, 'oPayment'])->name('oPayment.filter');
 Route::get('/ajaxOrder', [TransactionController::class, 'ajaxOrder'])->name('ajaxOrder'); //Dynamic Orders
 Route::get('/addOPayment', [TransactionController::class, 'createOPayment'])->name('transaction.addOPayment');
 Route::get('/oPayment/{id}', [TransactionController::class, 'showOPayment'])->name('transaction.showOPayment');
@@ -377,6 +395,8 @@ Route::get('/editOPayment/{id}', [TransactionController::class, 'editOPayment'])
 
 // Standard Print Routes
 Route::get('/order/print/{id}', [OrderController::class, 'printOrder'])->name('order.print');
+Route::get('/order/production/{id}', [OrderController::class, 'printProduction'])->name('order.production');
+Route::get('/order/proforma/{id}', [OrderController::class, 'printProforma'])->name('order.proforma');
 Route::get('/payment/print/{id}', [TransactionController::class, 'printPayment'])->name('payment.print');
 Route::get('/delivery/print/{id}', [DeliveryController::class, 'printDelivery'])->name('delivery.print');
 Route::get('/product/print/{id}', [ProductController::class, 'printProduct'])->name('product.print');
@@ -393,6 +413,7 @@ Route::get('/employee/print/{id}', [EmployeeController::class, 'printEmployee'])
 Route::get('/vendor/print/{id}', [VendorController::class, 'printVendor'])->name('vendor.print');
 Route::get('/contractor/print/{id}', [VendorController::class, 'printContractor'])->name('contractor.print');
 Route::get('/material/print/{id}', [MaterialController::class, 'printMaterial'])->name('material.print');
+Route::get('/productMaterial/print/{id}', [ProductMaterialController::class, 'printProductMaterial'])->name('productMaterial.print');
 Route::get('/stock/print', [StockController::class, 'printStock'])->name('stock.print');
 Route::get('/cLedger/print/{id}', [CustomerController::class, 'printCustomerLedger'])->name('customer.ledger.print');
 Route::get('/eLedger/print/{id}', [EmployeeController::class, 'printEmployeeLedger'])->name('employee.ledger.print');
@@ -415,6 +436,7 @@ Route::post('/delivery-return', [DeliveryReturnController::class, 'store'])->nam
 Route::get('/delivery-return/{id}', [DeliveryReturnController::class, 'show'])->name('delivery-return.show');
 Route::get('/delivery-return/{id}/edit', [DeliveryReturnController::class, 'edit'])->name('delivery-return.edit');
 Route::post('/delivery-return/{id}', [DeliveryReturnController::class, 'update'])->name('delivery-return.update');
+Route::get('/delivery-return/print/{id}', [DeliveryReturnController::class, 'printDeliveryReturn'])->name('delivery-return.print');
 
 // Assets
 Route::get('/asset', [AssetController::class, 'index'])->name('asset');

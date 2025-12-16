@@ -182,15 +182,40 @@ class StockController extends Controller
             $productMaterial = $this->productMaterialRepository->get($productId);
             $stockItem = $this->stockItemRepository->pStockGet($productId);
 
+            // Get product components (other products used in manufacturing this product)
+            $productComponents = $this->productMaterialRepository->getProductComponents($productId);
+
+            // Get stock info for each product component
+            $productComponentsWithStock = [];
+            foreach ($productComponents as $component) {
+                $componentStockItems = $this->stockItemRepository->pStockGet($component->component_pt_id);
+                // Get total stock across all stages for this component
+                $totalStock = 0;
+                foreach ($componentStockItems as $stockItem2) {
+                    $totalStock += ($stockItem2->stockIn ?? 0) - ($stockItem2->stockOut ?? 0);
+                }
+                $productComponentsWithStock[] = [
+                    'product_material_id' => $component->product_material_id,
+                    'component_product_type_id' => $component->component_pt_id,
+                    'article_no' => $component->article_no,
+                    'product_name' => $component->product_name,
+                    'size_name' => $component->size_name,
+                    'quantity' => $component->quantity,
+                    'available_stock' => $totalStock,
+                ];
+            }
+
             \Log::info('ajaxPM: Data retrieved successfully', [
                 'productId' => $productId,
                 'materials_count' => count($productMaterial),
-                'stock_items_count' => count($stockItem)
+                'stock_items_count' => count($stockItem),
+                'product_components_count' => count($productComponentsWithStock)
             ]);
 
             return response()->json([
                 'materials' => $productMaterial,
                 'stockItems' => $stockItem,
+                'productComponents' => $productComponentsWithStock,
             ]);
         } catch (\Exception $e) {
             \Log::error('ajaxPM: Exception occurred', [
@@ -342,7 +367,7 @@ class StockController extends Controller
     {
         $this->authorize('create', Stock::class);
         // Add Issuance
-        $employee = $this->employeeRepository->wages();
+        $employee = $this->employeeRepository->allActive();
         $vendor = $this->vendorRepository->worker();
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
@@ -365,7 +390,7 @@ class StockController extends Controller
     {
         $this->authorize('create', Stock::class);
         // Add Group Issuance
-        $employee = $this->employeeRepository->wages();
+        $employee = $this->employeeRepository->allActive();
         $vendor = $this->vendorRepository->worker();
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
@@ -392,7 +417,7 @@ class StockController extends Controller
     {
         $this->authorize('create', Stock::class);
         // Add Machine Material Issuance
-        $employee = $this->employeeRepository->wages();
+        $employee = $this->employeeRepository->allActive();
         // $vendor = $this->vendorRepository->worker();
         $material = $this->materialRepository->machine();
         $stock = $this->stockItemRepository->stock();
@@ -423,11 +448,12 @@ class StockController extends Controller
         $mid = $request->input('material_id');
         $stages = $request->input('stage_id');
         $works = $request->input('work_logs');
+        $componentIds = $request->input('component_id', []);
         if ($request->has('issue_id')) { // Add Receive Issuance
             $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
         }
         $getId = $this->stockRepository->store($validatedData);
-        $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $request->input());
+        $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $componentIds, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'issuance', 'stocks', $getId);
@@ -583,7 +609,7 @@ class StockController extends Controller
         $oid = $request->input('order_id');
         $tid = $request->input('employee_id');
         $order = $this->orderRepository->all();
-        $employee = $this->employeeRepository->wages();
+        $employee = $this->employeeRepository->allActive();
         $vendor = $this->vendorRepository->worker();
         if (! empty($dfrom) && ! empty($dto)) {
             $issueItem = $this->stockItemRepository->dailyReceiveFilter($dfrom, $dto, $tname, $tid, $oid);
@@ -638,7 +664,7 @@ class StockController extends Controller
         $this->authorize('edit', Stock::class);
         // Edit Issuance
         $issueItem = $this->stockItemRepository->get($id->stock_id);
-        $employee = $this->employeeRepository->wages();
+        $employee = $this->employeeRepository->allActive();
         $vendor = $this->vendorRepository->worker();
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
@@ -872,7 +898,7 @@ class StockController extends Controller
         $this->authorize('delete', Stock::class);
     }
 
-    private function storeSI($getId, $ptids, $mids, $quantities, $stages, $works, $all)
+    private function storeSI($getId, $ptids, $mids, $quantities, $stages, $works, $componentIds, $all)
     {
         // Store Issuance Items
         $tid = $all['employee_id'];
@@ -882,6 +908,7 @@ class StockController extends Controller
             $mid = $mids[$key] ?? 0;
             $stage = $stages[$key] ?? 0;
             $work = $works[$key] ?? 0;
+            $componentId = $componentIds[$key] ?? null;
             $wages = $work ? $this->productCostRepository->wages($ptid, $work, $tid, $tname) : '0';
             $stockItem = [
                 'stock_id' => $getId,
@@ -889,6 +916,7 @@ class StockController extends Controller
                 'material_id' => $mid,
                 'quantity' => $quantity,
                 'stage_id' => $stage,
+                'component_product_type_id' => $componentId ?: null,
                 'work_logs' => $work,
                 'work_wages' => $wages,
             ];
@@ -988,7 +1016,7 @@ class StockController extends Controller
         $ptcNo = $this->stockRepository->ptcRefNo();
 
         // Get employees and vendors
-        $employees = $this->employeeRepository->wages();
+        $employees = $this->employeeRepository->allActive();
         $vendors = $this->vendorRepository->worker();
 
         // Get material stock for issuance
@@ -1044,10 +1072,15 @@ class StockController extends Controller
 
         // Get materials linked to this product type (BOM only)
         $materials = collect();
+        $productComponents = collect();
         if ($productTypeId && $product) {
-            // Get from product_materials table
+            // Get from product_materials table (materials only)
             $productMaterialIds = \DB::table('product_materials')
                 ->where('product_type_id', $productTypeId)
+                ->where(function($query) {
+                    $query->where('component_type', 'material')
+                          ->orWhereNull('component_type');
+                })
                 ->pluck('material_id')
                 ->toArray();
 
@@ -1064,6 +1097,29 @@ class StockController extends Controller
                     ->select('materials.*', 'uhead.name as uname')
                     ->get();
             }
+
+            // Get product components (other products used in manufacturing this product)
+            $productComponents = $this->productMaterialRepository->getProductComponents($productTypeId);
+
+            // Add stock info for each product component
+            $productComponentsWithStock = [];
+            foreach ($productComponents as $component) {
+                $componentStockItems = $this->stockItemRepository->pStockGet($component->component_pt_id);
+                $totalStock = 0;
+                foreach ($componentStockItems as $stockItem2) {
+                    $totalStock += ($stockItem2->stockIn ?? 0) - ($stockItem2->stockOut ?? 0);
+                }
+                $productComponentsWithStock[] = [
+                    'product_material_id' => $component->product_material_id,
+                    'component_product_type_id' => $component->component_pt_id,
+                    'article_no' => $component->article_no,
+                    'product_name' => $component->product_name,
+                    'size_name' => $component->size_name,
+                    'quantity' => $component->quantity,
+                    'available_stock' => $totalStock,
+                ];
+            }
+            $productComponents = collect($productComponentsWithStock);
         }
 
         return view('addPTC', [
@@ -1081,6 +1137,7 @@ class StockController extends Controller
             'employees' => $employees,
             'vendors' => $vendors,
             'materials' => $materials,
+            'productComponents' => $productComponents,
             'stock' => $stock,
             'pstock' => $pstock,
         ]);
@@ -1151,6 +1208,7 @@ class StockController extends Controller
         $materialIds = $request->input('material_id', []);
         $productTypeIds = $request->input('product_type_id', []);
         $stageIdsInput = $request->input('stage_id', []);
+        $componentIds = $request->input('component_id', []);
 
         foreach ($quantities as $key => $quantity) {
             if ($quantity > 0) {
@@ -1158,6 +1216,7 @@ class StockController extends Controller
                 $itemProductTypeId = $productTypeIds[$key] ?? 0;
                 $itemMaterialId = $materialIds[$key] ?? 0;
                 $itemStageId = $stageIdsInput[$key] ?? 0;
+                $componentProductTypeId = $componentIds[$key] ?? 0;
 
                 // For material issuance, use the PTC's product_type_id
                 // For product issuance, use the item's product_type_id
@@ -1169,6 +1228,7 @@ class StockController extends Controller
                     'stage_id' => ($itemStageId > 0) ? $itemStageId : $startStageId,
                     'work_logs' => '0',
                     'work_wages' => '0',
+                    'component_product_type_id' => $componentProductTypeId,
                     'created_by' => auth()->id(),
                 ];
                 $this->stockItemRepository->store($stockItem);
@@ -1339,8 +1399,12 @@ class StockController extends Controller
                 ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
                 ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
                 ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+                ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+                ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+                ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
                 ->select('stock_items.*', 'materials.name as material_name', 'products.name as product_name',
-                    'shead.name as size_name', 'sthead.name as stage_name')
+                    'shead.name as size_name', 'sthead.name as stage_name',
+                    'cp.article_no as component_article_no', 'cp.name as component_name', 'cshead.name as component_size')
                 ->get();
         }
 
@@ -1352,8 +1416,12 @@ class StockController extends Controller
             ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
             ->select('stock_items.*', 'materials.name as material_name', 'products.name as product_name',
-                'shead.name as size_name', 'sthead.name as stage_name')
+                'shead.name as size_name', 'sthead.name as stage_name',
+                'cp.article_no as component_article_no', 'cp.name as component_name', 'cshead.name as component_size')
             ->get();
 
         // Get last received items (most recent receive record)
@@ -1392,6 +1460,98 @@ class StockController extends Controller
             'issuances' => $issuances,
             'receivings' => $receivings,
             'receivingsByIssueId' => $receivingsByIssueId,
+        ]);
+    }
+
+    /**
+     * Print PTC
+     */
+    public function printPTC($id)
+    {
+        $this->authorize('show', Stock::class);
+
+        $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->leftJoin('heads as current_stage', 'current_stage.head_id', '=', 'stocks.current_stage_id')
+            ->select('stocks.*', 'orders.job_no', 'employees.name as employee_name', 'vendors.fname as vendor_name', 'current_stage.name as current_stage_name')
+            ->first();
+
+        if (!$ptc) {
+            return redirect()->route('ptc')->with('fails', 'PTC record not found');
+        }
+
+        // Get product information
+        $ptcItems = $this->stockItemRepository->get($id);
+        $product = null;
+        if ($ptcItems->isNotEmpty()) {
+            $firstItem = $ptcItems->first();
+            $product = \DB::table('product_types as pt')
+                ->join('products as p', 'pt.product_id', '=', 'p.product_id')
+                ->leftJoin('heads as size', 'pt.size_id', '=', 'size.head_id')
+                ->select('p.name', 'size.name as size_name')
+                ->where('pt.product_type_id', $firstItem->product_type_id)
+                ->first();
+        }
+
+        // Get all movements (issuances and receivings) for this PTC
+        $movements = Stock::where('ptc_id', $id)
+            ->orWhere(function($q) use ($id) {
+                $q->where('stock_id', $id)->where('is_ptc_master', 1);
+            })
+            ->leftJoin('heads as stage_head', 'stage_head.head_id', '=', 'stocks.current_stage_id')
+            ->leftJoin('heads as issue_stage', 'issue_stage.head_id', '=', 'stocks.issue_for')
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->select('stocks.*', 'stage_head.name as stage_name', 'issue_stage.name as issue_stage_name',
+                'employees.name as employee_name', 'vendors.fname as vendor_name')
+            ->orderBy('stocks.stock_date', 'asc')
+            ->get();
+
+        // Get issuances for sequence mapping
+        $issuances = Stock::where('ptc_id', $id)
+            ->where('stock_type', 2)
+            ->orderBy('stock_date', 'asc')
+            ->get();
+
+        // Get stock items for each movement to calculate average quantities
+        $movementItems = [];
+        foreach ($movements as $movement) {
+            $items = $this->stockItemRepository->get($movement->stock_id);
+            $movementItems[$movement->stock_id] = $items;
+        }
+
+        // Get product material requirements for the product
+        $productMaterials = [];
+        if ($ptcItems->isNotEmpty()) {
+            $firstItem = $ptcItems->first();
+            $productMaterials = \DB::table('product_materials')
+                ->where('product_type_id', $firstItem->product_type_id)
+                ->select('material_id', 'quantity')
+                ->get()
+                ->keyBy('material_id');
+        }
+
+        return view('print.ptc', [
+            'ptc' => $ptc,
+            'product' => $product,
+            'movements' => $movements,
+            'issuances' => $issuances,
+            'movementItems' => $movementItems,
+            'productMaterials' => $productMaterials,
         ]);
     }
 
@@ -1530,7 +1690,7 @@ class StockController extends Controller
         $ptcItems = $this->stockItemRepository->get($id);
 
         // Get employees and vendors
-        $employees = $this->employeeRepository->wages();
+        $employees = $this->employeeRepository->allActive();
         $vendors = $this->vendorRepository->worker();
 
         // Get material stock for issuance
@@ -1558,10 +1718,15 @@ class StockController extends Controller
 
         // Get materials linked to this product type (BOM only)
         $materials = collect();
+        $productComponents = collect();
         if ($productTypeId) {
             // Get from product_materials table
             $productMaterialIds = \DB::table('product_materials')
                 ->where('product_type_id', $productTypeId)
+                ->where(function($query) {
+                    $query->where('component_type', 'material')
+                          ->orWhereNull('component_type');
+                })
                 ->pluck('material_id')
                 ->toArray();
 
@@ -1578,6 +1743,29 @@ class StockController extends Controller
                     ->select('materials.*', 'uhead.name as unit')
                     ->get();
             }
+
+            // Get product components (other products used in manufacturing this product)
+            $productComponents = $this->productMaterialRepository->getProductComponents($productTypeId);
+
+            // Add stock info for each product component
+            $productComponentsWithStock = [];
+            foreach ($productComponents as $component) {
+                $componentStockItems = $this->stockItemRepository->pStockGet($component->component_pt_id);
+                $totalStock = 0;
+                foreach ($componentStockItems as $stockItem2) {
+                    $totalStock += ($stockItem2->stockIn ?? 0) - ($stockItem2->stockOut ?? 0);
+                }
+                $productComponentsWithStock[] = [
+                    'product_material_id' => $component->product_material_id,
+                    'component_product_type_id' => $component->component_pt_id,
+                    'article_no' => $component->article_no,
+                    'product_name' => $component->product_name,
+                    'size_name' => $component->size_name,
+                    'quantity' => $component->quantity,
+                    'available_stock' => $totalStock,
+                ];
+            }
+            $productComponents = collect($productComponentsWithStock);
         }
 
         // Get PTC with joined data
@@ -1611,6 +1799,7 @@ class StockController extends Controller
             'employees' => $employees,
             'vendors' => $vendors,
             'materials' => $materials,
+            'productComponents' => $productComponents,
             'stock' => $stock,
             'pstock' => $pstock,
             'issuances' => $issuances,
@@ -1665,12 +1854,14 @@ class StockController extends Controller
         $materialIds = $request->input('material_id', []);
         $productTypeIds = $request->input('product_type_id', []);
         $stageIds = $request->input('stage_id', []);
+        $componentIds = $request->input('component_id', []);
 
         foreach ($quantities as $key => $quantity) {
             if ($quantity > 0) {
                 $itemProductTypeId = $productTypeIds[$key] ?? 0;
                 $itemMaterialId = $materialIds[$key] ?? 0;
                 $itemStageId = $stageIds[$key] ?? 0;
+                $itemComponentId = $componentIds[$key] ?? null;
 
                 $stockItem = [
                     'stock_id' => $issueId,
@@ -1678,6 +1869,7 @@ class StockController extends Controller
                     'material_id' => $itemMaterialId,
                     'quantity' => $quantity,
                     'stage_id' => ($itemStageId > 0) ? $itemStageId : $ptc->current_stage_id,
+                    'component_product_type_id' => $itemComponentId ?: null,
                     'work_logs' => '0',
                     'work_wages' => '0',
                     'created_by' => auth()->id(),
@@ -1867,9 +2059,13 @@ class StockController extends Controller
             ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
             ->select('stock_items.*', 'products.product_id', 'products.name as pname', 'products.article_no',
                 'materials.material_id', 'materials.name', 'uhead.name as uname', 'shead.name as sname',
-                'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty')
+                'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty',
+                'cp.article_no as component_article_no', 'cp.name as component_name', 'cshead.name as component_size')
             ->orderBy('products.product_id')
             ->get();
 
@@ -1898,10 +2094,14 @@ class StockController extends Controller
             ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id')
-            ->selectRaw('stock_items.product_type_id, stock_items.material_id, stock_items.stage_id,
+            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
+            ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id', 'stock_items.component_product_type_id')
+            ->selectRaw('stock_items.product_type_id, stock_items.material_id, stock_items.stage_id, stock_items.component_product_type_id,
                 SUM(stock_items.quantity) as total_quantity, products.article_no, products.name as pname,
-                materials.name, shead.name as sname, sthead.name as stage, uhead.name as uname, puhead.name as puname')
+                materials.name, shead.name as sname, sthead.name as stage, uhead.name as uname, puhead.name as puname,
+                cp.article_no as component_article_no, cp.name as component_name, cshead.name as component_size')
             ->get();
 
         // Calculate average for materials
@@ -1930,6 +2130,48 @@ class StockController extends Controller
             ->orderBy('stocks.stock_date', 'desc')
             ->get();
 
+        // Get product components that were issued (for receiving back unused components)
+        $issuedComponents = collect();
+        if ($productTypeId) {
+            // Get all issued component items for this PTC
+            $issuedComponents = \DB::table('stock_items')
+                ->whereIn('stock_items.stock_id', $issueRecordIds)
+                ->where('stock_items.component_product_type_id', '>', 0)
+                ->join('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+                ->join('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+                ->join('heads as csize', 'csize.head_id', '=', 'cpt.size_id')
+                ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'cp.unit_id')
+                ->select(
+                    'stock_items.component_product_type_id',
+                    'cp.article_no as component_article_no',
+                    'cp.name as component_name',
+                    'csize.name as component_size',
+                    'puhead.name as component_unit',
+                    \DB::raw('SUM(stock_items.quantity) as issued_quantity')
+                )
+                ->groupBy('stock_items.component_product_type_id', 'cp.article_no', 'cp.name', 'csize.name', 'puhead.name')
+                ->get();
+
+            // Get already received back components
+            $receivedComponents = \DB::table('stock_items')
+                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+                ->where('stocks.ptc_id', $id)
+                ->where('stocks.stock_type', 1)
+                ->where('stock_items.component_product_type_id', '>', 0)
+                ->select(
+                    'stock_items.component_product_type_id',
+                    \DB::raw('SUM(stock_items.quantity) as received_quantity')
+                )
+                ->groupBy('stock_items.component_product_type_id')
+                ->pluck('received_quantity', 'component_product_type_id');
+
+            // Calculate receivable quantity for each component
+            foreach ($issuedComponents as $component) {
+                $received = $receivedComponents[$component->component_product_type_id] ?? 0;
+                $component->receivable_quantity = $component->issued_quantity - $received;
+            }
+        }
+
         return view('ptcReceiving', [
             'ptc' => $ptcWithData,
             'ptcItems' => $ptcItems,
@@ -1942,6 +2184,7 @@ class StockController extends Controller
             'issueSum' => $issueSum,
             'average' => $average,
             'receivings' => $receivings,
+            'issuedComponents' => $issuedComponents,
             'issuance' => null,
             'issuanceSeqNo' => null,
         ]);
@@ -2001,9 +2244,13 @@ class StockController extends Controller
             ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
             ->select('stock_items.*', 'products.product_id', 'products.name as pname', 'products.article_no',
                 'materials.material_id', 'materials.name', 'uhead.name as uname', 'shead.name as sname',
-                'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty')
+                'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty',
+                'cp.article_no as component_article_no', 'cp.name as component_name', 'cshead.name as component_size')
             ->orderBy('products.product_id')
             ->get();
 
@@ -2065,10 +2312,14 @@ class StockController extends Controller
             ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id')
-            ->selectRaw('stock_items.product_type_id, stock_items.material_id, stock_items.stage_id,
+            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
+            ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id', 'stock_items.component_product_type_id')
+            ->selectRaw('stock_items.product_type_id, stock_items.material_id, stock_items.stage_id, stock_items.component_product_type_id,
                 SUM(stock_items.quantity) as total_quantity, products.article_no, products.name as pname,
-                materials.name, shead.name as sname, sthead.name as stage, uhead.name as uname, puhead.name as puname')
+                materials.name, shead.name as sname, sthead.name as stage, uhead.name as uname, puhead.name as puname,
+                cp.article_no as component_article_no, cp.name as component_name, cshead.name as component_size')
             ->get();
 
         // Calculate average for materials
@@ -2100,6 +2351,48 @@ class StockController extends Controller
         // Get issuance sequence number for display
         $issuanceSeqNo = $this->stockRepository->getIssuanceSeqNo($id, $issuanceId);
 
+        // Get product components that were issued (for receiving back unused components)
+        $issuedComponents = collect();
+        if ($productTypeId) {
+            // Get all issued component items for this specific issuance
+            $issuedComponents = \DB::table('stock_items')
+                ->where('stock_items.stock_id', $issuanceId)
+                ->where('stock_items.component_product_type_id', '>', 0)
+                ->join('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+                ->join('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+                ->join('heads as csize', 'csize.head_id', '=', 'cpt.size_id')
+                ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'cp.unit_id')
+                ->select(
+                    'stock_items.component_product_type_id',
+                    'cp.article_no as component_article_no',
+                    'cp.name as component_name',
+                    'csize.name as component_size',
+                    'puhead.name as component_unit',
+                    \DB::raw('SUM(stock_items.quantity) as issued_quantity')
+                )
+                ->groupBy('stock_items.component_product_type_id', 'cp.article_no', 'cp.name', 'csize.name', 'puhead.name')
+                ->get();
+
+            // Get already received back components for this issuance
+            $receivedComponents = \DB::table('stock_items')
+                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+                ->where('stocks.issue_id', $issuanceId)
+                ->where('stocks.stock_type', 1)
+                ->where('stock_items.component_product_type_id', '>', 0)
+                ->select(
+                    'stock_items.component_product_type_id',
+                    \DB::raw('SUM(stock_items.quantity) as received_quantity')
+                )
+                ->groupBy('stock_items.component_product_type_id')
+                ->pluck('received_quantity', 'component_product_type_id');
+
+            // Calculate receivable quantity for each component
+            foreach ($issuedComponents as $component) {
+                $received = $receivedComponents[$component->component_product_type_id] ?? 0;
+                $component->receivable_quantity = $component->issued_quantity - $received;
+            }
+        }
+
         return view('ptcReceiving', [
             'ptc' => $ptcWithData,
             'ptcItems' => $ptcItems,
@@ -2112,6 +2405,7 @@ class StockController extends Controller
             'issueSum' => $issueSum,
             'average' => $average,
             'receivings' => $receivings,
+            'issuedComponents' => $issuedComponents,
             'issuance' => $issuance,
             'issuanceSeqNo' => $issuanceSeqNo,
         ]);
@@ -2168,6 +2462,7 @@ class StockController extends Controller
         $rProductTypeIds = $request->input('r_product_type_id', []);
         $rStageIds = $request->input('r_stage_id', []);
         $rWorkLogs = $request->input('r_work_logs', []);
+        $rComponentProductTypeIds = $request->input('r_component_product_type_id', []);
 
         // Get employee/vendor info for wages calculation
         $employeeId = $request->input('employee_id', 0);
@@ -2179,6 +2474,7 @@ class StockController extends Controller
                 $itemMaterialId = $rMaterialIds[$key] ?? 0;
                 $itemStageId = $rStageIds[$key] ?? 0;
                 $workLog = $rWorkLogs[$key] ?? '0';
+                $componentProductTypeId = $rComponentProductTypeIds[$key] ?? 0;
 
                 // Calculate wages from work_logs using the same logic as regular receiving
                 $wages = '0';
@@ -2198,6 +2494,7 @@ class StockController extends Controller
                     'stage_id' => ($itemStageId > 0) ? $itemStageId : $ptc->current_stage_id,
                     'work_logs' => $workLog,
                     'work_wages' => $wages,
+                    'component_product_type_id' => $componentProductTypeId,
                     'created_by' => auth()->id(),
                 ];
                 $this->stockItemRepository->store($stockItem);

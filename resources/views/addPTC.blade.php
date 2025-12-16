@@ -174,6 +174,48 @@
                 </div>
               </div>
 
+              {{-- Product Components Section --}}
+              @if(isset($productComponents) && $productComponents->count() > 0)
+              <div class="row" id="product-components-row">
+                <div class="col-md-5">
+                  <div class="form-group">
+                    <label>Product Components <small class="text-muted">(Other products used in manufacturing)</small></label>
+                    <select class="form-control select2" name="component_id" id="component_id">
+                      <option value="" disabled selected>Select Product Component</option>
+                      @foreach($productComponents as $component)
+                        <option value="{{ $component['component_product_type_id'] }}"
+                                data-stock="{{ $component['available_stock'] }}"
+                                data-article="{{ $component['article_no'] }}"
+                                data-name="{{ $component['product_name'] }}"
+                                data-size="{{ $component['size_name'] }}"
+                                data-required="{{ $component['quantity'] }}">
+                          {{ $component['article_no'] }} - {{ $component['product_name'] }} ({{ $component['size_name'] }}) - Req: {{ $component['quantity'] }}
+                        </option>
+                      @endforeach
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Available Stock</label>
+                    <input type="text" class="form-control" id="available_component_stock" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" step="0.001" class="form-control" name="quantityComponent" id="quantityComponent" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Add</label><br>
+                    <button type="button" id="addBtnComponent" class="btn btn-primary">Add</button>
+                  </div>
+                </div>
+              </div>
+              @endif
+
               <!-- Product Issuance Section -->
               <div class="row">
                 <div class="col-md-5">
@@ -260,6 +302,106 @@ var orderId = '{{ $order_id ?? 0 }}';
 var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";
 var ajaxAMQtyUrl = "{{ route('ajaxAMQty') }}";
 var ajaxATMQtyUrl = "{{ route('ajaxATMQty') }}";
+
+// Product Components handling
+var componentStockInfo = {};
+@if(isset($productComponents) && $productComponents->count() > 0)
+@foreach($productComponents as $component)
+componentStockInfo['{{ $component['component_product_type_id'] }}'] = {
+    stock: {{ $component['available_stock'] }},
+    name: '{{ $component['product_name'] }}',
+    article_no: '{{ $component['article_no'] }}',
+    size_name: '{{ $component['size_name'] }}',
+    required_qty: {{ $component['quantity'] }}
+};
+@endforeach
+@endif
+
+$(document).ready(function() {
+    // Function to update serial numbers
+    function updateComponentSerialNumbers() {
+        $('#items-table tbody tr').each(function(index) {
+            $(this).find('td:first').text(index + 1);
+        });
+    }
+
+    // Component selection handler
+    $('#component_id').on('change', function() {
+        var componentId = $(this).val();
+        if (componentId && componentStockInfo[componentId]) {
+            $('#available_component_stock').val(componentStockInfo[componentId].stock);
+        } else {
+            $('#available_component_stock').val('');
+        }
+    });
+
+    // Add component button handler
+    $('#addBtnComponent').click(function() {
+        var componentId = $('#component_id').val();
+        var componentText = $('#component_id option:selected').text();
+        var quantity = parseFloat($('#quantityComponent').val());
+        var availableStock = parseFloat($('#available_component_stock').val());
+
+        if (!componentId || !quantity) return;
+
+        if (quantity > availableStock) {
+            alert("Quantity cannot be greater than available stock.");
+            return;
+        }
+
+        // Check for duplicates
+        var isDuplicate = false;
+        $('#items-table tbody tr').each(function() {
+            var existingComponentId = $(this).find('input[name="component_id[]"]').val();
+            if (existingComponentId === componentId) {
+                isDuplicate = true;
+                return false;
+            }
+        });
+
+        if (isDuplicate) {
+            alert("This product component is already added to the table.");
+            return;
+        }
+
+        var updatedStock = availableStock - quantity;
+        $('#available_component_stock').val(updatedStock);
+        componentStockInfo[componentId].stock = updatedStock;
+
+        var componentInfo = componentStockInfo[componentId];
+        var srNo = $('#items-table tbody tr').length + 1;
+
+        var markup = `<tr>
+            <td>${srNo}</td>
+            <td>${ptcProductName}<input type="hidden" name="product_type_id[]" value="${ptcProductTypeId}"><input type="hidden" name="stage_id[]" value="0"><input type="hidden" name="component_id[]" value="${componentId}"></td>
+            <td><span class="badge badge-warning">Component:</span> ${componentInfo.article_no} - ${componentInfo.name} (${componentInfo.size_name})<input type="hidden" name="material_id[]" value="0"></td>
+            <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
+            <td><button type="button" class="btn btn-danger deleteComponentRow">X</button></td>
+        </tr>`;
+
+        $('#items-table tbody').append(markup);
+
+        $('#component_id').val(null).trigger('change');
+        $('#quantityComponent').val('');
+        $('#available_component_stock').val('');
+        updateComponentSerialNumbers();
+    });
+
+    // Delete component row
+    $(document).on('click', '.deleteComponentRow', function() {
+        var row = $(this).closest('tr');
+        var componentId = row.find('input[name="component_id[]"]').val();
+        var quantity = parseFloat(row.find('input[name="quantity[]"]').val());
+
+        // Restore stock
+        if (componentId && componentStockInfo[componentId]) {
+            componentStockInfo[componentId].stock += quantity;
+        }
+
+        row.remove();
+        updateComponentSerialNumbers();
+    });
+});
 </script>
 @endsection
 

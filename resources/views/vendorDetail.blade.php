@@ -47,7 +47,7 @@
                         <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
                         <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
                       @endif
-                      <td><b>{{($balance > 0)? 'Receiveable':'Payable'}} Amount:</b> {{number_format(abs($balance))}}</td>
+                      <td><b>{{($balance > 0)? 'Payable':'Receiveable'}} Amount:</b> {{number_format(abs($balance))}}</td>
                       {{-- <td><b>Payable Amount:</b> {{number_format($balance)}}</td> --}}
                     </tr>
                   </tbody>
@@ -113,14 +113,9 @@
                             @if($item->transaction_type == 'openingBalance')
                               <a href="#" class="btn btn-info btn-sm">View</a>
                             @elseif($item->transaction_type == 'wages')
-                              <div>
-                                <span class="badge badge-success mb-1">{{ $item->stock_no ?? 'N/A' }}</span><br>
-                                <small class="text-muted">
-                                  <strong>{{ $item->item_count ?? 1 }} items</strong> - Total Wages: {{ number_format($item->debit) }}
-                                </small><br>
                                 <div class="btn-group mt-1">
                                   @if(isset($item->stock_id))
-                                    <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-xs">View</a>
+                                    <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
                                   @endif
                                   @if(isset($item->wage_details) && !empty($item->wage_details) && isset($item->stock_id))
                                     <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#wagesModal{{ $item->stock_id }}">
@@ -128,7 +123,6 @@
                                     </button>
                                   @endif
                                 </div>
-                              </div>
                             @else
                               <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @endif

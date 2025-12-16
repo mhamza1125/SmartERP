@@ -38,6 +38,16 @@ class EmployeeRepository implements GlobalInterface
             ->get();
     }
 
+    public function allActive()
+    {
+        // All active employees (both salary and wage types) for issuance/receiving forms
+        return Employee::join('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
+            ->join('heads as chead', 'chead.head_id', '=', 'employees.city_id')
+            ->select('employees.*', 'dhead.name as dname', 'chead.name as cname')
+            ->orderBy('employees.created_at', 'desc')
+            ->get();
+    }
+
     public function get($id)
     {
         return Employee::where('employee_id', $id)

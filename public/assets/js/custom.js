@@ -1162,7 +1162,10 @@ $(document).ready(function () {
         // Optional: Max button functionality
         $(document).on('click', '.maxBtn', function () {
             let quantityInput = $(this).closest('tr').find('.quantity-input');
-            let maxQuantity = quantityInput.attr('max');
+            let maxStock = parseFloat(quantityInput.attr('max')) || 0;
+            let remainingToDeliver = parseFloat(quantityInput.data('remaining')) || 0;
+            // Set to the lesser of available stock or remaining to be delivered
+            let maxQuantity = Math.min(maxStock, remainingToDeliver);
             quantityInput.val(maxQuantity).trigger('input');
         });
 
@@ -1604,17 +1607,17 @@ $(document).ready(function () {
             });
         }
 
-        // Function to load all products with stock (for issuance forms)
+        // Function to load all products (for issuance forms - regardless of stock)
         function loadAllProductsWithStock() {
             $.ajax({
-                url: ajaxPTUrl, // This now points to ajaxPTStock route
+                url: '/ajax/getAllProducts', // Get ALL products regardless of stock
                 type: "GET",
                 dataType: "json",
                 success: function (response) {
                     $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
                     response.data.forEach(function (item) {
                         // Handle undefined size names
-                        var sizeText = item.sname ? ' (Size: ' + item.sname + ')' : '';
+                        var sizeText = item.hname ? ' (Size: ' + item.hname + ')' : '';
                         var optionText = item.article_no + ' - ' + item.name + sizeText;
                         $('#product_type_id').append(new Option(optionText, item.product_type_id));
                     });
@@ -1683,6 +1686,9 @@ $(document).ready(function () {
             loadAllProductsWithStock();
         }
 
+        // Define componentStockInfo for tracking component stock
+        var componentStockInfo = {};
+
         // Event listener for change in product type
         if (typeof isIGroupPage === 'undefined') {
             // Issuance Page
@@ -1699,7 +1705,6 @@ $(document).ready(function () {
                         response.materials.forEach(function (item) {
                             var optionText = item.material_no + ' - ' + item.name;
                             materialSelect.append(new Option(optionText, item.material_id));
-                            // materialSelect.append(new Option(item.name, item.material_id));
                         });
                         materialSelect.trigger('change');
 
@@ -1709,7 +1714,6 @@ $(document).ready(function () {
                         // Populate stageSelect and stageStockInfo
                         var stageSelect = $('#stage_id');
                         stageSelect.empty();
-                        // stageSelect.empty().append('<option value="" disabled>Select Product</option>');
                         response.stockItems.forEach(function (item) {
                             var optionText = item.article_no + ' - Size ' + item.sname + ' - ' + item.stname;
                             stageSelect.append(new Option(optionText, item.stage_id));
@@ -1718,6 +1722,31 @@ $(document).ready(function () {
                                 stname: item.stname,
                             };
                         });
+
+                        // Populate product components dropdown
+                        componentStockInfo = {};
+                        var componentSelect = $('#component_id');
+                        componentSelect.empty().append('<option value="" disabled selected>Select Product Component</option>');
+                        if (response.productComponents && response.productComponents.length > 0) {
+                            response.productComponents.forEach(function (item) {
+                                var optionText = item.article_no + ' - ' + item.product_name + ' (' + item.size_name + ') - Req: ' + item.quantity;
+                                var option = new Option(optionText, item.component_product_type_id);
+                                $(option).data('stock', item.available_stock);
+                                $(option).data('article', item.article_no);
+                                $(option).data('name', item.product_name);
+                                $(option).data('size', item.size_name);
+                                $(option).data('required', item.quantity);
+                                componentSelect.append(option);
+                                componentStockInfo[item.component_product_type_id] = {
+                                    stock: item.available_stock,
+                                    article: item.article_no,
+                                    name: item.product_name,
+                                    size: item.size_name,
+                                    required: item.quantity
+                                };
+                            });
+                        }
+                        componentSelect.trigger('change');
                     },
                 });
             });
@@ -1993,6 +2022,70 @@ $(document).ready(function () {
             $('#stage_id').val('').trigger('change');
             $('input[name="quantityStage"]').val('');
             $('input[name="available_pstock"]').val('');
+            updateSerialNumbers();
+        });
+
+        // Event listener for component selection change
+        $('#component_id').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+            var stock = selectedOption.data('stock') || componentStockInfo[$(this).val()]?.stock || 0;
+            $('#available_component_stock').val(stock);
+        });
+
+        // Event listener for add component button click
+        $('#addBtnComponent').click(function () {
+            var productId = $('#product_type_id').val();
+            var componentId = $('#component_id').val();
+            var productName = $('#product_type_id option:selected').text();
+            var componentText = $('#component_id option:selected').text();
+            var quantity = parseFloat($('input[name="quantityComponent"]').val());
+            var availableStock = parseFloat($('#available_component_stock').val());
+
+            if (!componentId || !quantity) {
+                alert("Please select a component and enter a valid quantity.");
+                return;
+            }
+
+            if (quantity > availableStock) {
+                alert("Quantity cannot be greater than available stock.");
+                return;
+            }
+
+            var isDuplicate = false;
+            $('#items-table tbody tr').each(function () {
+                var existingProductId = $(this).find('input[name="product_type_id[]"]').val();
+                var existingComponentId = $(this).find('input[name="component_id[]"]').val();
+                if (existingProductId === productId && existingComponentId === componentId) {
+                    isDuplicate = true;
+                    return false;
+                }
+            });
+
+            if (isDuplicate) {
+                alert("This component is already added to the table.");
+                return;
+            }
+
+            var srNo = $('#items-table tbody tr').length + 1;
+            var markup = `<tr>
+                <td>${srNo}</td>
+                <td>${productName}<input type="hidden" name="product_type_id[]" value="${productId}"><input type="hidden" name="stage_id[]" value="0"></td>
+                <td><span class="badge badge-info">Component:</span> ${componentText}<input type="hidden" name="material_id[]" value="0"><input type="hidden" name="component_id[]" value="${componentId}"></td>
+                <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
+                <td><button type="button" class="btn btn-danger deleteComponentRow">X</button></td>
+            </tr>`;
+
+            $('#items-table tbody').append(markup);
+
+            $('#component_id').val(null).trigger('change');
+            $('input[name="quantityComponent"]').val('');
+            $('#available_component_stock').val('');
+            updateSerialNumbers();
+        });
+
+        // Event listener for delete component row
+        $(document).on('click', '.deleteComponentRow', function () {
+            $(this).closest('tr').remove();
             updateSerialNumbers();
         });
 
@@ -3263,6 +3356,18 @@ $(document).ready(function () {
         var $endStageSelect = $('#modal_end_stage_id');
         var $submitBtn = $('#modalSubmitBtn');
         var stagesData = [];
+
+        // Function to initialize select2 within modal
+        function initializeSelect2() {
+            $('#createPtcModal .select2').select2({
+                dropdownParent: $('#createPtcModal')
+            });
+        }
+
+        // Initialize Select2 when modal is shown
+        $('#createPtcModal').on('shown.bs.modal', function () {
+            initializeSelect2();
+        });
 
         // Function to validate form and enable/disable submit button
         function validatePtcForm() {

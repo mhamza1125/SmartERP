@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>BRS Info</h4>
+            <h4>Balance Adjustment Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a class="btn btn-info" href="{{ route('brs.print', $transaction['transaction_id']) }}" target="_blank">
@@ -23,12 +23,12 @@
                 <table class="table table-sm">
                   <tbody>
                     @if($transaction['bank_id'])
-                      <tr><td><b>BRS Of:</b> Bank Balance</td></tr>
+                      <tr><td><b>Balance Adjustment Of:</b> Bank Balance</td></tr>
                       <tr><td><b>Bank:</b> {{$transaction['bname']}}</td></tr>
                       <tr><td><b>Account Title:</b> {{$transaction['account_title']}}</td></tr>
                       <tr><td><b>Account No:</b> {{$transaction['account']}}</td></tr>
                     @else
-                      <tr><td><b>BRS Of:</b> Petty Cash</td></tr>
+                      <tr><td><b>Balance Adjustment Of:</b> Petty Cash</td></tr>
                     @endif
                     
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
@@ -42,21 +42,21 @@
                     <tr><td><b>Voucher No:</b> SSL-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
                     @php
                       // Properly handle null and zero values in both debit and credit columns
-                      $brsAmount = 0;
-                      $brsType = 'Unknown';
+                      $adjustmentAmount = 0;
+                      $adjustmentType = 'Unknown';
 
                       if (isset($transaction['debit']) && $transaction['debit'] > 0) {
-                          $brsAmount = $transaction['debit'];
-                          $brsType = 'Increase Balance';
+                          $adjustmentAmount = $transaction['debit'];
+                          $adjustmentType = 'Increase Balance';
                       } elseif (isset($transaction['credit']) && $transaction['credit'] > 0) {
-                          $brsAmount = $transaction['credit'];
-                          $brsType = 'Decrease Balance';
+                          $adjustmentAmount = $transaction['credit'];
+                          $adjustmentType = 'Decrease Balance';
                       }
                     @endphp
-                    <tr><td><b>BRS Type:</b> {{ $brsType }}</td></tr>
-                    <tr><td><b>Amount:</b> {{number_format($brsAmount)}}</td></tr>
-                    <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($brsAmount) }}</td></tr>
-                    <tr><td><b>BRS Date:</b> {{$transaction['transaction_date']}}</td></tr>
+                    <tr><td><b>Adjustment Type:</b> {{ $adjustmentType }}</td></tr>
+                    <tr><td><b>Amount:</b> {{number_format($adjustmentAmount)}}</td></tr>
+                    <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($adjustmentAmount) }}</td></tr>
+                    <tr><td><b>Adjustment Date:</b> {{$transaction['transaction_date']}}</td></tr>
                   </tbody>
                 </table>
               </div>

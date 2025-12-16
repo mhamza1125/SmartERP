@@ -1,0 +1,87 @@
+@extends('print.layout')
+
+@section('title', 'Production_Order_' . ($order['job_no'] ?? 'N/A') . '_' . ($order['order_date'] ?? date('Y-m-d')))
+
+@section('content')
+<div class="document-title">Production Order</div>
+
+{{-- Production Order Header Information --}}
+<div class="document-info">
+    <div class="info-section">
+        <div class="info-row">
+            <span class="info-label">Job No:</span>
+            <span class="info-value">{{ $order['job_no'] ?? 'N/A' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Order Date:</span>
+            <span class="info-value">{{ $order['order_date'] ?? 'N/A' }}</span>
+        </div>
+        @if(isset($order['due_date']) && !empty($order['due_date']))
+        <div class="info-row">
+            <span class="info-label">Due Date:</span>
+            <span class="info-value">{{ $order['due_date'] }}</span>
+        </div>
+        @endif
+    </div>
+
+    @if(isset($order['description']) && !empty($order['description']))
+    <div class="info-section">
+        <div class="info-row">
+            <span class="info-label">Description:</span>
+            <span class="info-value">{{ substr($order['description'], 0, 100) }}{{ strlen($order['description']) > 100 ? '...' : '' }}</span>
+        </div>
+    </div>
+    @endif
+</div>
+
+{{-- Production Items Table --}}
+@if(isset($orderItem) && $orderItem->count() > 0)
+<div class="avoid-break">
+    <h3>Production Items</h3>
+    <table class="print-table">
+        <thead>
+            <tr>
+                <th style="width: 8%">Sr.</th>
+                <th style="width: 12%">Article No</th>
+                <th style="width: 25%">Product Name</th>
+                <th style="width: 12%">Size</th>
+                <th style="width: 28%">Stage</th>
+                <th style="width: 15%">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if($orderItem->count())
+                @php $product_id = 0; @endphp
+                @foreach($orderItem as $item)
+                <tr>
+                    <td class="text-center">{{ $loop->index + 1 }}</td>
+                    @if($item->product_id == $product_id)
+                        <td colspan="3"></td>
+                    @else
+                        <td class="text-center">{{ $item->article_no }}</td>
+                        <td class="text-center">{{ $item->pname }}</td>
+                        <td class="text-center">{{ $item->name }}</td>
+                        @php $product_id = $item->product_id; @endphp
+                    @endif
+                    <td class="text-center">{{ $item->sname ?? 'N/A' }}</td>
+                    <td class="text-center">{{ number_format($item->quantity) }}</td>
+                </tr>
+                @endforeach
+            @endif
+        </tbody>
+    </table>
+</div>
+@endif
+
+{{-- Additional Notes Section --}}
+@if(isset($order['description']) && !empty($order['description']))
+<div class="info-section avoid-break">
+    <h3>Production Notes</h3>
+    <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
+        {!! nl2br(e($order['description'])) !!}
+    </div>
+</div>
+@endif
+
+@endsection
+

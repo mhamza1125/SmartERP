@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Edit BRS - Bank / Cash Balance Adjustment</h4>
+            <h4>Edit Balance Adjustment - Bank / Cash Balance Adjustment</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">
                 Back
@@ -22,7 +22,7 @@
                     <input type="hidden" name="transaction_to" required value="{{ $transaction['transaction_to'] ?? 'brs' }}">
                     <input type="hidden" name="transaction_type" required value="{{ $transaction['transaction_type'] ?? 'brs' }}">
                     <input type="hidden" name="payee_bank_id" required value="0">
-                    <label>Cash / Bank BRS</label>
+                    <label>Cash / Bank Balance Adjustment</label>
                     <select class="form-control select2" name="bank_id" required>
                       <option value="0" selected>Cash Balance</option>
                       @if($bank->count())
@@ -45,18 +45,18 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>BRS Type</label>
+                    <label>Adjustment Type</label>
                     <select class="form-control" name="brs_type" required>
                       <option value="1" {{ isset($transaction['credit']) ? 'selected' : '' }}>Increase</option>
                       <option value="2" {{ isset($transaction['debit']) ? 'selected' : '' }}>Deduct</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select BRS Type</div>
+                    <div class="invalid-feedback">Select Adjustment Type</div>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>BRS Date</label>
+                    <label>Adjustment Date</label>
                     <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>

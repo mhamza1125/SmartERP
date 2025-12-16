@@ -53,15 +53,11 @@
                     <label>Order Status</label>
                     <select class="form-control select2" name="order_status" required>
                       <option value="" selected disabled>Select Order Status</option>
-                      <option value="1" selected>Pending</option>
-                      <option value="2">Processing</option>
-                      <option value="3">On Hold</option>
-                      <option value="4">Partially Delivered</option>
-                      <option value="5">Delivered</option>
-                      <option value="6">Completed</option>
-                      <option value="7">Cancelled</option>
-                      <option value="8">Returned</option>
-                      <option value="9">Disputed</option>
+                      <option value="1" selected>Draft</option>
+                      <option value="2">Confirmed</option>
+                      <option value="3">Dispatched</option>
+                      <option value="4">Delivered</option>
+                      <option value="5">Cancelled</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>

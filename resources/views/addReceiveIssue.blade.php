@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>{{ ($issue['table_name'] == 'employee')? 'Employee':'Vendor' }}</label>
+                    <label>{{ ($issue['table_name'] == 'employee')? 'Employee':'Contractor' }}</label>
                     <input type="hidden" name="employee_id" required value="{{$issue['employee_id']}}">
                     <input type="text" class="form-control" required value="{{ $issue['table_name'] === 'employee' ? $issue['employee_no'] . ' - ' . $issue['name'] : $issue['vendor_no'] . ' - ' . $issue['fname'] }}" readonly>
                     <div class="valid-feedback">Good job!</div>
@@ -126,40 +126,19 @@
                       @if($issueItem->count())
                         @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
                         @foreach($issueItemUnique as $item)
-                          @php 
-                            // $currentKey = $item->article_no . '|' . $item->sname; 
-                            $currentKey = $item->product_type_id; 
-                            $minAvg = isset($average[$currentKey]['min_avg']) ? $average[$currentKey]['min_avg'] : '0'; 
+                          @php
+                            // $currentKey = $item->article_no . '|' . $item->sname;
+                            $currentKey = $item->product_type_id;
+                            $minAvg = isset($average[$currentKey]['min_avg']) ? $average[$currentKey]['min_avg'] : '0';
                           @endphp
                           <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>
                             {{$item->article_no}} | Size {{$item->sname}} | Avg {{$minAvg}}
                           </option>
                         @endforeach
                       @endif
-                      {{-- @if($issueItem->count())
-                        @php $issueItemUnique = $issueItemUnique->unique('product_type_id'); @endphp
-                        @foreach($issueItemUnique as $item)
-                        @php $currentKey = $item->article_no . '|' . $item->sname; @endphp
-                        <option value="{{$item->product_type_id}}" {{ old('product_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} | Size {{$item->sname}} | Avg {{$average[$currentKey]['min_avg']}}</option>
-                        @endforeach
-                      @endif --}}
                   </select>
                   </div>
                 </div>
-                {{-- <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Product Stage</label>
-                    <select class="form-control select2" name="stage_id" id="stage_id">
-                      <option value="" selected disabled>Select Product Stage</option>
-                      @if($head->count())
-                        @foreach($head as $item)
-                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div> --}}
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Product Stage</label>
@@ -195,6 +174,55 @@
                   </div>
                 </div>
               </div>
+
+              {{-- Component Product Type Receive Section --}}
+              @php
+                // Extract component products from issued items
+                $issuedComponents = collect();
+                foreach($issueItem as $item) {
+                  if($item->component_product_type_id) {
+                    $issuedComponents->push($item);
+                  }
+                }
+              @endphp
+              @if($issuedComponents->count())
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Component Products (Issued)</label>
+                    <select class="form-control select2" name="component_product_type_id" id="component_product_type_id">
+                      <option value="" disabled selected>Select Component Product</option>
+                      @foreach($issuedComponents->unique('component_product_type_id') as $component)
+                        <option value="{{ $component->component_product_type_id }}"
+                          data-receivable="{{ $component->quantity }}"
+                          data-unit="{{ $component->puname ?? 'Pcs' }}"
+                          data-product-type-id="{{ $component->product_type_id }}">
+                          {{ $component->component_article_no }} - {{ $component->component_name }} | Receivable: {{ $component->quantity }}
+                        </option>
+                      @endforeach
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label for="component_receivable_stock">Receivable Stock</label>
+                    <input type="text" class="form-control" id="component_receivable_stock" name="component_receivable_stock" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" step="1" class="form-control" name="quantityComponent" placeholder="0" id="quantityComponent">
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Add</label><br>
+                    <button type="button" id="addBtnComponent" class="btn btn-success">Add</button>
+                  </div>
+                </div>
+              </div>
+              @endif
 
               <div class="row">
                 <div class="col-md-12">
@@ -238,13 +266,14 @@
                       </table>
                     </div>
                     {{-- Issuance --}}
-                    <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
-                      <table class="table table-sm table-striped">                    
+                    <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">
+                      <table class="table table-sm table-striped">
                         <thead>
                           <tr>
                             <th>Sr.</th>
+                            <th>Type</th>
                             <th>Item / Product</th>
-                            <th>Material / Stage</th>
+                            <th>Material / Stage / Component</th>
                             <th>Quantity</th>
                             <th>Average</th>
                           </tr>
@@ -254,8 +283,19 @@
                             @foreach($issueItem as $item)
                               <tr>
                                 <td>{{$loop->index + 1}}</td>
-                                <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                                <td>{{($item->name)? $item->name:$item->stage}}</td>
+                                @if($item->component_product_type_id)
+                                  <td><span class="badge badge-warning">Component</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->component_article_no}} - {{$item->component_name}}</td>
+                                @elseif($item->material_id > 0)
+                                  <td><span class="badge badge-info">Material</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->name}}</td>
+                                @else
+                                  <td><span class="badge badge-success">Product</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->stage}}</td>
+                                @endif
                                 <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                                 <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }} Units</td>
                               </tr>
@@ -265,8 +305,9 @@
                         <tfoot>
                           <tr>
                             <th>Sr.</th>
+                            <th>Type</th>
                             <th>Item / Product</th>
-                            <th>Material / Stage</th>
+                            <th>Material / Stage / Component</th>
                             <th>Quantity</th>
                             <th>Average</th>
                           </tr>
@@ -274,13 +315,14 @@
                       </table>
                     </div>
                     {{-- Received --}}
-                    <div class="tab-pane fade" id="received" role="tabpanel" aria-labelledby="received-tab">  
+                    <div class="tab-pane fade" id="received" role="tabpanel" aria-labelledby="received-tab">
                       <table class="table table-sm table-striped">
                         <thead>
                           <tr>
                             <th>Sr.</th>
+                            <th>Type</th>
                             <th>Article No</th>
-                            <th>Material / Stage</th>
+                            <th>Material / Stage / Component</th>
                             <th>Quantity</th>
                           </tr>
                         </thead>
@@ -289,8 +331,19 @@
                             @foreach($issueSum as $item)
                               <tr>
                                 <td>{{$loop->index + 1}}</td>
-                                <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                                <td>{{($item->name)? $item->name:$item->stage}}</td>
+                                @if($item->component_product_type_id)
+                                  <td><span class="badge badge-warning">Component</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->component_article_no}} - {{$item->component_name}}</td>
+                                @elseif($item->material_id > 0)
+                                  <td><span class="badge badge-info">Material</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->name}}</td>
+                                @else
+                                  <td><span class="badge badge-success">Product</span></td>
+                                  <td>{{$item->article_no}} - Size {{$item->sname}}</td>
+                                  <td>{{$item->stage}}</td>
+                                @endif
                                 <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                               </tr>
                             @endforeach
@@ -299,8 +352,9 @@
                         <tfoot>
                           <tr>
                             <th>Sr.</th>
+                            <th>Type</th>
                             <th>Article No</th>
-                            <th>Material / Stage</th>
+                            <th>Material / Stage / Component</th>
                             <th>Quantity</th>
                           </tr>
                         </tfoot>
@@ -336,5 +390,74 @@
   var rstock = {!! $rstock->toJson() !!};
   var ajaxPCUrl = "{{ route('ajaxPC') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
+
+  // Component Product Type Receiving
+  $(document).ready(function() {
+    // Update receivable stock when component is selected
+    $('#component_product_type_id').on('change', function() {
+      var selected = $(this).find(':selected');
+      var receivable = selected.data('receivable') || 0;
+      var unit = selected.data('unit') || 'Pcs';
+      $('#component_receivable_stock').val(receivable + ' ' + unit);
+      $('#quantityComponent').val('').attr('max', receivable);
+    });
+
+    // Add component to receive table
+    $('#addBtnComponent').on('click', function() {
+      var componentSelect = $('#component_product_type_id');
+      var componentId = componentSelect.val();
+      var quantity = parseFloat($('#quantityComponent').val()) || 0;
+
+      if (!componentId || quantity <= 0) {
+        alert('Please select a component and enter a valid quantity');
+        return;
+      }
+
+      var selected = componentSelect.find(':selected');
+      var receivable = parseFloat(selected.data('receivable')) || 0;
+      var componentText = selected.text().split(' | ')[0]; // Get component name without receivable info
+      var unit = selected.data('unit') || 'Pcs';
+      var productTypeId = selected.data('product-type-id') || 0; // Get parent product's product_type_id
+
+      if (quantity > receivable) {
+        alert('Quantity cannot exceed receivable stock (' + receivable + ')');
+        return;
+      }
+
+      // Add to receive table
+      var rowCount = $('#items-table tbody tr').length + 1;
+      var row = '<tr>' +
+        '<td>' + rowCount + '</td>' +
+        '<td>' + componentText + ' <span class="badge badge-warning">Component</span></td>' +
+        '<td>-</td>' +
+        '<td>-</td>' +
+        '<td>' + quantity + ' ' + unit +
+          '<input type="hidden" name="material_id[]" value="0">' +
+          '<input type="hidden" name="product_type_id[]" value="' + productTypeId + '">' +
+          '<input type="hidden" name="stage_id[]" value="0">' +
+          '<input type="hidden" name="work_logs[]" value="0">' +
+          '<input type="hidden" name="quantity[]" value="' + quantity + '">' +
+          '<input type="hidden" name="component_id[]" value="' + componentId + '">' +
+        '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fas fa-trash"></i></button></td>' +
+        '</tr>';
+
+      $('#items-table tbody').append(row);
+
+      // Update receivable quantity in dropdown
+      var newReceivable = receivable - quantity;
+      selected.data('receivable', newReceivable);
+      if (newReceivable <= 0) {
+        selected.remove();
+      } else {
+        selected.text(componentText + ' | Receivable: ' + newReceivable);
+      }
+
+      // Reset inputs
+      componentSelect.val('').trigger('change');
+      $('#component_receivable_stock').val('');
+      $('#quantityComponent').val('');
+    });
+  });
 </script>
 @endsection

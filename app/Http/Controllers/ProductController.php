@@ -77,6 +77,7 @@ class ProductController extends Controller
         $unit = $this->headRepository->get('4');
         $stage = $this->headRepository->get('12');
         $material = $this->materialRepository->all();
+        $productTypes = $this->productRepository->activeTypes();
 
         return view('addProduct', [
             'category' => $category,
@@ -84,6 +85,7 @@ class ProductController extends Controller
             'stage' => $stage,
             'size' => $size,
             'unit' => $unit,
+            'productTypes' => $productTypes,
         ]);
     }
 
@@ -138,6 +140,21 @@ class ProductController extends Controller
                 }
             }
         }
+        // Store product components (other products used in manufacturing)
+        $componentProductTypeIds = $request->input('component_product_type_id', []);
+        $componentQuantities = $request->input('component_quantity', []);
+
+        if (!empty($componentProductTypeIds)) {
+            foreach ($productTypeIds as $productTypeId) {
+                // Store product components for each size variant
+                $this->productMaterialRepository->updateProductComponents(
+                    $productTypeId,
+                    $componentProductTypeIds,
+                    $componentQuantities
+                );
+            }
+        }
+
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'product', 'products', $getId);
@@ -168,6 +185,12 @@ class ProductController extends Controller
         $stage = $this->headRepository->getStage($product['stage_ids']);
         $openingStock = $this->productRepository->getOpeningStock($id);
 
+        // Get product components for the first product type (they're the same for all sizes)
+        $productComponents = collect();
+        if ($size->count() > 0) {
+            $productComponents = $this->productMaterialRepository->getProductComponents($size->first()->product_type_id);
+        }
+
         return view('productInfo', [
             'product' => $product,
             'size' => $size,
@@ -181,6 +204,7 @@ class ProductController extends Controller
             'material' => $material,
             'stage' => $stage,
             'openingStock' => $openingStock,
+            'productComponents' => $productComponents,
         ]);
     }
 
@@ -226,6 +250,13 @@ class ProductController extends Controller
         $material = $this->materialRepository->all();
         $pmaterial = $this->materialRepository->getMaterial($id['material_id']);
         $openingStock = $this->productRepository->getOpeningStock($id->product_id);
+        $productTypes = $this->productRepository->activeTypes();
+
+        // Get existing product components for the first product type (they're the same for all sizes)
+        $existingProductComponents = [];
+        if ($productType->count() > 0) {
+            $existingProductComponents = $this->productMaterialRepository->getProductComponents($productType->first()->product_type_id);
+        }
 
         return view('editProduct', [
             'size' => $size,
@@ -238,6 +269,8 @@ class ProductController extends Controller
             'pmaterial' => $pmaterial,
             'productType' => $productType,
             'openingStock' => $openingStock,
+            'productTypes' => $productTypes,
+            'existingProductComponents' => $existingProductComponents,
         ]);
     }
 
@@ -255,6 +288,19 @@ class ProductController extends Controller
 
         // Update stage-specific opening stock
         $this->updateStageSpecificOpeningStock($getId, $request);
+
+        // Update product components for all product types (sizes)
+        $componentProductTypeIds = $request->input('component_product_type_id', []);
+        $componentQuantities = $request->input('component_quantity', []);
+        $productTypeIds = $this->productTypeRepository->active($getId)->pluck('product_type_id');
+
+        foreach ($productTypeIds as $productTypeId) {
+            $this->productMaterialRepository->updateProductComponents(
+                $productTypeId,
+                $componentProductTypeIds,
+                $componentQuantities
+            );
+        }
 
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {

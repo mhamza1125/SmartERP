@@ -21,6 +21,7 @@
                   <div class="form-group">
                     <input type="hidden" name="transaction_to" required value="employee" id="transaction_to">
                     <input type="hidden" name="debit" required value="0">
+                    <input type="hidden" name="payee_bank_id" required value="0">
                     <label>Employee</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Employee</option>
@@ -34,7 +35,7 @@
                     <div class="invalid-feedback">Select Employee</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                   <div class="form-group">
                     <label>Receiver Cash / Bank (if any)</label>
                     <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
@@ -44,7 +45,7 @@
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Cash / Bank</div>
                   </div>
-                </div>
+                </div> --}}
               </div>
               <div class="row">
                 <div class="col-md-6">

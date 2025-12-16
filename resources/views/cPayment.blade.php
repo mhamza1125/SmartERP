@@ -13,6 +13,55 @@
             </div>
           </div>
           <div class="card-body">
+            {{-- Filter Form --}}
+            <form action="{{ route('cPayment.filter') }}" method="POST" class="needs-validation col-md-12 mb-3" novalidate="">
+              @csrf
+              <div class="row">
+                <div class="form-group col-md-3">
+                  <label>Date From</label>
+                  <input type="text" class="form-control datepicker" name="dfrom" value="{{$dfrom ?? ''}}">
+                </div>
+                <div class="form-group col-md-3">
+                  <label>Date To</label>
+                  <input type="text" class="form-control datepicker" name="dto" value="{{$dto ?? ''}}">
+                </div>
+                <div class="form-group col-md-4">
+                  <label>Contractor</label>
+                  <select class="form-control select2" name="contractor_id">
+                    <option value="">All Contractors</option>
+                    @foreach($contractors as $contractor)
+                      <option value="{{ $contractor->vendor_id }}" {{ (isset($contractor_id) && $contractor_id == $contractor->vendor_id) ? 'selected' : '' }}>
+                        {{ $contractor->vendor_no }} - {{ $contractor->fname }}
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="form-group col-md-2 mt-4">
+                  <button class="btn btn-primary mt-2" type="submit">Filter</button>
+                  @if(!empty($dfrom) || !empty($dto) || !empty($contractor_id))
+                    <a href="{{ route('cPayment') }}" class="btn btn-secondary mt-2">Clear</a>
+                  @endif
+                </div>
+              </div>
+            </form>
+
+            @if(!empty($dfrom) || !empty($dto) || !empty($contractor_id))
+              <div class="alert alert-info">
+                <strong>Filtered Results:</strong>
+                @if(!empty($dfrom) && !empty($dto))
+                  Showing payments from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+                @endif
+                @if(!empty($contractor_id))
+                  @php
+                    $selectedContractor = $contractors->firstWhere('vendor_id', $contractor_id);
+                  @endphp
+                  @if($selectedContractor)
+                    for contractor: {{ $selectedContractor->vendor_no }} - {{ $selectedContractor->fname }}
+                  @endif
+                @endif
+              </div>
+            @endif
+
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>

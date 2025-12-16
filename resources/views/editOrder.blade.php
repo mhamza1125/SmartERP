@@ -51,18 +51,18 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Order Status</label>
-                    <select class="form-control select2" name="order_status" required>
+                    <select class="form-control select2" name="order_status" required {{ in_array($order['order_status'], [3, 4, 5]) ? 'disabled' : '' }}>
                       <option value="" selected disabled>Select Order Status</option>
-                      <option value="1" {{ $order['order_status'] == 1 ? 'selected' : '' }}>Pending</option>
-                      <option value="2" {{ $order['order_status'] == 2 ? 'selected' : '' }}>Processing</option>
-                      <option value="3" {{ $order['order_status'] == 3 ? 'selected' : '' }}>On Hold</option>
-                      <option value="4" {{ $order['order_status'] == 4 ? 'selected' : '' }}>Partially Delivered</option>
-                      <option value="5" {{ $order['order_status'] == 5 ? 'selected' : '' }}>Delivered</option>
-                      <option value="6" {{ $order['order_status'] == 6 ? 'selected' : '' }}>Completed</option>
-                      <option value="7" {{ $order['order_status'] == 7 ? 'selected' : '' }}>Cancelled</option>
-                      <option value="8" {{ $order['order_status'] == 8 ? 'selected' : '' }}>Returned</option>
-                      <option value="9" {{ $order['order_status'] == 9 ? 'selected' : '' }}>Disputed</option>
+                      <option value="1" {{ $order['order_status'] == 1 ? 'selected' : '' }}>Draft</option>
+                      <option value="2" {{ $order['order_status'] == 2 ? 'selected' : '' }}>Confirmed</option>
+                      <option value="3" {{ $order['order_status'] == 3 ? 'selected' : '' }}>Dispatched</option>
+                      <option value="4" {{ $order['order_status'] == 4 ? 'selected' : '' }}>Delivered</option>
+                      <option value="5" {{ $order['order_status'] == 5 ? 'selected' : '' }}>Cancelled</option>
                     </select>
+                    @if(in_array($order['order_status'], [3, 4, 5]))
+                      <input type="hidden" name="order_status" value="{{ $order['order_status'] }}">
+                      <small class="text-muted">Status cannot be changed for Dispatched, Delivered, or Cancelled orders</small>
+                    @endif
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>

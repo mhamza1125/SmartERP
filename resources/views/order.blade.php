@@ -44,36 +44,34 @@
                       </td> --}}
                       <td>
                         <div class="btn-group">
-                            <button class="btn <?php 
-                                if($item->order_status == 1){ echo 'btn-warning'; $status = 'Pending'; }
-                                elseif($item->order_status == 2){ echo 'btn-success'; $status = 'Processing'; }
-                                elseif($item->order_status == 3){ echo 'btn-warning'; $status = 'On Hold'; }
-                                elseif($item->order_status == 4){ echo 'btn-success'; $status = 'Partially Delivered'; }
-                                elseif($item->order_status == 5){ echo 'btn-success'; $status = 'Delivered'; }
-                                elseif($item->order_status == 6){ echo 'btn-success'; $status = 'Completed'; }
-                                elseif($item->order_status == 7){ echo 'btn-danger'; $status = 'Canceled'; }
-                                elseif($item->order_status == 8){ echo 'btn-danger'; $status = 'Returned'; }
-                                elseif($item->order_status == 9){ echo 'btn-danger'; $status = 'Disputed'; }
+                            <button class="btn <?php
+                                if($item->order_status == 1){ echo 'btn-secondary'; $status = 'Draft'; }
+                                elseif($item->order_status == 2){ echo 'btn-success'; $status = 'Confirmed'; }
+                                elseif($item->order_status == 3){ echo 'btn-info'; $status = 'Dispatched'; }
+                                elseif($item->order_status == 4){ echo 'btn-primary'; $status = 'Delivered'; }
+                                elseif($item->order_status == 5){ echo 'btn-danger'; $status = 'Cancelled'; }
                                 else{ echo 'btn-danger'; $status = 'Unknown'; }
-                               ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                               ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" {{ in_array($item->order_status, [3, 4, 5]) ? 'disabled' : '' }}>
                               {{$status}}
                             </button>
+                            @if(!in_array($item->order_status, [3, 4, 5]))
                             <div class="dropdown-menu">
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '1']) }}">Pending</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '2']) }}">Processing</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '3']) }}">On Hold</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '4']) }}">Partially Deilvered</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '5']) }}">Delivered</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '6']) }}">Completed</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '7']) }}">Cancelled</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '8']) }}">Returned</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '9']) }}">Disputed</a>
+                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '1']) }}">Draft</a>
+                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '2']) }}">Confirmed</a>
+                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '3']) }}">Dispatched</a>
+                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '4']) }}">Delivered</a>
+                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '5']) }}">Cancelled</a>
                             </div>
+                            @endif
                           </div>
                       </td>
                       <td>
                         <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('order.edit', $item->order_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(!in_array($item->order_status, [3, 4, 5]))
+                          <a href="{{ route('order.edit', $item->order_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @else
+                          <button class="btn btn-secondary btn-sm" disabled title="Cannot edit Dispatched, Delivered, or Cancelled orders">Edit</button>
+                        @endif
                       </td>
                     </tr>
                     @endforeach

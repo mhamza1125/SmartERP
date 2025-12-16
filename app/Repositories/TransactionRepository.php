@@ -30,6 +30,28 @@ class TransactionRepository implements GlobalInterface
         // return Transaction::orderBy('created_at', 'desc')->get();
     }
 
+    public function filterByDate($dfrom, $dto)
+    {
+        return Transaction::select(
+            'transactions.*', 'vendor_no', 'vendors.fname', 'employee_no', 'employees.name', 'order_no', 'job_no'
+        )
+            ->leftJoin('vendors', function ($join) {
+                $join->on('transactions.payee_id', '=', 'vendors.vendor_id')
+                    ->whereIn('transactions.transaction_to', ['vendor', 'contractor']);
+            })
+            ->leftJoin('employees', function ($join) {
+                $join->on('transactions.payee_id', '=', 'employees.employee_id')
+                    ->where('transactions.transaction_to', '=', 'employee');
+            })
+            ->leftJoin('orders', function ($join) {
+                $join->on('transactions.order_id', '=', 'orders.order_id')
+                    ->where('transactions.transaction_to', '=', 'customer');
+            })
+            ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
+            ->orderBy('transactions.created_at', 'desc')
+            ->get();
+    }
+
     public function oPayment()
     {
         return Transaction::where('transaction_to', 'customer')
@@ -39,12 +61,45 @@ class TransactionRepository implements GlobalInterface
             ->get();
     }
 
+    public function oPaymentFilter($dfrom, $dto, $customer_id)
+    {
+        $query = Transaction::where('transaction_to', 'customer')
+            ->join('customers', 'customers.customer_id', '=', 'transactions.payee_id')
+            ->join('orders', 'orders.order_id', '=', 'transactions.order_id');
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
+        }
+
+        if (!empty($customer_id)) {
+            $query->where('transactions.payee_id', $customer_id);
+        }
+
+        return $query->orderBy('transactions.created_at', 'desc')->get();
+    }
+
     public function ePayment()
     {
         return Transaction::where('transaction_to', 'employee')
             ->join('employees', 'employees.employee_id', '=', 'transactions.payee_id')
             ->orderBy('transactions.created_at', 'desc')
             ->get();
+    }
+
+    public function ePaymentFilter($dfrom, $dto, $employee_id)
+    {
+        $query = Transaction::where('transaction_to', 'employee')
+            ->join('employees', 'employees.employee_id', '=', 'transactions.payee_id');
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
+        }
+
+        if (!empty($employee_id)) {
+            $query->where('transactions.payee_id', $employee_id);
+        }
+
+        return $query->orderBy('transactions.created_at', 'desc')->get();
     }
 
     public function vPayment()
@@ -56,6 +111,23 @@ class TransactionRepository implements GlobalInterface
             ->get();
     }
 
+    public function vPaymentFilter($dfrom, $dto, $vendor_id)
+    {
+        $query = Transaction::where('transaction_to', 'vendor')
+            ->join('vendors', 'vendors.vendor_id', '=', 'transactions.payee_id')
+            ->where('vendor_type', '0');
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
+        }
+
+        if (!empty($vendor_id)) {
+            $query->where('transactions.payee_id', $vendor_id);
+        }
+
+        return $query->orderBy('transactions.created_at', 'desc')->get();
+    }
+
     public function cPayment()
     {
         return Transaction::where('transaction_to', 'contractor')
@@ -65,12 +137,45 @@ class TransactionRepository implements GlobalInterface
             ->get();
     }
 
+    public function cPaymentFilter($dfrom, $dto, $contractor_id)
+    {
+        $query = Transaction::where('transaction_to', 'contractor')
+            ->join('vendors', 'vendors.vendor_id', '=', 'transactions.payee_id')
+            ->where('vendor_type', '1');
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
+        }
+
+        if (!empty($contractor_id)) {
+            $query->where('transactions.payee_id', $contractor_id);
+        }
+
+        return $query->orderBy('transactions.created_at', 'desc')->get();
+    }
+
     public function expense()
     {
         return Transaction::where('transaction_to', 'expense')
             ->join('heads', 'heads.head_id', '=', 'transactions.payee_id')
             ->orderBy('transactions.created_at', 'desc')
             ->get();
+    }
+
+    public function expenseFilter($dfrom, $dto, $head_id)
+    {
+        $query = Transaction::where('transaction_to', 'expense')
+            ->join('heads', 'heads.head_id', '=', 'transactions.payee_id');
+
+        if (!empty($dfrom) && !empty($dto)) {
+            $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
+        }
+
+        if (!empty($head_id)) {
+            $query->where('transactions.payee_id', $head_id);
+        }
+
+        return $query->orderBy('transactions.created_at', 'desc')->get();
     }
 
     public function generalVoucher()
@@ -375,12 +480,13 @@ class TransactionRepository implements GlobalInterface
             ->get();
 
         // Vendor Ledger - Purchase Returns
+        // Purchase returns reduce liability, so store as credit (displays in Debit column after reversal)
         $purchaseReturns = \DB::table('returns')
             ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-            ->select('*', 'returns.created_at as timestamp', \DB::raw('SUM(return_materials.quantity * purchase_items.price) as debit'))
+            ->select('*', 'returns.created_at as timestamp', \DB::raw('SUM(return_materials.quantity * purchase_items.price) as credit'))
             ->where('purchases.vendor_id', $id)
             ->groupBy('purchases.purchase_id')
             ->get();
@@ -456,7 +562,7 @@ class TransactionRepository implements GlobalInterface
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-            ->select('*', 'returns.created_at as timestamp', \DB::raw('SUM(return_materials.quantity * purchase_items.price) as debit'))
+            ->select('*', 'returns.created_at as timestamp', \DB::raw('SUM(return_materials.quantity * purchase_items.price) as credit'))
             ->where('purchases.vendor_id', $id)
             ->whereBetween('returns.return_date', [$dfrom, $dto])
             ->groupBy('purchases.purchase_id')
@@ -713,41 +819,49 @@ class TransactionRepository implements GlobalInterface
     {
         // Update Delivery Expense
         $existingItems = Transaction::where('order_id', $id)->get();
+
+        // Get transaction IDs from data (if they exist)
+        $dataTransactionIds = $data['transaction_id'] ?? [];
+
         foreach ($existingItems as $existingItem) {
             // Check if combination does not exist in the provided data
-            if (! in_array($existingItem->transaction_id, $data['transaction_id'])) {
+            if (! in_array($existingItem->transaction_id, $dataTransactionIds)) {
                 Transaction::where('transaction_id', $existingItem->transaction_id)->delete();
             }
         }
-        // Assuming you have an array of product_type_ids and material_ids indexed similarly to quantities
-        foreach ($data['debit'] as $key => $debit) {
-            // Assuming you have these arrays in your $data and they are indexed accordingly
-            $payee = $data['payee_id'][$key] ?? null;
-            $bank = $data['bank_id'][$key] ?? 0;
-            $remark = $data['remarks'][$key] ?? null;
-            $tid = $data['transaction_id'][$key] ?? 0;
 
-            // Validate that both $ptid and $mid are not null
-            if ($debit !== null) {
-                $tItems = [
-                    'transaction_to' => 'expense',
-                    'transaction_date' => $data['stock_date'],
-                    'transaction_type' => 'deliveryExpense',
-                    'order_id' => $id,
-                    'bank_id' => $bank,
-                    'debit' => $debit,
-                    'payee_id' => $payee,
-                    'payee_bank_id' => '0',
-                    'description' => $remark,
-                ];
+        // Check if debit array exists before processing
+        if (isset($data['debit']) && is_array($data['debit'])) {
+            // Assuming you have an array of product_type_ids and material_ids indexed similarly to quantities
+            foreach ($data['debit'] as $key => $debit) {
+                // Assuming you have these arrays in your $data and they are indexed accordingly
+                $payee = $data['payee_id'][$key] ?? null;
+                $bank = $data['bank_id'][$key] ?? 0;
+                $remark = $data['remarks'][$key] ?? null;
+                $tid = $data['transaction_id'][$key] ?? 0;
 
-                $transaction = Transaction::where('transaction_id', $tid)->first();
-                if ($transaction) {
-                    $transaction->update($tItems);
-                } else {
-                    if ($debit > 0) {
-                        $tItems['created_by'] = auth()->id();
-                        Transaction::create($tItems);
+                // Validate that both $ptid and $mid are not null
+                if ($debit !== null) {
+                    $tItems = [
+                        'transaction_to' => 'expense',
+                        'transaction_date' => $data['stock_date'],
+                        'transaction_type' => 'deliveryExpense',
+                        'order_id' => $id,
+                        'bank_id' => $bank,
+                        'debit' => $debit,
+                        'payee_id' => $payee,
+                        'payee_bank_id' => '0',
+                        'description' => $remark,
+                    ];
+
+                    $transaction = Transaction::where('transaction_id', $tid)->first();
+                    if ($transaction) {
+                        $transaction->update($tItems);
+                    } else {
+                        if ($debit > 0) {
+                            $tItems['created_by'] = auth()->id();
+                            Transaction::create($tItems);
+                        }
                     }
                 }
             }

@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>{{ ($issue['table_name'] == 'employee')? 'Employee':'Vendor' }}</label>
+                    <label>{{ ($issue['table_name'] == 'employee')? 'Employee':'Contractor' }}</label>
                     <input type="hidden" name="employee_id" required value="{{$issue['employee_id']}}">
                     <input type="text" class="form-control" required value="{{ $issue['table_name'] === 'employee' ? $issue['employee_no'] . ' - ' . $issue['name'] : $issue['vendor_no'] . ' - ' . $issue['fname'] }}" readonly>
                     <div class="valid-feedback">Good job!</div>
@@ -164,6 +164,55 @@
                   </div>
                 </div>
               </div>
+
+              {{-- Component Product Type Receive Section --}}
+              @php
+                // Extract component products from issued items
+                $issuedComponents = collect();
+                foreach($issueItem as $item) {
+                  if($item->component_product_type_id) {
+                    $issuedComponents->push($item);
+                  }
+                }
+              @endphp
+              @if($issuedComponents->count())
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Component Products (Issued)</label>
+                    <select class="form-control select2" name="component_product_type_id" id="component_product_type_id">
+                      <option value="" disabled selected>Select Component Product</option>
+                      @foreach($issuedComponents->unique('component_product_type_id') as $component)
+                        <option value="{{ $component->component_product_type_id }}"
+                          data-receivable="{{ $component->quantity }}"
+                          data-unit="{{ $component->puname ?? 'Pcs' }}"
+                          data-product-type-id="{{ $component->product_type_id }}">
+                          {{ $component->component_article_no }} - {{ $component->component_name }} | Receivable: {{ $component->quantity }}
+                        </option>
+                      @endforeach
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label for="component_receivable_stock">Receivable Stock</label>
+                    <input type="text" class="form-control" id="component_receivable_stock" name="component_receivable_stock" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" step="1" class="form-control" name="quantityComponent" placeholder="0" id="quantityComponent">
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Add</label><br>
+                    <button type="button" id="addBtnComponent" class="btn btn-success">Add</button>
+                  </div>
+                </div>
+              </div>
+              @endif
 
               <div class="row">
                 <div class="col-md-12">
@@ -333,5 +382,74 @@
   var rstock = {!! $rstock->toJson() !!};
   var ajaxPCUrl = "{{ route('ajaxPC') }}";
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
+
+  // Component Product Type Receiving
+  $(document).ready(function() {
+    // Update receivable stock when component is selected
+    $('#component_product_type_id').on('change', function() {
+      var selected = $(this).find(':selected');
+      var receivable = selected.data('receivable') || 0;
+      var unit = selected.data('unit') || 'Pcs';
+      $('#component_receivable_stock').val(receivable + ' ' + unit);
+      $('#quantityComponent').val('').attr('max', receivable);
+    });
+
+    // Add component to receive table
+    $('#addBtnComponent').on('click', function() {
+      var componentSelect = $('#component_product_type_id');
+      var componentId = componentSelect.val();
+      var quantity = parseFloat($('#quantityComponent').val()) || 0;
+
+      if (!componentId || quantity <= 0) {
+        alert('Please select a component and enter a valid quantity');
+        return;
+      }
+
+      var selected = componentSelect.find(':selected');
+      var receivable = parseFloat(selected.data('receivable')) || 0;
+      var componentText = selected.text().split(' | ')[0]; // Get component name without receivable info
+      var unit = selected.data('unit') || 'Pcs';
+      var productTypeId = selected.data('product-type-id') || 0; // Get parent product's product_type_id
+
+      if (quantity > receivable) {
+        alert('Quantity cannot exceed receivable stock (' + receivable + ')');
+        return;
+      }
+
+      // Add to receive table
+      var rowCount = $('#items-table tbody tr').length + 1;
+      var row = '<tr>' +
+        '<td>' + rowCount + '</td>' +
+        '<td>' + componentText + ' <span class="badge badge-warning">Component</span></td>' +
+        '<td>-</td>' +
+        '<td>-</td>' +
+        '<td>' + quantity + ' ' + unit +
+          '<input type="hidden" name="material_id[]" value="0">' +
+          '<input type="hidden" name="product_type_id[]" value="' + productTypeId + '">' +
+          '<input type="hidden" name="stage_id[]" value="0">' +
+          '<input type="hidden" name="work_logs[]" value="0">' +
+          '<input type="hidden" name="quantity[]" value="' + quantity + '">' +
+          '<input type="hidden" name="component_id[]" value="' + componentId + '">' +
+        '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fas fa-trash"></i></button></td>' +
+        '</tr>';
+
+      $('#items-table tbody').append(row);
+
+      // Update receivable quantity in dropdown
+      var newReceivable = receivable - quantity;
+      selected.data('receivable', newReceivable);
+      if (newReceivable <= 0) {
+        selected.remove();
+      } else {
+        selected.text(componentText + ' | Receivable: ' + newReceivable);
+      }
+
+      // Reset inputs
+      componentSelect.val('').trigger('change');
+      $('#component_receivable_stock').val('');
+      $('#quantityComponent').val('');
+    });
+  });
 </script>
 @endsection

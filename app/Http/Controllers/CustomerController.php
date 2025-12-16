@@ -130,9 +130,14 @@ class CustomerController extends Controller
         } else {
             $detail = $this->transactionRepository->cDetail($id);
         }
-        $totalCredit = $detail->sum('credit');
-        $totalDebit = $detail->sum('debit');
-        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+
+        // For customer ledger (receivable account):
+        // - Deliveries are stored in debit (customer owes us)
+        // - Payments are stored in debit (cash inflow to us)
+        // Balance = Total Deliveries - Total Payments
+        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('debit');
+        $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('debit');
+        $balance = $oBalance + $totalDeliveries - $totalPayments + $cBalance;
 
         return view('customerDetail', [
             'customer' => $customer,
@@ -165,9 +170,14 @@ class CustomerController extends Controller
         } else {
             $detail = $this->transactionRepository->cDetail($id);
         }
-        $totalCredit = $detail->sum('credit');
-        $totalDebit = $detail->sum('debit');
-        $balance = $totalCredit - $totalDebit + $oBalance + $cBalance;
+
+        // For customer ledger (receivable account):
+        // - Deliveries are stored in debit (customer owes us)
+        // - Payments are stored in debit (cash inflow to us)
+        // Balance = Total Deliveries - Total Payments
+        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('debit');
+        $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('debit');
+        $balance = $oBalance + $totalDeliveries - $totalPayments + $cBalance;
 
         return view('print.customer-ledger', [
             'customer' => $customer,

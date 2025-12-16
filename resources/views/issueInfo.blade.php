@@ -100,7 +100,13 @@
                             <tr>
                               <td>{{$loop->index + 1}}</td>
                               <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                              <td>{{($item->name)? $item->name:$item->stage}}</td>
+                              <td>
+                                @if($item->component_product_type_id)
+                                  <span class="badge badge-info">Component:</span> {{$item->component_article_no ?? ''}} - {{$item->component_name ?? ''}}
+                                @else
+                                  {{($item->name)? $item->name:$item->stage}}
+                                @endif
+                              </td>
                               <td>{{$item->quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                               <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : $item->quantity }} {{$item->puname}}</td>
                               {{-- <td>{{ $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0' }} Units</td> --}}
@@ -139,7 +145,13 @@
                             <tr>
                               <td>{{$loop->index + 1}}</td>
                               <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                              <td>{{($item->name)? $item->name:$item->stage}}</td>
+                              <td>
+                                @if($item->component_product_type_id)
+                                  <span class="badge badge-info">Component:</span> {{$item->component_article_no ?? ''}} - {{$item->component_name ?? ''}}
+                                @else
+                                  {{($item->name)? $item->name:$item->stage}}
+                                @endif
+                              </td>
                               <td>{{$item->total_quantity}} {{($item->uname)? $item->uname:$item->puname}}</td>
                             </tr>
                           @endforeach
