@@ -223,7 +223,7 @@
                     <label>Product Stage</label>
                     <select class="form-control select2" name="stage_id" id="stage_id" multiple>
                       <option value="" disabled>Select Stage</option>
-                      @foreach($stages as $stage)
+                      @foreach($stagesAll as $stage)
                         <option value="{{ $stage->head_id }}">{{ $stage->name }}</option>
                       @endforeach
                     </select>

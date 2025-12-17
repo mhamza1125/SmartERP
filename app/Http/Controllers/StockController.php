@@ -1052,6 +1052,7 @@ class StockController extends Controller
                 }
 
                 $stages = $allStages->slice($startIndex, $endIndex - $startIndex + 1)->values();
+                $stagesAll = $allStages->values();
                 $startStage = $stages->first();
                 $endStage = $stages->last();
             }
@@ -1130,6 +1131,7 @@ class StockController extends Controller
             'end_stage_id' => $endStageId,
             'productType' => $product,
             'stages' => $stages,
+            'stagesAll' => $stagesAll,
             'startStage' => $startStage,
             'endStage' => $endStage,
             'order' => $order,
