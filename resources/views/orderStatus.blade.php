@@ -9,8 +9,8 @@
             <h4>Order Status</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a class="btn btn-info" href="{{ route('order.print', $order['order_id']) }}" target="_blank">
-                  <i class="fas fa-file-alt"></i> Print
+                <a class="btn btn-info" href="{{ route('order.production', $order['order_id']) }}" target="_blank">
+                  <i class="fas fa-file-alt"></i> Production Order
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>
