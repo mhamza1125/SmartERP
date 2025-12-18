@@ -13,7 +13,13 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('transaction.addVPayment')}}" class="btn btn-primary">Pay</a>
+                <a href="{{ $vendor['vendor_type'] == 0 
+                        ? route('transaction.addVPayment') 
+                        : route('transaction.addCPayment') }}" 
+                  class="btn btn-primary">
+                    Pay
+                </a>
+
               </div>
             </div>
           </div>

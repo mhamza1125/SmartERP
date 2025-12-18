@@ -87,20 +87,20 @@
         <tbody>
             <tr>
                 <td style="padding: 4px;">{{ $expense['description'] ?? 'Expense Transaction' }}</td>
-                <td class="text-right amount" style="padding: 4px;">{{ $expense['debit'] ? number_format($expense['debit'], 2) : '-' }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
+                <td class="text-right amount" style="padding: 4px;">{{ $expense['debit'] ? number_format($expense['debit'], 2) : '-' }}</td>
             </tr>
             @if($expense['bank_id'])
             <tr>
                 <td style="padding: 4px;">{{ $expense['bname'] ?? 'Bank Account' }}</td>
-                <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['debit'] ? number_format($expense['debit'], 2) : '-' }}</td>
+                <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
             </tr>
             @else
             <tr>
                 <td style="padding: 4px;">Cash Account</td>
-                <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['debit'] ? number_format($expense['debit'], 2) : '-' }}</td>
+                <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
             </tr>
             @endif
         </tbody>

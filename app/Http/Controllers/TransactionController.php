@@ -519,7 +519,7 @@ class TransactionController extends Controller
 
             // Set ledger_flag=0 so general vouchers don't appear in Cash/Bank ledgers
             // They will only appear in payee ledgers (Vendor/Contractor/Employee/Customer)
-            $validatedData['ledger_flag'] = 0;
+            $validatedData['ledger_flag'] = 1; // Updated from 0 to 1
         }
 
         // For expense payments: handle debit/credit based on expense_type

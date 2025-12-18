@@ -1,0 +1,66 @@
+===============================================================================================
+==========   Testing   ========================================================================
+===============================================================================================
+Todo (Required): 
+1. Commercial Invoice
+2. Add ntn and other fields in company
+3. Default issuance should show all products
+    Keep Select Order as default selected not the Default Issuance
+    Clicking on it will show all products, Just like ptc modal
+4. Show material unit along with it
+    Add / edit / view purchase
+    Add / edit / view receive
+    Add / edit / view return
+5. Edit product and material should keep showing the Opening stock. Currently it's always 0
+6. Multiple order same perfomra Invoice / commercial invoice / packing list
+7. Order Status view update
+    Show delivered qty if partially or fully delivered
+    Virtual stock: What is in production (Will get to stock)
+    Available stock based on Running order
+8. Show ptc of each product with order in order details
+9. http://127.0.0.1:8000/ptc/create?order_id=43&product_type_id=51&start_stage_id=72&end_stage_id=118
+    Along with order qty also show the already issued qty from other ptcs
+    On create PTC show already issued ptc quantity for the product in order
+10. Don't receive extra product in issuance / receiving (Can receive more when material is issued)
+
+Accounts Task: 
+1. Add city + button in add employee and other pages
+2. Show active / inactive status of employee and other person
+3. Increase limit of field as Varchar => long text in vendor (Product and Material selection)
+4. Bank to cash and cash to bank transfer (Add Check No in desc should show up in print)
+5. Expense.blade.php view columns update
+Date, Voucher No, Desc, Debit, Credit, Balance (Debit +, Credit -)
+6. Description in printing showing <p> tag. Don't display html tags in printing
+7. Single entry General Voucher (Show in the ledgers) Fixed
+    Debit Voucher: Removed form the cash 
+    Credit: Increased cash
+8. Purchase ledger just like expense ledger
+9. Tested: Above Hr/Payroll
+
+Admin Task: 
+1. Add production order btn to order status (Done)
+2. Remove the product stage from production order
+    Also show available stock of product in that print
+3. Hs code in packing list, performa invoice, 
+4. Pickup rex and ntn number and moove to company detail
+5. FI no is needed on commercial no. Not needed on perfoma invoice
+6.  Only central display of footer in prints
+
+Running order stock view (All)
+Virtual Stock (Stock what we will get)
+
+Todo (Optional):
+
+1. Balance Sheet (Combined ledger values)
+2. Hide customer detials on accounts (Permissions)
+3. Profit/Loss statements
+4. Customer amount display fix Net / Gross amount
+    (Customer fully paid, But we received little less due to bank charges)
+5. Remove bqty from the products and respective pages, Not needed
+6. Use the product stages as costing heads
+7. Issuance group needs rework Not showing up the products
+8. Single payment of multiple orders
+9. We should pay vendor regardless of purchase
+10. Delivery return affected nothing
+    That should affect stock as well as customer ledger
+11. Default Stock of Material / Product Adjustment (Increase / Decrease)
