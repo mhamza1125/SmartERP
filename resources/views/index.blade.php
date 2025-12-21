@@ -180,11 +180,11 @@
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">General Voucher</a></li>
-                <li><a class="nav-link" href="{{ route('ePayment') }}">Employee</a></li>
-                <li><a class="nav-link" href="{{ route('vPayment') }}">Vendor</a></li>
-                <li><a class="nav-link" href="{{ route('cPayment') }}">Contractor</a></li>
-                <li><a class="nav-link" href="{{ route('expense') }}">Expense</a></li>
-                <li><a class="nav-link" href="{{ route('oPayment') }}">Customer Order</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addExpense') }}">Add Expense</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addEPayment') }}">Pay Employee</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addVPayment') }}">Pay Vendor</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addCPayment') }}">Pay Contractor</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addOPayment') }}">Receive Order Payment</a></li>
               </ul>
             </li>
             @endcan
@@ -198,8 +198,8 @@
                 <ul class="dropdown-menu">
                     {{-- Bank / Cash Section --}}
                     @can('access', App\Models\Bank::class)
-                        {{-- <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li> --}}
-                        <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li>
+                        <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li>
+                        {{-- <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li> --}}
                         <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
                     @endcan
 
@@ -241,6 +241,9 @@
                 <li><a class="nav-link" href="{{ route('stock.daily') }}">Daily Issuance</a></li>
                 <li><a class="nav-link" href="{{ route('rstock.daily') }}">Daily Receiving</a></li>
                 <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
+                <li><a class="nav-link" href="{{ route('purchase.ledger') }}">Purchase Ledger</a></li>
+                <li><a class="nav-link" href="{{ route('reports.product.stock.requirements') }}">Product Stock Requirements</a></li>
+                <li><a class="nav-link" href="{{ route('reports.product.stock.ledger') }}">Product Stock Ledger</a></li>
               </ul>
             </li>
             @endcan

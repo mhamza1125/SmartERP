@@ -123,7 +123,7 @@
                               <td>{{$loop->index + 1}}</td>
                               <td>
                                 @if($purchase['purchase_type'] == 'material')
-                                  {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                                  {{ $item->material_no ?? '' }}
                                 @else
                                   {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
                                 @endif

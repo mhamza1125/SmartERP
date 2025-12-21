@@ -13,6 +13,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\PurchaseItemRepository;
+use App\Repositories\CompanyRepository;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
@@ -33,6 +34,8 @@ class OrderController extends Controller
 
     protected $purchaseItemRepository;
 
+    protected $companyRepository;
+
     public function __construct(
         HeadRepository $headRepository,
         BankRepository $bankRepository,
@@ -42,6 +45,7 @@ class OrderController extends Controller
         OrderItemRepository $orderItemRepository,
         StockItemRepository $stockItemRepository,
         PurchaseItemRepository $purchaseItemRepository,
+        CompanyRepository $companyRepository,
     ) {
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
@@ -52,6 +56,7 @@ class OrderController extends Controller
         $this->orderItemRepository = $orderItemRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->purchaseItemRepository = $purchaseItemRepository;
+        $this->companyRepository = $companyRepository;
     }
 
     public function index()
@@ -131,11 +136,21 @@ class OrderController extends Controller
         $banks = $this->bankRepository->self();
         $packingList = $this->getPackingList($id);
 
+        // Get all PTCs (Production Tracking Cards) for this order
+        $ptcs = DB::table('stocks')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->where('stocks.order_id', $id)
+            ->where('stocks.is_ptc_master', 1)
+            ->select('stocks.*', 'orders.order_status')
+            ->orderBy('stocks.stock_no')
+            ->get();
+
         return view('orderInfo', [
             'order' => $order,
             'orderItem' => $orderItem,
             'banks' => $banks,
             'packingList' => $packingList,
+            'ptcs' => $ptcs,
         ]);
     }
 
@@ -167,9 +182,55 @@ class OrderController extends Controller
         $order = $this->orderRepository->get($id);
         $orderItem = $this->orderItemRepository->get($id);
 
+        // Fetch stock data for each product using the same logic as the /stock page
+        $stockData = [];
+
+        // Get unique product_type_ids from order items
+        $productTypeIds = $orderItem->pluck('product_type_id')->unique();
+
+        foreach ($productTypeIds as $productTypeId) {
+            // Get stock data for this product type using the repository method
+            // This uses the same calculation logic as the /stock page
+            $allStockForProduct = $this->stockItemRepository->pStockByProductType($productTypeId);
+
+            // Store stock by stage_id for easy lookup
+            $stageStockMap = [];
+            foreach ($allStockForProduct as $stock) {
+                $stageStockMap[$stock->stage_id] = [
+                    'stockIn' => $stock->stockIn ?? 0,
+                    'stockOut' => $stock->stockOut ?? 0,
+                ];
+            }
+
+            // For each order item with this product type, calculate finished and unfinished stock
+            $itemsWithThisProduct = $orderItem->where('product_type_id', $productTypeId);
+            foreach ($itemsWithThisProduct as $item) {
+                $orderedStageId = $item->product_stage_id;
+
+                // Finished Stock: Stock at the ordered stage only
+                $finishedStockData = $stageStockMap[$orderedStageId] ?? ['stockIn' => 0, 'stockOut' => 0];
+                $finishedStockQty = $finishedStockData['stockIn'] - $finishedStockData['stockOut'];
+
+                // Unfinished Stock: Sum of stock at all OTHER stages (excluding the ordered stage)
+                $unfinishedStockQty = 0;
+                foreach ($stageStockMap as $stageId => $stockData) {
+                    if ($stageId != $orderedStageId) {
+                        $unfinishedStockQty += $stockData['stockIn'] - $stockData['stockOut'];
+                    }
+                }
+
+                $key = $item->product_type_id . '_' . $item->product_stage_id;
+                $stockData[$key] = [
+                    'finished_stock' => max(0, $finishedStockQty), // Ensure non-negative
+                    'unfinished_stock' => max(0, $unfinishedStockQty), // Ensure non-negative
+                ];
+            }
+        }
+
         return view('print.order-production', [
             'order' => $order,
             'orderItem' => $orderItem,
+            'stockData' => $stockData,
         ]);
     }
 
@@ -181,6 +242,7 @@ class OrderController extends Controller
         $this->authorize('show', Order::class);
         $order = $this->orderRepository->get($id);
         $orderItem = $this->orderItemRepository->get($id);
+        $company = $this->companyRepository->first();
 
         // Get bank details if bank_id is provided in query parameter
         $bankDetails = null;
@@ -198,6 +260,7 @@ class OrderController extends Controller
             'order' => $order,
             'orderItem' => $orderItem,
             'bankDetails' => $bankDetails,
+            'company' => $company,
         ]);
     }
 

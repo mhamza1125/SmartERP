@@ -99,7 +99,7 @@
                             -
                         @endif
                     </td>
-                    <td>{{ $transaction->description ?? $transaction->purchase_no ?? 'Transaction' }}</td>
+                    <td>{{ strip_tags($transaction->description ?? $transaction->purchase_no ?? 'Transaction') }}</td>
                     <td class="text-right amount">{{ $displayDebit > 0 ? number_format($displayDebit, 2) : '-' }}</td>
                     <td class="text-right amount">{{ $displayCredit > 0 ? number_format($displayCredit, 2) : '-' }}</td>
                     <td class="text-right amount">{{ number_format($runningBalance, 2) }}</td>

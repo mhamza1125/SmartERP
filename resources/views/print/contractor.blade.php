@@ -65,7 +65,7 @@
 <div class="info-section avoid-break">
     <h3>Contractor Details</h3>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {!! nl2br(e($vendor['description'])) !!}
+        {!! nl2br(e(strip_tags($vendor['description']))) !!}
     </div>
 </div>
 @endif

@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Cash Balance Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>
+              <div class="btn-group">
+                <a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>
+                <a href="{{ route('transaction.addTransfer') }}" class="btn btn-success">Bank/Cash Transfer</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

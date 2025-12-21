@@ -204,25 +204,25 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>REX No <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control" name="rex_no" placeholder="REX Number" value="{{old('rex_no')}}">
-                    <div class="valid-feedback">Good job!</div>
+                    <label>REX No <small class="text-muted">(From Company)</small></label>
+                    <input type="text" class="form-control" value="{{ $company->rex_no ?? 'N/A' }}" readonly>
+                    <small class="form-text text-muted">This field is managed in Company Settings</small>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>NTN <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control" name="ntn" placeholder="NTN Number" value="{{old('ntn')}}">
-                    <div class="valid-feedback">Good job!</div>
+                    <label>NTN <small class="text-muted">(From Company)</small></label>
+                    <input type="text" class="form-control" value="{{ $company->ntn ?? 'N/A' }}" readonly>
+                    <small class="form-text text-muted">This field is managed in Company Settings</small>
                   </div>
                 </div>
               </div>
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Statement of Origin <small class="text-muted">(Optional)</small></label>
-                    <textarea class="form-control" name="so_origin" rows="3" placeholder="Statement of Origin for commercial invoice">{{old('so_origin')}}</textarea>
-                    <div class="valid-feedback">Good job!</div>
+                    <label>Statement of Origin <small class="text-muted">(From Company)</small></label>
+                    <textarea class="form-control" rows="3" readonly>{{ $company->statement_of_origin ?? 'N/A' }}</textarea>
+                    <small class="form-text text-muted">This field is managed in Company Settings</small>
                   </div>
                 </div>
               </div>
@@ -261,15 +261,24 @@
                                 $aggregatedItems[$key] = $item;
                               } else {
                                 $aggregatedItems[$key]->quantity += $item->quantity;
-                                $aggregatedItems[$key]->stockOutDelivered += $item->stockOutDelivered;
+                                // Don't sum stockOut or stockOutDelivered - they represent totals for this product/stage
+                                // Just keep the value from the first item (they should all be the same)
                                 $aggregatedItems[$key]->stockIn += $item->stockIn;
-                                $aggregatedItems[$key]->stockOut += $item->stockOut;
+                                // stockOut and stockOutDelivered are NOT summed - they're already totals
                               }
                             }
                             $index = 1;
                           @endphp
                           @foreach($aggregatedItems as $item)
-                            @unless(($item->stockIn - $item->stockOut) <= 0)
+                            @php
+                              // Calculate available quantity for delivery
+                              $availableQty = $item->stockIn - $item->stockOut;
+                              // Calculate remaining to deliver (ordered - already delivered)
+                              $remainingQty = $item->quantity - $item->stockOutDelivered;
+                              // Actual deliverable is the minimum of available and remaining
+                              $deliverableQty = min($availableQty, $remainingQty);
+                            @endphp
+                            @unless($deliverableQty <= 0)
                               <tr>
                                 <td>{{$index++}}</td>
                                 <td>{{$item->article_no}} - Size {{$item->sname}}
@@ -280,11 +289,11 @@
                                   <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
                                 </td>
                                 <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
-                                <td>{{number_format($item->quantity - $item->stockOutDelivered)}}</td>
+                                <td>{{number_format($remainingQty)}}</td>
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
-                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}} boxes</td>
+                                <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" data-remaining="{{$item->quantity - $item->stockOutDelivered}}" style="width:100px">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                                 </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
@@ -299,9 +308,33 @@
                         @endif
                       @else
                         @if($stock->count())
-                        @php $index = 1; @endphp
-                          @foreach($stock as $item)
-                            @unless(($item->stockIn - $item->stockOut) <= 0)
+                        @php
+                          $aggregatedItems = [];
+                          foreach($stock as $item) {
+                            $item = (object) $item;
+                            $key = $item->product_type_id . '_' . $item->stage_id;
+                            if (!isset($aggregatedItems[$key])) {
+                              $aggregatedItems[$key] = $item;
+                            } else {
+                              $aggregatedItems[$key]->quantity += $item->quantity;
+                              // Don't sum stockOut or stockOutDelivered - they represent totals for this product/stage
+                              // Just keep the value from the first item (they should all be the same)
+                              $aggregatedItems[$key]->stockIn += $item->stockIn;
+                              // stockOut and stockOutDelivered are NOT summed - they're already totals
+                            }
+                          }
+                          $index = 1;
+                        @endphp
+                          @foreach($aggregatedItems as $item)
+                            @php
+                              // Calculate available quantity for delivery
+                              $availableQty = $item->stockIn - $item->stockOut;
+                              // Calculate remaining to deliver (ordered - already delivered)
+                              $remainingQty = $item->quantity - $item->stockOutDelivered;
+                              // Actual deliverable is the minimum of available and remaining
+                              $deliverableQty = min($availableQty, $remainingQty);
+                            @endphp
+                            @unless($deliverableQty <= 0)
                               <tr>
                                 <td>{{$index++}}</td>
                                 <td>{{$item->article_no}} - Size {{$item->sname}}
@@ -312,11 +345,11 @@
                                   <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
                                 </td>
                                 <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
-                                <td>{{number_format($item->quantity - $item->stockOutDelivered)}}</td>
+                                <td>{{number_format($remainingQty)}}</td>
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
-                                <td>{{number_format($item->stockIn - $item->stockOut)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut)*$item->bqty, 2)}} boxes</td>
+                                <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$item->stockIn - $item->stockOut}}" data-bqty="{{$item->bqty}}" data-remaining="{{$item->quantity - $item->stockOutDelivered}}" style="width:100px">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                                 </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>

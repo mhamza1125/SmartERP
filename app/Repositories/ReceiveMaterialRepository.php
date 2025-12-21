@@ -20,7 +20,7 @@ class ReceiveMaterialRepository implements GlobalInterface
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
             ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->select('material_no', 'materials.name', 'heads.name as uname', 'receive_materials.*')
+            ->select('material_no', 'materials.name', 'heads.name as hname', 'receive_materials.*')
             ->get();
     }
 

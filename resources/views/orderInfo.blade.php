@@ -25,6 +25,11 @@
                 </div>
               </div>
               <div class="btn-group">
+                @if(isset($ptcs) && $ptcs->count() > 0)
+                  <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#ptcModal">
+                    <i class="fas fa-tasks"></i> PTCs ({{ $ptcs->count() }})
+                  </button>
+                @endif
                 <a href="{{ route('order.estimate', $order['order_id']) }}" class="btn btn-primary">Estimate</a>
                 <a href="{{ route('order.status', $order['order_id']) }}" class="btn btn-primary">Order Status</a>
                 <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>
@@ -130,7 +135,7 @@
                                 <td>{{$item->pname}}</td>
                               @endif
                               <td>{{$item->sname}}</td>
-                              <td>{{$item->hname}}</td>
+                              <td>{{$item->name}}</td>
                               <td>{{$item->uname}}</td>
                               <td>{{$item->quantity}}</td>
                               <td>{{ $item->box_quantity ? number_format($item->box_quantity) . ' boxes' : 'N/A' }}</td>
@@ -282,5 +287,113 @@ function printProformaInvoice() {
     </div>
   </div>
 </div>
+
+<!-- Production Tracking Cards (PTCs) Modal -->
+@if(isset($ptcs) && $ptcs->count() > 0)
+<div class="modal fade" id="ptcModal" tabindex="-1" role="dialog" aria-labelledby="ptcModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="ptcModalLabel">
+          <i class="fas fa-tasks"></i> Production Tracking Cards (PTCs)
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if($ptcs->count() > 0)
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 15%">PTC No</th>
+                  <th style="width: 20%">Quantity</th>
+                  <th style="width: 25%">Status</th>
+                  <th style="width: 20%">Date</th>
+                  <th style="width: 20%">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach($ptcs as $ptc)
+                  @php
+                    // Extract quantity from description field
+                    // Description format: "Qty: XXX" or similar
+                    $quantity = 'N/A';
+                    if ($ptc->description) {
+                      // Try to extract quantity from description
+                      if (preg_match('/Qty:\s*(\d+)/i', $ptc->description, $matches)) {
+                        $quantity = $matches[1];
+                      } elseif (preg_match('/(\d+)\s*units?/i', $ptc->description, $matches)) {
+                        $quantity = $matches[1];
+                      }
+                    }
+
+                    // Determine status badge based on order_status or stock_status
+                    $statusBadge = 'badge-secondary';
+                    $statusText = 'Unknown';
+
+                    // Use order_status if available, otherwise use stock_status
+                    $status = $ptc->order_status ?? $ptc->stock_status;
+
+                    if ($status == 1) {
+                      $statusBadge = 'badge-secondary';
+                      $statusText = 'Draft';
+                    } elseif ($status == 2) {
+                      $statusBadge = 'badge-success';
+                      $statusText = 'Confirmed';
+                    } elseif ($status == 3) {
+                      $statusBadge = 'badge-info';
+                      $statusText = 'Dispatched';
+                    } elseif ($status == 4) {
+                      $statusBadge = 'badge-primary';
+                      $statusText = 'Delivered';
+                    } elseif ($status == 5) {
+                      $statusBadge = 'badge-danger';
+                      $statusText = 'Cancelled';
+                    } elseif ($status == 6) {
+                      $statusBadge = 'badge-warning';
+                      $statusText = 'In Progress';
+                    } elseif ($status == 7) {
+                      $statusBadge = 'badge-success';
+                      $statusText = 'Completed';
+                    }
+                  @endphp
+                  <tr>
+                    <td>
+                      <strong>PTC-{{ $ptc->stock_no }}</strong>
+                    </td>
+                    <td>
+                      {{ $quantity }}
+                    </td>
+                    <td>
+                      <span class="badge {{ $statusBadge }}">{{ $statusText }}</span>
+                    </td>
+                    <td>
+                      {{ $ptc->stock_date ?? 'N/A' }}
+                    </td>
+                    <td>
+                      <a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-sm btn-info" title="View PTC Details">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        @else
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No Production Tracking Cards found for this order.
+          </div>
+        @endif
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endif
 
 @endsection

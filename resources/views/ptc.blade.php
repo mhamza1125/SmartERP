@@ -58,9 +58,9 @@
                       </td>
                       <td>
                         <a href="{{ route('ptc.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
-                        @if($item->stock_status == 6)
+                        {{-- @if($item->stock_status == 6)
                           <a href="{{ route('ptc.move.form', $item->stock_id) }}" class="btn btn-success btn-sm">Move Stage</a>
-                        @endif
+                        @endif --}}
                       </td>
                     </tr>
                     @endforeach

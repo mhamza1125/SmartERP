@@ -101,7 +101,7 @@
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
                         @foreach($product as $item)
-                          <option value="{{$item->product_type_id}}" {{ old('sproduct_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
+                          <option value="{{$item->product_type_id}}" data-size-id="{{$item->size_id}}" {{ old('sproduct_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -185,8 +185,8 @@
                           @foreach($orderItem as $item)
                             <tr data-item-id="{{ $item->order_item_id }}">
                               <td></td>
-                              <td>{{$item->article_no}} - Size {{$item->hname}}
-                                <input type="hidden" name="name[]" value="{{$item->article_no}} - Size {{$item->hname}}">
+                              <td>{{$item->article_no}} - Size {{$item->name}}
+                                <input type="hidden" name="name[]" value="{{$item->article_no}} - Size {{$item->name}}">
                                 <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
                               </td>
                               <td>{{$item->sname}}
@@ -268,6 +268,28 @@
         });
       }
     });
+
+    // Add duplicate prevention logic for Edit Order page
+    /*$('#addBtn').on('click', function () {
+      var productId = $('select[name="product_type_id"]').val();
+      var stageId = $('select[name="stage_id"]').val();
+      var existingProduct = false;
+
+      $('#items-table tbody tr').each(function (index, row) {
+        var existingProductId = $(row).find('input[name="product_type_id[]"]').val();
+        var existingStageId = $(row).find('input[name="product_stage_id[]"]').val();
+
+        if (existingProductId == productId && existingStageId == stageId) {
+          existingProduct = true;
+          return false; 
+        }
+      });
+
+      if (existingProduct) {
+        alert('This product with the same size and stage already exists in the table.');
+        return false;
+      }
+    });*/
   });
   </script>
 @endsection

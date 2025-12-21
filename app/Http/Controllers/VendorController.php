@@ -414,6 +414,9 @@ class VendorController extends Controller
         $vmaterial = $this->materialRepository->getMaterial($id['material_id']);
         $vproduct = $this->productRepository->getProduct($id['product_id'] ?? '0');
 
+        // Fetch opening balance transaction
+        $openingBalance = $this->transactionRepository->getOB($id->vendor_id, 'vendor');
+
         return view('editVendor', [
             'city' => $city,
             'vendor' => $id,
@@ -422,6 +425,7 @@ class VendorController extends Controller
             'vmaterial' => $vmaterial,
             'vproduct' => $vproduct,
             'vendorType' => $vendorType,
+            'openingBalance' => $openingBalance,
         ]);
     }
 
@@ -430,9 +434,13 @@ class VendorController extends Controller
         $this->authorize('contractors_edit', Vendor::class);
         $city = $this->headRepository->get('8');
 
+        // Fetch opening balance transaction
+        $openingBalance = $this->transactionRepository->getOB($id->vendor_id, 'contractor');
+
         return view('editContractor', [
             'city' => $city,
             'vendor' => $id,
+            'openingBalance' => $openingBalance,
         ]);
     }
 

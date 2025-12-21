@@ -24,6 +24,7 @@ use App\Http\Controllers\ProductCostController;
 use App\Http\Controllers\ProductMaterialController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReceiveController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReturnController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\TransactionController;
@@ -226,6 +227,8 @@ Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purc
 Route::get('/ajaxPMQty', [PurchaseController::class, 'ajaxPMQty'])->name('ajaxPMQty'); //Material Qty
 Route::get('/addProductPurchase', [PurchaseController::class, 'create2'])->name('productPurchase.add');
 Route::get('/editProductPurchase/{id}', [PurchaseController::class, 'edit2'])->name('productPurchase.edit');
+Route::get('/pLedger', [PurchaseController::class, 'purchaseLedger'])->name('purchase.ledger');
+Route::post('/pLedger', [PurchaseController::class, 'purchaseLedger'])->name('purchase.ledger.filter');
 
 // Purchase Receive
 Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
@@ -378,6 +381,12 @@ Route::get('/editGeneralVoucher/{id}', [TransactionController::class, 'editGener
 Route::get('/addBRS', [TransactionController::class, 'createBRS'])->name('transaction.addBRS');
 Route::get('/BRS/{id}', [TransactionController::class, 'showBRS'])->name('transaction.showBRS');
 Route::get('/editBRS/{id}', [TransactionController::class, 'editBRS'])->name('transaction.editBRS');
+// Bank/Cash Transfer
+Route::get('/addTransfer', [TransactionController::class, 'createTransfer'])->name('transaction.addTransfer');
+Route::post('/transfer', [TransactionController::class, 'storeTransfer'])->name('transaction.storeTransfer');
+Route::get('/transfer/{id}', [TransactionController::class, 'showTransfer'])->name('transaction.showTransfer');
+Route::get('/editTransfer/{id}', [TransactionController::class, 'editTransfer'])->name('transaction.editTransfer');
+Route::post('/transfer/{id}', [TransactionController::class, 'updateTransfer'])->name('transaction.updateTransfer');
 // Bank Balance
 Route::get('/bankBalance', [TransactionController::class, 'bankBalance'])->name('bankBalance');
 Route::get('/bankBalance/{id}', [TransactionController::class, 'showBBalance'])->name('transaction.showBBalance');
@@ -393,12 +402,17 @@ Route::get('/addOPayment', [TransactionController::class, 'createOPayment'])->na
 Route::get('/oPayment/{id}', [TransactionController::class, 'showOPayment'])->name('transaction.showOPayment');
 Route::get('/editOPayment/{id}', [TransactionController::class, 'editOPayment'])->name('transaction.editOPayment');
 
+// Reports
+Route::get('/reports/product-stock-requirements', [ReportController::class, 'productStockRequirements'])->name('reports.product.stock.requirements');
+Route::get('/reports/product-stock-ledger', [ReportController::class, 'productStockLedger'])->name('reports.product.stock.ledger');
+
 // Standard Print Routes
 Route::get('/order/print/{id}', [OrderController::class, 'printOrder'])->name('order.print');
 Route::get('/order/production/{id}', [OrderController::class, 'printProduction'])->name('order.production');
 Route::get('/order/proforma/{id}', [OrderController::class, 'printProforma'])->name('order.proforma');
 Route::get('/payment/print/{id}', [TransactionController::class, 'printPayment'])->name('payment.print');
 Route::get('/delivery/print/{id}', [DeliveryController::class, 'printDelivery'])->name('delivery.print');
+Route::get('/delivery/commercial/{id}', [DeliveryController::class, 'printCommercial'])->name('delivery.commercial');
 Route::get('/product/print/{id}', [ProductController::class, 'printProduct'])->name('product.print');
 Route::get('/issuance/print/{id}', [StockController::class, 'printIssuance'])->name('issuance.print');
 Route::get('/receive-issuance/print/{id}', [StockController::class, 'printReceiveIssuance'])->name('receive-issuance.print');
@@ -418,6 +432,7 @@ Route::get('/stock/print', [StockController::class, 'printStock'])->name('stock.
 Route::get('/cLedger/print/{id}', [CustomerController::class, 'printCustomerLedger'])->name('customer.ledger.print');
 Route::get('/eLedger/print/{id}', [EmployeeController::class, 'printEmployeeLedger'])->name('employee.ledger.print');
 Route::get('/vLedger/print/{id}', [VendorController::class, 'printVendorLedger'])->name('vendor.ledger.print');
+Route::get('/pLedger/print', [PurchaseController::class, 'printPurchaseLedger'])->name('purchase.ledger.print');
 Route::get('/expense/print/{id}', [TransactionController::class, 'printExpense'])->name('expense.print');
 Route::get('/brs/print/{id}', [TransactionController::class, 'printBRS'])->name('brs.print');
 

@@ -255,6 +255,16 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function createTransfer()
+    {
+        $this->authorize('create', Transaction::class);
+        $bank = $this->bankRepository->self();
+
+        return view('addTransfer', [
+            'bank' => $bank,
+        ]);
+    }
+
     public function createEPayment()
     {
         $this->authorize('create', Transaction::class);
@@ -618,6 +628,78 @@ class TransactionController extends Controller
         }
     }
 
+    public function storeTransfer(Request $request)
+    {
+        $this->authorize('create', Transaction::class);
+
+        $request->validate([
+            'from_bank_id' => 'required',
+            'to_bank_id' => 'required',
+            'amount' => 'required|numeric|min:0.01',
+            'transaction_date' => 'required|date',
+        ]);
+
+        $fromBankId = $request->input('from_bank_id');
+        $toBankId = $request->input('to_bank_id');
+        $amount = $request->input('amount');
+        $checkNo = $request->input('check_no');
+        $description = $request->input('description');
+        $transactionDate = $request->input('transaction_date');
+
+        // Validate that from and to accounts are different
+        if ($fromBankId === $toBankId) {
+            return redirect()->back()->with('fails', 'From and To accounts must be different')->withInput();
+        }
+
+        // Check balance for outflow account
+        if ($fromBankId != '0') {
+            $fromBalance = $this->transactionRepository->bankBalance2($fromBankId);
+            $balance = ($fromBalance->tdebit ?? 0) - ($fromBalance->tcredit ?? 0);
+        } else {
+            $balance = $this->transactionRepository->cashBalance();
+        }
+
+        if ($balance < $amount) {
+            return redirect()->back()->with('fails', 'Insufficient Balance in From Account')->withInput();
+        }
+
+        // Build description with check number if provided
+        $fullDescription = $description;
+        if ($checkNo) {
+            $fullDescription = ($description ? $description . ' - ' : '') . 'Check No: ' . $checkNo;
+        }
+
+        // Create first transaction: Cash going out (Credit entry)
+        $transaction1 = [
+            'bank_id' => $fromBankId,
+            'transaction_to' => 'transfer',
+            'transaction_type' => 'transfer',
+            'credit' => $amount,
+            'debit' => null,
+            'transaction_date' => $transactionDate,
+            'description' => $fullDescription,
+            'created_by' => auth()->id(),
+        ];
+
+        // Create second transaction: Cash coming in (Debit entry)
+        $transaction2 = [
+            'bank_id' => $toBankId,
+            'transaction_to' => 'transfer',
+            'transaction_type' => 'transfer',
+            'debit' => $amount,
+            'credit' => null,
+            'transaction_date' => $transactionDate,
+            'description' => $fullDescription,
+            'created_by' => auth()->id(),
+        ];
+
+        // Store both transactions
+        $getId1 = $this->transactionRepository->store($transaction1);
+        $getId2 = $this->transactionRepository->store($transaction2);
+
+        return redirect()->route('transaction.showTransfer', $getId1)->with('success', 'Transfer Created Successfully');
+    }
+
     public function show($id)
     {
         $this->authorize('show', Transaction::class);
@@ -701,6 +783,16 @@ class TransactionController extends Controller
         $transaction = $this->transactionRepository->getBRS($id);
 
         return view('brsInfo', [
+            'transaction' => $transaction,
+        ]);
+    }
+
+    public function showTransfer($id)
+    {
+        $this->authorize('show', Transaction::class);
+        $transaction = $this->transactionRepository->getTransfer($id);
+
+        return view('transferInfo', [
             'transaction' => $transaction,
         ]);
     }
@@ -836,6 +928,17 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function editTransfer(Transaction $id)
+    {
+        $this->authorize('edit', Transaction::class);
+        $bank = $this->bankRepository->self();
+
+        return view('editTransfer', [
+            'transaction' => $id,
+            'bank' => $bank,
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
@@ -921,6 +1024,72 @@ class TransactionController extends Controller
         } else {
             return redirect()->route('transaction')->with('success', 'Record Updated Successfully');
         }
+    }
+
+    public function updateTransfer(Request $request, $id)
+    {
+        $this->authorize('edit', Transaction::class);
+
+        $request->validate([
+            'from_bank_id' => 'required',
+            'to_bank_id' => 'required',
+            'amount' => 'required|numeric|min:0.01',
+            'transaction_date' => 'required|date',
+        ]);
+
+        // Get the original transaction to find its pair
+        $originalTransaction = Transaction::find($id);
+        if (!$originalTransaction || $originalTransaction->transaction_to !== 'transfer') {
+            return redirect()->back()->with('fails', 'Invalid transfer transaction')->withInput();
+        }
+
+        $fromBankId = $request->input('from_bank_id');
+        $toBankId = $request->input('to_bank_id');
+        $amount = $request->input('amount');
+        $checkNo = $request->input('check_no');
+        $description = $request->input('description');
+        $transactionDate = $request->input('transaction_date');
+
+        // Validate that from and to accounts are different
+        if ($fromBankId === $toBankId) {
+            return redirect()->back()->with('fails', 'From and To accounts must be different')->withInput();
+        }
+
+        // Build description with check number if provided
+        $fullDescription = $description;
+        if ($checkNo) {
+            $fullDescription = ($description ? $description . ' - ' : '') . 'Check No: ' . $checkNo;
+        }
+
+        // Update the original transaction (outflow)
+        $this->transactionRepository->update($id, [
+            'bank_id' => $fromBankId,
+            'credit' => $amount,
+            'debit' => null,
+            'transaction_date' => $transactionDate,
+            'description' => $fullDescription,
+        ]);
+
+        // Find and update the paired transaction (inflow)
+        // Look for another transfer transaction with opposite debit/credit
+        $pairedTransaction = Transaction::where('transaction_to', 'transfer')
+            ->where('transaction_type', 'transfer')
+            ->where('transaction_date', $originalTransaction->transaction_date)
+            ->where('transaction_id', '!=', $id)
+            ->where('bank_id', $originalTransaction->bank_id)
+            ->first();
+
+        if ($pairedTransaction) {
+            $this->transactionRepository->update($pairedTransaction->transaction_id, [
+                'bank_id' => $toBankId,
+                'debit' => $amount,
+                'credit' => null,
+                'transaction_date' => $transactionDate,
+                'description' => $fullDescription,
+            ]);
+        }
+
+        return redirect()->route('transaction.showTransfer', $id)->with('success', 'Transfer Updated Successfully');
     }
 
     public function destroy(product $product)

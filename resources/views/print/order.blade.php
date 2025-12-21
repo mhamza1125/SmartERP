@@ -134,7 +134,7 @@ $total = $orderItem->sum(function($item) {
 <div class="info-section avoid-break">
     <h3>Description/Notes</h3>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {{ $order['description'] }}
+        {{ strip_tags($order['description']) }}
     </div>
 </div>
 @endif

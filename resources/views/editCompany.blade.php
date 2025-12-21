@@ -66,6 +66,18 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label>REX No</label>
+                                            <input type="text" class="form-control" name="rex_no" value="{{ old('rex_no', $company->rex_no) }}">
+                                            @error('rex_no')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label>Website</label>
                                             <input type="text" class="form-control" name="website" value="{{ old('website', $company->website) }}">
                                             @error('website')
@@ -148,6 +160,19 @@
                                             <label>Footer Text</label>
                                             <textarea class="form-control" name="footer_text" rows="3">{{ old('footer_text', $company->footer_text) }}</textarea>
                                             @error('footer_text')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Statement of Origin</label>
+                                            <textarea class="form-control" name="statement_of_origin" rows="3">{{ old('statement_of_origin', $company->statement_of_origin) }}</textarea>
+                                            <small class="form-text text-muted">Used in commercial invoices</small>
+                                            @error('statement_of_origin')
                                                 <div class="text-danger">{{ $message }}</div>
                                             @enderror
                                         </div>

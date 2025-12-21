@@ -459,6 +459,15 @@ class TransactionRepository implements GlobalInterface
             ->first();
     }
 
+    public function getTransfer($id)
+    {
+        return Transaction::where('transaction_id', $id)
+            ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
+            ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
+            ->select('transactions.*', 'bhead.name as bname', 'banks.account', 'banks.account_title')
+            ->first();
+    }
+
     public function vDetail($id)
     {
         // Vendor Ledger
@@ -781,6 +790,104 @@ class TransactionRepository implements GlobalInterface
             ->get();
     }
 
+    public function pLedger()
+    {
+        // Purchase Ledger - All purchases, returns, and vendor payments
+        // Purchases increase liability, so store as debit (displays in Debit column)
+        $purchases = \DB::table('purchases')
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'), \DB::raw('0 as credit'))
+            ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+            ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
+            ->groupBy('purchases.purchase_id')
+            ->get();
+
+        // Purchase Returns - reduce liability, so store as credit (displays in Credit column)
+        $purchaseReturns = \DB::table('returns')
+            ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
+            ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
+            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+            ->select('returns.*', 'returns.created_at as timestamp', \DB::raw('0 as debit'), \DB::raw('SUM(return_materials.quantity * purchase_items.price) as credit'))
+            ->groupBy('returns.return_id')
+            ->get();
+
+        // Vendor Payments - reduce liability, so store as credit (displays in Credit column)
+        $transactions = \DB::table('transactions')
+            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->where('transactions.transaction_to', 'vendor')
+            ->get();
+
+        $return = $purchases->concat($purchaseReturns)->concat($transactions);
+        $sorted = $return->sortBy('timestamp');
+
+        return $sorted;
+    }
+
+    public function pLedgerFilter($dfrom, $dto)
+    {
+        // Purchase Ledger - Before Date From (Opening Balance)
+        // For purchase ledger (liability account):
+        // DB debit = purchases, increases liability = ADD to balance
+        // DB credit = returns/payments, decreases liability = SUBTRACT from balance
+        $before = \DB::table('purchases')
+            ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'), \DB::raw('0 as credit'))
+            ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+            ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
+            ->where('purchases.purchase_date', '<', $dfrom)
+            ->first();
+
+        $returnsBefore = \DB::table('returns')
+            ->select(\DB::raw('0 as debit'), \DB::raw('SUM(return_materials.quantity * purchase_items.price) as credit'))
+            ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
+            ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
+            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->where('returns.created_at', '<', $dfrom)
+            ->first();
+
+        $transactionsBefore = Transaction::where('transaction_to', 'vendor')
+            ->where('transaction_date', '<', $dfrom)
+            ->select(\DB::raw('SUM(debit) as debit'), \DB::raw('SUM(credit) as credit'))
+            ->first();
+
+        $totalDebitBefore = ($before->debit ?? 0) + ($transactionsBefore->debit ?? 0);
+        $totalCreditBefore = ($returnsBefore->credit ?? 0) + ($transactionsBefore->credit ?? 0);
+        $openingBalance = $totalDebitBefore - $totalCreditBefore;
+
+        // Purchase Ledger - Between Date From and Date To
+        $purchases = \DB::table('purchases')
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'), \DB::raw('0 as credit'))
+            ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+            ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
+            ->whereBetween('purchases.purchase_date', [$dfrom, $dto])
+            ->groupBy('purchases.purchase_id')
+            ->get();
+
+        $purchaseReturns = \DB::table('returns')
+            ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
+            ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
+            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->select('returns.*', 'returns.created_at as timestamp', \DB::raw('0 as debit'), \DB::raw('SUM(return_materials.quantity * purchase_items.price) as credit'))
+            ->whereBetween('returns.created_at', [$dfrom, $dto])
+            ->groupBy('returns.return_id')
+            ->get();
+
+        $transactions = Transaction::where('transaction_to', 'vendor')
+            ->whereBetween('transaction_date', [$dfrom, $dto])
+            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->get();
+
+        $return = $purchases->concat($purchaseReturns)->concat($transactions);
+        $sorted = $return->sortBy('timestamp');
+
+        $closingBalance = 0;
+
+        return [
+            'transactions' => $sorted,
+            'opening_balance' => $openingBalance,
+            'closing_balance' => $closingBalance,
+        ];
+    }
+
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();
@@ -795,6 +902,14 @@ class TransactionRepository implements GlobalInterface
         $update->update($data);
 
         return $update->transaction_id;
+    }
+
+    public function getOB($id, $tto)
+    {
+        // Fetch opening balance transaction for a specific payee
+        return Transaction::where('payee_id', $id)
+            ->where('transaction_type', 'openingBalance')
+            ->where('transaction_to', $tto)->first();
     }
 
     public function updateOB($id, $tto, array $data)

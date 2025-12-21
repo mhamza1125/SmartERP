@@ -60,10 +60,10 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>City</label>
-                    <select class="form-control select2" name="city_id" required>
+                    <select class="form-control select2" id="city_id" name="city_id" required>
                       <option value="" selected disabled>Select City</option>
                       @if($city->count())
                         @foreach($city as $item)
@@ -73,6 +73,14 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select City</div>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-primary form-control" data-toggle="modal" data-target="#createCityModal">
+                      <i class="fas fa-plus"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -135,4 +143,87 @@
     </div>
   </div>
 </section>
+
+<!-- Create City Modal -->
+<div class="modal fade" id="createCityModal" tabindex="-1" role="dialog" aria-labelledby="createCityModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createCityModalLabel">Create New City</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createCityForm">
+          @csrf
+          <div class="form-group">
+            <label for="city_name">City Name</label>
+            <input type="text" class="form-control" id="city_name" name="name" required>
+            <div class="invalid-feedback" id="city_name_error"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="createCity()">Create City</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function createCity() {
+    var cityName = $('#city_name').val();
+
+    if (!cityName) {
+        $('#city_name').addClass('is-invalid');
+        $('#city_name_error').text('City name is required');
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("head.store") }}',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            name: cityName,
+            head_type_id: 8 // City type
+        },
+        success: function(response) {
+            if (response.success) {
+                // Add new option to select
+                var newOption = new Option(cityName, response.head_id, true, true);
+                $('#city_id').append(newOption).trigger('change');
+
+                // Close modal and reset form
+                $('#createCityModal').modal('hide');
+                $('#createCityForm')[0].reset();
+                $('#city_name').removeClass('is-invalid');
+
+                // Show success message
+                alert('City created successfully!');
+            } else {
+                alert('Error creating city: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            var errors = xhr.responseJSON.errors;
+            if (errors && errors.name) {
+                $('#city_name').addClass('is-invalid');
+                $('#city_name_error').text(errors.name[0]);
+            } else {
+                alert('Error creating city. Please try again.');
+            }
+        }
+    });
+}
+
+// Reset form when modal is closed
+$('#createCityModal').on('hidden.bs.modal', function () {
+    $('#createCityForm')[0].reset();
+    $('#city_name').removeClass('is-invalid');
+    $('#city_name_error').text('');
+});
+</script>
 @endsection

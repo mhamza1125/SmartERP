@@ -25,6 +25,7 @@ class CompanyRequest extends FormRequest
             'name' => 'required|string|max:255',
             'ceo' => 'required|string|max:255',
             'ntn' => 'nullable|string|max:255',
+            'rex_no' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
@@ -36,6 +37,7 @@ class CompanyRequest extends FormRequest
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'logo_path' => 'nullable|string|max:255',
             'footer_text' => 'nullable|string',
+            'statement_of_origin' => 'nullable|string',
         ];
     }
 }

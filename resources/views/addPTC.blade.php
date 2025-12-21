@@ -48,28 +48,35 @@
               </div>
 
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Start Stage</label>
                     <input type="text" class="form-control" value="{{ $startStage->name }}" readonly>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>End Stage</label>
                     <input type="text" class="form-control" value="{{ $endStage->name }}" readonly>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label>Order Quantity</label>
+                    <label>Order Qty</label>
                     <input type="text" class="form-control bg-light" value="{{ $orderQuantity ?? 'N/A' }}" readonly>
-                    <small class="text-muted">From order items</small>
+                    <small class="text-muted">From order</small>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label>PTC Quantity <span class="text-danger">*</span></label>
+                    <label>Already Issued</label>
+                    <input type="text" class="form-control bg-light" value="{{ $alreadyIssuedQty ?? 0 }}" readonly>
+                    <small class="text-muted">Previous PTCs</small>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>PTC Qty <span class="text-danger">*</span></label>
                     <input type="number" min="1" class="form-control" name="product_quantity" required value="{{ old('product_quantity', $orderQuantity ?? 1) }}">
                   </div>
                 </div>

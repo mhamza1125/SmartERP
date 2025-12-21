@@ -52,7 +52,7 @@
     @if(isset($packingItem->description) && !empty($packingItem->description))
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9; margin-top: 10px;">
         <strong>Details:</strong><br>
-        {!! nl2br(e($packingItem->description)) !!}
+        {!! nl2br(e(strip_tags($packingItem->description))) !!}
     </div>
     @endif
 </div>

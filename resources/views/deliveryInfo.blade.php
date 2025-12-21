@@ -8,10 +8,20 @@
           <div class="card-header">
             <h4>Delivery Info @if(isset($isMultiOrder) && $isMultiOrder) <span class="badge badge-secondary ml-2">Multi-Order</span> @endif</h4>
             <div class="card-header-action">
+              <div class="dropdown">
+                <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="{{ route('delivery.print', $deliveryId) }}" target="_blank">
+                    <i class="fas fa-file-alt"></i> Print Delivery
+                  </a>
+                  <a class="dropdown-item" href="{{ route('delivery.commercial', $deliveryId) }}" target="_blank">
+                    <i class="fas fa-file-invoice"></i> Commercial Invoice
+                  </a>
+                </div>
+              </div>
               <div class="btn-group">
-                <a class="btn btn-info" href="{{ route('delivery.print', $deliveryId) }}" target="_blank">
-                  <i class="fas fa-file-alt"></i> Print
-                </a>
                 @php
                   $deliveryId = is_array($delivery) ? $delivery['delivery_id'] : $delivery->delivery_id;
                   $customerId = is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id;
@@ -103,17 +113,17 @@
                     @if($delivery['fi_no'])
                     <tr><td><b>FI No:</b> {{$delivery['fi_no']}}</td></tr>
                     @endif
-                    @if($delivery['rex_no'])
-                    <tr><td><b>REX No:</b> {{$delivery['rex_no']}}</td></tr>
+                    @if($company && $company->rex_no)
+                    <tr><td><b>REX No:</b> {{$company->rex_no}}</td></tr>
                     @endif
-                    @if($delivery['ntn'])
-                    <tr><td><b>NTN:</b> {{$delivery['ntn']}}</td></tr>
+                    @if($company && $company->ntn)
+                    <tr><td><b>NTN:</b> {{$company->ntn}}</td></tr>
                     @endif
                   </tbody>
                 </table>
               </div>
             </div>
-            @if($delivery['so_origin'])
+            @if($company && $company->statement_of_origin)
             <div class="row">
               <div class="col-md-12">
                 <div class="card">
@@ -121,7 +131,7 @@
                     <h6>Statement of Origin</h6>
                   </div>
                   <div class="card-body">
-                    <p>{{$delivery['so_origin']}}</p>
+                    <p>{{$company->statement_of_origin}}</p>
                   </div>
                 </div>
               </div>
@@ -312,15 +322,7 @@
 </section>
 
 <script>
-// Commercial Invoice Print Functions for Delivery
-function printCommercialInvoice(bankDetails, includeSO) {
-    console.log('printCommercialInvoice() called for delivery');
-    var title = 'Commercial Invoice';
-    var content = generateDeliveryInvoiceContent(title, bankDetails, includeSO);
-    console.log('Generated content length:', content.length);
-    printInvoice(content, title);
-}
-
+// Packing List Print Functions for Delivery
 function printPackingList() {
     console.log('printPackingList() called');
     var title = 'Packing List';
@@ -345,11 +347,11 @@ function generateDeliveryInvoiceContent(title, bankDetails, includeSO) {
                         @if($delivery['fi_no'])
                         <p><strong>FI No:</strong> {{$delivery['fi_no']}}</p>
                         @endif
-                        @if($delivery['rex_no'])
-                        <p><strong>REX No:</strong> {{$delivery['rex_no']}}</p>
+                        @if($company && $company->rex_no)
+                        <p><strong>REX No:</strong> {{$company->rex_no}}</p>
                         @endif
-                        @if($delivery['ntn'])
-                        <p><strong>NTN:</strong> {{$delivery['ntn']}}</p>
+                        @if($company && $company->ntn)
+                        <p><strong>NTN:</strong> {{$company->ntn}}</p>
                         @endif
                     </td>
                     <td style="width: 50%; vertical-align: top; text-align: right;">
@@ -408,11 +410,11 @@ function generateDeliveryInvoiceContent(title, bankDetails, includeSO) {
             </div>`;
     }
 
-    if (includeSO && '{{$delivery["so_origin"]}}') {
+    if (includeSO && '{{$company->statement_of_origin ?? ''}}') {
         content += `
             <div class="so-section">
                 <h4>Statement of Origin</h4>
-                <p>{{$delivery['so_origin']}}</p>
+                <p>{{$company->statement_of_origin}}</p>
             </div>`;
     }
 

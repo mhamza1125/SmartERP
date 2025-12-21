@@ -8,7 +8,10 @@
           <div class="card-header">
             <h4>Bank Management</h4>
             <div class="card-header-action">
-              <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>
+              <div class="btn-group">
+                <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>
+                <a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>
+              </div>
             </div>
           </div>
           <div class="card-body">

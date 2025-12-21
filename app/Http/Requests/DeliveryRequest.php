@@ -42,9 +42,6 @@ class DeliveryRequest extends FormRequest
             'delivery_method' => 'required',
             'delivery_status' => 'required',
             'fi_no' => 'nullable|string|max:255',
-            'rex_no' => 'nullable|string|max:255',
-            'ntn' => 'nullable|string|max:255',
-            'so_origin' => 'nullable|string',
             // Tranaction Table
             'payee_id.*' => '',
             'bank_id.*' => '',

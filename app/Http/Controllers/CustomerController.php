@@ -196,10 +196,14 @@ class CustomerController extends Controller
         $country = $this->headRepository->get('15');
         $currency = $this->headRepository->get('16');
 
+        // Fetch opening balance transaction
+        $openingBalance = $this->transactionRepository->getOB($id->customer_id, 'customer');
+
         return view('editCustomer', [
             'customer' => $id,
             'country' => $country,
             'currency' => $currency,
+            'openingBalance' => $openingBalance,
         ]);
     }
 

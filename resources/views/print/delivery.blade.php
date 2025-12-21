@@ -116,7 +116,7 @@
 <div class="info-section avoid-break">
     <h3>Statement of Origin</h3>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {!! nl2br(e($delivery['so_origin'])) !!}
+        {!! nl2br(e(strip_tags($delivery['so_origin']))) !!}
     </div>
 </div>
 @endif
@@ -126,7 +126,7 @@
 <div class="info-section avoid-break">
     <h3>Delivery Details</h3>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {!! nl2br(e($delivery['description'])) !!}
+        {!! nl2br(e(strip_tags($delivery['description']))) !!}
     </div>
 </div>
 @endif

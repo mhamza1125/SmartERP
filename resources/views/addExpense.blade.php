@@ -61,13 +61,13 @@
                     <div class="custom-control custom-radio">
                       <input type="radio" id="creditRadio" name="expense_type" class="custom-control-input" value="credit" checked>
                       <label class="custom-control-label" for="creditRadio">
-                        Expense Reversal (Debit)
+                        Expense Incurred (Debit)
                       </label>
                     </div>
                     <div class="custom-control custom-radio">
                       <input type="radio" id="debitRadio" name="expense_type" class="custom-control-input" value="debit">
                       <label class="custom-control-label" for="debitRadio">
-                        Expense Incurred (Credit)
+                        Expense Reversal (Credit)
                       </label>
                     </div>
                   </div>

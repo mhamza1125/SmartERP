@@ -9,7 +9,7 @@
     <p><strong>Generated on:</strong> {{ \Carbon\Carbon::now()->format('d M Y H:i:s') }}</p>
 </div>
 
-@if(($type === 'all' || $type === 'material') && isset($stock) && $stock->count())
+@if($type === 'material' && isset($stock) && $stock->count())
 <div class="avoid-break">
     <h3>Material Stock</h3>
     <table class="print-table">
@@ -42,7 +42,7 @@
 </div>
 @endif
 
-@if(($type === 'all' || $type === 'product') && isset($pstock) && $pstock->count())
+@if($type === 'product' && isset($pstock) && $pstock->count())
 <div class="avoid-break">
     <h3>Product Stock</h3>
     <table class="print-table">
@@ -77,7 +77,7 @@
 </div>
 @endif
 
-@if(($type === 'all' || $type === 'machine') && isset($stock) && $stock->count())
+@if($type === 'machine' && isset($stock) && $stock->count())
 <div class="avoid-break">
     <h3>Machine Material Stock</h3>
     <table class="print-table">

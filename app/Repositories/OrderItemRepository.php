@@ -35,6 +35,7 @@ class OrderItemRepository implements GlobalInterface
                 'product_types.*',
                 'products.name as pname',
                 'products.article_no',
+                'products.hs_code',
                 'heads.name as name',
                 'uhead.name as uname',
                 'shead.name as sname',

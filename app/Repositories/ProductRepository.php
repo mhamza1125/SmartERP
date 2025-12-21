@@ -30,7 +30,7 @@ class ProductRepository implements GlobalInterface
             ->join('heads', 'heads.head_id', 'product_types.size_id')
             ->where('products.product_status', '1')
             ->where('product_types.product_type_status', '1')
-            ->select('products.*', 'product_types.product_type_id', 'heads.name as hname')
+            ->select('products.*', 'product_types.product_type_id', 'product_types.size_id', 'heads.name as hname')
             ->get();
     }
 

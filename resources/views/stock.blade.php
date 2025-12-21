@@ -13,7 +13,7 @@
                   <i class="fas fa-print"></i> Print
                 </button>
                 <div class="dropdown-menu">
-                  <a class="dropdown-item" href="{{ route('stock.print') }}" target="_blank">
+                  <a class="dropdown-item" href="{{ route('stock.print') }}?type=material" target="_blank">
                     <i class="fas fa-file-alt"></i> Material Stock
                   </a>
                   <a class="dropdown-item" href="{{ route('stock.print') }}?type=product" target="_blank">
@@ -43,7 +43,7 @@
               {{-- Material Stock --}}
               <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
                 <div class="table-responsive">
-                  <table class="table table-sm table-striped" id="tableExport" style="width:100%;">                    
+                  <table class="table table-sm table-striped" style="width:100%;">                    
                     <thead>
                       <tr>
                         <th>Sr.</th>
@@ -86,7 +86,7 @@
               {{-- Product Stock (Grouped by Product/Size with Stage Modal) --}}
               <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">
                 <div class="table-responsive">
-                  <table class="table table-sm table-striped" id="tableExport1" style="width:100%;">
+                  <table class="table table-sm table-striped" style="width:100%;">
                     <thead>
                       <tr>
                         <th>Sr.</th>
@@ -158,7 +158,7 @@
               {{-- Material Stock --}}
               <div class="tab-pane fade" id="machine" role="tabpanel" aria-labelledby="machine-tab">      
                 <div class="table-responsive">
-                  <table class="table table-sm table-striped" id="tableExport" style="width:100%;">                    
+                  <table class="table table-sm table-striped" style="width:100%;">                    
                     <thead>
                       <tr>
                         <th>Sr.</th>

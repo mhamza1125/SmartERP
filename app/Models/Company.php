@@ -15,6 +15,7 @@ class Company extends Model
         'name',
         'ceo',
         'ntn',
+        'rex_no',
         'address',
         'city',
         'country',
@@ -26,6 +27,7 @@ class Company extends Model
         'logo',
         'logo_path',
         'footer_text',
+        'statement_of_origin',
         'created_by',
         'updated_at',
     ];

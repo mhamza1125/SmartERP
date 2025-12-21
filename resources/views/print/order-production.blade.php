@@ -41,18 +41,25 @@
     <table class="print-table">
         <thead>
             <tr>
-                <th style="width: 8%">Sr.</th>
-                <th style="width: 12%">Article No</th>
-                <th style="width: 25%">Product Name</th>
-                <th style="width: 12%">Size</th>
-                <th style="width: 28%">Stage</th>
-                <th style="width: 15%">Quantity</th>
+                <th style="width: 6%">Sr.</th>
+                <th style="width: 10%">Article No</th>
+                <th style="width: 20%">Product Name</th>
+                <th style="width: 10%">Size</th>
+                <th style="width: 20%">Stage</th>
+                <th style="width: 10%">Quantity</th>
+                <th style="width: 12%">Finished Stock</th>
+                <th style="width: 12%">Unfinished Stock</th>
             </tr>
         </thead>
         <tbody>
             @if($orderItem->count())
                 @php $product_id = 0; @endphp
                 @foreach($orderItem as $item)
+                @php
+                    $key = $item->product_type_id . '_' . $item->product_stage_id;
+                    $finishedStock = $stockData[$key]['finished_stock'] ?? 0;
+                    $unfinishedStock = $stockData[$key]['unfinished_stock'] ?? 0;
+                @endphp
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     @if($item->product_id == $product_id)
@@ -65,6 +72,8 @@
                     @endif
                     <td class="text-center">{{ $item->sname ?? 'N/A' }}</td>
                     <td class="text-center">{{ number_format($item->quantity) }}</td>
+                    <td class="text-center">{{ number_format($finishedStock) }}</td>
+                    <td class="text-center">{{ number_format($unfinishedStock) }}</td>
                 </tr>
                 @endforeach
             @endif
@@ -78,7 +87,7 @@
 <div class="info-section avoid-break">
     <h3>Production Notes</h3>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {!! nl2br(e($order['description'])) !!}
+        {!! nl2br(e(strip_tags($order['description']))) !!}
     </div>
 </div>
 @endif

@@ -79,7 +79,7 @@
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
-                          <option value="{{$item->material_id}}">{{$item->material_no}} - {{$item->name}}</option>
+                          <option value="{{$item->material_id}}">{{$item->material_no}} - {{$item->name}} ({{$item->uname}})</option>
                         @endforeach
                       @endif
                     </select>
@@ -117,6 +117,7 @@
                       <tr>
                         <th>Sr.</th>
                         <th>Item / Material</th>
+                        <th>Unit</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
@@ -135,6 +136,7 @@
                               <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
                               <input type="hidden" name="product_stage_id[]" value="{{$item->product_stage_id}}"></td>
                             </td>
+                            <td>{{$item->uname}}</td>
                             <td>{{$item->quantity}}
                               <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                             </td>

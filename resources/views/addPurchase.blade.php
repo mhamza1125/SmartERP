@@ -82,7 +82,7 @@
                       <option value="" disabled selected>Select Material</option>
                       @if($material->count())
                         @foreach($material as $item)
-                          <option value="{{$item->material_id}}">{{$item->material_no}} - {{$item->name}} | Price {{$item->cprice}}</option>
+                          <option value="{{$item->material_id}}">{{$item->material_no}} - {{$item->name}} ({{$item->uname}}) | Price {{$item->cprice}}</option>
                         @endforeach
                       @endif
                     </select>

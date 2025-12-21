@@ -86,7 +86,7 @@
         </thead>
         <tbody>
             <tr>
-                <td style="padding: 4px;">{{ $expense['description'] ?? 'Expense Transaction' }}</td>
+                <td style="padding: 4px;">{{ strip_tags($expense['description'] ?? 'Expense Transaction') }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['debit'] ? number_format($expense['debit'], 2) : '-' }}</td>
             </tr>

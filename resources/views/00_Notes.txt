@@ -11,7 +11,7 @@ Todo (Required):
     Add / edit / view purchase
     Add / edit / view receive
     Add / edit / view return
-5. Edit product and material should keep showing the Opening stock. Currently it's always 0
+5. Editing of people should keep showing the opening balance. Currently it's always 0
 6. Multiple order same perfomra Invoice / commercial invoice / packing list
 7. Order Status view update
     Show delivered qty if partially or fully delivered
@@ -44,7 +44,7 @@ Admin Task:
 3. Hs code in packing list, performa invoice, 
 4. Pickup rex and ntn number and moove to company detail
 5. FI no is needed on commercial no. Not needed on perfoma invoice
-6.  Only central display of footer in prints
+6. Only central display of footer in prints
 
 Running order stock view (All)
 Virtual Stock (Stock what we will get)

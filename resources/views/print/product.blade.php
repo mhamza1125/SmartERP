@@ -57,7 +57,7 @@
 <div class="info-section avoid-break">
     <h3>Product Description</h3>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
-        {!! nl2br(e($product['description'])) !!}
+        {!! nl2br(e(strip_tags($product['description']))) !!}
     </div>
 </div>
 @endif

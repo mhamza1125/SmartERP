@@ -321,11 +321,15 @@ class EmployeeController extends Controller
         $employeeType = $this->headRepository->get('9');
         $city = $this->headRepository->get('8');
 
+        // Fetch opening balance transaction
+        $openingBalance = $this->transactionRepository->getOB($id->employee_id, 'employee');
+
         return view('editEmployee', [
             'employee' => $id,
             'department' => $department,
             'employeeType' => $employeeType,
             'city' => $city,
+            'openingBalance' => $openingBalance,
         ]);
     }
 

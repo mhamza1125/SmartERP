@@ -23,6 +23,7 @@
                     <th>Designation</th>
                     <th>City</th>
                     <th>Employee Type</th>
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -36,13 +37,19 @@
                       <td>{{$item->dname}}</td>                     
                       <td>{{$item->designation}}</td>                      
                       <td>{{$item->cname}}</td>
-                      <td><b>@if($item->employee_type_id == 39) 
+                      <td>@if($item->employee_type_id == 39) 
                         <span class="badge badge-success">Salary</span> 
                         @elseif($item->employee_type_id == 40) 
                         <span class="badge badge-primary">Wages</span>
                         @else 
                         <span class="badge badge-secondary">Other</span>
-                        @endif</td>                       
+                        @endif
+                      </td>
+                      <td>
+                        @if($item->employee_status) 
+                        <span class="badge badge-success">Active</span> @else 
+                        <span class="badge badge-danger">Inactive</span> @endif
+                      </td>                       
                       <td>
                         <a href="{{ route('employee.show', $item->employee_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('employee.edit', $item->employee_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -61,6 +68,7 @@
                     <th>Designation</th>
                     <th>City</th>
                     <th>Employee Type</th>
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

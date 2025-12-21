@@ -42,6 +42,7 @@ class OrderRepository implements GlobalInterface
     {
         // Get only Confirmed orders for multi-order delivery
         // Only Confirmed (2) orders can be used for delivery creation
+        // Exclude orders that have been fully delivered (delivery_status = 4)
         return Order::where('orders.customer_id', $customerId)
             ->where('order_status', '=', 2) // Only Confirmed orders
             ->whereNotExists(function ($query) {
@@ -49,7 +50,7 @@ class OrderRepository implements GlobalInterface
                       ->from('deliveries')
                       ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
                       ->whereColumn('stocks.order_id', 'orders.order_id')
-                      ->where('deliveries.delivery_status', '>=', 2); // Not delivered
+                      ->where('deliveries.delivery_status', '=', 4); // Only exclude fully delivered orders
             })
             ->select('orders.order_id', 'orders.job_no', 'orders.order_date', 'orders.order_status')
             ->orderBy('orders.created_at', 'desc')

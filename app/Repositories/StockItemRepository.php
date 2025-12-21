@@ -39,9 +39,10 @@ class StockItemRepository implements GlobalInterface
 
     public function delivery($id)
     {
-        // Get Delivery Items
+        // Get Delivery Items with pricing from order_items
         return StockItem::where('deliveries.delivery_id', $id)
             ->join('deliveries', 'deliveries.stock_id', 'stock_items.stock_id')
+            ->join('stocks', 'stocks.stock_id', 'stock_items.stock_id')
             ->leftJoin('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
             ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
             ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
@@ -58,6 +59,12 @@ class StockItemRepository implements GlobalInterface
                                ->where('material_type_id', 61);
                      });
             })
+            ->leftJoin('order_items', function($join) {
+                $join->on('order_items.product_type_id', '=', 'stock_items.product_type_id')
+                     ->on('order_items.product_stage_id', '=', 'stock_items.stage_id')
+                     ->on('order_items.order_id', '=', 'stocks.order_id');
+            })
+            ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
             ->select(
                 'stock_items.*',
                 'product_types.product_type_id',
@@ -65,6 +72,7 @@ class StockItemRepository implements GlobalInterface
                 'product_types.size_id',
                 'products.name',
                 'products.article_no',
+                'products.hs_code',
                 'products.product_id',
                 'shead.name as hname',
                 'uhead.name as uname',
@@ -72,7 +80,9 @@ class StockItemRepository implements GlobalInterface
                 'puhead.name as puname',
                 'materials.name as mname',
                 'materials.material_id',
-                'product_materials.quantity as bqty'
+                'product_materials.quantity as bqty',
+                'order_items.price2',
+                'chead.name as cname'
             )
             ->orderBy('products.product_id')
             ->get();
@@ -537,6 +547,32 @@ class StockItemRepository implements GlobalInterface
             ->get();
     }
 
+    /**
+     * Get stock data for a specific product type (used by Production Order Print)
+     * Uses the same calculation logic as pStock() but filtered by product_type_id
+     * This method filters the full pStock() results in PHP to ensure consistency
+     */
+    public function pStockByProductType($productTypeId)
+    {
+        // Get all stock data using the same method as the /stock page
+        $allStock = $this->pStock();
+
+        // Filter to only the requested product type
+        $filteredStock = $allStock->filter(function($item) use ($productTypeId) {
+            return $item->product_type_id == $productTypeId;
+        });
+
+        // Return as a collection with only the needed fields
+        return $filteredStock->map(function($item) {
+            return (object)[
+                'product_type_id' => $item->product_type_id,
+                'stage_id' => $item->stage_id,
+                'stockIn' => $item->stockIn,
+                'stockOut' => $item->stockOut,
+            ];
+        })->values();
+    }
+
     public function gStock()
     {
         // Fetch igroup_items for the given order
@@ -731,6 +767,16 @@ class StockItemRepository implements GlobalInterface
             ->where('purchase_items.material_id', 0)
             ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
 
+        // Subquery for Box Materials (only box materials, not all component products)
+        $boxMaterialsSub = DB::table('product_materials')
+            ->select(
+                'product_materials.product_type_id',
+                DB::raw('MAX(product_materials.quantity) as bqty')
+            )
+            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->where('materials.material_type_id', 61) // Box only
+            ->groupBy('product_materials.product_type_id');
+
         // Main Query
         return StockItem::select(
                 'stock_items.product_type_id',
@@ -741,7 +787,7 @@ class StockItemRepository implements GlobalInterface
                 'stock_items.stage_id', // Just stage_id from stock_items
                 'uhead.name as uname',
                 'order_items.quantity',
-                DB::raw('COALESCE(product_materials.quantity, 0) as bqty')
+                DB::raw('COALESCE(box_materials.bqty, 0) as bqty')
             )
             ->selectRaw('
                 (
@@ -763,15 +809,12 @@ class StockItemRepository implements GlobalInterface
             ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
             ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id') // Only on stock_items.stage_id
-            ->leftJoin('product_materials', 'product_materials.product_type_id', '=', 'product_types.product_type_id')
-            ->leftJoin('materials', 'materials.material_id', '=', 'product_materials.material_id')
+            ->leftJoinSub($boxMaterialsSub, 'box_materials', function ($join) {
+                $join->on('box_materials.product_type_id', '=', 'product_types.product_type_id');
+            })
             ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
                 $join->on('purchase_sub.product_type_id', '=', 'product_types.product_type_id')
                     ->whereColumn('purchase_sub.product_stage_id', '=', 'stock_items.stage_id');
-            })
-            ->where(function($query) {
-                $query->where('materials.material_type_id', 61) // Box
-                      ->orWhereNull('materials.material_type_id'); // Include products without bqty defined
             })
             ->where('order_items.order_id', $id)
             ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
@@ -784,8 +827,7 @@ class StockItemRepository implements GlobalInterface
                 'shead.name',
                 'sthead.name',
                 'uhead.name',
-                'order_items.quantity',
-                DB::raw('COALESCE(product_materials.quantity, 0)')
+                'order_items.quantity'
             )
             ->get();
     }

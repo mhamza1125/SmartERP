@@ -81,7 +81,7 @@
                             @if($receive['purchase_type'] == 'product')
                               {{ $item->article_no ?? '' }} - Size {{ $item->hname ?? '' }} - {{ $item->sname ?? '' }}
                             @else
-                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
+                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }} ({{ $item->uname ?? '' }})
                             @endif
                             <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
                           </td>

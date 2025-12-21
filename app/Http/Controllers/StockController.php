@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Stock;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StockRequest;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
@@ -1025,6 +1026,25 @@ class StockController extends Controller
         // Get product stock (products in stages)
         $pstock = $this->stockItemRepository->pStock();
 
+        // Calculate already issued PTC quantity for this product in this order
+        $alreadyIssuedQty = 0;
+        if ($orderId && $productTypeId) {
+            $issuedPtcs = \DB::table('stocks')
+                ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+                ->where('stocks.order_id', $orderId)
+                ->where('stocks.is_ptc_master', 1)
+                ->where('stock_items.product_type_id', $productTypeId)
+                ->select('stocks.description')
+                ->distinct('stocks.stock_id')
+                ->get();
+
+            foreach ($issuedPtcs as $ptc) {
+                if (preg_match('/\[QTY:(\d+)\]/i', $ptc->description, $matches)) {
+                    $alreadyIssuedQty += (int)$matches[1];
+                }
+            }
+        }
+
         // Get selected product details
         $product = null;
         $stages = collect();
@@ -1136,6 +1156,7 @@ class StockController extends Controller
             'endStage' => $endStage,
             'order' => $order,
             'orderQuantity' => $orderQuantity,
+            'alreadyIssuedQty' => $alreadyIssuedQty,
             'employees' => $employees,
             'vendors' => $vendors,
             'materials' => $materials,

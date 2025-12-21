@@ -15,6 +15,7 @@ use App\Repositories\DeliveryRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\DeliveryBoxRepository;
 use App\Repositories\TransactionRepository;
+use App\Repositories\CompanyRepository;
 
 class DeliveryController extends Controller
 {
@@ -36,6 +37,8 @@ class DeliveryController extends Controller
 
     protected $transactionRepository;
 
+    protected $companyRepository;
+
     public function __construct(
         HeadRepository $headRepository,
         BankRepository $bankRepository,
@@ -46,6 +49,7 @@ class DeliveryController extends Controller
         StockItemRepository $stockItemRepository,
         DeliveryBoxRepository $deliveryBoxRepository,
         TransactionRepository $transactionRepository,
+        CompanyRepository $companyRepository,
     ) {
         $this->middleware(['auth', 'all'])->except(['getCustomerOrders']);
         $this->middleware('auth')->only(['getCustomerOrders']);
@@ -58,6 +62,7 @@ class DeliveryController extends Controller
         $this->stockItemRepository = $stockItemRepository;
         $this->deliveryBoxRepository = $deliveryBoxRepository;
         $this->transactionRepository = $transactionRepository;
+        $this->companyRepository = $companyRepository;
     }
 
     public function index()
@@ -105,6 +110,7 @@ class DeliveryController extends Controller
         $vehicle = $this->stockItemRepository->stockVehicle($id);
         $bank = $this->bankRepository->self();
         $expense = $this->headRepository->get('7');
+        $company = $this->companyRepository->first();
 
         return view('addDelivery', [
             'bank' => $bank,
@@ -112,6 +118,7 @@ class DeliveryController extends Controller
             'order' => $order,
             'stock' => $stock,
             'vehicle' => $vehicle,
+            'company' => $company,
             'isMultiOrder' => false,
         ]);
     }
@@ -148,6 +155,7 @@ class DeliveryController extends Controller
         $bank = $this->bankRepository->self();
         $vehicle = $this->stockItemRepository->stockVehicle($orderIds[0]);
         $expense = $this->headRepository->get('7');
+        $company = $this->companyRepository->first();
 
         // If this is an edit request, get existing delivery data
         $existingDelivery = null;
@@ -169,6 +177,7 @@ class DeliveryController extends Controller
             'bank' => $bank,
             'vehicle' => $vehicle,
             'expense' => $expense,
+            'company' => $company,
             'isMultiOrder' => true,
             'orderIds' => $orderIdsString,
             'editMode' => !is_null($editDeliveryId),
@@ -262,6 +271,7 @@ class DeliveryController extends Controller
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $transaction = $this->transactionRepository->delivery($id);
         $deliveryBox = $this->deliveryBoxRepository->get($id);
+        $company = $this->companyRepository->first();
 
         // Detect if this is a multi-order delivery
         $isMultiOrder = $this->isMultiOrderDelivery($delivery);
@@ -289,6 +299,7 @@ class DeliveryController extends Controller
             'deliveryBox' => $deliveryBox,
             'transaction' => $transaction,
             'deliveryItem' => $deliveryItem,
+            'company' => $company,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
             'customerId' => is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id,
@@ -323,6 +334,23 @@ class DeliveryController extends Controller
             'deliveryItem' => $deliveryItem,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
+        ]);
+    }
+
+    /**
+     * Print commercial invoice
+     */
+    public function printCommercial($id)
+    {
+        $this->authorize('show', Delivery::class);
+        $delivery = $this->deliveryRepository->get($id);
+        $deliveryItem = $this->stockItemRepository->delivery($id);
+        $company = $this->companyRepository->first();
+
+        return view('print.delivery-commercial', [
+            'delivery' => $delivery,
+            'deliveryItem' => $deliveryItem,
+            'company' => $company,
         ]);
     }
 
@@ -444,6 +472,7 @@ class DeliveryController extends Controller
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $deliveryBox = $this->deliveryBoxRepository->get($id);
         $transaction = $this->transactionRepository->delivery($id);
+        $company = $this->companyRepository->first();
 
         // Detect if this is a multi-order delivery
         $isMultiOrder = $this->isMultiOrderDelivery($order);
@@ -460,6 +489,7 @@ class DeliveryController extends Controller
             'order' => $order,
             'stock' => $stock,
             'vehicle' => $vehicle,
+            'company' => $company,
             'deliveryBox' => $deliveryBox,
             'deliveryItem' => $deliveryItem,
             'transaction' => $transaction,

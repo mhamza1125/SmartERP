@@ -116,11 +116,11 @@
                                 Salary Advance
                                 @break
                               @case('salary')
-                                Monthly Salary{{ isset($transaction->description) ? ' - ' . $transaction->description : '' }}
+                                Monthly Salary{{ isset($transaction->description) ? ' - ' . strip_tags($transaction->description) : '' }}
                                 @break
                               @default
                                 @if(isset($transaction->description))
-                                    {{ $transaction->description }}
+                                    {{ strip_tags($transaction->description) }}
                                 @elseif(isset($transaction->stock_no))
                                     Work: {{ $transaction->stock_no }}
                                 @else
@@ -129,7 +129,7 @@
                             @endswitch
                         @else
                             @if(isset($transaction->description))
-                                {{ $transaction->description }}
+                                {{ strip_tags($transaction->description) }}
                             @elseif(isset($transaction->stock_no))
                                 Work: {{ $transaction->stock_no }}
                             @else

@@ -28,6 +28,29 @@
     </div>
 </div>
 
+{{-- Company Information from Company Table --}}
+@if(isset($company))
+<div class="company-info avoid-break">
+    <h3>Company Information</h3>
+    <table class="print-table">
+        <tbody>
+            @if(isset($company->ntn) && !empty($company->ntn))
+            <tr>
+                <td><strong>NTN:</strong></td>
+                <td>{{ $company->ntn }}</td>
+            </tr>
+            @endif
+            @if(isset($company->rex_no) && !empty($company->rex_no))
+            <tr>
+                <td><strong>REX No:</strong></td>
+                <td>{{ $company->rex_no }}</td>
+            </tr>
+            @endif
+        </tbody>
+    </table>
+</div>
+@endif
+
 {{-- Order Items Table --}}
 @if(isset($orderItem) && $orderItem->count() > 0)
 <div class="avoid-break">
@@ -35,13 +58,14 @@
     <table class="print-table">
         <thead>
             <tr>
-                <th style="width: 6%">Sr.</th>
-                <th style="width: 10%">Article No</th>
-                <th style="width: 24%">Product Name</th>
-                <th style="width: 12%">Size</th>
-                <th style="width: 12%">Quantity</th>
-                <th style="width: 14%">Unit Price</th>
-                <th style="width: 22%">Total</th>
+                <th style="width: 5%">Sr.</th>
+                <th style="width: 9%">Article No</th>
+                <th style="width: 8%">HS Code</th>
+                <th style="width: 20%">Product Name</th>
+                <th style="width: 10%">Size</th>
+                <th style="width: 10%">Quantity</th>
+                <th style="width: 12%">Unit Price</th>
+                <th style="width: 16%">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -51,9 +75,10 @@
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     @if($item->product_id == $product_id)
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
+                        <td class="text-center">{{ $item->hs_code ?? '-' }}</td>
                         <td class="text-center">{{ $item->pname }}</td>
                         <td class="text-center">{{ $item->name }}</td>
                         @php $product_id = $item->product_id; @endphp
@@ -124,6 +149,14 @@ $currencyName = $firstItem->cname ?? 'PKR';
             @endif
         </tbody>
     </table>
+</div>
+@endif
+
+{{-- Statement of Origin --}}
+@if(isset($company) && isset($company->statement_of_origin) && !empty($company->statement_of_origin))
+<div class="statement-of-origin avoid-break">
+    <h3>Statement of Origin</h3>
+    <p>{{ $company->statement_of_origin }}</p>
 </div>
 @endif
 
