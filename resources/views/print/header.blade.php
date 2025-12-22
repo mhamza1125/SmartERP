@@ -27,9 +27,9 @@
 </div> --}}
 
 {{-- Document Date/Time --}}
-<div class="document-meta">
+{{-- <div class="document-meta">
     <div style="font-size: 10px; text-align: right;">
         <div>Print Date: {{ date('d-M-Y') }}</div>
         <div>Print Time: {{ date('h:i A') }}</div>
     </div>
-</div>
+</div> --}}

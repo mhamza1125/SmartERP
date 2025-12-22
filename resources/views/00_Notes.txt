@@ -1,6 +1,21 @@
 ===============================================================================================
 ==========   Testing   ========================================================================
 ===============================================================================================
+
+Todo: Fix migration of update material and product id columns in vendors table
+
+1. Manual hs code in performa invoice and commercial invoice
+2. Remove email, Add customer address in both invoices
+3. Manual statement of origin
+4. Customer ledger in dollor not in pkr
+5. Remove header date time (oK)
+6. Footer fields in print (OK)
+7. Divide qty of pcs in packing list
+
+===============================================================================================
+==========   Delivered  =======================================================================
+===============================================================================================
+
 Todo (Required): 
 1. Commercial Invoice
 2. Add ntn and other fields in company
@@ -64,3 +79,6 @@ Todo (Optional):
 10. Delivery return affected nothing
     That should affect stock as well as customer ledger
 11. Default Stock of Material / Product Adjustment (Increase / Decrease)
+
+===============================================================================================
+===============================================================================================
