@@ -101,6 +101,8 @@ Route::get('/editCustomer/{id}', [CustomerController::class, 'edit'])->name('cus
 Route::post('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
 Route::get('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
 Route::post('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.filter');
+Route::get('/cLedger2/{id}', [CustomerController::class, 'detail2'])->name('customer.detail2');
+Route::post('/cLedger2/{id}', [CustomerController::class, 'detail2'])->name('customer.filter2');
 
 // Employee
 Route::get('/employee', [EmployeeController::class, 'index'])->name('employee');

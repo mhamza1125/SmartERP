@@ -92,49 +92,95 @@
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Delivery No</label>
+                    <label>Delivery No <small class="text-muted">(Auto-generated if empty)</small></label>
                     @if(!isset($isMultiOrder) || !$isMultiOrder)
                       <input type="hidden" name="order_id" value="{{$order['order_id']}}" required>
                     @else
                       <!-- Multi-order delivery: use first order as primary and pass all order IDs -->
                       <input type="hidden" name="order_id" value="{{$orders[0]['order_id']}}" required>
                       <input type="hidden" name="order_ids" value="{{$orderIds}}" required>
+                      @if(isset($editMode) && $editMode && isset($existingDelivery))
+                        <input type="hidden" name="stock_id" value="{{$existingDelivery['stock_id']}}" required>
+                        <input type="hidden" name="delivery_id" value="{{$existingDelivery['delivery_id']}}" required>
+                      @endif
                     @endif
                     <input type="hidden" name="table_name" value="delivery" required>
                     <input type="hidden" name="employee_id" value="0" required>
                     <input type="hidden" name="stock_type" value="2" required>
                     <input type="hidden" name="stock_status" required value="3">
-                    @if(isset($isMultiOrder) && $isMultiOrder && isset($orders) && count($orders) > 1)
-                      @php
-                        $orderNumbers = collect($orders)->pluck('order_no')->toArray();
-                        $multiOrderStockNo = 'Multi-Order: ' . implode(', ', $orderNumbers);
-                      @endphp
-                      <input type="text" class="form-control" name="stock_no" placeholder="Delivery No" required value="{{old('stock_no', $multiOrderStockNo)}}" readonly>
-                      <small class="form-text text-muted">Auto-generated for multi-order delivery</small>
-                    @else
-                      <input type="text" class="form-control" name="stock_no" placeholder="Delivery No" required value="{{old('stock_no')}}">
-                    @endif
+                    <!-- Delivery No Input Field -->
+                    @php
+                      $deliveryNoValue = old('delivery_no');
+                      if (!$deliveryNoValue && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $deliveryNoValue = $existingDelivery['delivery_no'] ?? '';
+                      }
+                    @endphp
+                    <input type="text" class="form-control" name="delivery_no" placeholder="Leave empty for auto-generation" value="{{$deliveryNoValue}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Delivery No</div>
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
+                    <label>Stock No <small class="text-muted">(Auto-populated from order)</small></label>
+                    @if(isset($isMultiOrder) && $isMultiOrder && isset($orders) && count($orders) > 1)
+                      @php
+                        $orderNumbers = collect($orders)->pluck('order_no')->toArray();
+                        $multiOrderStockNo = 'Multi-Order: ' . implode(', ', $orderNumbers);
+                        $stockNoValue = isset($editMode) && $editMode && isset($existingDelivery) ? $existingDelivery['stock_no'] : $multiOrderStockNo;
+                      @endphp
+                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
+                    @else
+                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', isset($order) ? $order['stock_no'] ?? '' : '')}}" readonly>
+                    @endif
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Enter Stock No</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Stock Date</label>
+                    @php
+                      $deliveryDate = old('stock_date');
+                      if (!$deliveryDate && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $deliveryDate = $existingDelivery['stock_date'] ?? '';
+                      }
+                    @endphp
+                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$deliveryDate}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
                     <label>Delivery Date</label>
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{old('stock_date')}}">
+                    @php
+                      $actualDeliveryDate = old('delivery_date');
+                      if (!$actualDeliveryDate && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $actualDeliveryDate = $existingDelivery['delivery_date'] ?? '';
+                      }
+                    @endphp
+                    <input type="text" class="form-control datepicker" name="delivery_date" value="{{$actualDeliveryDate}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Order Status</label>
+                    @php
+                      $orderStatus = old('order_status');
+                      if (!$orderStatus && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $orderStatus = $existingDelivery['order_status'] ?? '2';
+                      } else if (!$orderStatus) {
+                        $orderStatus = '2';
+                      }
+                    @endphp
                     <select class="form-control select2" name="order_status" required>
-                      <option value="" selected disabled>Select Order Status</option>
-                      <option value="1">Draft</option>
-                      <option value="2" selected>Confirmed</option>
-                      <option value="3">Dispatched</option>
-                      <option value="4">Delivered</option>
-                      <option value="5">Cancelled</option>
+                      <option value="" disabled>Select Order Status</option>
+                      <option value="1" {{ $orderStatus == '1' ? 'selected' : '' }}>Draft</option>
+                      <option value="2" {{ $orderStatus == '2' ? 'selected' : '' }}>Confirmed</option>
+                      <option value="3" {{ $orderStatus == '3' ? 'selected' : '' }}>Dispatched</option>
+                      <option value="4" {{ $orderStatus == '4' ? 'selected' : '' }}>Delivered</option>
+                      <option value="5" {{ $orderStatus == '5' ? 'selected' : '' }}>Cancelled</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Order Status</div>
@@ -143,12 +189,20 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Delivery Status</label>
+                    @php
+                      $deliveryStatus = old('delivery_status');
+                      if (!$deliveryStatus && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $deliveryStatus = $existingDelivery['delivery_status'] ?? '1';
+                      } else if (!$deliveryStatus) {
+                        $deliveryStatus = '1';
+                      }
+                    @endphp
                     <select class="form-control select2" name="delivery_status" required>
-                      <option value="" selected disabled>Select Delivery Status</option>
-                      <option value="1" selected>Pending</option>
-                      <option value="2">Dispatched</option>
-                      <option value="3">Delivered</option>
-                      <option value="4">Returned</option>
+                      <option value="" disabled>Select Delivery Status</option>
+                      <option value="1" {{ $deliveryStatus == '1' ? 'selected' : '' }}>Pending</option>
+                      <option value="2" {{ $deliveryStatus == '2' ? 'selected' : '' }}>Dispatched</option>
+                      <option value="3" {{ $deliveryStatus == '3' ? 'selected' : '' }}>Delivered</option>
+                      <option value="4" {{ $deliveryStatus == '4' ? 'selected' : '' }}>Returned</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Delivery Status</div>
@@ -160,20 +214,38 @@
               <div class="row">
                 <div class="col-md-6">
                   <label>Shipping From</label>
-                  <input type="text" class="form-control" name="fshipping" placeholder="Shipping From" value="{{old('fshipping')}}">
+                  @php
+                    $fshipping = old('fshipping');
+                    if (!$fshipping && isset($editMode) && $editMode && isset($existingDelivery)) {
+                      $fshipping = $existingDelivery['fshipping'] ?? '';
+                    }
+                  @endphp
+                  <input type="text" class="form-control" name="fshipping" placeholder="Shipping From" value="{{$fshipping}}">
                 </div>
                 <div class="col-md-3">
                   <label>Port No</label>
-                  <input type="text" class="form-control" name="fport_no" placeholder="Port No" value="{{old('fport_no')}}">
+                  @php
+                    $fportNo = old('fport_no');
+                    if (!$fportNo && isset($editMode) && $editMode && isset($existingDelivery)) {
+                      $fportNo = $existingDelivery['fport_no'] ?? '';
+                    }
+                  @endphp
+                  <input type="text" class="form-control" name="fport_no" placeholder="Port No" value="{{$fportNo}}">
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Shipping Method</label>
+                    @php
+                      $deliveryMethod = old('delivery_method');
+                      if (!$deliveryMethod && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $deliveryMethod = $existingDelivery['delivery_method'] ?? '';
+                      }
+                    @endphp
                     <select class="form-control select2" name="delivery_method" required>
-                      <option value="" selected disabled>Select Shipping Method</option>
-                      <option value="1">Sea Freight</option>
-                      <option value="2">Air Freight</option>
-                      <option value="3">Road Transport</option>
+                      <option value="" disabled>Select Shipping Method</option>
+                      <option value="1" {{ $deliveryMethod == '1' ? 'selected' : '' }}>Sea Freight</option>
+                      <option value="2" {{ $deliveryMethod == '2' ? 'selected' : '' }}>Air Freight</option>
+                      <option value="3" {{ $deliveryMethod == '3' ? 'selected' : '' }}>Road Transport</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Shipping Method</div>
@@ -185,11 +257,23 @@
               <div class="row">
                 <div class="col-md-6">
                   <label>Shipping To</label>
-                  <input type="text" class="form-control" name="tshipping" placeholder="Shipping To" value="{{old('tshipping')}}">
+                  @php
+                    $tshipping = old('tshipping');
+                    if (!$tshipping && isset($editMode) && $editMode && isset($existingDelivery)) {
+                      $tshipping = $existingDelivery['tshipping'] ?? '';
+                    }
+                  @endphp
+                  <input type="text" class="form-control" name="tshipping" placeholder="Shipping To" value="{{$tshipping}}">
                 </div>
                 <div class="col-md-6">
                   <label>Port No</label>
-                  <input type="text" class="form-control" name="tport_no" placeholder="Port No" value="{{old('tport_no')}}">
+                  @php
+                    $tportNo = old('tport_no');
+                    if (!$tportNo && isset($editMode) && $editMode && isset($existingDelivery)) {
+                      $tportNo = $existingDelivery['tport_no'] ?? '';
+                    }
+                  @endphp
+                  <input type="text" class="form-control" name="tport_no" placeholder="Port No" value="{{$tportNo}}">
                 </div>
               </div>
 
@@ -198,7 +282,13 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>FI No <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{old('fi_no')}}">
+                    @php
+                      $fiNo = old('fi_no');
+                      if (!$fiNo && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $fiNo = $existingDelivery['fi_no'] ?? '';
+                      }
+                    @endphp
+                    <input type="text" class="form-control" name="fi_no" placeholder="FI Number" value="{{$fiNo}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
@@ -213,15 +303,6 @@
                   <div class="form-group">
                     <label>NTN <small class="text-muted">(From Company)</small></label>
                     <input type="text" class="form-control" value="{{ $company->ntn ?? 'N/A' }}" readonly>
-                    <small class="form-text text-muted">This field is managed in Company Settings</small>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Statement of Origin <small class="text-muted">(From Company)</small></label>
-                    <textarea class="form-control" rows="3" readonly>{{ $company->statement_of_origin ?? 'N/A' }}</textarea>
                     <small class="form-text text-muted">This field is managed in Company Settings</small>
                   </div>
                 </div>
@@ -261,10 +342,9 @@
                                 $aggregatedItems[$key] = $item;
                               } else {
                                 $aggregatedItems[$key]->quantity += $item->quantity;
-                                // Don't sum stockOut or stockOutDelivered - they represent totals for this product/stage
+                                // Don't sum stockIn, stockOut or stockOutDelivered - they represent totals for this product/stage
                                 // Just keep the value from the first item (they should all be the same)
-                                $aggregatedItems[$key]->stockIn += $item->stockIn;
-                                // stockOut and stockOutDelivered are NOT summed - they're already totals
+                                // stockIn, stockOut and stockOutDelivered are NOT summed - they're already totals
                               }
                             }
                             $index = 1;
@@ -277,6 +357,17 @@
                               $remainingQty = $item->quantity - $item->stockOutDelivered;
                               // Actual deliverable is the minimum of available and remaining
                               $deliverableQty = min($availableQty, $remainingQty);
+
+                              // When editing, get the existing delivered quantity for this item
+                              $existingDeliveredQty = 0;
+                              if (isset($editMode) && $editMode && isset($deliveryItem) && count($deliveryItem) > 0) {
+                                foreach ($deliveryItem as $dItem) {
+                                  if ($dItem['product_type_id'] == $item->product_type_id && $dItem['stage_id'] == $item->stage_id) {
+                                    $existingDeliveredQty = $dItem['quantity'] ?? 0;
+                                    break;
+                                  }
+                                }
+                              }
                             @endphp
                             @unless($deliverableQty <= 0)
                               <tr>
@@ -293,10 +384,10 @@
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                                 <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$existingDeliveredQty}}" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                                 </td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
+                                  <input type="number" class="form-control bqty-input" value="{{$existingDeliveredQty * $item->bqty}}" style="width:100px" readonly>
                                 </td>
                                 <td>
                                   <button class="btn btn-success btn-sm maxBtn">Max</button>
@@ -333,6 +424,17 @@
                               $remainingQty = $item->quantity - $item->stockOutDelivered;
                               // Actual deliverable is the minimum of available and remaining
                               $deliverableQty = min($availableQty, $remainingQty);
+
+                              // When editing, get the existing delivered quantity for this item
+                              $existingDeliveredQty = 0;
+                              if (isset($editMode) && $editMode && isset($deliveryItem) && count($deliveryItem) > 0) {
+                                foreach ($deliveryItem as $dItem) {
+                                  if ($dItem['product_type_id'] == $item->product_type_id && $dItem['stage_id'] == $item->stage_id) {
+                                    $existingDeliveredQty = $dItem['quantity'] ?? 0;
+                                    break;
+                                  }
+                                }
+                              }
                             @endphp
                             @unless($deliverableQty <= 0)
                               <tr>
@@ -349,10 +451,10 @@
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                                 <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes</td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="0" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
+                                  <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$existingDeliveredQty}}" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                                 </td>
                                 <td class="form-group">
-                                  <input type="number" class="form-control bqty-input" value="0" style="width:100px" readonly>
+                                  <input type="number" class="form-control bqty-input" value="{{$existingDeliveredQty * $item->bqty}}" style="width:100px" readonly>
                                 </td>
                                 <td>
                                   <button class="btn btn-success btn-sm maxBtn">Max</button>

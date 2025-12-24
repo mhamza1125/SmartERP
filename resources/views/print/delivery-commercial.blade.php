@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Commercial_Invoice_' . ($delivery['customer_no'] ?? 'N/A') . '_' . date('Y-m-d'))
+@section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust  _no'] ?? 'N/A') . '_' . date('Y-m-d'))
 
 @section('content')
 <div class="document-title">Commercial Invoice</div>
@@ -12,17 +12,34 @@
             <span class="info-label">Customer Name:</span>
             <span class="info-value">{{ $delivery['fname'] ?? 'N/A' }} {{ $delivery['lname'] ?? '' }}</span>
         </div>
-        @if(isset($delivery['email']) && !empty($delivery['email']))
-        <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">{{ $delivery['email'] }}</span>
-        </div>
-        @endif
         @if(isset($delivery['address']) && !empty($delivery['address']))
         <div class="info-row">
             <span class="info-label">Address:</span>
             <span class="info-value">{{ $delivery['address'] }}</span>
         </div>
+        @endif
+        {{-- Company info (no title) --}}
+        @if(isset($company))
+            @if(!empty($company->ntn))
+            <div class="info-row">
+                <span class="info-label">NTN:</span>
+                <span class="info-value">{{ $company->ntn }}</span>
+            </div>
+            @endif
+
+            @if(!empty($company->rex_no))
+            <div class="info-row">
+                <span class="info-label">REX No:</span>
+                <span class="info-value">{{ $company->rex_no }}</span>
+            </div>
+            @endif
+        @endif
+
+        @if(!empty($delivery['fi_no']))
+            <div class="info-row">
+                <span class="info-label">FI No:</span>
+                <span class="info-value">{{ $delivery['fi_no'] }}</span>
+            </div>
         @endif
     </div>
 
@@ -32,40 +49,39 @@
             <span class="info-value">{{ date('Y-m-d') }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Delivery No:</span>
-            <span class="info-value">{{ $delivery['customer_no'] ?? 'N/A' }}</span>
+            <span class="info-label">Invoice No:</span>
+            <span class="info-value">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
         </div>
+        @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
+        <div class="info-row">
+            <span class="info-label">Delivery Date:</span>
+            <span class="info-value">{{ $delivery['delivery_date'] }}</span>
+        </div>
+        @endif
+        @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 0)
+        <div class="info-row">
+            <span class="info-label">Order Numbers:</span>
+            <span class="info-value">
+                @php
+                    $orderNumbers = collect($relatedOrders)->pluck('order_no')->implode(', ');
+                @endphp
+                {{ $orderNumbers }}
+            </span>
+        </div>
+        @else
+        <div class="info-row">
+            <span class="info-label">Order Number:</span>
+            <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
+        </div>
+        @endif
+        @if(isset($hsCode) && !empty($hsCode))
+        <div class="info-row">
+            <span class="info-label">HS Code:</span>
+            <span class="info-value">{{ $hsCode }}</span>
+        </div>
+        @endif
     </div>
 </div>
-
-{{-- Company Information from Company Table --}}
-@if(isset($company))
-<div class="company-info avoid-break">
-    <h3>Company Information</h3>
-    <table class="print-table">
-        <tbody>
-            @if(isset($company->ntn) && !empty($company->ntn))
-            <tr>
-                <td><strong>NTN:</strong></td>
-                <td>{{ $company->ntn }}</td>
-            </tr>
-            @endif
-            @if(isset($company->rex_no) && !empty($company->rex_no))
-            <tr>
-                <td><strong>REX No:</strong></td>
-                <td>{{ $company->rex_no }}</td>
-            </tr>
-            @endif
-            @if(isset($delivery['fi_no']) && !empty($delivery['fi_no']))
-            <tr>
-                <td><strong>FI No:</strong></td>
-                <td>{{ $delivery['fi_no'] }}</td>
-            </tr>
-            @endif
-        </tbody>
-    </table>
-</div>
-@endif
 
 {{-- Delivered Items Table --}}
 @if(isset($deliveryItem) && $deliveryItem->count() > 0)
@@ -75,9 +91,8 @@
         <thead>
             <tr>
                 <th style="width: 5%">Sr.</th>
-                <th style="width: 10%">Article No</th>
-                <th style="width: 8%">HS Code</th>
-                <th style="width: 24%">Product Name</th>
+                <th style="width: 12%">Article No</th>
+                <th style="width: 28%">Product Name</th>
                 <th style="width: 10%">Size</th>
                 <th style="width: 10%">Quantity</th>
                 <th style="width: 13%">Unit Price</th>
@@ -91,10 +106,9 @@
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     @if($item->product_id == $product_id)
-                        <td colspan="3"></td>
+                        <td colspan="2"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
-                        <td class="text-center">{{ $item->hs_code ?? '-' }}</td>
                         <td class="text-center">{{ $item->name }}</td>
                         @php $product_id = $item->product_id; @endphp
                     @endif
@@ -125,11 +139,11 @@ $currencyName = $firstItem->cname ?? 'PKR';
 </div>
 @endif
 
-{{-- Statement of Origin --}}
-@if(isset($company) && isset($company->statement_of_origin) && !empty($company->statement_of_origin))
+{{-- Statement of Origin (if provided) --}}
+@if(isset($statementOfOrigin) && !empty($statementOfOrigin))
 <div class="statement-of-origin avoid-break">
     <h3>Statement of Origin</h3>
-    <p>{{ $company->statement_of_origin }}</p>
+    <p>{{ $statementOfOrigin }}</p>
 </div>
 @endif
 

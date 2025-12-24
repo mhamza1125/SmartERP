@@ -116,10 +116,9 @@
                           <th>Unit</th>
                           <th>Quantity</th>
                           <th>Box Quantity</th>
-                          <th>Price (Currency)</th>
-                          <th>Exchange (Pkr)</th>
-                          <th>Price (Pkr)</th>
-                          <th>Total (Pkr)</th>
+                          <th>Price (Customer Currency)</th>
+                          <th>Price (PKR)</th>
+                          <th>Total (PKR)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -140,9 +139,8 @@
                               <td>{{$item->quantity}}</td>
                               <td>{{ $item->box_quantity ? number_format($item->box_quantity) . ' boxes' : 'N/A' }}</td>
                               <td>{{$item->price2}} {{$item->cname}}</td>
-                              <td>{{$item->exchange}}</td>
-                              <td>{{$item->price}}</td>
-                              <td>{{$item->quantity * $item->price}}</td>
+                              <td>{{number_format($item->price, 2)}}</td>
+                              <td>{{number_format($item->quantity * $item->price, 2)}}</td>
                             </tr>
                           @php $product_id = $item->product_id; @endphp
                           @endforeach
@@ -153,32 +151,26 @@
                           $total = $orderItem->sum(function($item) {
                             return $item->quantity * $item->price;
                           });
-                          // Calculate total in original currency
+                          // Calculate total in customer currency
+                          $totalCustomerCurrency = $orderItem->sum(function($item) {
+                            return $item->quantity * ($item->price2 ?? 0);
+                          });
                           $firstItem = $orderItem->first();
                           $currencyName = $firstItem->cname ?? 'PKR';
-                          $exchangeRate = $firstItem->exchange ?? 1;
-                          // If exchange rate is not 1 and currency is not PKR, calculate original currency total
-                          $hasExchange = $exchangeRate > 0 && $exchangeRate != 1 && strtoupper($currencyName) != 'PKR';
-                          if ($hasExchange) {
-                            $totalOriginal = $orderItem->sum(function($item) {
-                              return $item->quantity * ($item->price2 ?? 0);
-                            });
-                          }
                         @endphp
                         <tr>
-                          <th colspan="10"></th>
-                          <th>Grand Total:</th>
-                          <th>
-                            @if($hasExchange)
-                              {{ number_format($totalOriginal, 2) }} {{ $currencyName }} (PKR {{ number_format($total) }})
-                            @else
-                              PKR {{ number_format($total) }}
-                            @endif
-                          </th>
+                          <th colspan="9"></th>
+                          <th>Grand Total (PKR):</th>
+                          <th>{{ number_format($total, 2) }}</th>
                         </tr>
                         <tr>
-                          <th colspan="10"></th>
-                          <th>Amount in Words:</th>
+                          <th colspan="9"></th>
+                          <th>Grand Total ({{ $currencyName }}):</th>
+                          <th>{{ number_format($totalCustomerCurrency, 2) }}</th>
+                        </tr>
+                        <tr>
+                          <th colspan="9"></th>
+                          <th>Amount in Words (PKR):</th>
                           <th>{{ numberToWordsWithCurrency($total) }}</th>
                         </tr>
                       </tfoot>
@@ -236,10 +228,15 @@
 <script>
 function printProformaInvoice() {
     var bankId = document.getElementById('proformaBankSelect').value;
+    var hsCode = document.getElementById('proformaHsCode').value;
     var url = "{{ route('order.proforma', $order['order_id']) }}";
 
-    if (bankId) {
-        url += '?bank_id=' + bankId;
+    var params = new URLSearchParams();
+    if (bankId) params.append('bank_id', bankId);
+    if (hsCode) params.append('hs_code', hsCode);
+
+    if (params.toString()) {
+        url += '?' + params.toString();
     }
 
     window.open(url, '_blank');
@@ -258,6 +255,10 @@ function printProformaInvoice() {
         </button>
       </div>
       <div class="modal-body">
+        <div class="form-group">
+          <label for="proformaHsCode"><strong>HS Code (Optional)</strong></label>
+          <input type="text" class="form-control" id="proformaHsCode" placeholder="Enter HS Code">
+        </div>
         <div class="form-group">
           <label for="proformaBankSelect"><strong>Select Bank Account (Optional)</strong></label>
           <select class="form-control" id="proformaBankSelect">

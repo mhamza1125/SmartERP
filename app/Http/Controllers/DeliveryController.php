@@ -162,14 +162,32 @@ class DeliveryController extends Controller
         $deliveryBox = null;
         $deliveryItem = null;
         $transaction = null;
+        $relatedOrders = [];
 
         if ($editDeliveryId) {
             $existingDelivery = $this->deliveryRepository->get($editDeliveryId);
             $deliveryBox = $this->deliveryBoxRepository->get($editDeliveryId);
             $deliveryItem = $this->stockItemRepository->delivery($editDeliveryId);
             $transaction = $this->transactionRepository->delivery($editDeliveryId);
+            $relatedOrders = $this->getRelatedOrdersForDelivery($existingDelivery);
+
+            // Use editDelivery view for multi-order delivery edits
+            return view('editDelivery', [
+                'order' => $existingDelivery,
+                'stock' => $allOrderItems,
+                'bank' => $bank,
+                'vehicle' => $vehicle,
+                'expense' => $expense,
+                'company' => $company,
+                'deliveryBox' => $deliveryBox,
+                'deliveryItem' => $deliveryItem,
+                'transaction' => $transaction,
+                'isMultiOrder' => true,
+                'relatedOrders' => $relatedOrders,
+            ]);
         }
 
+        // Use addDelivery view for multi-order delivery creation
         return view('addDelivery', [
             'customer' => $customer,
             'orders' => $orders,
@@ -180,11 +198,7 @@ class DeliveryController extends Controller
             'company' => $company,
             'isMultiOrder' => true,
             'orderIds' => $orderIdsString,
-            'editMode' => !is_null($editDeliveryId),
-            'existingDelivery' => $existingDelivery,
-            'deliveryBox' => $deliveryBox,
-            'deliveryItem' => $deliveryItem,
-            'transaction' => $transaction,
+            'editMode' => false,
         ]);
     }
 
@@ -347,10 +361,25 @@ class DeliveryController extends Controller
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $company = $this->companyRepository->first();
 
+        // Get optional parameters from query string
+        $hsCode = request()->input('hs_code');
+        $statementOfOrigin = request()->input('statement_of_origin');
+
+        // Get related orders for multi-order deliveries
+        $isMultiOrder = $this->isMultiOrderDelivery($delivery);
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($delivery);
+        }
+
         return view('print.delivery-commercial', [
             'delivery' => $delivery,
             'deliveryItem' => $deliveryItem,
             'company' => $company,
+            'hsCode' => $hsCode,
+            'statementOfOrigin' => $statementOfOrigin,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
         ]);
     }
 
@@ -503,11 +532,29 @@ class DeliveryController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+
+        // Get the delivery to check if it's multi-order
+        $delivery = $this->deliveryRepository->get($id);
+        $isMultiOrder = $this->isMultiOrderDelivery($delivery);
+
         $this->transactionRepository->updateDE($id, $request->input());
         $this->stockRepository->update($request->input('stock_id'), $request->input());
         $this->deliveryRepository->update($id, $request->input());
         $orderStatus = ['order_status' => $request->input('order_status')];
-        $this->orderRepository->update($request->input('order_id'), $orderStatus);
+
+        // Handle both single and multi-order deliveries
+        $orderIds = $request->input('order_ids');
+        if ($orderIds) {
+            // Multi-order delivery - update all related orders
+            $orderIdArray = explode(',', $orderIds);
+            foreach ($orderIdArray as $orderId) {
+                $this->orderRepository->update($orderId, $orderStatus);
+            }
+        } else {
+            // Single order delivery
+            $this->orderRepository->update($request->input('order_id'), $orderStatus);
+        }
+
         $this->deliveryBoxRepository->delete($id);
         $this->storeDB($id, $request->input('vehicle_no'),
             $request->input('rowQty'), $request->input('totalQty'));

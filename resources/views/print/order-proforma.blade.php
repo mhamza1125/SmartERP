@@ -12,44 +12,53 @@
             <span class="info-label">Customer Name:</span>
             <span class="info-value">{{ $order['fname'] ?? 'N/A' }} {{ $order['lname'] ?? '' }}</span>
         </div>
-        @if(isset($order['email']) && !empty($order['email']))
+        @if(isset($order['address']) && !empty($order['address']))
         <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">{{ $order['email'] }}</span>
+            <span class="info-label">Address:</span>
+            <span class="info-value">{{ $order['address'] }}</span>
         </div>
+        @endif
+        {{-- Company info (no title) --}}
+        @if(isset($company))
+            @if(!empty($company->ntn))
+            <div class="info-row">
+                <span class="info-label">NTN:</span>
+                <span class="info-value">{{ $company->ntn }}</span>
+            </div>
+            @endif
+
+            @if(!empty($company->rex_no))
+            <div class="info-row">
+                <span class="info-label">REX No:</span>
+                <span class="info-value">{{ $company->rex_no }}</span>
+            </div>
+            @endif
         @endif
     </div>
 
     <div class="info-section">
         <div class="info-row">
+            <span class="info-label">Order Number:</span>
+            <span class="info-value">{{ $order['order_no'] ?? 'N/A' }}</span>
+        </div>
+        <div class="info-row">
             <span class="info-label">Invoice Date:</span>
             <span class="info-value">{{ $order['order_date'] ?? 'N/A' }}</span>
         </div>
+        @if(isset($order['due_date']) && !empty($order['due_date']))
+        <div class="info-row">
+            <span class="info-label">Delivery Date:</span>
+            <span class="info-value">{{ $order['due_date'] }}</span>
+        </div>
+        @endif
+        @if(isset($hsCode) && !empty($hsCode))
+        <div class="info-row">
+            <span class="info-label">HS Code:</span>
+            <span class="info-value">{{ $hsCode }}</span>
+        </div>
+        @endif
     </div>
 </div>
-
-{{-- Company Information from Company Table --}}
-@if(isset($company))
-<div class="company-info avoid-break">
-    <h3>Company Information</h3>
-    <table class="print-table">
-        <tbody>
-            @if(isset($company->ntn) && !empty($company->ntn))
-            <tr>
-                <td><strong>NTN:</strong></td>
-                <td>{{ $company->ntn }}</td>
-            </tr>
-            @endif
-            @if(isset($company->rex_no) && !empty($company->rex_no))
-            <tr>
-                <td><strong>REX No:</strong></td>
-                <td>{{ $company->rex_no }}</td>
-            </tr>
-            @endif
-        </tbody>
-    </table>
-</div>
-@endif
 
 {{-- Order Items Table --}}
 @if(isset($orderItem) && $orderItem->count() > 0)
@@ -59,9 +68,8 @@
         <thead>
             <tr>
                 <th style="width: 5%">Sr.</th>
-                <th style="width: 9%">Article No</th>
-                <th style="width: 8%">HS Code</th>
-                <th style="width: 20%">Product Name</th>
+                <th style="width: 11%">Article No</th>
+                <th style="width: 24%">Product Name</th>
                 <th style="width: 10%">Size</th>
                 <th style="width: 10%">Quantity</th>
                 <th style="width: 12%">Unit Price</th>
@@ -75,10 +83,9 @@
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     @if($item->product_id == $product_id)
-                        <td colspan="4"></td>
+                        <td colspan="3"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
-                        <td class="text-center">{{ $item->hs_code ?? '-' }}</td>
                         <td class="text-center">{{ $item->pname }}</td>
                         <td class="text-center">{{ $item->name }}</td>
                         @php $product_id = $item->product_id; @endphp
@@ -149,14 +156,6 @@ $currencyName = $firstItem->cname ?? 'PKR';
             @endif
         </tbody>
     </table>
-</div>
-@endif
-
-{{-- Statement of Origin --}}
-@if(isset($company) && isset($company->statement_of_origin) && !empty($company->statement_of_origin))
-<div class="statement-of-origin avoid-break">
-    <h3>Statement of Origin</h3>
-    <p>{{ $company->statement_of_origin }}</p>
 </div>
 @endif
 

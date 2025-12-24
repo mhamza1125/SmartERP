@@ -71,6 +71,7 @@ class PackingListController extends Controller
             'groups.*.products.*.product_id' => 'required|exists:products,product_id',
             'groups.*.products.*.pcs_each_carton' => 'required|integer|min:1',
             'groups.*.products.*.total_pcs' => 'required|integer|min:1',
+            'groups.*.products.*.instance_id' => 'nullable|string',
         ]);
 
         // Validate carton_to >= carton_from
@@ -78,6 +79,34 @@ class PackingListController extends Controller
             if ($group['carton_to'] < $group['carton_from']) {
                 return redirect()->back()
                     ->with('fails', "Group ".($index + 1).": Carton To must be greater than or equal to Carton From")
+                    ->withInput();
+            }
+        }
+
+        // Validate split products - total allocated shouldn't exceed delivered quantity
+        $productAllocations = [];
+        foreach ($validatedData['groups'] as $group) {
+            foreach ($group['products'] as $product) {
+                $productId = $product['product_id'];
+                $pcsEachCarton = $product['pcs_each_carton'];
+                $totalPcs = $product['total_pcs'];
+
+                if (!isset($productAllocations[$productId])) {
+                    $productAllocations[$productId] = [
+                        'total_delivered' => $totalPcs,
+                        'total_allocated' => 0,
+                    ];
+                }
+
+                $productAllocations[$productId]['total_allocated'] += $pcsEachCarton;
+            }
+        }
+
+        // Check if any product exceeds its delivered quantity
+        foreach ($productAllocations as $productId => $allocation) {
+            if ($allocation['total_allocated'] > $allocation['total_delivered']) {
+                return redirect()->back()
+                    ->with('fails', "Product ID {$productId}: Total allocated ({$allocation['total_allocated']}) exceeds delivered quantity ({$allocation['total_delivered']})")
                     ->withInput();
             }
         }
@@ -182,6 +211,7 @@ class PackingListController extends Controller
             'groups.*.products.*.product_id' => 'required|exists:products,product_id',
             'groups.*.products.*.pcs_each_carton' => 'required|integer|min:1',
             'groups.*.products.*.total_pcs' => 'required|integer|min:1',
+            'groups.*.products.*.instance_id' => 'nullable|string',
         ]);
 
         // Validate carton_to >= carton_from
@@ -189,6 +219,34 @@ class PackingListController extends Controller
             if ($group['carton_to'] < $group['carton_from']) {
                 return redirect()->back()
                     ->with('fails', "Group ".($index + 1).": Carton To must be greater than or equal to Carton From")
+                    ->withInput();
+            }
+        }
+
+        // Validate split products - total allocated shouldn't exceed delivered quantity
+        $productAllocations = [];
+        foreach ($validatedData['groups'] as $group) {
+            foreach ($group['products'] as $product) {
+                $productId = $product['product_id'];
+                $pcsEachCarton = $product['pcs_each_carton'];
+                $totalPcs = $product['total_pcs'];
+
+                if (!isset($productAllocations[$productId])) {
+                    $productAllocations[$productId] = [
+                        'total_delivered' => $totalPcs,
+                        'total_allocated' => 0,
+                    ];
+                }
+
+                $productAllocations[$productId]['total_allocated'] += $pcsEachCarton;
+            }
+        }
+
+        // Check if any product exceeds its delivered quantity
+        foreach ($productAllocations as $productId => $allocation) {
+            if ($allocation['total_allocated'] > $allocation['total_delivered']) {
+                return redirect()->back()
+                    ->with('fails', "Product ID {$productId}: Total allocated ({$allocation['total_allocated']}) exceeds delivered quantity ({$allocation['total_delivered']})")
                     ->withInput();
             }
         }

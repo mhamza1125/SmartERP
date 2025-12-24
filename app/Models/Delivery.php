@@ -20,7 +20,27 @@ class Delivery extends Model
         'delivery_method',
         'delivery_status',
         'fi_no',
+        'delivery_no',
+        'delivery_date',
         'created_by',
         'updated_at',
     ];
+
+    /**
+     * Generate auto-generated delivery number with format: SLE-001-26
+     * SLE = Fixed prefix
+     * 001 = Sequential delivery number for the year (zero-padded, 3 digits)
+     * 26 = Last 2 digits of the year (2026)
+     */
+    public static function generateDeliveryNo()
+    {
+        $currentYear = date('Y');
+        $lastTwoDigits = substr($currentYear, -2);
+
+        // Get the count of deliveries created this year
+        $count = self::whereYear('created_at', $currentYear)->count();
+        $sequentialNo = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+        return "SLE-{$sequentialNo}-{$lastTwoDigits}";
+    }
 }

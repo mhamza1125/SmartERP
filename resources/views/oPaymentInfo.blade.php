@@ -39,12 +39,17 @@
                           $grossAmount = $transaction['credit'];
                       }
                       $netAmount = $grossAmount - ($transaction['fees_expenses'] ?? 0);
+                      $ccAmount = $transaction['cc_amount'] ?? 0;
+                      $currencyName = $transaction['cname'] ?? 'PKR';
                     @endphp
-                    <tr><td><b>Amount Received:</b> {{number_format($grossAmount)}}</td></tr>
+                    <tr><td><b>Amount Received (PKR):</b> {{number_format($grossAmount, 2)}}</td></tr>
+                    @if($ccAmount > 0)
+                    <tr><td><b>Amount Received ({{ $currencyName }}):</b> {{number_format($ccAmount, 2)}}</td></tr>
+                    @endif
                     <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($grossAmount) }}</td></tr>
                     @if($transaction['fees_expenses'] && $transaction['fees_expenses'] > 0)
-                    <tr><td><b>Fees/Expenses:</b> {{number_format($transaction['fees_expenses'])}}</td></tr>
-                    <tr><td><b>Net Amount (After Fees):</b> {{number_format($netAmount)}}</td></tr>
+                    <tr><td><b>Fees/Expenses:</b> {{number_format($transaction['fees_expenses'], 2)}}</td></tr>
+                    <tr><td><b>Net Amount (After Fees):</b> {{number_format($netAmount, 2)}}</td></tr>
                     @endif
                     @if($transaction['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>@endif

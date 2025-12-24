@@ -29,14 +29,27 @@
               @csrf
               <input type="hidden" name="delivery_id" value="{{ $deliveryId }}">
 
+              <!-- Product Split Summary Section -->
+              {{-- <div class="row mb-3">
+                <div class="col-12">
+                  <div class="alert alert-info" id="splitSummary" style="display: none;">
+                    <h6 class="alert-heading">Product Allocation Summary</h6>
+                    <div id="splitSummaryContent"></div>
+                  </div>
+                </div>
+              </div> --}}
+
               <!-- Carton Groups Section -->
               <div class="row">
                 <div class="col-12">
                   <div class="card">
                     <div class="card-header">
                       <h6 class="mb-0">Carton Groups</h6>
-                      <small class="text-muted d-block mt-1">
-                        <i class="fas fa-info-circle"></i> Drag products between groups to merge. Click remove button to split into separate group.
+                      <small class="text-muted d-block mt-1 ml-4">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Drag products between groups to split across multiple cartons.</strong>
+                        {{-- The same product can appear in multiple groups with different quantities.
+                        Total allocated pieces cannot exceed the delivered quantity. --}}
                       </small>
                     </div>
                     <div class="card-body" id="cartonGroupsContainer">

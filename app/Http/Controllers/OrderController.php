@@ -97,11 +97,9 @@ class OrderController extends Controller
         $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
         $prices2 = $request->input('price2');
-        $heads = $request->input('head_id');
-        $exchanges = $request->input('exchange');
         $quantities = $request->input('quantity');
         $getId = $this->orderRepository->store($validatedData);
-        $this->storeOI($getId, $products, $stages, $prices, $prices2, $quantities, $heads, $exchanges);
+        $this->storeOI($getId, $products, $stages, $prices, $prices2, $quantities);
 
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -256,11 +254,15 @@ class OrderController extends Controller
             }
         }
 
+        // Get optional HS Code parameter
+        $hsCode = request()->input('hs_code');
+
         return view('print.order-proforma', [
             'order' => $order,
             'orderItem' => $orderItem,
             'bankDetails' => $bankDetails,
             'company' => $company,
+            'hsCode' => $hsCode,
         ]);
     }
 
@@ -442,15 +444,13 @@ class OrderController extends Controller
     {
     }
 
-    private function storeOI($getId, $products, $stages, $prices, $prices2, $quantities, $heads, $exchanges)
+    private function storeOI($getId, $products, $stages, $prices, $prices2, $quantities)
     {
         foreach ($prices as $key => $price) {
             $product = $products[$key] ?? null;
             $stage = $stages[$key] ?? null;
             $quantity = $quantities[$key] ?? null;
             $price2 = $prices2[$key] ?? null;
-            $head_id = $heads[$key] ?? null;
-            $exchange = $exchanges[$key] ?? null;
             $total = $price * $quantity;
             $orderItem = [
                 'order_id' => $getId,
@@ -458,8 +458,6 @@ class OrderController extends Controller
                 'product_stage_id' => $stage,
                 'price' => $price,
                 'price2' => $price2,
-                'head_id' => $head_id,
-                'exchange' => $exchange,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

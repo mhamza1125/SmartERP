@@ -14,13 +14,15 @@ class OrderItemRepository implements GlobalInterface
 
     public function get($id)
     {
-        return OrderItem::where('order_id', $id)
+        return OrderItem::where('order_items.order_id', $id)
             ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
             ->join('heads as shead', 'shead.head_id', '=', 'order_items.product_stage_id')
+            ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
+            ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
+            ->leftJoin('heads as chead', 'chead.head_id', '=', 'customers.currency_id')
             ->leftJoin('product_materials', function($join) {
                 $join->on('product_materials.product_type_id', '=', 'order_items.product_type_id')
                      ->whereIn('product_materials.material_id', function($query) {
@@ -218,8 +220,6 @@ class OrderItemRepository implements GlobalInterface
             $stage = $data['product_stage_id'][$key] ?? null;
             $price = $data['price'][$key] ?? null;
             $price2 = $data['price2'][$key] ?? null;
-            $head_id = $data['head_id'][$key] ?? null;
-            $exchange = $data['exchange'][$key] ?? null;
             $total = $data['total'][$key] ?? null;
             $orderItem = [
                 'order_id' => $id,
@@ -227,8 +227,6 @@ class OrderItemRepository implements GlobalInterface
                 'product_stage_id' => $stage,
                 'price' => $price,
                 'price2' => $price2,
-                'head_id' => $head_id,
-                'exchange' => $exchange,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

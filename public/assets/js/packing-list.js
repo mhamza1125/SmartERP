@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const productsZone = newGroup.querySelector('.products-zone');
             addProductToGroup(productsZone, product.product_id, product.name, product.article_no, groupCounter - 1, product.quantity);
         });
+
+        // Update split summary after all groups are created
+        updateSplitSummary();
     }
 
     function loadExistingCartons() {
@@ -107,6 +110,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         });
+
+        // Update split summary after all groups are loaded
+        updateSplitSummary();
     }
 
     function addCartonGroup(productId, productName, article, totalPcs) {
@@ -185,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Move product to target group
+                // Copy product to target group (allow splitting across groups)
                 const productId = draggedElement.dataset.productId;
                 const productName = draggedElement.dataset.productName;
                 const article = draggedElement.dataset.article;
@@ -195,21 +201,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetGroupIndex = targetGroup.dataset.groupIndex - 1;
                 const targetProductsZone = targetGroup.querySelector('.products-zone');
 
-                // Add to target group
+                // Add to target group (creates a new instance of the product)
                 addProductToGroup(targetProductsZone, productId, productName, article, targetGroupIndex, totalPcs, pcsEachCarton);
-
-                // Remove from source group
-                draggedElement.remove();
 
                 // Update group headers
                 updateGroupHeader(targetGroup);
-                updateGroupHeader(sourceGroup);
 
-                // If source group is now empty, remove it
-                const sourceProductsZone = sourceGroup.querySelector('.products-zone');
-                if (sourceProductsZone.querySelectorAll('.product-item-row').length === 0) {
-                    sourceGroup.remove();
-                }
+                // Update split summary
+                updateSplitSummary();
+
+                // Note: We do NOT remove from source group - this allows the same product
+                // to be split across multiple groups with different quantities
             }
         });
     }
@@ -238,12 +240,16 @@ document.addEventListener('DOMContentLoaded', function () {
         // Ensure totalPcs has a value (fallback to 0 if undefined/null)
         const displayTotalPcs = totalPcs || 0;
 
+        // Generate unique instance ID for tracking split products
+        const instanceId = `${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const itemHtml = `
             <div class="product-item-row" draggable="true"
                  data-product-id="${productId}"
                  data-product-name="${productName}"
                  data-article="${article}"
-                 data-total-pcs="${displayTotalPcs}">
+                 data-total-pcs="${displayTotalPcs}"
+                 data-instance-id="${instanceId}">
                 <div class="row align-items-center mb-2">
                     <div class="col-md-4">
                         <div class="drag-handle">
@@ -253,6 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <small class="text-muted ml-4">Article: ${article}</small>
                         <input type="hidden" name="groups[${groupArrayIndex}][products][${productCount}][product_id]" value="${productId}">
                         <input type="hidden" name="groups[${groupArrayIndex}][products][${productCount}][total_pcs]" value="${displayTotalPcs}">
+                        <input type="hidden" name="groups[${groupArrayIndex}][products][${productCount}][instance_id]" value="${instanceId}">
                     </div>
                     <div class="col-md-3">
                         <label class="mb-0">Pcs Each Carton</label>
@@ -277,38 +284,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const newItem = productsZone.lastElementChild;
         const removeBtn = newItem.querySelector('.remove-product');
+        const pcsInput = newItem.querySelector('.pcs-each-carton');
 
         // Make product draggable
         attachProductDragListeners(newItem);
 
-        // Remove product button - creates new group with this product
+        // Update summary when pcs value changes
+        pcsInput.addEventListener('change', updateSplitSummary);
+        pcsInput.addEventListener('input', updateSplitSummary);
+
+        // Remove product button - removes this instance from the group
         removeBtn.addEventListener('click', function () {
             const groupElement = productsZone.closest('.carton-group');
             const remainingProducts = productsZone.querySelectorAll('.product-item-row').length;
 
-            // If this is the only product in the group, just delete the group
+            // If this is the only product in the group, remove the entire group
             if (remainingProducts === 1) {
                 if (confirm('This will remove the entire carton group. Continue?')) {
                     groupElement.remove();
+                    updateSplitSummary();
                 }
             } else {
-                // Create new group with this product (split functionality)
-                const pcsEachValue = newItem.querySelector('.pcs-each-carton').value;
-                const newGroup = addCartonGroup(productId, productName, article, totalPcs);
-
-                // Set the pcs each carton value if it was filled
-                if (pcsEachValue) {
-                    const newPcsInput = newGroup.querySelector('.pcs-each-carton');
-                    if (newPcsInput) {
-                        newPcsInput.value = pcsEachValue;
-                    }
-                }
-
-                // Remove from current group
+                // Just remove this product instance from the group
                 newItem.remove();
-
                 // Update header of source group
                 updateGroupHeader(groupElement);
+                updateSplitSummary();
             }
         });
     }
@@ -325,6 +326,82 @@ document.addEventListener('DOMContentLoaded', function () {
             draggedElement = null;
             draggedFromGroup = null;
         });
+    }
+
+    // Helper function to get all product instances across all groups
+    function getAllProductInstances() {
+        const instances = {};
+        const groups = document.querySelectorAll('.carton-group');
+
+        groups.forEach((group) => {
+            const productsZone = group.querySelector('.products-zone');
+            const items = productsZone.querySelectorAll('.product-item-row');
+
+            items.forEach((item) => {
+                const productId = item.dataset.productId;
+                const instanceId = item.dataset.instanceId;
+                const totalPcs = parseInt(item.dataset.totalPcs) || 0;
+                const pcsEachCarton = parseInt(item.querySelector('.pcs-each-carton').value) || 0;
+
+                if (!instances[productId]) {
+                    instances[productId] = {
+                        name: item.dataset.productName,
+                        totalDelivered: totalPcs,
+                        instances: []
+                    };
+                }
+
+                instances[productId].instances.push({
+                    instanceId: instanceId,
+                    pcsEachCarton: pcsEachCarton
+                });
+            });
+        });
+
+        return instances;
+    }
+
+    // Update the split summary display
+    function updateSplitSummary() {
+        const productInstances = getAllProductInstances();
+        const summaryDiv = document.getElementById('splitSummary');
+        const summaryContent = document.getElementById('splitSummaryContent');
+
+        let hasSplits = false;
+        let summaryHtml = '';
+
+        for (const productId in productInstances) {
+            const product = productInstances[productId];
+
+            if (product.instances.length > 1) {
+                hasSplits = true;
+                let totalAllocated = 0;
+                let instancesHtml = '';
+
+                product.instances.forEach((instance, index) => {
+                    totalAllocated += instance.pcsEachCarton;
+                    instancesHtml += `<span class="badge badge-secondary mr-2">Group ${index + 1}: ${instance.pcsEachCarton} pcs</span>`;
+                });
+
+                const remaining = product.totalDelivered - totalAllocated;
+                const statusClass = remaining < 0 ? 'text-danger' : (remaining === 0 ? 'text-success' : 'text-warning');
+
+                summaryHtml += `
+                    <div class="mb-2">
+                        <strong>${product.name}</strong><br>
+                        <small>Delivered: ${product.totalDelivered} pcs | Allocated: ${totalAllocated} pcs | Remaining: <span class="${statusClass}">${remaining} pcs</span></small><br>
+                        ${instancesHtml}
+                    </div>
+                `;
+            }
+        }
+
+        if (hasSplits) {
+            summaryContent.innerHTML = summaryHtml;
+            summaryDiv.style.display = 'block';
+        } else {
+            summaryDiv.style.display = 'none';
+        }
     }
 
     // Form validation before submit
@@ -348,7 +425,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 hasError = true;
                 return false;
             }
+
+            // Validate that pcs_each_carton is filled for all products
+            items.forEach((item) => {
+                const pcsInput = item.querySelector('.pcs-each-carton');
+                if (!pcsInput.value || parseInt(pcsInput.value) < 1) {
+                    e.preventDefault();
+                    alert(`Carton Group ${index + 1}: Please enter a valid "Pcs Each Carton" value for ${item.dataset.productName}`);
+                    hasError = true;
+                }
+            });
         });
+
+        if (hasError) {
+            return false;
+        }
+
+        // Validate split products - total across all groups shouldn't exceed delivered quantity
+        const productInstances = getAllProductInstances();
+        for (const productId in productInstances) {
+            const product = productInstances[productId];
+            let totalAllocated = 0;
+
+            product.instances.forEach((instance) => {
+                totalAllocated += instance.pcsEachCarton;
+            });
+
+            if (totalAllocated > product.totalDelivered) {
+                e.preventDefault();
+                alert(`Product "${product.name}": Total allocated (${totalAllocated}) exceeds delivered quantity (${product.totalDelivered})`);
+                hasError = true;
+            }
+        }
 
         return !hasError;
     });

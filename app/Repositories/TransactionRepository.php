@@ -419,8 +419,9 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
             ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
             ->join('customers', 'customers.customer_id', 'transactions.payee_id')
+            ->leftJoin('heads as chead', 'chead.head_id', '=', 'customers.currency_id')
             ->join('orders', 'orders.order_id', 'transactions.order_id')
-            ->select('transactions.*', 'customers.customer_no', 'customers.fname', 'orders.order_date', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title')
+            ->select('transactions.*', 'customers.customer_no', 'customers.fname', 'orders.order_date', 'orders.order_no', 'chead.name as cname', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title')
             ->first();
     }
 
@@ -725,6 +726,140 @@ class TransactionRepository implements GlobalInterface
         $totalDebitAfter = ($deliveriesAfter->debit ?? 0) + ($transactionsAfter->debit ?? 0);
         $totalCreditAfter = $transactionsAfter->credit ?? 0;
         $closingBalance = $totalCreditAfter - $totalDebitAfter;
+
+        return [
+            'transactions' => $transactionsBetween,
+            'opening_balance' => $openingBalance,
+            'closing_balance' => $closingBalance,
+        ];
+    }
+
+    public function cDetailCC($id)
+    {
+        // Customer Ledger in Customer Currency - Show deliveries with price2 (customer currency)
+        // Get deliveries with their delivered amounts based on stocks and stock_items using price2
+        $deliveries = \DB::table('stocks')
+            ->select(
+                'stocks.stock_id',
+                'stocks.stock_no',
+                'stocks.stock_date',
+                'deliveries.delivery_id',
+                'stocks.created_at as timestamp',
+                \DB::raw('COALESCE(SUM(order_items.price2 * stock_items.quantity), 0) as price2')
+            )
+            ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
+            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->leftJoin('order_items', function($join) {
+                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                    ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
+            })
+            ->where('orders.customer_id', $id)
+            ->where('stocks.stock_status', '=', 3) // Delivery status
+            ->groupBy('stocks.stock_id')
+            ->get();
+
+        $transactions = \DB::table('transactions')
+            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->where('transactions.payee_id', $id)
+            ->where('transactions.transaction_to', 'customer')
+            ->get();
+
+        $return = $deliveries->concat($transactions);
+        $sorted = $return->sortBy('timestamp');
+
+        return $sorted;
+    }
+
+    public function cDetailCCFilter($id, $dfrom, $dto)
+    {
+        // Customer Ledger in Customer Currency - Before Date From (show only deliveries)
+        $deliveriesBefore = \DB::table('stocks')
+            ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
+            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->leftJoin('order_items', function($join) {
+                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                    ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
+            })
+            ->where('orders.customer_id', $id)
+            ->where('stocks.stock_date', '<', $dfrom)
+            ->where('stocks.stock_status', '=', 3) // Delivery status
+            ->select(\DB::raw('COALESCE(SUM(order_items.price2 * stock_items.quantity), 0) as price2'))
+            ->first();
+
+        $transactionsBefore = \DB::table('transactions')
+            ->where('transactions.payee_id', $id)
+            ->where('transactions.transaction_date', '<', $dfrom)
+            ->where('transactions.transaction_to', 'customer')
+            ->select(
+                \DB::raw('SUM(transactions.cc_amount) as cc_amount')
+            )
+            ->first();
+
+        $totalDeliveryBefore = $deliveriesBefore->price2 ?? 0;
+        $totalPaymentBefore = $transactionsBefore->cc_amount ?? 0;
+        $openingBalance = $totalPaymentBefore - $totalDeliveryBefore;
+
+        // Customer Ledger in Customer Currency - Between Date From and Date To (show only deliveries)
+        $deliveries = \DB::table('stocks')
+            ->select(
+                'stocks.stock_id',
+                'stocks.stock_no',
+                'stocks.stock_date',
+                'deliveries.delivery_id',
+                'stocks.created_at as timestamp',
+                \DB::raw('COALESCE(SUM(order_items.price2 * stock_items.quantity), 0) as price2')
+            )
+            ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
+            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->leftJoin('order_items', function($join) {
+                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                    ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
+            })
+            ->where('orders.customer_id', $id)
+            ->whereBetween('stocks.stock_date', [$dfrom, $dto])
+            ->where('stocks.stock_status', '=', 3) // Delivery status
+            ->groupBy('stocks.stock_id')
+            ->get();
+
+        $transactions = \DB::table('transactions')
+            ->select('transactions.*', 'transactions.created_at as timestamp')
+            ->where('transactions.payee_id', $id)
+            ->where('transactions.transaction_to', 'customer')
+            ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
+            ->get();
+
+        $transactionsBetween = $deliveries->concat($transactions)->sortBy('timestamp');
+
+        // Customer Ledger in Customer Currency - After Date To (show only deliveries)
+        $deliveriesAfter = \DB::table('stocks')
+            ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
+            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->leftJoin('order_items', function($join) {
+                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                    ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
+            })
+            ->where('orders.customer_id', $id)
+            ->where('stocks.stock_date', '>', $dto)
+            ->where('stocks.stock_status', '=', 3) // Delivery status
+            ->select(\DB::raw('COALESCE(SUM(order_items.price2 * stock_items.quantity), 0) as price2'))
+            ->first();
+
+        $transactionsAfter = \DB::table('transactions')
+            ->where('transactions.payee_id', $id)
+            ->where('transactions.transaction_date', '>', $dto)
+            ->where('transactions.transaction_to', 'customer')
+            ->select(
+                \DB::raw('SUM(transactions.cc_amount) as cc_amount')
+            )
+            ->first();
+
+        $totalDeliveryAfter = $deliveriesAfter->price2 ?? 0;
+        $totalPaymentAfter = $transactionsAfter->cc_amount ?? 0;
+        $closingBalance = $totalPaymentAfter - $totalDeliveryAfter;
 
         return [
             'transactions' => $transactionsBetween,

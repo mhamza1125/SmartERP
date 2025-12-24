@@ -5,20 +5,30 @@
 Todo: Fix migration of update material and product id columns in vendors table
 
 1. Manual hs code in performa invoice and commercial invoice
-2. Remove email, Add customer address in both invoices
 3. Manual statement of origin
+2. Remove email, Add customer address in both invoices
+13. Add order no in commercial invoice and performa invoice
+8. Customer address and detail in performan and commercial invoice
+9. Manual invoice number and add Customer order no from order in performa and commercial
+12. TXN => SLE (Transaction number)
+    Current: TXN-2025-0040
+    New: SLE-001-26
+        SLE-(First delivery of 2026)-(Year 2026) (Commercial invoice print) Invoice No
+        Same in performa mentioned as Invoice No
 4. Customer ledger in dollor not in pkr
-5. Remove header date time (oK)
-6. Footer fields in print (OK)
+10. Delivery date in performa invoice
+11. Overall total pcs remove form packing list
 7. Divide qty of pcs in packing list
 
+
+
 ===============================================================================================
-==========   Delivered  =======================================================================
+==========   Delivered   ======================================================================
 ===============================================================================================
 
 Todo (Required): 
 1. Commercial Invoice
-2. Add ntn and other fields in company
+2. Add ntn and REX No fields in company
 3. Default issuance should show all products
     Keep Select Order as default selected not the Default Issuance
     Clicking on it will show all products, Just like ptc modal

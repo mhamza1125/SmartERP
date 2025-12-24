@@ -151,6 +151,47 @@ class CustomerController extends Controller
     }
 
     /**
+     * Show customer detail in customer currency (USD)
+     */
+    public function detail2(Request $request, $id)
+    {
+        $this->authorize('show', Customer::class);
+        $this->authorize('show', Transaction::class);
+        $customer = $this->customerRepository->get($id);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $ccOBalance = 0; // Opening Balance in customer currency
+        $ccCBalance = 0; // Closing Balance in customer currency
+
+        if (! empty($dfrom) && ! empty($dto)) {
+            $all = $this->transactionRepository->cDetailCCFilter($id, $dfrom, $dto);
+            $detail = $all['transactions'];
+            $ccOBalance = $all['opening_balance'];
+            $ccCBalance = $all['closing_balance'];
+        } else {
+            $detail = $this->transactionRepository->cDetailCC($id);
+        }
+
+        // For customer currency ledger:
+        // - Deliveries use price2 (customer currency) from order items
+        // - Payments use cc_amount from transactions
+        // Balance = Total Deliveries (price2) - Total Payments (cc_amount)
+        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('price2');
+        $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('cc_amount');
+        $ccBalance = $ccOBalance + $totalDeliveries - $totalPayments + $ccCBalance;
+
+        return view('customerDetail2', [
+            'customer' => $customer,
+            'detail' => $detail,
+            'ccBalance' => $ccBalance,
+            'ccOBalance' => $ccOBalance,
+            'ccCBalance' => $ccCBalance,
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+        ]);
+    }
+
+    /**
      * Print customer ledger
      */
     public function printCustomerLedger(Request $request, $id)

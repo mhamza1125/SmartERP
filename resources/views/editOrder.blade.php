@@ -131,34 +131,14 @@
                   </div>
                 </div>
                 <div class="col-md-3">
-                  <div class="form-group">                    
-                    <label>Currency</label>
-                    {{-- <select class="form-control select2" name="head_id" required> --}}
-                    <select class="form-control select2" name="head_id">
-                      <option value="" selected disabled>Select Currency</option>
-                      @if($head->count())
-                        @foreach($head as $item)
-                          <option value="{{$item->head_id}}" {{ old('head_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-3">
                   <div class="form-group">
-                    <label>Price (Currency)</label>
+                    <label>Price (Customer Currency)</label>
                     <input type="number" min="0" class="form-control" name="price2" id="price2" placeholder="0">
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Exchange Rate (Pkr)</label>
-                    <input type="number" min="0" class="form-control" name="exchange" id="exchange" placeholder="0">
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Price (Pkr)</label>
+                    <label>Price (PKR)</label>
                     <input type="number" min="0" class="form-control" name="price" id="price" placeholder="0">
                   </div>
                 </div>
@@ -172,10 +152,9 @@
                         <th>Item / Product</th>
                         <th>Product Stage</th>
                         <th>Quantity</th>
-                        <th>Price (Pkr)</th>
-                        <th>Exchange (Pkr)</th>
-                        <th>Price (Currency)</th>
-                        <th>Total</th>
+                        <th>Price (PKR)</th>
+                        <th>Price (Customer Currency)</th>
+                        <th>Total (PKR)</th>
                         <th>Action</th>
                       </tr>
                     </thead>

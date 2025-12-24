@@ -282,12 +282,12 @@
     @endforeach
 
     <!-- Grand Total Summary -->
-    <div class="grand-total">
+    {{-- <div class="grand-total">
         <div style="display: flex; justify-content: space-between;">
             <span>OVERALL TOTAL PIECES:</span>
             <span>{{ $grandTotalPieces }}</span>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Summary Section -->
     <div class="summary">

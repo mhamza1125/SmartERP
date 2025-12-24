@@ -90,12 +90,19 @@
                     <div class="invalid-feedback">Select Bank</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label>Net Amount Received <span class="text-danger">*</span></label>
+                    <label>Amount (PKR) <span class="text-danger">*</span></label>
                     <input type="number" min="0" step="0.01" class="form-control" name="debit" id="debit" required value="{{ $transaction['debit'] }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Amount (Customer Currency)</label>
+                    <input type="number" min="0" step="0.01" class="form-control" name="cc_amount" id="cc_amount" value="{{ $transaction['cc_amount'] ?? '' }}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -112,9 +119,21 @@
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Fees/Expenses</label>
+                    <label>Fees/Expenses (PKR)</label>
                     <input type="number" min="0" step="0.01" class="form-control" name="fees_expenses" id="fees_expenses" value="{{ $transaction['fees_expenses'] ?? '' }}" placeholder="Bank fees, processing charges, etc.">
                     <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="alert alert-info">
+                    <h6>Payment Information:</h6>
+                    <ul class="mb-0">
+                      <li><strong>Amount (PKR):</strong> Payment amount in Pakistani Rupees (affects cash/bank balance)</li>
+                      <li><strong>Amount (Customer Currency):</strong> Payment amount in customer's currency (for reference only)</li>
+                      <li><strong>Fees/Expenses:</strong> Bank fees, processing charges, or other deductions in PKR (optional)</li>
+                    </ul>
                   </div>
                 </div>
               </div>

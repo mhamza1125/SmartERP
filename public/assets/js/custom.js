@@ -593,19 +593,9 @@ $(document).ready(function () {
             // return (productId && stageId && quantity && price);
         }
 
-        function calculatePriceInPkr() {
-            var priceUsd = parseFloat($('#price2').val()) || 0;
-            var exchangeRate = parseFloat($('#exchange').val()) || 0;
-            var pricePkr = priceUsd * exchangeRate;
-            $('#price').val(pricePkr.toFixed(2));
-            toggleAddButton();
-        }
-
         function toggleAddButton() {
             $('#addBtn').prop('disabled', !checkFields());
         }
-
-        $('#price2, #exchange').on('input', calculatePriceInPkr);
 
         // Enable/disable add button based on field values
         $('select[name="product_type_id"], select[name="stage_id"], input[name="quantity"], input[name="price"]').on('change keyup', toggleAddButton);
@@ -616,10 +606,6 @@ $(document).ready(function () {
             var productName = $('select[name="product_type_id"] option:selected').text();
             var stageId = $('select[name="stage_id"]').val();
             var stageName = $('select[name="stage_id"] option:selected').text();
-            var headId = $('select[name="head_id"]').val() || '0';
-            var headName = $('select[name="head_id"] option:selected').text() || 'None';
-            if (headId == 0) { var headName = 'None'; }
-            var exchange = $('input[name="exchange"]').val() || '0';
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
             var price2 = $('input[name="price2"]').val() || '0';
@@ -646,8 +632,7 @@ $(document).ready(function () {
                     '<td>' + stageName + '<input type="hidden" name="sname[]" value="' + stageName + '"><input type="hidden" name="product_stage_id[]" value="' + stageId + '"></td>' +
                     '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td>' + price + '<input type="hidden" name="price[]" value="' + price + '"></td>' +
-                    '<td>' + exchange + '<input type="hidden" name="exchange[]" value="' + exchange + '"></td>' +
-                    '<td>' + price2 + ' (' + headName + ')' + '<input type="hidden" name="price2[]" value="' + price2 + '"><input type="hidden" name="head_id[]" value="' + headId + '"></td>' +
+                    '<td>' + price2 + '<input type="hidden" name="price2[]" value="' + price2 + '"></td>' +
                     '<td>' + total + '<input type="hidden" name="total[]" value="' + total + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
@@ -755,19 +740,9 @@ $(document).ready(function () {
             // return (productId && stageId && quantity && price);
         }
 
-        function calculatePriceInPkr() {
-            var priceUsd = parseFloat($('#price2').val()) || 0;
-            var exchangeRate = parseFloat($('#exchange').val()) || 0;
-            var pricePkr = priceUsd * exchangeRate;
-            $('#price').val(pricePkr.toFixed(2));
-            toggleAddButton();
-        }
-
         function toggleAddButton() {
             $('#addBtn').prop('disabled', !checkFields());
         }
-
-        $('#price2, #exchange').on('input', calculatePriceInPkr);
 
         // Enable/disable add button based on field values
         $('select[name="product_type_id"], select[name="stage_id"], input[name="quantity"], input[name="price"]').on('change keyup', toggleAddButton);
@@ -778,13 +753,9 @@ $(document).ready(function () {
             var productName = $('select[name="product_type_id"] option:selected').text();
             var stageId = $('select[name="stage_id"]').val();
             var stageName = $('select[name="stage_id"] option:selected').text();
-            // var headId = $('select[name="head_id"]').val() || '0';
-            // var headName = $('select[name="head_id"] option:selected').text() || 'None';
-            // if (headId == 0) { var headName = 'None'; }
-            // var exchange = $('input[name="exchange"]').val() || '0';
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
-            // var price2 = $('input[name="price2"]').val() || '0';
+            var price2 = $('input[name="price2"]').val() || '0';
             var total = quantity * price;
             var existingProduct = false;
 

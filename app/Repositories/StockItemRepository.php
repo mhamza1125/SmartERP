@@ -64,7 +64,9 @@ class StockItemRepository implements GlobalInterface
                      ->on('order_items.product_stage_id', '=', 'stock_items.stage_id')
                      ->on('order_items.order_id', '=', 'stocks.order_id');
             })
-            ->leftJoin('heads as chead', 'chead.head_id', '=', 'order_items.head_id')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->leftJoin('customers', 'customers.customer_id', '=', 'orders.customer_id')
+            ->leftJoin('heads as chead', 'chead.head_id', '=', 'customers.currency_id')
             ->select(
                 'stock_items.*',
                 'product_types.product_type_id',

@@ -16,7 +16,7 @@
                   <a class="dropdown-item" href="{{ route('delivery.print', $deliveryId) }}" target="_blank">
                     <i class="fas fa-file-alt"></i> Print Delivery
                   </a>
-                  <a class="dropdown-item" href="{{ route('delivery.commercial', $deliveryId) }}" target="_blank">
+                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#commercialInvoiceModal">
                     <i class="fas fa-file-invoice"></i> Commercial Invoice
                   </a>
                 </div>
@@ -93,15 +93,18 @@
               <div class="col-md-5">
                 <table class="table table-sm">
                   <tbody>
-                    <tr><td><b>Delivery No:</b> {{$delivery['customer_no']}}</td></tr>
+                    <tr><td><b>Delivery No:</b> {{$delivery['delivery_no'] ?? 'N/A'}}</td></tr>
+                    @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
+                    <tr><td><b>Delivery Date:</b> {{$delivery['delivery_date']}}</td></tr>
+                    @endif
                     <tr><td><b>Shipping From:</b> {{$delivery['fshipping']}}</td></tr>
                     <tr><td><b>Port No:</b> {{$delivery['fport_no']}}</td></tr>
                     <tr><td><b>Shipping To:</b> {{$delivery['tshipping']}}</td></tr>
                     <tr><td><b>Port No:</b> {{$delivery['tport_no']}}</td></tr>
-                    <tr><td><b>Delivery Method: </b> 
-                      @if($delivery['delivery_method'] == 1) Sea Freight 
-                      @elseif($delivery['delivery_method'] == 2) Air Freight 
-                      @elseif($delivery['delivery_method'] == 3) Road Transport 
+                    <tr><td><b>Delivery Method: </b>
+                      @if($delivery['delivery_method'] == 1) Sea Freight
+                      @elseif($delivery['delivery_method'] == 2) Air Freight
+                      @elseif($delivery['delivery_method'] == 3) Road Transport
                       @else Unknown @endif</td></tr>
                     <tr><td><b>Delivery Status:</b>
                       @if($delivery['delivery_status'] == 1) <span class="badge badge-warning">Pending</span>
@@ -123,20 +126,6 @@
                 </table>
               </div>
             </div>
-            @if($company && $company->statement_of_origin)
-            <div class="row">
-              <div class="col-md-12">
-                <div class="card">
-                  <div class="card-header">
-                    <h6>Statement of Origin</h6>
-                  </div>
-                  <div class="card-body">
-                    <p>{{$company->statement_of_origin}}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            @endif
             <div class="row">
               <div class="col-md-12 mt-2">
                 <table class="table table-sm table-striped">
@@ -152,7 +141,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @if($deliveryItem->count())
+                    @if($deliveryItem && $deliveryItem->count())
                       @php $product_id = 0; $index = 1; @endphp
                       @foreach($deliveryItem as $item)
                         @unless($item->product_type_id == 0)
@@ -190,7 +179,7 @@
             </div>
 
             <h5>Delivery to Container</h5>
-            @if($deliveryBox->count())
+            @if($deliveryBox && $deliveryBox->count())
             <div class="row">
               <div class="col-md-12 mt-2">
                 <table class="table table-sm table-striped">
@@ -210,7 +199,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @if($deliveryBox->count())
+                    @if($deliveryBox && $deliveryBox->count())
                       @php $total = 0; @endphp
                       @foreach($deliveryBox as $item)
                         @php
@@ -243,7 +232,7 @@
             @endif
 
             <h5>Delivery Container / Vehicle</h5>
-            @if($deliveryItem->where('product_type_id', 0)->count())
+            @if($deliveryItem && $deliveryItem->where('product_type_id', 0)->count())
             <div class="row">
               <div class="col-md-12 mt-2">
                 <table class="table table-sm table-striped">
@@ -256,7 +245,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @if($deliveryItem->count())
+                    @if($deliveryItem && $deliveryItem->count())
                       @php $index = 1; @endphp
                       @foreach($deliveryItem as $item)
                         @unless($item->product_type_id != 0)
@@ -278,7 +267,7 @@
             @endif
 
             <h5>Delivery Expense</h5>
-            @if($transaction->count())
+            @if($transaction && $transaction->count())
             <div class="row">
               <div class="col-md-12 mt-2">
                 <table class="table table-sm table-striped">
@@ -292,7 +281,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @if($transaction->count())
+                    @if($transaction && $transaction->count())
                       @foreach($transaction as $item)
                         <tr>
                           <td>{{$loop->index + 1}}</td>
@@ -379,7 +368,7 @@ function generateDeliveryInvoiceContent(title, bankDetails, includeSO) {
                 </thead>
                 <tbody>`;
 
-    @if($deliveryItem->count())
+    @if($deliveryItem && $deliveryItem->count())
         @foreach($deliveryItem as $item)
             content += `
                 <tr>
@@ -459,7 +448,7 @@ function generatePackingListContent() {
                 </thead>
                 <tbody>`;
 
-    @if($deliveryItem->count())
+    @if($deliveryItem && $deliveryItem->count())
         @foreach($deliveryItem as $item)
             content += `
                 <tr>
@@ -579,6 +568,57 @@ function generateInvoicePrintDocument(content, title, company) {
         printWindow.close();
         console.log('Print window closed');
     }, 1000);
+}
+</script>
+
+<!-- Commercial Invoice Modal -->
+<div class="modal fade" id="commercialInvoiceModal" tabindex="-1" role="dialog" aria-labelledby="commercialInvoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="commercialInvoiceModalLabel">Commercial Invoice</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="hsCode"><strong>HS Code (Optional)</strong></label>
+          <input type="text" class="form-control" id="hsCode" placeholder="Enter HS Code">
+        </div>
+        <div class="form-group">
+          <label for="statementOfOrigin"><strong>Statement of Origin (Optional)</strong></label>
+          <textarea class="form-control" id="statementOfOrigin" rows="4" placeholder="Enter Statement of Origin"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="printCommercialInvoice()">
+          <i class="fas fa-print"></i> Print Commercial Invoice
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function printCommercialInvoice() {
+    const hsCode = document.getElementById('hsCode').value;
+    const statementOfOrigin = document.getElementById('statementOfOrigin').value;
+
+    let url = '{{ route("delivery.commercial", $deliveryId) }}';
+
+    // Add parameters to URL
+    const params = new URLSearchParams();
+    if (hsCode) params.append('hs_code', hsCode);
+    if (statementOfOrigin) params.append('statement_of_origin', statementOfOrigin);
+
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+
+    window.open(url, '_blank');
+    $('#commercialInvoiceModal').modal('hide');
 }
 </script>
 

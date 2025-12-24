@@ -51,6 +51,12 @@ class DeliveryRepository implements GlobalInterface
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();
+
+        // Auto-generate delivery_no if not provided
+        if (empty($data['delivery_no'])) {
+            $data['delivery_no'] = Delivery::generateDeliveryNo();
+        }
+
         $store = Delivery::create($data);
 
         return $store->delivery_id;
