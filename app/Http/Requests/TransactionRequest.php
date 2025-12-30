@@ -29,6 +29,9 @@ class TransactionRequest extends FormRequest
             'order_id' => '',
             'debit' => '',
             'credit' => '',
+            'cc_amount' => 'nullable|numeric|min:0',
+            'fb_charges' => 'nullable|numeric|min:0',
+            'db_charges' => 'nullable|numeric|min:0',
             'amount' => '',
             'fees_expenses' => 'nullable|numeric|min:0',
             'payee_id' => '',
@@ -36,6 +39,8 @@ class TransactionRequest extends FormRequest
             'payee_type' => '',
             'voucher_type' => '',
             'description' => '',
+            'image' => 'nullable|array',
+            'image.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
         ];
     }
 }

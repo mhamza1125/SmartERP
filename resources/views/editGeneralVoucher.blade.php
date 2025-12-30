@@ -104,7 +104,16 @@
                   <div class="form-group">
                     <label>Voucher Type</label>
                     @php
-                      $voucherType = ($transaction->debit > 0) ? 'debit' : 'credit';
+                      // Determine voucher type based on transaction_to and stored values
+                      if ($transaction->transaction_to == 'customer') {
+                        // For customer vouchers, cc_amount is used
+                        // If credit is 0/null, it's a debit voucher (charge to customer)
+                        // If debit is 0/null, it's a credit voucher (credit to customer)
+                        $voucherType = ($transaction->credit == 0 || $transaction->credit === null) ? 'debit' : 'credit';
+                      } else {
+                        // For other payees (vendor, contractor, employee), use debit/credit
+                        $voucherType = !empty($transaction->credit) ? 'debit' : 'credit';
+                      }
                     @endphp
                     <select class="form-control select2" name="voucher_type" required>
                       <option value="" disabled>Select Voucher Type</option>
@@ -120,7 +129,16 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label id="amountLabel">Amount</label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="amount" required value="{{ abs($transaction->debit ?? $transaction->credit) }}">
+                    @php
+                      // For customer vouchers, amount is stored in cc_amount
+                      // For other payees, amount is stored in debit or credit
+                      if ($transaction->transaction_to == 'customer') {
+                        $displayAmount = $transaction->cc_amount ?? 0;
+                      } else {
+                        $displayAmount = abs($transaction->debit ?? $transaction->credit ?? 0);
+                      }
+                    @endphp
+                    <input type="number" min="0" step="0.01" class="form-control" name="amount" required value="{{ $displayAmount }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
@@ -177,4 +195,3 @@ $(document).ready(function() {
 });
 </script>
 @endsection
-

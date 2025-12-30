@@ -71,6 +71,12 @@ class OrderRepository implements GlobalInterface
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();
+
+        // Auto-generate order_no if not provided
+        if (empty($data['order_no'])) {
+            $data['order_no'] = Order::generateOrderNo();
+        }
+
         $store = Order::create($data);
 
         return $store->order_id;

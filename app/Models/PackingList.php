@@ -16,6 +16,9 @@ class PackingList extends Model
         'order_id',
         'created_by',
         'updated_at',
+        'pallet_qty',
+        'pallet_weight',
+        'pallet_dimension',
     ];
 
     public function delivery()
@@ -33,4 +36,3 @@ class PackingList extends Model
         return $this->hasMany(PackingCarton::class, 'packing_list_id', 'packing_list_id');
     }
 }
-

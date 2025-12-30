@@ -110,7 +110,7 @@
                   <input type="text" class="form-control" name="fshipping" placeholder="Shipping From" value="{{$order['fshipping']}}">
                 </div>
                 <div class="col-md-3">
-                  <label>Port No</label>
+                  <label>Port Name</label>
                   <input type="text" class="form-control" name="fport_no" placeholder="Port No" value="{{$order['fport_no']}}">
                 </div>
                 <div class="col-md-3">
@@ -135,7 +135,7 @@
                   <input type="text" class="form-control" name="tshipping" placeholder="Shipping To" value="{{$order['tshipping']}}">
                 </div>
                 <div class="col-md-6">
-                  <label>Port No</label>
+                  <label>Port Name</label>
                   <input type="text" class="form-control" name="tport_no" placeholder="Port No" value="{{$order['tport_no']}}">
                 </div>
               </div>

@@ -131,7 +131,7 @@
                       @endphp
                       <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
                     @else
-                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', isset($order) ? $order['stock_no'] ?? '' : '')}}" readonly>
+                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', isset($order) ? $order['stock_no'] ?? '' : '')}}">
                     @endif
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Stock No</div>
@@ -223,14 +223,14 @@
                   <input type="text" class="form-control" name="fshipping" placeholder="Shipping From" value="{{$fshipping}}">
                 </div>
                 <div class="col-md-3">
-                  <label>Port No</label>
+                  <label>Port Name</label>
                   @php
                     $fportNo = old('fport_no');
                     if (!$fportNo && isset($editMode) && $editMode && isset($existingDelivery)) {
                       $fportNo = $existingDelivery['fport_no'] ?? '';
                     }
                   @endphp
-                  <input type="text" class="form-control" name="fport_no" placeholder="Port No" value="{{$fportNo}}">
+                  <input type="text" class="form-control" name="fport_no" placeholder="Port Name" value="{{$fportNo}}">
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
@@ -262,18 +262,22 @@
                     if (!$tshipping && isset($editMode) && $editMode && isset($existingDelivery)) {
                       $tshipping = $existingDelivery['tshipping'] ?? '';
                     }
+                    // Auto-populate from customer address (server-side)
+                    if (!$tshipping && isset($customer)) {
+                      $tshipping = $customer['address'] ?? '';
+                    }
                   @endphp
-                  <input type="text" class="form-control" name="tshipping" placeholder="Shipping To" value="{{$tshipping}}">
+                  <input type="text" class="form-control" id="tshipping" name="tshipping" placeholder="Shipping To" value="{{$tshipping}}">
                 </div>
                 <div class="col-md-6">
-                  <label>Port No</label>
+                  <label>Port Name</label>
                   @php
                     $tportNo = old('tport_no');
                     if (!$tportNo && isset($editMode) && $editMode && isset($existingDelivery)) {
                       $tportNo = $existingDelivery['tport_no'] ?? '';
                     }
                   @endphp
-                  <input type="text" class="form-control" name="tport_no" placeholder="Port No" value="{{$tportNo}}">
+                  <input type="text" class="form-control" name="tport_no" placeholder="Port Name" value="{{$tportNo}}">
                 </div>
               </div>
 

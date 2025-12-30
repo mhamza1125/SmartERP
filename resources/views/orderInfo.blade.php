@@ -45,25 +45,9 @@
                   <tbody>
                     <tr><td><b>Customer No:</b> {{$order['customer_no']}}</td></tr>
                     <tr><td><b>Customer Name:</b> {{$order['fname']}} {{$order['lname']}}</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="col-md-5">
-                <table class="table table-sm">
-                  <tbody>
-                    <tr><td><b>Voucher No:</b> TXN-{{ date('Y') }}-{{ str_pad($order['order_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
-                    <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
-                    <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                    <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
-                    @if($order['due_date'])
-                    <tr><td><b>Due Date:</b> {{$order['due_date']}}</td></tr>
-                    @endif
                     @if($order['payment_terms'])
                     <tr><td><b>Payment Terms:</b> {{$order['payment_terms']}}</td></tr>
                     @endif
-                    {{-- @if($order['expected_delivery_date'])
-                    <tr><td><b>Expected Delivery:</b> {{$order['expected_delivery_date']}}</td></tr>
-                    @endif --}}
                     <tr><td><b>Order Status:</b>
                       @if($order['order_status'] == 1) <span class="badge badge-secondary">Draft</span>
                       @elseif($order['order_status'] == 2) <span class="badge badge-success">Confirmed</span>
@@ -72,6 +56,23 @@
                       @elseif($order['order_status'] == 5) <span class="badge badge-danger">Cancelled</span>
                       @else @endif
                     </td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-5">
+                <table class="table table-sm">
+                  <tbody>
+                    {{-- <tr><td><b>Voucher No:</b> SLE-{{ date('Y') }}-{{ str_pad($order['order_id'], 4, '0', STR_PAD_LEFT) }}</td></tr> --}}
+                    <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
+                    <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
+                    <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                    @if($order['due_date'])
+                    <tr><td><b>Delivery Date:</b> {{$order['due_date']}}</td></tr>
+                    @endif
+                    {{-- @if($order['expected_delivery_date'])
+                    <tr><td><b>Expected Delivery:</b> {{$order['expected_delivery_date']}}</td></tr>
+                    @endif --}}
+                    
                   </tbody>
                 </table>
               </div>
@@ -90,14 +91,14 @@
             @endif
 
             <!-- Tab Navigation -->
-            <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+            {{-- <ul class="nav nav-tabs" id="orderTabs" role="tablist">
               <li class="nav-item">
                 <a class="nav-link active" id="order-details-tab" data-toggle="tab" href="#order-details" role="tab" aria-controls="order-details" aria-selected="true">Order Details</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" id="packing-list-tab" data-toggle="tab" href="#packing-list" role="tab" aria-controls="packing-list" aria-selected="false">Packing List</a>
               </li>
-            </ul>
+            </ul> --}}
 
             <!-- Tab Content -->
             <div class="tab-content" id="orderTabContent">
@@ -115,10 +116,10 @@
                           <th>Size</th>
                           <th>Unit</th>
                           <th>Quantity</th>
-                          <th>Box Quantity</th>
+                          {{-- <th>Box Quantity</th> --}}
                           <th>Price (Customer Currency)</th>
-                          <th>Price (PKR)</th>
-                          <th>Total (PKR)</th>
+                          {{-- <th>Price (PKR)</th> --}}
+                          <th>Total</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -137,9 +138,8 @@
                               <td>{{$item->name}}</td>
                               <td>{{$item->uname}}</td>
                               <td>{{$item->quantity}}</td>
-                              <td>{{ $item->box_quantity ? number_format($item->box_quantity) . ' boxes' : 'N/A' }}</td>
-                              <td>{{$item->price2}} {{$item->cname}}</td>
-                              <td>{{number_format($item->price, 2)}}</td>
+                              {{-- <td>{{ $item->box_quantity ? number_format($item->box_quantity) . ' boxes' : 'N/A' }}</td> --}}
+                              <td>{{number_format($item->price, 2)}} {{$item->cname}}</td>
                               <td>{{number_format($item->quantity * $item->price, 2)}}</td>
                             </tr>
                           @php $product_id = $item->product_id; @endphp
@@ -148,30 +148,17 @@
                       </tbody>
                       <tfoot>
                         @php
-                          $total = $orderItem->sum(function($item) {
-                            return $item->quantity * $item->price;
-                          });
-                          // Calculate total in customer currency
+                          // Calculate total in customer currency (price is now customer currency)
                           $totalCustomerCurrency = $orderItem->sum(function($item) {
-                            return $item->quantity * ($item->price2 ?? 0);
+                            return $item->quantity * $item->price;
                           });
                           $firstItem = $orderItem->first();
                           $currencyName = $firstItem->cname ?? 'PKR';
                         @endphp
                         <tr>
-                          <th colspan="9"></th>
-                          <th>Grand Total (PKR):</th>
-                          <th>{{ number_format($total, 2) }}</th>
-                        </tr>
-                        <tr>
-                          <th colspan="9"></th>
+                          <th colspan="7"></th>
                           <th>Grand Total ({{ $currencyName }}):</th>
                           <th>{{ number_format($totalCustomerCurrency, 2) }}</th>
-                        </tr>
-                        <tr>
-                          <th colspan="9"></th>
-                          <th>Amount in Words (PKR):</th>
-                          <th>{{ numberToWordsWithCurrency($total) }}</th>
                         </tr>
                       </tfoot>
                     </table>
@@ -296,7 +283,7 @@ function printProformaInvoice() {
     <div class="modal-content">
       <div class="modal-header bg-warning text-dark">
         <h5 class="modal-title" id="ptcModalLabel">
-          <i class="fas fa-tasks"></i> Production Tracking Cards (PTCs)
+          <i class="fas fa-tasks"></i> Process Travel Cards (PTCs)
         </h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
@@ -335,7 +322,7 @@ function printProformaInvoice() {
                     $statusText = 'Unknown';
 
                     // Use order_status if available, otherwise use stock_status
-                    $status = $ptc->order_status ?? $ptc->stock_status;
+                    $status = $ptc->stock_status ?? $ptc->order_status;
 
                     if ($status == 1) {
                       $statusBadge = 'badge-secondary';

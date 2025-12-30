@@ -58,7 +58,11 @@ class PackingListRepository implements GlobalInterface
     public function update($id, array $data)
     {
         $update = PackingList::findOrFail($id);
-        $update->update($data);
+        // Filter out null values but keep 0 values
+        $updateData = array_filter($data, function($value, $key) {
+            return $value !== null && $value !== '';
+        }, ARRAY_FILTER_USE_BOTH);
+        $update->update($updateData);
     }
 
     public function delete($id)
@@ -100,4 +104,3 @@ class PackingListRepository implements GlobalInterface
         PackingCarton::where('packing_list_id', $packingListId)->delete();
     }
 }
-

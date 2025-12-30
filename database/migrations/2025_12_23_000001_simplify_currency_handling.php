@@ -8,10 +8,11 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * This migration simplifies currency handling by:
-     * 1. Removing head_id and exchange columns from order_items table
-     *    (These were used for complex currency exchange calculations)
+     * 1. Removing price2, head_id and exchange columns from order_items table
+     *    (price2 was customer currency, now using price for customer currency)
+     *    (head_id and exchange were used for complex currency exchange calculations)
      * 2. Adding cc_amount column to transactions table
      *    (Stores customer currency amounts for payments)
      */
@@ -19,6 +20,9 @@ return new class extends Migration
     {
         // Remove complex currency exchange columns from order_items
         Schema::table('order_items', function (Blueprint $table) {
+            if (Schema::hasColumn('order_items', 'price2')) {
+                $table->dropColumn('price2');
+            }
             if (Schema::hasColumn('order_items', 'head_id')) {
                 $table->dropColumn('head_id');
             }
@@ -41,8 +45,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Restore head_id and exchange columns to order_items
+        // Restore price2, head_id and exchange columns to order_items
         Schema::table('order_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('order_items', 'price2')) {
+                $table->double('price2')->unsigned()->nullable()->after('price');
+            }
             if (!Schema::hasColumn('order_items', 'head_id')) {
                 $table->unsignedBigInteger('head_id')->nullable()->after('price2');
             }

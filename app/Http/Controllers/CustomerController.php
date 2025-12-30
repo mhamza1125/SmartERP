@@ -134,10 +134,46 @@ class CustomerController extends Controller
         // For customer ledger (receivable account):
         // - Deliveries are stored in debit (customer owes us)
         // - Payments are stored in debit (cash inflow to us)
-        // Balance = Total Deliveries - Total Payments
-        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('debit');
-        $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('debit');
-        $balance = $oBalance + $totalDeliveries - $totalPayments + $cBalance;
+        // - For order payments with cc_amount, use cc_amount instead of debit
+        // - For general vouchers: debit vouchers increase receivable, credit vouchers decrease it
+        // Balance = Total Deliveries - Total Payments + General Debit Vouchers - General Credit Vouchers
+        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment', 'generalVoucher'])->sum('debit');
+
+        // For payments, use cc_amount if available (customer currency), otherwise use debit (PKR)
+        $payments = $detail->where('transaction_type', 'orderPayment');
+        $totalPayments = 0;
+        foreach ($payments as $payment) {
+            $totalPayments += !empty($payment->cc_amount) ? $payment->cc_amount : ($payment->debit ?? 0);
+        }
+
+        // For general vouchers, use cc_amount with strict NULL checks
+        // If credit IS NULL: display and calculate in Credit column (customer credit)
+        // If debit IS NULL: display and calculate in Debit column (customer charge)
+        $generalVouchers = $detail->where('transaction_type', 'generalVoucher');
+        $totalGeneralDebit = 0;
+        $totalGeneralCredit = 0;
+        foreach ($generalVouchers as $gv) {
+            if (!empty($gv->cc_amount)) {
+                if (is_null($gv->credit)) {
+                    // Credit Voucher (credit IS NULL) - decreases receivable
+                    $totalGeneralCredit += $gv->cc_amount;
+                } else if (is_null($gv->debit)) {
+                    // Debit Voucher (debit IS NULL) - increases receivable
+                    $totalGeneralDebit += $gv->cc_amount;
+                }
+            }
+        }
+
+        $balance = $oBalance + $totalDeliveries - $totalPayments + $totalGeneralDebit - $totalGeneralCredit + $cBalance;
+
+        // Get customer currency name
+        $currencyName = null;
+        if (isset($customer['currency_id']) && !empty($customer['currency_id'])) {
+            $currency = $this->headRepository->getById($customer['currency_id']);
+            if ($currency && isset($currency['name'])) {
+                $currencyName = $currency['name'];
+            }
+        }
 
         return view('customerDetail', [
             'customer' => $customer,
@@ -147,49 +183,11 @@ class CustomerController extends Controller
             'cBalance' => $cBalance,
             'dfrom' => $dfrom,
             'dto' => $dto,
+            'currencyName' => $currencyName,
         ]);
     }
 
-    /**
-     * Show customer detail in customer currency (USD)
-     */
-    public function detail2(Request $request, $id)
-    {
-        $this->authorize('show', Customer::class);
-        $this->authorize('show', Transaction::class);
-        $customer = $this->customerRepository->get($id);
-        $dfrom = $request->input('dfrom');
-        $dto = $request->input('dto');
-        $ccOBalance = 0; // Opening Balance in customer currency
-        $ccCBalance = 0; // Closing Balance in customer currency
 
-        if (! empty($dfrom) && ! empty($dto)) {
-            $all = $this->transactionRepository->cDetailCCFilter($id, $dfrom, $dto);
-            $detail = $all['transactions'];
-            $ccOBalance = $all['opening_balance'];
-            $ccCBalance = $all['closing_balance'];
-        } else {
-            $detail = $this->transactionRepository->cDetailCC($id);
-        }
-
-        // For customer currency ledger:
-        // - Deliveries use price2 (customer currency) from order items
-        // - Payments use cc_amount from transactions
-        // Balance = Total Deliveries (price2) - Total Payments (cc_amount)
-        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('price2');
-        $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('cc_amount');
-        $ccBalance = $ccOBalance + $totalDeliveries - $totalPayments + $ccCBalance;
-
-        return view('customerDetail2', [
-            'customer' => $customer,
-            'detail' => $detail,
-            'ccBalance' => $ccBalance,
-            'ccOBalance' => $ccOBalance,
-            'ccCBalance' => $ccCBalance,
-            'dfrom' => $dfrom,
-            'dto' => $dto,
-        ]);
-    }
 
     /**
      * Print customer ledger
@@ -215,10 +213,37 @@ class CustomerController extends Controller
         // For customer ledger (receivable account):
         // - Deliveries are stored in debit (customer owes us)
         // - Payments are stored in debit (cash inflow to us)
-        // Balance = Total Deliveries - Total Payments
-        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('debit');
-        $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('debit');
-        $balance = $oBalance + $totalDeliveries - $totalPayments + $cBalance;
+        // - For order payments with cc_amount, use cc_amount instead of debit
+        // - For general vouchers: debit vouchers increase receivable, credit vouchers decrease it
+        // Balance = Total Deliveries - Total Payments + General Debit Vouchers - General Credit Vouchers
+        $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment', 'generalVoucher'])->sum('debit');
+
+        // For payments, use cc_amount if available (customer currency), otherwise use debit (PKR)
+        $payments = $detail->where('transaction_type', 'orderPayment');
+        $totalPayments = 0;
+        foreach ($payments as $payment) {
+            $totalPayments += !empty($payment->cc_amount) ? $payment->cc_amount : ($payment->debit ?? 0);
+        }
+
+        // For general vouchers, use cc_amount with strict NULL checks
+        // If credit IS NULL: display and calculate in Credit column (customer credit)
+        // If debit IS NULL: display and calculate in Debit column (customer charge)
+        $generalVouchers = $detail->where('transaction_type', 'generalVoucher');
+        $totalGeneralDebit = 0;
+        $totalGeneralCredit = 0;
+        foreach ($generalVouchers as $gv) {
+            if (!empty($gv->cc_amount)) {
+                if (is_null($gv->credit)) {
+                    // Credit Voucher (credit IS NULL) - decreases receivable
+                    $totalGeneralCredit += $gv->cc_amount;
+                } else if (is_null($gv->debit)) {
+                    // Debit Voucher (debit IS NULL) - increases receivable
+                    $totalGeneralDebit += $gv->cc_amount;
+                }
+            }
+        }
+
+        $balance = $oBalance + $totalDeliveries - $totalPayments + $totalGeneralDebit - $totalGeneralCredit + $cBalance;
 
         return view('print.customer-ledger', [
             'customer' => $customer,

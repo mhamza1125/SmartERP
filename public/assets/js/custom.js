@@ -395,7 +395,7 @@ $(document).ready(function () {
                     grandTotal += total;
                 }
             });
-            $('#grandTotal').text('Rupee: ' + grandTotal.toFixed(2));
+            $('#grandTotal').text('Amount: ' + grandTotal.toFixed(2));
         }
 
         $('#submitBtn').on('click', function () {
@@ -533,7 +533,7 @@ $(document).ready(function () {
                     grandTotal += total;
                 }
             });
-            $('#grandTotal').text('Rupee: ' + grandTotal.toFixed(2));
+            $('#grandTotal').text('Amount: ' + grandTotal.toFixed(2));
         }
 
         $('#submitBtn').on('click', function () {
@@ -608,7 +608,6 @@ $(document).ready(function () {
             var stageName = $('select[name="stage_id"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
-            var price2 = $('input[name="price2"]').val() || '0';
             var total = quantity * price;
             var existingProduct = false;
 
@@ -632,7 +631,6 @@ $(document).ready(function () {
                     '<td>' + stageName + '<input type="hidden" name="sname[]" value="' + stageName + '"><input type="hidden" name="product_stage_id[]" value="' + stageId + '"></td>' +
                     '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td>' + price + '<input type="hidden" name="price[]" value="' + price + '"></td>' +
-                    '<td>' + price2 + '<input type="hidden" name="price2[]" value="' + price2 + '"></td>' +
                     '<td>' + total + '<input type="hidden" name="total[]" value="' + total + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';
@@ -645,7 +643,6 @@ $(document).ready(function () {
                 $('#addBtn').prop('disabled', true);
                 $('input[name="quantity"]').val('0');
                 $('input[name="price"]').val('0');
-                $('input[name="price2"]').val('0');
                 $('select[name="product_type_id[]"]').val('').trigger('change');
                 updateSrNumbers();
                 updateGrandTotal();
@@ -679,7 +676,7 @@ $(document).ready(function () {
                     grandTotal += total;
                 }
             });
-            $('#grandTotal').text('Rupee: ' + grandTotal.toFixed(2));
+            $('#grandTotal').text('Amount: ' + grandTotal.toFixed(2));
         }
 
         $('#submitBtn').on('click', function () {
@@ -691,7 +688,6 @@ $(document).ready(function () {
                     'product_name': $(row).find('input[name="name[]"]').val(),
                     'quantity': $(row).find('input[name="quantity[]"]').val(),
                     'price': $(row).find('input[name="price[]"]').val(),
-                    'price2': $(row).find('input[name="price2[]"]').val(),
                     'total': $(row).find('input[name="total[]"]').val()
                 };
                 tableData.push(rowData);
@@ -755,7 +751,6 @@ $(document).ready(function () {
             var stageName = $('select[name="stage_id"] option:selected').text();
             var quantity = $('input[name="quantity"]').val();
             var price = $('input[name="price"]').val();
-            var price2 = $('input[name="price2"]').val() || '0';
             var total = quantity * price;
             var existingProduct = false;
 
@@ -824,7 +819,7 @@ $(document).ready(function () {
                     grandTotal += total;
                 }
             });
-            $('#grandTotal').text('Rupee: ' + grandTotal.toFixed(2));
+            $('#grandTotal').text('Amount: ' + grandTotal.toFixed(2));
         }
 
         $('#submitBtn').on('click', function () {
@@ -836,7 +831,6 @@ $(document).ready(function () {
                     'product_name': $(row).find('input[name="name[]"]').val(),
                     'quantity': $(row).find('input[name="quantity[]"]').val(),
                     'price': $(row).find('input[name="price[]"]').val(),
-                    'price2': $(row).find('input[name="price2[]"]').val(),
                     'total': $(row).find('input[name="total[]"]').val()
                 };
                 tableData.push(rowData);

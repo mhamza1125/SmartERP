@@ -95,13 +95,42 @@
                     // For customer ledger:
                     // - Deliveries (stored in debit) should display in Debit column
                     // - Payments (stored in debit) should display in Credit column
+                    // - For order payments with cc_amount, use cc_amount instead of debit
+                    // - For general vouchers (transaction_type = 'generalVoucher'):
+                    //   - Use cc_amount for display and balance
+                    //   - If credit IS NULL: display cc_amount in Credit column (customer credit)
+                    //   - If debit IS NULL: display cc_amount in Debit column (customer charge)
                     $isPayment = isset($transaction->transaction_type) && $transaction->transaction_type == 'orderPayment';
+                    $isGeneralVoucher = isset($transaction->transaction_type) && $transaction->transaction_type == 'generalVoucher';
 
-                    if ($isPayment) {
+                    if ($isGeneralVoucher && !empty($transaction->cc_amount)) {
+                        // General Voucher: stored in cc_amount
+                        // Determine column by strict NULL check:
+                        // - If credit is NULL: display cc_amount in Credit column (customer credit)
+                        // - If debit is NULL: display cc_amount in Debit column (customer charge)
+                        if (is_null($transaction->credit)) {
+                            // Credit Voucher (Credit to Customer) - credit IS NULL
+                            $displayDebit = 0;
+                            $displayCredit = $transaction->cc_amount;
+                            $runningBalance += $transaction->cc_amount; // Decreases customer liability (increases balance)
+                        } else if (is_null($transaction->debit)) {
+                            // Debit Voucher (Charge to Customer) - debit IS NULL
+                            $displayDebit = $transaction->cc_amount;
+                            $displayCredit = 0;
+                            $runningBalance -= $transaction->cc_amount; // Increases customer liability (reduces balance)
+                        } else {
+                            // Fallback: both have values, shouldn't happen but handle gracefully
+                            $displayDebit = 0;
+                            $displayCredit = 0;
+                        }
+                    } elseif ($isPayment) {
                         // Payment: stored in debit, but display in credit column
+                        // Use cc_amount if available (customer currency), otherwise use debit (PKR)
                         $displayDebit = 0;
-                        $displayCredit = $debit;
-                        $runningBalance += $debit; // Payment increases balance (reduces receivable)
+                        $displayCredit = !empty($transaction->cc_amount) ? $transaction->cc_amount : $debit;
+                        // For balance calculation, use cc_amount if available
+                        $amountToUse = !empty($transaction->cc_amount) ? $transaction->cc_amount : $debit;
+                        $runningBalance += $amountToUse; // Payment increases balance (reduces receivable)
                     } else {
                         // Delivery: stored in debit, display in debit column
                         $displayDebit = $debit;

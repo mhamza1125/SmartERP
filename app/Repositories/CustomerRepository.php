@@ -10,7 +10,9 @@ class CustomerRepository implements GlobalInterface
 {
     public function all()
     {
-        return Customer::orderBy('customers.created_at', 'desc')
+        return Customer::leftJoin('heads as currency', 'currency.head_id', '=', 'customers.currency_id')
+            ->select('customers.*', 'currency.name as currency_name')
+            ->orderBy('customers.created_at', 'desc')
             ->get();
     }
 

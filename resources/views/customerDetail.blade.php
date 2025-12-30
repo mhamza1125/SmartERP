@@ -85,13 +85,42 @@
                         // For customer ledger:
                         // - Deliveries (stored in debit) should display in Debit column
                         // - Payments (stored in debit) should display in Credit column
+                        // - For order payments with cc_amount, use cc_amount instead of debit
+                        // - For general vouchers (transaction_type = 'generalVoucher'):
+                        //   - Use cc_amount for display and balance
+                        //   - If credit IS NULL: display cc_amount in Credit column (customer credit)
+                        //   - If debit IS NULL: display cc_amount in Debit column (customer charge)
                         $isPayment = isset($item->transaction_type) && $item->transaction_type == 'orderPayment';
+                        $isGeneralVoucher = isset($item->transaction_type) && $item->transaction_type == 'generalVoucher';
 
-                        if ($isPayment) {
+                        if ($isGeneralVoucher && !empty($item->cc_amount)) {
+                          // General Voucher: stored in cc_amount
+                          // Determine column by strict NULL check:
+                          // - If credit is NULL: display cc_amount in Credit column (customer credit)
+                          // - If debit is NULL: display cc_amount in Debit column (customer charge)
+                          if (is_null($item->credit)) {
+                            // Credit Voucher (Credit to Customer) - credit IS NULL
+                            $displayDebit = 0;
+                            $displayCredit = $item->cc_amount;
+                            $balance += $item->cc_amount; // Decreases customer liability (increases balance)
+                          } else if (is_null($item->debit)) {
+                            // Debit Voucher (Charge to Customer) - debit IS NULL
+                            $displayDebit = $item->cc_amount;
+                            $displayCredit = 0;
+                            $balance -= $item->cc_amount; // Increases customer liability (reduces balance)
+                          } else {
+                            // Fallback: both have values, shouldn't happen but handle gracefully
+                            $displayDebit = 0;
+                            $displayCredit = 0;
+                          }
+                        } elseif ($isPayment) {
                           // Payment: stored in debit, but display in credit column
+                          // Use cc_amount if available (customer currency), otherwise use debit (PKR)
                           $displayDebit = 0;
-                          $displayCredit = $item->debit ?? 0;
-                          $balance += $item->debit; // Payment increases balance (reduces receivable)
+                          $displayCredit = !empty($item->cc_amount) ? $item->cc_amount : ($item->debit ?? 0);
+                          // For balance calculation, use cc_amount if available
+                          $amountToUse = !empty($item->cc_amount) ? $item->cc_amount : ($item->debit ?? 0);
+                          $balance += $amountToUse; // Payment increases balance (reduces receivable)
                         } else {
                           // Delivery: stored in debit, display in debit column
                           $displayDebit = $item->debit ?? 0;
@@ -115,6 +144,8 @@
                           @if(isset($item->transaction_type))
                             @if($item->transaction_type == 'openingBalance')
                               <a href="#" class="btn btn-info btn-sm">View</a>
+                            @elseif($item->transaction_type == 'generalVoucher')
+                              <a href="{{ route('transaction.showGeneralVoucher', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @else
                               <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @endif

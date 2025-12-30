@@ -37,13 +37,21 @@ document.addEventListener('DOMContentLoaded', function () {
                         </button>
                     </div>
                     <div class="row mb-2">
-                        <div class="col-md-6">
+                        <div class="col-md-2">
                             <label>Carton From</label>
                             <input type="number" class="form-control carton-from" name="groups[${groupCounter - 1}][carton_from]" min="1" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-2">
                             <label>Carton To</label>
                             <input type="number" class="form-control carton-to" name="groups[${groupCounter - 1}][carton_to]" min="1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Box Dimension</label>
+                            <input type="text" class="form-control" name="groups[${groupCounter - 1}][box_dimension]" placeholder="e.g. 65x42x22 cm">
+                        </div>
+                        <div class="col-md-3">
+                            <label>Box Weight (kg)</label>
+                            <input type="number" class="form-control" name="groups[${groupCounter - 1}][box_weight]" min="0" step="0.01">
                         </div>
                     </div>
                     <div class="products-zone" data-group="${groupCounter}">
@@ -84,13 +92,21 @@ document.addEventListener('DOMContentLoaded', function () {
                         </button>
                     </div>
                     <div class="row mb-2">
-                        <div class="col-md-6">
+                        <div class="col-md-2">
                             <label>Carton From</label>
                             <input type="number" class="form-control carton-from" name="groups[${groupCounter - 1}][carton_from]" min="1" value="${carton.carton_from}" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-2">
                             <label>Carton To</label>
                             <input type="number" class="form-control carton-to" name="groups[${groupCounter - 1}][carton_to]" min="1" value="${carton.carton_to}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Box Dimension</label>
+                            <input type="text" class="form-control" name="groups[${groupCounter - 1}][box_dimension]" placeholder="e.g. 65x42x22 cm" value="${carton.box_dimension || ''}">
+                        </div>
+                        <div class="col-md-3">
+                            <label>Box Weight (kg)</label>
+                            <input type="number" class="form-control" name="groups[${groupCounter - 1}][box_weight]" min="0" step="0.01" value="${carton.box_weight || ''}">
                         </div>
                     </div>
                     <div class="products-zone" data-group="${groupCounter}">
@@ -461,4 +477,3 @@ document.addEventListener('DOMContentLoaded', function () {
         return !hasError;
     });
 });
-

@@ -393,10 +393,37 @@ class TransactionController extends Controller
                     // For customer ledger:
                     // - Deliveries are stored in debit column (customer owes us)
                     // - Payments are stored in debit column (cash inflow to us)
-                    // Balance = Total Deliveries - Total Payments
-                    $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment'])->sum('debit');
-                    $totalPayments = $detail->where('transaction_type', 'orderPayment')->sum('debit');
-                    $balance = $totalDeliveries - $totalPayments; // Positive = customer owes us
+                    // - For order payments with cc_amount, use cc_amount instead of debit
+                    // - For general vouchers: debit vouchers increase receivable, credit vouchers decrease it
+                    // Balance = Total Deliveries - Total Payments + General Debit Vouchers - General Credit Vouchers
+                    
+                    // Get deliveries and payments
+                    $totalDeliveries = $detail->whereNotIn('transaction_type', ['orderPayment', 'generalVoucher'])->sum('debit');
+
+                    // For payments, use cc_amount if available (customer currency), otherwise use debit (PKR)
+                    $payments = $detail->where('transaction_type', 'orderPayment');
+                    $totalPayments = 0;
+                    foreach ($payments as $payment) {
+                        $totalPayments += !empty($payment->cc_amount) ? $payment->cc_amount : ($payment->debit ?? 0);
+                    }
+
+                    // For general vouchers, use cc_amount
+                    // Debit vouchers (credit=0/null) increase receivable
+                    // Credit vouchers (debit=0/null) decrease receivable
+                    $generalVouchers = $detail->where('transaction_type', 'generalVoucher');
+                    $totalGeneralDebit = 0;
+                    $totalGeneralCredit = 0;
+                    foreach ($generalVouchers as $gv) {
+                        if ($gv->credit == 0 && $gv->credit === null) {
+                            // Debit voucher - increases receivable
+                            $totalGeneralDebit += $gv->cc_amount ?? 0;
+                        } else {
+                            // Credit voucher - decreases receivable
+                            $totalGeneralCredit += $gv->cc_amount ?? 0;
+                        }
+                    }
+
+                    $balance = $totalDeliveries - $totalPayments + $totalGeneralDebit - $totalGeneralCredit; // Positive = customer owes us
                     break;
 
                 case 'employee':
@@ -487,6 +514,32 @@ class TransactionController extends Controller
         return response()->json($payees);
     }
 
+    public function ajaxGetCustomerCurrency(Request $request)
+    {
+        $customerId = $request->input('customer_id');
+
+        if (!$customerId) {
+            return response()->json(['currency' => '']);
+        }
+
+        try {
+            $customer = $this->customerRepository->find($customerId);
+            
+            if (!$customer || !$customer->currency_id) {
+                return response()->json(['currency' => '']);
+            }
+
+            // Fetch the currency name from heads table using currency_id
+            $currency = \DB::table('heads')
+                ->where('heads_id', $customer->currency_id)
+                ->value('name');
+
+            return response()->json(['currency' => $currency ?? '']);
+        } catch (\Exception $e) {
+            return response()->json(['currency' => '']);
+        }
+    }
+
     public function store(TransactionRequest $request)
     {
         $validatedData = $request->validated();
@@ -505,7 +558,7 @@ class TransactionController extends Controller
             $validatedData['credit'] = null;
         }
 
-        // For generalVoucher: handle debit/credit based on voucher type
+        // For generalVoucher: handle debit/credit based on voucher type and payee type
         if ($validatedData['transaction_to'] == 'generalVoucher') {
             // Determine if payee is vendor, contractor, employee, or customer based on payee_type
             $payeeType = $request->input('payee_type');
@@ -515,21 +568,34 @@ class TransactionController extends Controller
             $voucherType = $request->input('voucher_type', 'debit');
             $amount = $request->input('amount', 0);
 
-            if ($voucherType === 'debit') {
-                // Debit Voucher (Charge to Payee): Store in credit column
-                // This represents a charge/bill that hasn't been paid yet
-                $validatedData['credit'] = $amount;
-                $validatedData['debit'] = null;
+            // For Customer payees: Store in cc_amount (customer currency column)
+            if ($payeeType === 'customer') {
+                if ($voucherType === 'debit') {
+                    // Debit Voucher (Charge to Customer): Store in cc_amount, debit=null, credit=0
+                    $validatedData['cc_amount'] = $amount;
+                    $validatedData['debit'] = null;
+                    $validatedData['credit'] = 0;
+                } else {
+                    // Credit Voucher (Credit to Customer): Store in cc_amount, debit=0, credit=null
+                    $validatedData['cc_amount'] = $amount;
+                    $validatedData['debit'] = 0;
+                    $validatedData['credit'] = null;
+                }
             } else {
-                // Credit Voucher (Credit to Payee): Store in debit column
-                // This represents a credit/allowance that hasn't been settled yet
-                $validatedData['debit'] = $amount;
-                $validatedData['credit'] = null;
+                // For other payees (Vendor, Contractor, Employee): Use traditional debit/credit
+                if ($voucherType === 'debit') {
+                    // Debit Voucher (Charge to Payee): Store in credit column
+                    $validatedData['credit'] = $amount;
+                    $validatedData['debit'] = null;
+                } else {
+                    // Credit Voucher (Credit to Payee): Store in debit column
+                    $validatedData['debit'] = $amount;
+                    $validatedData['credit'] = null;
+                }
             }
 
-            // Set ledger_flag=0 so general vouchers don't appear in Cash/Bank ledgers
-            // They will only appear in payee ledgers (Vendor/Contractor/Employee/Customer)
-            $validatedData['ledger_flag'] = 1; // Updated from 0 to 1
+            // Set ledger_flag=1 so general vouchers appear in payee ledgers
+            $validatedData['ledger_flag'] = 1;
         }
 
         // For expense payments: handle debit/credit based on expense_type
@@ -960,10 +1026,29 @@ class TransactionController extends Controller
             $payeeType = $request->input('payee_type');
             $request->merge(['transaction_to' => $payeeType]); // Set to 'vendor', 'contractor', 'employee', or 'customer'
 
-            // For vendor/contractor: keep debit as debit (charge to them reduces payable)
-            // For employee: keep debit as debit (charge to them reduces payable)
-            // For customer: keep debit as debit (charge to them increases receivable)
-            $request->merge(['credit' => null]); // Keep debit only for all types
+            // Get the voucher type and amount
+            $voucherType = $request->input('voucher_type', 'debit');
+            $amount = $request->input('amount', 0);
+
+            // For Customer payees: Store in cc_amount (customer currency column)
+            if ($payeeType === 'customer') {
+                if ($voucherType === 'debit') {
+                    // Debit Voucher (Charge to Customer): Store in cc_amount, debit=null, credit=0
+                    $request->merge(['cc_amount' => $amount, 'debit' => null, 'credit' => 0]);
+                } else {
+                    // Credit Voucher (Credit to Customer): Store in cc_amount, debit=0, credit=null
+                    $request->merge(['cc_amount' => $amount, 'debit' => 0, 'credit' => null]);
+                }
+            } else {
+                // For other payees (Vendor, Contractor, Employee): Use traditional debit/credit
+                if ($voucherType === 'debit') {
+                    // Debit Voucher (Charge to Payee): Store in credit column
+                    $request->merge(['credit' => $amount, 'debit' => null]);
+                } else {
+                    // Credit Voucher (Credit to Payee): Store in debit column
+                    $request->merge(['debit' => $amount, 'credit' => null]);
+                }
+            }
         }
 
         // For expense payments: handle debit/credit based on expense_type

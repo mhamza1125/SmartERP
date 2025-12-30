@@ -32,7 +32,10 @@
                     @endif
                     @php
                       $amount = 0;
-                      if (isset($transaction['debit']) && $transaction['debit'] > 0) {
+                      // For customer general vouchers, use cc_amount (customer currency)
+                      if ($transaction['transaction_to'] == 'customer' && isset($transaction['cc_amount']) && $transaction['cc_amount'] > 0) {
+                          $amount = $transaction['cc_amount'];
+                      } elseif (isset($transaction['debit']) && $transaction['debit'] > 0) {
                           $amount = $transaction['debit'];
                       } elseif (isset($transaction['credit']) && $transaction['credit'] > 0) {
                           $amount = $transaction['credit'];
@@ -108,4 +111,3 @@
   </div>
 </section>
 @endsection
-

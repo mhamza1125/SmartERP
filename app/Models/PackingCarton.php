@@ -17,6 +17,8 @@ class PackingCarton extends Model
         'carton_to',
         'created_by',
         'updated_at',
+        'box_dimension',
+        'box_weight',
     ];
 
     public function packingList()
@@ -29,4 +31,3 @@ class PackingCarton extends Model
         return $this->hasMany(PackingCartonItem::class, 'packing_carton_id', 'packing_carton_id');
     }
 }
-

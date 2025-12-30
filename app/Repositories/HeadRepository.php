@@ -30,6 +30,12 @@ class HeadRepository implements GlobalInterface
             ->get();
     }
 
+    public function getById($id)
+    {
+        return Head::where('heads.head_id', $id)
+            ->first();
+    }
+
     public function duplicate(array $data)
     {
         return Head::where('head_type_id', $data['head_type_id'])

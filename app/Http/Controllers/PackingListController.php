@@ -64,9 +64,14 @@ class PackingListController extends Controller
     {
         $validatedData = $request->validate([
             'delivery_id' => 'required|exists:deliveries,delivery_id',
+            'pallet_qty' => 'nullable|integer|min:1',
+            'pallet_weight' => 'nullable|numeric|min:0',
+            'pallet_dimension' => 'nullable|string',
             'groups' => 'required|array|min:1',
             'groups.*.carton_from' => 'required|integer|min:1',
             'groups.*.carton_to' => 'required|integer|min:1',
+            'groups.*.box_dimension' => 'nullable|string',
+            'groups.*.box_weight' => 'nullable|numeric|min:0',
             'groups.*.products' => 'required|array|min:1',
             'groups.*.products.*.product_id' => 'required|exists:products,product_id',
             'groups.*.products.*.pcs_each_carton' => 'required|integer|min:1',
@@ -117,19 +122,42 @@ class PackingListController extends Controller
             // Get delivery to find order_id
             $delivery = $this->deliveryRepository->get($validatedData['delivery_id']);
 
-            // Create packing list
-            $packingListId = $this->packingListRepository->store([
+            // Create packing list with pallet information
+            $packingListData = [
                 'delivery_id' => $validatedData['delivery_id'],
                 'order_id' => $delivery->order_id,
-            ]);
+            ];
+
+            // Add pallet fields if provided
+            if (isset($validatedData['pallet_qty'])) {
+                $packingListData['pallet_qty'] = $validatedData['pallet_qty'];
+            }
+            if (isset($validatedData['pallet_weight'])) {
+                $packingListData['pallet_weight'] = $validatedData['pallet_weight'];
+            }
+            if (isset($validatedData['pallet_dimension'])) {
+                $packingListData['pallet_dimension'] = $validatedData['pallet_dimension'];
+            }
+
+            $packingListId = $this->packingListRepository->store($packingListData);
 
             // Create carton groups and items
             foreach ($validatedData['groups'] as $group) {
-                $cartonId = $this->packingListRepository->storeCarton([
+                $cartonData = [
                     'packing_list_id' => $packingListId,
                     'carton_from' => $group['carton_from'],
                     'carton_to' => $group['carton_to'],
-                ]);
+                ];
+
+                // Add box dimension and weight if provided
+                if (isset($group['box_dimension'])) {
+                    $cartonData['box_dimension'] = $group['box_dimension'];
+                }
+                if (isset($group['box_weight'])) {
+                    $cartonData['box_weight'] = $group['box_weight'];
+                }
+
+                $cartonId = $this->packingListRepository->storeCarton($cartonData);
 
                 foreach ($group['products'] as $product) {
                     $this->packingListRepository->storeCartonItem([
@@ -204,9 +232,14 @@ class PackingListController extends Controller
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
+            'pallet_qty' => 'nullable|integer|min:1',
+            'pallet_weight' => 'nullable|numeric|min:0',
+            'pallet_dimension' => 'nullable|string',
             'groups' => 'required|array|min:1',
             'groups.*.carton_from' => 'required|integer|min:1',
             'groups.*.carton_to' => 'required|integer|min:1',
+            'groups.*.box_dimension' => 'nullable|string',
+            'groups.*.box_weight' => 'nullable|numeric|min:0',
             'groups.*.products' => 'required|array|min:1',
             'groups.*.products.*.product_id' => 'required|exists:products,product_id',
             'groups.*.products.*.pcs_each_carton' => 'required|integer|min:1',
@@ -254,16 +287,42 @@ class PackingListController extends Controller
         try {
             DB::beginTransaction();
 
+            // Update packing list with pallet information
+            $updateData = [];
+            if (isset($validatedData['pallet_qty'])) {
+                $updateData['pallet_qty'] = $validatedData['pallet_qty'];
+            }
+            if (isset($validatedData['pallet_weight'])) {
+                $updateData['pallet_weight'] = $validatedData['pallet_weight'];
+            }
+            if (isset($validatedData['pallet_dimension'])) {
+                $updateData['pallet_dimension'] = $validatedData['pallet_dimension'];
+            }
+
+            if (!empty($updateData)) {
+                $this->packingListRepository->update($id, $updateData);
+            }
+
             // Delete existing cartons and items
             $this->packingListRepository->deleteCartons($id);
 
             // Create new carton groups and items
             foreach ($validatedData['groups'] as $group) {
-                $cartonId = $this->packingListRepository->storeCarton([
+                $cartonData = [
                     'packing_list_id' => $id,
                     'carton_from' => $group['carton_from'],
                     'carton_to' => $group['carton_to'],
-                ]);
+                ];
+
+                // Add box dimension and weight if provided
+                if (isset($group['box_dimension'])) {
+                    $cartonData['box_dimension'] = $group['box_dimension'];
+                }
+                if (isset($group['box_weight'])) {
+                    $cartonData['box_weight'] = $group['box_weight'];
+                }
+
+                $cartonId = $this->packingListRepository->storeCarton($cartonData);
 
                 foreach ($group['products'] as $product) {
                     $this->packingListRepository->storeCartonItem([
@@ -308,4 +367,3 @@ class PackingListController extends Controller
         ]);
     }
 }
-

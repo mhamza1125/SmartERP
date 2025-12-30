@@ -5,17 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Delivery;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Repositories\BankRepository;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
 use App\Http\Requests\DeliveryRequest;
+use App\Repositories\CompanyRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DeliveryRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\DeliveryBoxRepository;
 use App\Repositories\TransactionRepository;
-use App\Repositories\CompanyRepository;
 
 class DeliveryController extends Controller
 {
@@ -51,8 +52,8 @@ class DeliveryController extends Controller
         TransactionRepository $transactionRepository,
         CompanyRepository $companyRepository,
     ) {
-        $this->middleware(['auth', 'all'])->except(['getCustomerOrders']);
-        $this->middleware('auth')->only(['getCustomerOrders']);
+        $this->middleware(['auth', 'all'])->except(['getCustomerOrders', 'getCustomerAddress']);
+        $this->middleware('auth')->only(['getCustomerOrders', 'getCustomerAddress']);
         $this->headRepository = $headRepository;
         $this->bankRepository = $bankRepository;
         $this->orderRepository = $orderRepository;
@@ -112,6 +113,13 @@ class DeliveryController extends Controller
         $expense = $this->headRepository->get('7');
         $company = $this->companyRepository->first();
 
+        // Fetch customer data using the customer_id from the order (server-side)
+        $customer = null;
+        $customerId = is_array($order) ? ($order['customer_id'] ?? null) : ($order->customer_id ?? null);
+        if ($customerId) {
+            $customer = $this->customerRepository->get($customerId);
+        }
+
         return view('addDelivery', [
             'bank' => $bank,
             'expense' => $expense,
@@ -119,6 +127,7 @@ class DeliveryController extends Controller
             'stock' => $stock,
             'vehicle' => $vehicle,
             'company' => $company,
+            'customer' => $customer,
             'isMultiOrder' => false,
         ]);
     }
@@ -286,6 +295,7 @@ class DeliveryController extends Controller
         $transaction = $this->transactionRepository->delivery($id);
         $deliveryBox = $this->deliveryBoxRepository->get($id);
         $company = $this->companyRepository->first();
+        $banks = $this->bankRepository->self();
 
         // Detect if this is a multi-order delivery
         $isMultiOrder = $this->isMultiOrderDelivery($delivery);
@@ -314,6 +324,7 @@ class DeliveryController extends Controller
             'transaction' => $transaction,
             'deliveryItem' => $deliveryItem,
             'company' => $company,
+            'banks' => $banks,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
             'customerId' => is_array($delivery) ? $delivery['customer_id'] : $delivery->customer_id,
@@ -363,7 +374,39 @@ class DeliveryController extends Controller
 
         // Get optional parameters from query string
         $hsCode = request()->input('hs_code');
+        $sellingType = request()->input('selling_type');
+        $uom = request()->input('uom');
         $statementOfOrigin = request()->input('statement_of_origin');
+
+        // Get bank details if bank_id is provided in query parameter
+        $bankDetails = null;
+        if (request()->has('bank_id')) {
+            $bankDetailsObj = DB::table('banks')
+                ->where('bank_id', request()->input('bank_id'))
+                ->first();
+            // Convert stdClass object to array for view compatibility
+            if ($bankDetailsObj) {
+                $bankDetails = (array) $bankDetailsObj;
+            }
+        }
+
+        // Get packing list for this delivery if it exists
+        $packingList = null;
+        $packingListData = DB::table('packing_lists')
+            ->where('delivery_id', $id)
+            ->first();
+        
+        if ($packingListData) {
+            // Count the number of cartons/packages for this packing list
+            $cartonCount = DB::table('packing_cartons')
+                ->where('packing_list_id', $packingListData->packing_list_id)
+                ->count();
+            
+            $packingList = [
+                'packing_list_id' => $packingListData->packing_list_id,
+                'carton_count' => $cartonCount,
+            ];
+        }
 
         // Get related orders for multi-order deliveries
         $isMultiOrder = $this->isMultiOrderDelivery($delivery);
@@ -376,8 +419,12 @@ class DeliveryController extends Controller
             'delivery' => $delivery,
             'deliveryItem' => $deliveryItem,
             'company' => $company,
+            'bankDetails' => $bankDetails,
             'hsCode' => $hsCode,
+            'sellingType' => $sellingType,
+            'uom' => $uom,
             'statementOfOrigin' => $statementOfOrigin,
+            'packingList' => $packingList,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
         ]);
@@ -637,6 +684,22 @@ class DeliveryController extends Controller
                 ];
                 $this->deliveryBoxRepository->store($dBoxes);
             }
+        }
+    }
+
+    /**
+     * Get customer address for AJAX request (for auto-populating shipping address)
+     */
+    public function getCustomerAddress($customerId)
+    {
+        try {
+            $customer = $this->customerRepository->get($customerId);
+            if ($customer && isset($customer['address'])) {
+                return response()->json(['address' => $customer['address']]);
+            }
+            return response()->json(['address' => '']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load customer address'], 500);
         }
     }
 

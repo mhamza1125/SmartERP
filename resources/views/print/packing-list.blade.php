@@ -113,8 +113,6 @@
         .header h2 { margin: 0 0 10px 0; }
         .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .header-info div { width: 48%; }
-        .carton-group { margin-bottom: 20px; }
-        .carton-title { background-color: #e8e8e8; padding: 10px; font-weight: bold; margin-bottom: 10px; }
         .group-total { background-color: #f9f9f9; font-weight: bold; }
         .grand-total { background-color: #e8e8e8; font-weight: bold; margin-top: 20px; padding: 10px; }
         .summary { margin-top: 20px; padding: 15px; background-color: #f0f0f0; }
@@ -157,11 +155,6 @@
 
             /* Prevent table rows from breaking awkwardly */
             table tbody tr {
-                page-break-inside: avoid;
-            }
-
-            /* Prevent carton groups from breaking */
-            .carton-group {
                 page-break-inside: avoid;
             }
         }
@@ -217,84 +210,133 @@
     <div class="print-content">
     <!-- Header -->
     <div class="header">
-        <h2>PACKING LIST</h2>
+        <h2>PACKING DETAILS</h2>
         <div class="header-info">
             <div>
-                <p><strong>Stock No:</strong> {{ $packingList->stock_no }}</p>
                 <p><strong>Order No:</strong> {{ $packingList->order_no }}</p>
-                <p><strong>Job No:</strong> {{ $packingList->job_no }}</p>
             </div>
             <div>
                 <p><strong>Customer:</strong> {{ $packingList->fname }} {{ $packingList->lname }}</p>
-                <p><strong>Customer No:</strong> {{ $packingList->customer_no }}</p>
-                <p><strong>Date:</strong> {{ \Carbon\Carbon::parse($packingList->created_at)->format('d M Y') }}</p>
             </div>
         </div>
     </div>
 
-    <!-- Carton Groups -->
-    @php
-        $grandTotalPieces = 0;
-    @endphp
+    <!-- Carton Details Table -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Carton Details</th>
+                <th style="width: 35%;">Description of Goods</th>
+                <th style="width: 10%;">Pcs</th>
+                <th style="width: 15%; text-align: right;">Total Pcs</th>
+                <th style="width: 20%; text-align: right;">Weight</th>
+            </tr>
+        </thead>
+        <tbody>
+        @php
+            $grandTotalPieces = 0;
+            $grandTotalWeight = 0;
+        @endphp
 
-    @foreach($cartons as $carton)
-    <div class="carton-group">
-        <div class="carton-title">
-            @if($carton->carton_from == $carton->carton_to)
-                Carton #{{ $carton->carton_from }}
+        @foreach($cartons as $carton)
+            @php
+                $cartonQty = $carton->carton_to - $carton->carton_from + 1;
+                $cartonTotal = 0;
+                $cartonWeight = 0;
+            @endphp
+
+            <!-- Carton Range Row -->
+            <tr>
+                <td style="font-weight: bold;">
+                    @if($carton->carton_from == $carton->carton_to)
+                        Carton # {{ $carton->carton_from }}
+                    @else
+                        Carton # {{ $carton->carton_from }} to {{ $carton->carton_to }}
+                    @endif
+                </td>
+                <td colspan="4" style="border-left: none;"></td>
+            </tr>
+
+            <!-- Items in this carton -->
+            @foreach($carton->items as $item)
+            <tr>
+                <td></td>
+                <td>{{ $item->name }}</td>
+                <td style="text-align: center;">{{ $item->pcs_each_carton }} Each</td>
+                <td style="text-align: right;">{{ $item->pcs_each_carton * $cartonQty }}</td>
+                <td style="text-align: right;">
+                    @if($carton->box_weight)
+                        @php $cartonWeight += $carton->box_weight * $cartonQty; @endphp
+                        {{ number_format($carton->box_weight * $cartonQty, 2) }}
+                    @endif
+                </td>
+            </tr>
+            @php $cartonTotal += $item->pcs_each_carton * $cartonQty; @endphp
+            @endforeach
+
+            <!-- Box Dimension Row -->
+            @if($carton->box_dimension)
+            <tr>
+                <td style="font-style: italic; color: #666; font-size: 11px;">Box Dimension: {{ $carton->box_dimension }}</td>
+                <td colspan="2"></td>
+                <td style="text-align: right; font-weight: bold;">Group Total: {{ $cartonTotal }}</td>
+                <td style="text-align: right; font-weight: bold;">{{ number_format($cartonWeight, 2) }}</td>
+            </tr>
             @else
-                Carton #{{ $carton->carton_from }} to {{ $carton->carton_to }}
+            <tr style="background-color: #f9f9f9;">
+                <td></td>
+                <td colspan="2"></td>
+                <td style="text-align: right; font-weight: bold;">Group Total: {{ $cartonTotal }}</td>
+                <td style="text-align: right; font-weight: bold;">{{ number_format($cartonWeight, 2) }}</td>
+            </tr>
             @endif
-        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 30%;">Description of Goods</th>
-                    <th style="width: 20%;" class="text-center">Pcs</th>
-                    <th style="width: 20%;" class="text-right">Total Pcs</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $cartonTotal = 0;
-                @endphp
-                @foreach($carton->items as $item)
-                <tr>
-                    <td>{{ $item->name }}</td>
-                    <td class="text-center">{{ $item->pcs_each_carton }} Each</td>
-                    <td class="text-right">{{ $item->total_pcs }}</td>
-                </tr>
-                @php
-                    $cartonTotal += $item->total_pcs;
-                    $grandTotalPieces += $item->total_pcs;
-                @endphp
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr class="group-total">
-                    <td colspan="2" class="text-right">Group Total:</td>
-                    <td class="text-right">{{ $cartonTotal }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    @endforeach
+            @php
+                $grandTotalPieces += $cartonTotal;
+                $grandTotalWeight += $cartonWeight;
+            @endphp
+        @endforeach
 
-    <!-- Grand Total Summary -->
-    {{-- <div class="grand-total">
-        <div style="display: flex; justify-content: space-between;">
-            <span>OVERALL TOTAL PIECES:</span>
-            <span>{{ $grandTotalPieces }}</span>
-        </div>
-    </div> --}}
+        <!-- Pallet Information Row (if exists) -->
+        @if($packingList->pallet_qty)
+            <tr style="border-top: 2px solid #000;">
+                <td style="font-weight: bold;">{{ $packingList->pallet_qty }} Pallet{{ $packingList->pallet_qty > 1 ? 's' : '' }}</td>
+                <td colspan="3"></td>
+                <td style="text-align: right;">
+                    @if($packingList->pallet_weight)
+                        {{ number_format($packingList->pallet_weight, 2) }}
+                    @endif
+                </td>
+            </tr>
+            @if($packingList->pallet_dimension)
+            <tr>
+                <td style="font-style: italic; color: #666; font-size: 11px;">Pallet Dimension: {{ $packingList->pallet_dimension }}</td>
+                <td colspan="3"></td>
+                <td style="text-align: right;">
+                    @if($packingList->pallet_weight && $packingList->pallet_qty)
+                        @php $palletTotalWeight = $packingList->pallet_weight * $packingList->pallet_qty; @endphp
+                        {{ number_format($palletTotalWeight, 2) }}
+                    @endif
+                </td>
+            </tr>
+            @endif
+            @php
+                if($packingList->pallet_weight && $packingList->pallet_qty) {
+                    $grandTotalWeight += $packingList->pallet_weight * $packingList->pallet_qty;
+                }
+            @endphp
+        @endif
 
-    <!-- Summary Section -->
-    <div class="summary">
-        <p><strong>Total Carton Groups:</strong> {{ $cartons->count() }}</p>
-        <p><strong>Total Cartons:</strong> {{ $cartons->sum(function($c) { return $c->carton_to - $c->carton_from + 1; }) }}</p>
-        <p><strong>Grand Total Pieces:</strong> {{ $grandTotalPieces }}</p>
-    </div>
+        <!-- Final Total Row -->
+        <tr style="border-top: 2px solid #000; font-weight: bold; background-color: #f0f0f0;">
+            <td>Total (Pcs and weight)</td>
+            <td></td>
+            <td></td>
+            <td style="text-align: right;">{{ $grandTotalPieces }}</td>
+            <td style="text-align: right;">{{ number_format($grandTotalWeight, 2) }}</td>
+        </tr>
+        </tbody>
+    </table>
     </div>
 
     <!-- Print Footer -->

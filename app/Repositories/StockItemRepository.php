@@ -83,7 +83,7 @@ class StockItemRepository implements GlobalInterface
                 'materials.name as mname',
                 'materials.material_id',
                 'product_materials.quantity as bqty',
-                'order_items.price2',
+                'order_items.price',
                 'chead.name as cname'
             )
             ->orderBy('products.product_id')
@@ -473,19 +473,17 @@ class StockItemRepository implements GlobalInterface
 
         // Subquery 1b: Component product stock (when products are used as components)
         // These are tracked by component_product_type_id, not product_type_id
-        // Extract the final stage from the component product's stage_ids
+        // Use the actual stage_id from stock_items (components don't have stages when used as components)
         $componentStockSub = DB::table('stock_items')
             ->select(
                 'stock_items.component_product_type_id as product_type_id',
-                DB::raw('CAST(SUBSTRING_INDEX(products.stage_ids, \'|\', -1) AS UNSIGNED) as stage_id'), // Get last stage ID
+                'stock_items.stage_id', // Use actual stage from stock_items
                 DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
                 DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
             )
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->join('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
-            ->join('products', 'products.product_id', '=', 'cpt.product_id')
             ->whereNotNull('stock_items.component_product_type_id')
-            ->groupBy('stock_items.component_product_type_id', 'products.stage_ids');
+            ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
 
         // Subquery 2: Purchase-based received/returned quantities (for products only)
         $purchaseSub = DB::table('purchase_items')
@@ -732,25 +730,102 @@ class StockItemRepository implements GlobalInterface
     {
         // Order Current Status - includes ordered quantity from order_items
         // Start from order_items to show ALL products in the order, including those with zero stock
+        // Uses the same calculation logic as pStock() to include both stock_items and purchase_items
+
+        // Subquery 1: Stock-based quantities grouped by product_type_id and stage_id (regular products)
+        $stockSub = DB::table('stock_items')
+            ->select(
+                'stock_items.product_type_id',
+                'stock_items.stage_id',
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+            )
+            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->where('stock_items.material_id', '=', 0)
+            ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
+            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
+
+        // Subquery 1b: Component product stock (when products are used as components)
+        // Use the actual stage_id from stock_items (components don't have stages when used as components)
+        $componentStockSub = DB::table('stock_items')
+            ->select(
+                'stock_items.component_product_type_id as product_type_id',
+                'stock_items.stage_id', // Use actual stage from stock_items
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
+            )
+            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->whereNotNull('stock_items.component_product_type_id')
+            ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
+
+        // Subquery 2: Purchase-based received/returned quantities (for products only)
+        $purchaseSub = DB::table('purchase_items')
+            ->select(
+                'purchase_items.product_type_id',
+                'purchase_items.product_stage_id as stage_id',
+                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
+                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
+            )
+            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
+            ->where('purchase_items.material_id', 0)
+            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
+
+        // Combine stock, component stock, and purchase data using UNION approach
+        $combinedSub = DB::table(DB::raw("(
+            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
+            FROM ({$stockSub->toSql()}) as stock_data
+            UNION ALL
+            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
+            FROM ({$componentStockSub->toSql()}) as component_stock_data
+            UNION ALL
+            SELECT product_type_id, stage_id, 0 as stockIn, 0 as stockOut, total_received as purchase_received, total_returned as purchase_returned
+            FROM ({$purchaseSub->toSql()}) as purchase_data
+        ) as combined_data"))
+            ->mergeBindings($stockSub)
+            ->mergeBindings($componentStockSub)
+            ->mergeBindings($purchaseSub)
+            ->select(
+                'product_type_id',
+                'stage_id',
+                DB::raw('SUM(stockIn) + SUM(purchase_received) - SUM(purchase_returned) as stockIn'),
+                DB::raw('SUM(stockOut) as stockOut')
+            )
+            ->groupBy('product_type_id', 'stage_id');
+
+        // Main Query - Join aggregated data with order items and product info
         return DB::table('order_items')
-            ->select('order_items.product_type_id', 'products.name', 'article_no', 'shead.name as sname', 'sthead.name as stname', 'stock_items.stage_id', 'uhead.name as uname', 'products.product_id')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
+            ->select(
+                'order_items.product_type_id',
+                'products.name',
+                'products.article_no',
+                'shead.name as sname',
+                'sthead.name as stname',
+                'agg_stock.stage_id',
+                'uhead.name as uname',
+                'products.product_id',
+                'agg_stock.stockIn',
+                'agg_stock.stockOut'
+            )
             ->selectRaw('MAX(order_items.quantity) as ordered_qty')
             ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->leftJoin('stock_items', function ($join) {
-                $join->on('stock_items.product_type_id', '=', 'order_items.product_type_id')
-                     ->where('stock_items.material_id', '=', 0);
-            })
-            ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->leftJoinSub(
+                DB::table(DB::raw("({$combinedSub->toSql()}) as agg_stock"))
+                    ->mergeBindings($combinedSub),
+                'agg_stock',
+                function ($join) {
+                    $join->on('agg_stock.product_type_id', '=', 'product_types.product_type_id');
+                }
+            )
+            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'agg_stock.stage_id')
             ->where('order_items.order_id', $id)
             ->orderBy('product_types.product_id')
             ->orderBy('product_types.size_id')
-            ->groupBy('order_items.product_type_id', 'stock_items.stage_id', 'products.name', 'article_no', 'shead.name', 'sthead.name', 'uhead.name', 'products.product_id')
+            ->orderBy('agg_stock.stage_id')
+            ->groupBy('order_items.product_type_id', 'agg_stock.stage_id', 'products.name', 'products.article_no', 'shead.name', 'sthead.name', 'uhead.name', 'products.product_id', 'agg_stock.stockIn', 'agg_stock.stockOut')
             ->get();
     }
 
@@ -880,20 +955,18 @@ class StockItemRepository implements GlobalInterface
 
         // Subquery 1b: Component product stock (when this product is used as a component)
         // These are tracked by component_product_type_id, not product_type_id
-        // Extract the final stage from the component product's stage_ids
+        // Use the actual stage_id from stock_items (components don't have stages when used as components)
         $componentStockSub = DB::table('stock_items')
             ->select(
                 'stock_items.component_product_type_id as product_type_id',
-                DB::raw('CAST(SUBSTRING_INDEX(products.stage_ids, \'|\', -1) AS UNSIGNED) as stage_id'), // Get last stage ID
+                'stock_items.stage_id', // Use actual stage from stock_items
                 DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
                 DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
             )
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->join('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
-            ->join('products', 'products.product_id', '=', 'cpt.product_id')
             ->where('stock_items.component_product_type_id', '=', $id)
             ->whereNotNull('stock_items.component_product_type_id')
-            ->groupBy('stock_items.component_product_type_id', 'products.stage_ids');
+            ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
 
         // Subquery 2: Purchase-based received/returned quantities (for products only)
         $purchaseSub = DB::table('purchase_items')
@@ -1103,6 +1176,64 @@ class StockItemRepository implements GlobalInterface
 
     public function orderRemainingItems($id)
     {
+        // Subquery for regular product delivered quantities
+        $deliveredSub = DB::raw('(
+            SELECT
+                si.product_type_id,
+                si.stage_id,
+                SUM(si.quantity) as delivered_quantity
+            FROM stock_items si
+            JOIN stocks s ON s.stock_id = si.stock_id
+            WHERE s.order_id = ' . $id . '
+            AND s.stock_status = 3
+            AND s.stock_type = 2
+            AND si.component_product_type_id IS NULL
+            GROUP BY si.product_type_id, si.stage_id
+        ) as delivered');
+
+        // Subquery for component product delivered quantities
+        $componentDeliveredSub = DB::raw('(
+            SELECT
+                si.component_product_type_id as product_type_id,
+                0 as stage_id,
+                SUM(si.quantity) as delivered_quantity
+            FROM stock_items si
+            JOIN stocks s ON s.stock_id = si.stock_id
+            WHERE s.order_id = ' . $id . '
+            AND s.stock_status = 3
+            AND s.stock_type = 2
+            AND si.component_product_type_id IS NOT NULL
+            GROUP BY si.component_product_type_id
+        ) as component_delivered');
+
+        // Subquery for regular product returned quantities
+        $returnedSub = DB::raw('(
+            SELECT
+                si.product_type_id,
+                si.stage_id,
+                SUM(dri.quantity) as returned_quantity
+            FROM delivery_return_items dri
+            JOIN stock_items si ON si.stock_item_id = dri.stock_item_id
+            JOIN stocks s ON s.stock_id = si.stock_id
+            WHERE s.order_id = ' . $id . '
+            AND si.component_product_type_id IS NULL
+            GROUP BY si.product_type_id, si.stage_id
+        ) as returned');
+
+        // Subquery for component product returned quantities
+        $componentReturnedSub = DB::raw('(
+            SELECT
+                si.component_product_type_id as product_type_id,
+                0 as stage_id,
+                SUM(dri.quantity) as returned_quantity
+            FROM delivery_return_items dri
+            JOIN stock_items si ON si.stock_item_id = dri.stock_item_id
+            JOIN stocks s ON s.stock_id = si.stock_id
+            WHERE s.order_id = ' . $id . '
+            AND si.component_product_type_id IS NOT NULL
+            GROUP BY si.component_product_type_id
+        ) as component_returned');
+
         // Get order items with delivered quantities and returned quantities to show remaining items
         return DB::table('order_items')
             ->select(
@@ -1125,32 +1256,11 @@ class StockItemRepository implements GlobalInterface
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'order_items.product_stage_id')
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->leftJoin(DB::raw('(
-                SELECT
-                    si.product_type_id,
-                    si.stage_id,
-                    SUM(si.quantity) as delivered_quantity
-                FROM stock_items si
-                JOIN stocks s ON s.stock_id = si.stock_id
-                WHERE s.order_id = ' . $id . '
-                AND s.stock_status = 3
-                AND s.stock_type = 2
-                GROUP BY si.product_type_id, si.stage_id
-            ) as delivered'), function($join) {
+            ->leftJoin($deliveredSub, function($join) {
                 $join->on('delivered.product_type_id', '=', 'order_items.product_type_id')
                      ->on('delivered.stage_id', '=', 'order_items.product_stage_id');
             })
-            ->leftJoin(DB::raw('(
-                SELECT
-                    si.product_type_id,
-                    si.stage_id,
-                    SUM(dri.quantity) as returned_quantity
-                FROM delivery_return_items dri
-                JOIN stock_items si ON si.stock_item_id = dri.stock_item_id
-                JOIN stocks s ON s.stock_id = si.stock_id
-                WHERE s.order_id = ' . $id . '
-                GROUP BY si.product_type_id, si.stage_id
-            ) as returned'), function($join) {
+            ->leftJoin($returnedSub, function($join) {
                 $join->on('returned.product_type_id', '=', 'order_items.product_type_id')
                      ->on('returned.stage_id', '=', 'order_items.product_stage_id');
             })

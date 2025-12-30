@@ -45,6 +45,7 @@
             </div>
             <div class="row">
               <div class="col-md-12">
+                <h5 class="mt-4 mb-3">Materials Required</h5>
                 <div class="table-responsive">
                   <table class="table table-sm table-striped" id="save-stage" style="width:100%;">
                     <thead>
@@ -62,27 +63,31 @@
                     </thead>
                     <tbody>
                       @if($estimate->count())
+                        @php $srNo = 1; @endphp
                         @foreach($estimate as $item)
-                            @php
-                                $stockItem = $stock[$item->material_id] ?? (object)[
-                                  'total_qty' => 0, 'stockIn' => 0, 'total_received' => '0',
-                                  'total_returned' => 0, 'stockOut' => 0
-                                ];
-                                $available = $stockItem->total_received + $stockItem->stockIn - $stockItem->total_returned - $stockItem->stockOut;
-                                $purchaseItem = $purchase[$item->material_id] ?? null;
-                                $purchased = $purchaseItem ? $purchaseItem['total_qty'] : 0;
-                            @endphp
-                            <tr>
-                                <td>{{ $loop->index + 1 }}</td>
-                                <td>{{ $item->material_no }}</td>
-                                <td>{{ $item->name }}</td>
-                                <td>{{ $item->vendor_no }} - {{ $item->fname }}</td>
-                                <td>{{ number_format($item->total_qty, 2) }}</td>
-                                <td>{{ number_format($available) }}</td>
-                                <td>{{ number_format($purchased) }}</td>
-                                <td>{{ number_format(max($item->total_qty - $available, 0)) }}</td>
-                                <td>{{ $item->hname }}</td>
-                            </tr>
+                            @if(!isset($item->is_component_product) || !$item->is_component_product)
+                                @php
+                                    $stockItem = $stock[$item->material_id] ?? (object)[
+                                      'total_qty' => 0, 'stockIn' => 0, 'total_received' => '0',
+                                      'total_returned' => 0, 'stockOut' => 0
+                                    ];
+                                    $available = $stockItem->total_received + $stockItem->stockIn - $stockItem->total_returned - $stockItem->stockOut;
+                                    $purchaseItem = $purchase[$item->material_id] ?? null;
+                                    $purchased = $purchaseItem ? $purchaseItem['total_qty'] : 0;
+                                @endphp
+                                <tr>
+                                    <td>{{ $srNo }}</td>
+                                    <td>{{ $item->material_no }}</td>
+                                    <td>{{ $item->name }}</td>
+                                    <td>{{ $item->vendor_no }} - {{ $item->fname }}</td>
+                                    <td>{{ number_format($item->total_qty, 2) }}</td>
+                                    <td>{{ number_format($available) }}</td>
+                                    <td>{{ number_format($purchased) }}</td>
+                                    <td>{{ number_format(max($item->total_qty - $available, 0)) }}</td>
+                                    <td>{{ $item->hname }}</td>
+                                </tr>
+                                @php $srNo++; @endphp
+                            @endif
                         @endforeach
                       @endif
                     </tbody>
@@ -103,6 +108,74 @@
                 </div>
               </div>
             </div>
+
+            @php
+              $componentProducts = $estimate->filter(function($item) {
+                return isset($item->is_component_product) && $item->is_component_product;
+              });
+            @endphp
+
+            @if($componentProducts->count() > 0)
+            <div class="row">
+              <div class="col-md-12">
+                <h5 class="mt-4 mb-3">Component Products Required</h5>
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped" id="component-products-table" style="width:100%;">
+                    <thead>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Article No</th>
+                        <th>Product Name</th>
+                        <th>Size</th>
+                        <th>Total Require Qty</th>
+                        <th>Available Qty</th>
+                        <th>Required Qty</th>
+                        <th>Unit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @php $srNo = 1; @endphp
+                      @foreach($componentProducts as $item)
+                          @php
+                              $productStockItem = $productStock[$item->product_type_id] ?? null;
+                              $available = 0;
+                              if ($productStockItem) {
+                                  // Handle both array and object access
+                                  $stockIn = is_array($productStockItem) ? $productStockItem['stockIn'] : $productStockItem->stockIn;
+                                  $stockOut = is_array($productStockItem) ? $productStockItem['stockOut'] : $productStockItem->stockOut;
+                                  $available = $stockIn - $stockOut;
+                              }
+                          @endphp
+                          <tr>
+                              <td>{{ $srNo }}</td>
+                              <td>{{ $item->article_no }}</td>
+                              <td>{{ $item->name }}</td>
+                              <td>{{ $item->size_name }}</td>
+                              <td>{{ number_format($item->total_qty, 2) }}</td>
+                              <td>{{ number_format(max($available, 0)) }}</td>
+                              <td>{{ number_format(max($item->total_qty - $available, 0)) }}</td>
+                              <td>{{ $item->hname }}</td>
+                          </tr>
+                          @php $srNo++; @endphp
+                      @endforeach
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th>Sr.</th>
+                        <th>Article No</th>
+                        <th>Product Name</th>
+                        <th>Size</th>
+                        <th>Total Require Qty</th>
+                        <th>Available Qty</th>
+                        <th>Required Qty</th>
+                        <th>Unit</th>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+            @endif
           </div>
         </div>
       </div>

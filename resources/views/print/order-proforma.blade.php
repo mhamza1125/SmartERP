@@ -38,7 +38,7 @@
 
     <div class="info-section">
         <div class="info-row">
-            <span class="info-label">Order Number:</span>
+            <span class="info-label">Invoice No:</span>
             <span class="info-value">{{ $order['order_no'] ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
@@ -57,8 +57,22 @@
             <span class="info-value">{{ $hsCode }}</span>
         </div>
         @endif
+        @php
+            $totalQuantity = $orderItem->sum('quantity');
+        @endphp
+        <div class="info-row">
+            <span class="info-label">Total Quantity:</span>
+            <span class="info-value">{{ $totalQuantity }}</span>
+        </div>
     </div>
 </div>
+
+{{-- Total Quantity Display --}}
+{{-- <div class="document-info">
+    <div class="info-section">
+        
+    </div>
+</div> --}}
 
 {{-- Order Items Table --}}
 @if(isset($orderItem) && $orderItem->count() > 0)
@@ -71,6 +85,7 @@
                 <th style="width: 11%">Article No</th>
                 <th style="width: 24%">Product Name</th>
                 <th style="width: 10%">Size</th>
+                {{-- <th style="width: 10%">Unit</th> --}}
                 <th style="width: 10%">Quantity</th>
                 <th style="width: 12%">Unit Price</th>
                 <th style="width: 16%">Total</th>
@@ -83,16 +98,17 @@
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     @if($item->product_id == $product_id)
-                        <td colspan="3"></td>
+                        <td colspan="2"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
                         <td class="text-center">{{ $item->pname }}</td>
-                        <td class="text-center">{{ $item->name }}</td>
                         @php $product_id = $item->product_id; @endphp
                     @endif
+                    <td class="text-center">{{ $item->name }}</td>
+                    {{-- <td class="text-center">{{ $item->uname ?? 'N/A' }}</td> --}}
                     <td class="text-right">{{ number_format($item->quantity) }}</td>
-                    <td class="text-right amount">{{ number_format($item->price2 ?? 0, 2) }} {{ $item->cname }}</td>
-                    <td class="text-right amount">{{ number_format($item->quantity * ($item->price2 ?? 0), 2) }} {{ $item->cname }}</td>
+                    <td class="text-right amount">{{ number_format($item->price ?? 0, 2) }} {{-- {{ $item->cname }} --}}</td>
+                    <td class="text-right amount">{{ number_format($item->quantity * ($item->price ?? 0), 2) }} {{-- {{ $item->cname }} --}}</td>
                 </tr>
                 @endforeach
             @endif
@@ -104,16 +120,25 @@
 {{-- Invoice Totals --}}
 @php
 $totalOriginal = $orderItem->sum(function($item) {
-    return $item->quantity * ($item->price2 ?? 0);
+    return $item->quantity * ($item->price ?? 0);
 });
 $firstItem = $orderItem->first();
 $currencyName = $firstItem->cname ?? 'PKR';
 @endphp
 <div class="totals-section avoid-break">
     <div class="total-row grand-total">
-        <span>Grand Total:</span>
+        <span>Grand Total:
+            @if(function_exists('numberToWordsWithCurrency'))
+                {{ numberToWordsWithCurrency($totalOriginal ?? 0) }} {{ $currencyName }}
+            @endif
+        </span> 
         <span class="amount">{{ number_format($totalOriginal, 2) }} {{ $currencyName }}</span>
     </div>
+</div>
+
+{{-- Certification Statement --}}
+<div class="certification-statement avoid-break" style="margin-top: 30px; text-align: center; font-weight: bold;">
+    <p>CERTIFIED TO BE TRUE AND CORRECT: {{ $company->name ?? 'SAJJADSON LAB EQUIPMENT' }}</p>
 </div>
 
 {{-- Bank Account Details --}}
@@ -160,4 +185,3 @@ $currencyName = $firstItem->cname ?? 'PKR';
 @endif
 
 @endsection
-

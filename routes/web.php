@@ -101,8 +101,6 @@ Route::get('/editCustomer/{id}', [CustomerController::class, 'edit'])->name('cus
 Route::post('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
 Route::get('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
 Route::post('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.filter');
-Route::get('/cLedger2/{id}', [CustomerController::class, 'detail2'])->name('customer.detail2');
-Route::post('/cLedger2/{id}', [CustomerController::class, 'detail2'])->name('customer.filter2');
 
 // Employee
 Route::get('/employee', [EmployeeController::class, 'index'])->name('employee');
@@ -164,6 +162,7 @@ Route::post('/product', [ProductController::class, 'store'])->name('product.stor
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
 Route::get('/editProduct/{id}', [ProductController::class, 'edit'])->name('product.edit');
 Route::post('/product/{id}', [ProductController::class, 'update'])->name('product.update');
+Route::get('/product/{id}/ptc', [ProductController::class, 'printPTC'])->name('product.ptc');
 
 // Order
 Route::get('/order', [OrderController::class, 'index'])->name('order');

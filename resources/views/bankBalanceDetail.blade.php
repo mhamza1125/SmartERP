@@ -79,6 +79,7 @@
                       $balance -= $item->credit;
                       // For bank ledger, display as-is (debit=inflow, credit=outflow)
                       $displayDebit = $item->debit;
+                      $displayDC = $item->db_charges;
                       $displayCredit = $item->credit;
                     @endphp
                     <tr>
@@ -86,7 +87,7 @@
                       <td>{{$item->transaction_date}}</td>
                       <td>{{ucfirst($item->transaction_to)}}</td>
                       <td>{{ucfirst($item->transaction_type)}}</td>
-                      <td>{{isset($displayDebit) ? number_format($displayDebit) : ''}}</td>
+                      <td>{{isset($displayDebit) ? number_format($displayDebit) : ''}} ({{$displayDC}})</td>
                       <td>{{isset($displayCredit) ? number_format($displayCredit) : ''}}</td>
                       <td>{{number_format($balance)}}</td>
                       <td>

@@ -33,14 +33,14 @@
                     <div class="invalid-feedback">Enter Job No</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Customer</label>
-                    <select class="form-control select2" name="customer_id" required>
+                    <select class="form-control select2" id="customer_id" name="customer_id" required>
                       <option value="" selected disabled>Select Customer</option>
                       @if($customer->count())
                         @foreach($customer as $item)
-                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                          <option value="{{$item->customer_id}}" data-currency="{{$item->currency_name ?? 'PKR'}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -48,7 +48,13 @@
                     <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-1">
+                  <div class="form-group">
+                    <label>Currency</label>
+                    <input type="text" class="form-control" id="customer_currency" placeholder="Currency" readonly>
+                  </div>
+                </div>
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Order Status</label>
                     <select class="form-control select2" name="order_status" required>
@@ -139,12 +145,6 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Price (Customer Currency)</label>
-                    <input type="number" min="0" class="form-control" name="price2" id="price2" placeholder="0">
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Price (PKR)</label>
                     <input type="number" min="0" class="form-control" name="price" id="price" placeholder="0">
                   </div>
                 </div>
@@ -159,9 +159,8 @@
                         <th>Item / Product</th>
                         <th>Product Stage</th>
                         <th>Quantity</th>
-                        <th>Price (PKR)</th>
                         <th>Price (Customer Currency)</th>
-                        <th>Total (PKR)</th>
+                        <th>Total (Customer Currency)</th>
                         <th>Action</th>
                       </tr>
                     </thead>
@@ -171,7 +170,7 @@
                     <tfoot>
                       <tr>
                         <th></th>
-                        <th colspan="4">Grand Total (Pkr):</th>
+                        <th colspan="3">Grand Total (Customer Currency):</th>
                         <th id="grandTotal" colspan="2">00.00</th>
                       </tr>
                     </tfoot>
@@ -199,7 +198,23 @@
   </div>
 </section>
 <script>
-  var isOrderPage = false; 
+  var isOrderPage = false;
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
+
+  // Handle customer currency display
+  $(document).ready(function() {
+    $('#customer_id').on('change', function() {
+      var selectedOption = $(this).find('option:selected');
+      var currency = selectedOption.data('currency') || 'PKR';
+      $('#customer_currency').val(currency);
+    });
+
+    // Set currency on page load if customer is pre-selected
+    var selectedOption = $('#customer_id').find('option:selected');
+    if (selectedOption.val()) {
+      var currency = selectedOption.data('currency') || 'PKR';
+      $('#customer_currency').val(currency);
+    }
+  });
 </script>
 @endsection

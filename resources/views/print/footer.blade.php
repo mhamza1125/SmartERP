@@ -5,6 +5,6 @@
 {{-- Contact Information --}}
 <div class="footer-center">
     @if($company && $company->footer_text)
-        <div>{{ $company->footer_text }}</div>
+        <div>{!! $company->footer_text !!}</div>
     @endif
 </div>

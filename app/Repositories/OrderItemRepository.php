@@ -50,8 +50,9 @@ class OrderItemRepository implements GlobalInterface
             ->get();
     }
 
-    public function estimate($id) // Requred Material Against Order
-    {return OrderItem::where('order_id', $id)
+    public function estimate($id) // Required Material Against Order
+    {
+        return OrderItem::where('order_id', $id)
             ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
             ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
             ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
@@ -62,31 +63,32 @@ class OrderItemRepository implements GlobalInterface
             ->orderBy('materials.vendor_id')
             ->orderBy('materials.material_id')
             ->get();
+    }
 
-        // Separate Material Required for Each Order Item
+    public function estimateComponentProducts($id) // Required Component Products Against Order
+    {
         return OrderItem::where('order_id', $id)
             ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', 'vendors.fname', 'vendor_no')
+            ->where('product_materials.component_type', 'product')
+            ->join('product_types as cpt', 'cpt.product_type_id', '=', 'product_materials.component_product_type_id')
+            ->join('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->join('heads as csize', 'csize.head_id', '=', 'cpt.size_id')
+            ->join('heads as cuhead', 'cuhead.head_id', '=', 'cp.unit_id')
+            ->select(
+                'product_materials.component_product_type_id as product_type_id',
+                'cp.article_no',
+                'cp.name',
+                'csize.name as size_name',
+                'cuhead.name as hname',
+                DB::raw('0 as material_id'),
+                DB::raw('NULL as vendor_no'),
+                DB::raw('NULL as fname'),
+                DB::raw('1 as is_component_product')
+            )
             ->selectRaw('CEIL(SUM(CEIL(order_items.quantity * product_materials.quantity))) as total_qty')
-            ->groupBy('order_items.order_item_id')
-            ->groupBy('product_materials.material_id')
-            ->orderBy('materials.vendor_id')
-            ->orderBy('materials.material_id')
+            ->groupBy('product_materials.component_product_type_id', 'cp.article_no', 'cp.name', 'csize.name', 'cuhead.name')
+            ->orderBy('cp.article_no')
             ->get();
-
-        // Old Working Queery (False Record for Boxes)
-        return OrderItem::where('order_id', $id)
-            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
-            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-            ->join('vendors', 'vendors.vendor_id', '=', 'materials.vendor_id')
-            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->select('*', 'heads.name as hname', 'materials.name', 'product_materials.material_id', DB::raw('SUM(order_items.quantity * product_materials.quantity) as total_qty'), 'vendors.fname', 'vendor_no')
-            ->groupBy('product_materials.material_id')
-            ->orderBy('materials.vendor_id')
-            ->orderBy('materials.material_id')->get();
     }
 
     public function estimateMaterial($orderId, $materialId)
@@ -219,14 +221,12 @@ class OrderItemRepository implements GlobalInterface
             $product = $data['product_type_id'][$key] ?? null;
             $stage = $data['product_stage_id'][$key] ?? null;
             $price = $data['price'][$key] ?? null;
-            $price2 = $data['price2'][$key] ?? null;
             $total = $data['total'][$key] ?? null;
             $orderItem = [
                 'order_id' => $id,
                 'product_type_id' => $product,
                 'product_stage_id' => $stage,
                 'price' => $price,
-                'price2' => $price2,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

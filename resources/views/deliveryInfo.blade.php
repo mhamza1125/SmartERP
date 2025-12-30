@@ -58,7 +58,7 @@
                     {{-- <tr><td><b>Customer Name:</b> {{is_array($delivery) ? $delivery['fname'] : $delivery->fname}} {{is_array($delivery) ? $delivery['lname'] : $delivery->lname}}</td></tr> --}}
                     @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
                     <tr><td><b>Primary Order:</b> {{is_array($delivery) ? $delivery['order_no'] : $delivery->order_no}}</td></tr>
-                    <tr><td><b>Primary Job No:</b> {{is_array($delivery) ? $delivery['job_no'] : $delivery->job_no}}</td></tr>
+                    {{-- <tr><td><b>Primary Job No:</b> {{is_array($delivery) ? $delivery['job_no'] : $delivery->job_no}}</td></tr> --}}
                     <tr><td><b>All Orders:</b>
                       @foreach($relatedOrders as $index => $order)
                         @if($index < 5)
@@ -69,7 +69,7 @@
                       <span class="badge badge-light">+{{count($relatedOrders) - 5}} more</span>
                       @endif
                     </td></tr>
-                    <tr><td><b>All Job Numbers:</b>
+                    {{-- <tr><td><b>All Job Numbers:</b>
                       @foreach($relatedOrders as $index => $order)
                         @if($index < 5)
                         <span class="badge badge-secondary mr-1 mb-1">{{$order->job_no ?? 'N/A'}}</span>
@@ -78,12 +78,21 @@
                       @if(count($relatedOrders) > 5)
                       <span class="badge badge-light">+{{count($relatedOrders) - 5}} more</span>
                       @endif
-                    </td></tr>
+                    </td></tr> --}}
                     @else
                     <tr><td><b>Order No:</b> {{is_array($delivery) ? $delivery['order_no'] : $delivery->order_no}}</td></tr>
-                    <tr><td><b>Job No:</b> {{is_array($delivery) ? $delivery['job_no'] : $delivery->job_no}}</td></tr>
+                    {{-- <tr><td><b>Job No:</b> {{is_array($delivery) ? $delivery['job_no'] : $delivery->job_no}}</td></tr> --}}
                     @endif
                     <tr><td><b>Order Date:</b> {{is_array($delivery) ? $delivery['order_date'] : $delivery->order_date}}</td></tr>
+                    @if($company && $company->rex_no)
+                    <tr><td><b>REX No:</b> {{$company->rex_no}}</td></tr>
+                    @endif
+                    @if($company && $company->ntn)
+                    <tr><td><b>NTN:</b> {{$company->ntn}}</td></tr>
+                    @endif
+                    @if($delivery['fi_no'])
+                    <tr><td><b>FI No:</b> {{$delivery['fi_no']}}</td></tr>
+                    @endif
                     @php $description = is_array($delivery) ? $delivery['description'] : $delivery->description; @endphp
                     @if($description)<tr><td><b>Detail:</b></td></tr>
                     <tr><td>@php echo $description @endphp</td></tr>@endif
@@ -98,9 +107,9 @@
                     <tr><td><b>Delivery Date:</b> {{$delivery['delivery_date']}}</td></tr>
                     @endif
                     <tr><td><b>Shipping From:</b> {{$delivery['fshipping']}}</td></tr>
-                    <tr><td><b>Port No:</b> {{$delivery['fport_no']}}</td></tr>
+                    <tr><td><b>Port Name:</b> {{$delivery['fport_no']}}</td></tr>
                     <tr><td><b>Shipping To:</b> {{$delivery['tshipping']}}</td></tr>
-                    <tr><td><b>Port No:</b> {{$delivery['tport_no']}}</td></tr>
+                    <tr><td><b>Port Name:</b> {{$delivery['tport_no']}}</td></tr>
                     <tr><td><b>Delivery Method: </b>
                       @if($delivery['delivery_method'] == 1) Sea Freight
                       @elseif($delivery['delivery_method'] == 2) Air Freight
@@ -113,15 +122,7 @@
                       @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Returned</span>
                       @else @endif
                     </td></tr>
-                    @if($delivery['fi_no'])
-                    <tr><td><b>FI No:</b> {{$delivery['fi_no']}}</td></tr>
-                    @endif
-                    @if($company && $company->rex_no)
-                    <tr><td><b>REX No:</b> {{$company->rex_no}}</td></tr>
-                    @endif
-                    @if($company && $company->ntn)
-                    <tr><td><b>NTN:</b> {{$company->ntn}}</td></tr>
-                    @endif
+                    
                   </tbody>
                 </table>
               </div>
@@ -347,7 +348,6 @@ function generateDeliveryInvoiceContent(title, bankDetails, includeSO) {
                         <h4>Delivery Details:</h4>
                         <p><strong>Delivery No:</strong> {{$delivery['customer_no']}}</p>
                         <p><strong>Order No:</strong> {{$delivery['order_no']}}</p>
-                        <p><strong>Job No:</strong> {{$delivery['job_no']}}</p>
                         <p><strong>Order Date:</strong> {{$delivery['order_date']}}</p>
                         <p><strong>Shipping From:</strong> {{$delivery['fshipping']}}</p>
                         <p><strong>Shipping To:</strong> {{$delivery['tshipping']}}</p>
@@ -587,6 +587,33 @@ function generateInvoicePrintDocument(content, title, company) {
           <input type="text" class="form-control" id="hsCode" placeholder="Enter HS Code">
         </div>
         <div class="form-group">
+          <label for="sellingType"><strong>Selling Type (Optional)</strong></label>
+          <input type="text" class="form-control" id="sellingType" placeholder="Ex Works, FOB, CIF, etc">
+        </div>
+        <div class="form-group">
+          <label for="uom"><strong>UOM (Optional)</strong></label>
+          <input type="text" class="form-control" id="uom" placeholder="Pair, Dozen, etc">
+        </div>
+        <div class="form-group">
+          <label for="commercialBankSelect"><strong>Select Bank Account (Optional)</strong></label>
+          <select class="form-control" id="commercialBankSelect">
+            <option value="">-- No Bank Details --</option>
+            @if(isset($banks) && $banks->count() > 0)
+              @foreach($banks as $bank)
+                <option value="{{ $bank->bank_id }}"
+                        data-title="{{ $bank->account_title }}"
+                        data-account="{{ $bank->account }}"
+                        data-iban="{{ $bank->iban ?? '' }}"
+                        data-address="{{ $bank->address ?? '' }}"
+                        data-branch="{{ $bank->branch_code ?? '' }}"
+                        data-swift="{{ $bank->swift_code ?? '' }}">
+                  {{ $bank->account_title }} - {{ $bank->account }}
+                </option>
+              @endforeach
+            @endif
+          </select>
+        </div>
+        <div class="form-group">
           <label for="statementOfOrigin"><strong>Statement of Origin (Optional)</strong></label>
           <textarea class="form-control" id="statementOfOrigin" rows="4" placeholder="Enter Statement of Origin"></textarea>
         </div>
@@ -604,6 +631,9 @@ function generateInvoicePrintDocument(content, title, company) {
 <script>
 function printCommercialInvoice() {
     const hsCode = document.getElementById('hsCode').value;
+    const sellingType = document.getElementById('sellingType').value;
+    const uom = document.getElementById('uom').value;
+    const bankId = document.getElementById('commercialBankSelect').value;
     const statementOfOrigin = document.getElementById('statementOfOrigin').value;
 
     let url = '{{ route("delivery.commercial", $deliveryId) }}';
@@ -611,6 +641,9 @@ function printCommercialInvoice() {
     // Add parameters to URL
     const params = new URLSearchParams();
     if (hsCode) params.append('hs_code', hsCode);
+    if (sellingType) params.append('selling_type', sellingType);
+    if (uom) params.append('uom', uom);
+    if (bankId) params.append('bank_id', bankId);
     if (statementOfOrigin) params.append('statement_of_origin', statementOfOrigin);
 
     if (params.toString()) {

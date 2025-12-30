@@ -195,10 +195,10 @@
                     <span class="info-label">Account Title:</span>
                     <span class="info-value">{{ $transaction['account_title'] ?? 'N/A' }}</span>
                 </div>
-                <div class="info-row">
+                {{-- <div class="info-row">
                     <span class="info-label">Account No:</span>
                     <span class="info-value">{{ $transaction['account'] ?? 'N/A' }}</span>
-                </div>
+                </div> --}}
             @endif
 
             {{-- Customer Payment Breakdown (inline) --}}
@@ -285,7 +285,8 @@
                                 ({{ $transaction['order_date'] }})
                             @endif
                         @else
-                            {{ $transaction['description'] ?? 'Payment Transaction' }}
+                            Payment Transaction
+                            {{-- {{ $transaction['description'] ?? 'Payment Transaction' }} --}}
                         @endif
                     </td>
                     <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
@@ -293,7 +294,7 @@
                 </tr>
                 @if($transaction['bank_id'])
                 <tr>
-                    <td>{{ $transaction['bname'] ?? 'Bank Account' }}</td>
+                    <td>{{ $transaction['bname'] ?? 'Bank Account' }} - {!! $transaction['description'] ?? '' !!}</td>
                     <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
                     <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
                 </tr>

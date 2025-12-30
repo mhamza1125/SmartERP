@@ -72,7 +72,7 @@
 @if(isset($purchaseItem) && $purchaseItem->count() > 0)
 <div class="items-section avoid-break">
     <h3>Purchase Items</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>
@@ -92,7 +92,7 @@
                 $totalAmount += $amount;
             @endphp
             <tr>
-                <td>{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $loop->iteration }}</td>
                 <td>{{ $item->material_no ?? 'N/A' }}</td>
                 <td>{{ $item->name ?? 'N/A' }}</td>
                 <td class="text-right">{{ number_format($item->quantity ?? 0, 2) }}</td>
@@ -102,24 +102,22 @@
             </tr>
             @endforeach
         </tbody>
-        <tfoot>
-            <tr class="total-row">
-                <td colspan="6" class="text-right"><strong>Total Amount:</strong></td>
-                <td class="text-right"><strong>{{ number_format($totalAmount, 2) }}</strong></td>
-            </tr>
-        </tfoot>
     </table>
 </div>
 @endif
 
 {{-- Purchase Summary --}}
-<div class="totals-section avoid-break">
-    <div class="total-row">
+<div class="totals-section1 avoid-break">
+    {{-- <div class="total-row">
         <span>Total Items:</span>
         <span>{{ $purchaseItem->count() ?? 0 }}</span>
-    </div>
+    </div> --}}
     <div class="total-row grand-total">
-        <span>Grand Total:</span>
+        <span>Grand Total:
+            @if(function_exists('numberToWordsWithCurrency'))
+                {{ numberToWordsWithCurrency($totalAmount ?? 0) }}
+            @endif
+        </span>
         <span class="amount">{{ number_format($totalAmount ?? 0, 2) }}</span>
     </div>
 </div>
@@ -128,7 +126,7 @@
 @if(isset($receiveSum) && $receiveSum->count() > 0)
 <div class="items-section avoid-break">
     <h3>Receive Summary</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>
@@ -143,7 +141,7 @@
         <tbody>
             @foreach($receiveSum as $item)
             <tr>
-                <td>{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $loop->iteration }}</td>
                 <td>
                     @if($purchase['purchase_type'] == 'material')
                         {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}

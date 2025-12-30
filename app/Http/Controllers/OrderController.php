@@ -96,10 +96,9 @@ class OrderController extends Controller
         $products = $request->input('product_type_id');
         $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
-        $prices2 = $request->input('price2');
         $quantities = $request->input('quantity');
         $getId = $this->orderRepository->store($validatedData);
-        $this->storeOI($getId, $products, $stages, $prices, $prices2, $quantities);
+        $this->storeOI($getId, $products, $stages, $prices, $quantities);
 
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -333,14 +332,24 @@ class OrderController extends Controller
         $stock = $this->stockItemRepository->stock();
         $freeStock = $this->stockItemRepository->freeStock();
         $estimate = $this->orderItemRepository->estimate($id);
+        $estimateComponentProducts = $this->orderItemRepository->estimateComponentProducts($id);
         $stockArray = $stock->keyBy('material_id')->toArray();
+
+        // Get product stock for component products (keyed by product_type_id)
+        $productStock = $this->stockItemRepository->pStock();
+        $productStockArray = $productStock->keyBy('product_type_id')->toArray();
+
         $purchase = $this->purchaseItemRepository->estimate($id);
         $purchaseArray = $purchase->keyBy('material_id')->toArray();
+
+        // Combine materials and component products
+        $allEstimates = $estimate->concat($estimateComponentProducts);
 
         return view('orderEstimate', [
             'order' => $order,
             'stock' => $stockArray,
-            'estimate' => $estimate,
+            'productStock' => $productStockArray,
+            'estimate' => $allEstimates,
             'purchase' => $purchaseArray,
         ]);
     }
@@ -444,20 +453,18 @@ class OrderController extends Controller
     {
     }
 
-    private function storeOI($getId, $products, $stages, $prices, $prices2, $quantities)
+    private function storeOI($getId, $products, $stages, $prices, $quantities)
     {
         foreach ($prices as $key => $price) {
             $product = $products[$key] ?? null;
             $stage = $stages[$key] ?? null;
             $quantity = $quantities[$key] ?? null;
-            $price2 = $prices2[$key] ?? null;
             $total = $price * $quantity;
             $orderItem = [
                 'order_id' => $getId,
                 'product_type_id' => $product,
                 'product_stage_id' => $stage,
                 'price' => $price,
-                'price2' => $price2,
                 'quantity' => $quantity,
                 'total' => $total,
             ];

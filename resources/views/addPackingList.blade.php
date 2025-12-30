@@ -29,6 +29,33 @@
               @csrf
               <input type="hidden" name="delivery_id" value="{{ $deliveryId }}">
 
+              <!-- Pallet Information Section -->
+              <div class="row mb-4">
+                <div class="col-12">
+                  <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                      <h6 class="mb-0">Pallet Information</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <label>Pallet Quantity</label>
+                          <input type="number" class="form-control" name="pallet_qty" min="1" placeholder="e.g. 10">
+                        </div>
+                        <div class="col-md-4">
+                          <label>Pallet Weight (kg)</label>
+                          <input type="number" class="form-control" name="pallet_weight" min="0" step="0.01" placeholder="e.g. 4.32">
+                        </div>
+                        <div class="col-md-5">
+                          <label>Pallet Dimension</label>
+                          <input type="text" class="form-control" name="pallet_dimension" placeholder="e.g. 100x120 cm">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Product Split Summary Section -->
               {{-- <div class="row mb-3">
                 <div class="col-12">
@@ -146,4 +173,3 @@
 
 <script src="{{ URL::asset('assets/js/packing-list.js') }}"></script>
 @endsection
-

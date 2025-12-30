@@ -42,6 +42,7 @@
                       <td>
                         <a href="{{ route('product.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('product.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{{ route('product.ptc', $item->product_id) }}" class="btn btn-warning btn-sm">PTC</a>
                       </td>
                     </tr>
                     @endforeach

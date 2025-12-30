@@ -266,11 +266,11 @@
                           @foreach($transaction as $item)
                             <tr>
                               <td>{{$loop->index + 1}}</td>
-                              <td>{{number_format($item->debit)}}</td>
+                              <td>{{number_format($item->credit)}}</td>
                               <td>{{$item->transaction_date}}</td>
                               <td><a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a></td>
                             </tr>
-                            @php $total2 += $item->debit ; @endphp
+                            @php $total2 += $item->credit ; @endphp
                           @endforeach
                         @endif
                       </tbody>

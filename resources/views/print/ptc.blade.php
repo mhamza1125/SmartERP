@@ -3,7 +3,7 @@
 @section('title', 'PTC_' . ($ptc->stock_no ?? 'N/A') . '_' . ($ptc->stock_date ?? date('Y-m-d')))
 
 @section('content')
-<div class="document-title">Production Tracking Card (PTC)</div>
+<div class="document-title">Process Travel Card (PTC)</div>
 
 {{-- PTC Header Information --}}
 <div class="document-info">

@@ -12,26 +12,26 @@
             <span class="info-label">Job No:</span>
             <span class="info-value">{{ $order['job_no'] ?? 'N/A' }}</span>
         </div>
+        @if(isset($order['description']) && !empty($order['description']))
+        <div class="info-row">
+            <span class="info-label">Description:</span>
+            <span class="info-value">{{ substr($order['description'], 0, 100) }}{{ strlen($order['description']) > 100 ? '...' : '' }}</span>
+        </div>
+        @endif
+    </div>
+
+    <div class="info-section">
         <div class="info-row">
             <span class="info-label">Order Date:</span>
             <span class="info-value">{{ $order['order_date'] ?? 'N/A' }}</span>
         </div>
         @if(isset($order['due_date']) && !empty($order['due_date']))
         <div class="info-row">
-            <span class="info-label">Due Date:</span>
+            <span class="info-label">Delivery Date:</span>
             <span class="info-value">{{ $order['due_date'] }}</span>
         </div>
         @endif
     </div>
-
-    @if(isset($order['description']) && !empty($order['description']))
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Description:</span>
-            <span class="info-value">{{ substr($order['description'], 0, 100) }}{{ strlen($order['description']) > 100 ? '...' : '' }}</span>
-        </div>
-    </div>
-    @endif
 </div>
 
 {{-- Production Items Table --}}

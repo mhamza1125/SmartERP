@@ -27,8 +27,8 @@ class Delivery extends Model
     ];
 
     /**
-     * Generate auto-generated delivery number with format: SLE-001-26
-     * SLE = Fixed prefix
+     * Generate auto-generated delivery number with format: SLE-D001-26
+     * SLE-D = Fixed prefix for deliveries
      * 001 = Sequential delivery number for the year (zero-padded, 3 digits)
      * 26 = Last 2 digits of the year (2026)
      */
@@ -41,6 +41,6 @@ class Delivery extends Model
         $count = self::whereYear('created_at', $currentYear)->count();
         $sequentialNo = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
 
-        return "SLE-{$sequentialNo}-{$lastTwoDigits}";
+        return "SLE-D{$sequentialNo}-{$lastTwoDigits}";
     }
 }

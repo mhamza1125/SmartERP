@@ -22,6 +22,22 @@ Todo: Fix migration of update material and product id columns in vendors table
 
 
 
+Feture update of order, it's payment and ledger and delivery
+Currently we are taking two currency input of order items in pkr and in customer currency
+Remove the usage of pkr in customer order only show the customer currency
+There is a column order_items.price2 which is customer currency. Remove that column and use the price column as customer currency. The naem of the currency is fetched from customer table as customers.currency_id = heads.head_id
+In case of receiving payment of customer. We will take three inputs just like now 
+Cusomer currency, Pkr currency, fees_expenses
+Like customer paid us the 550 USD and converted to pkr we received 154,000 and we paid 500 rs as bank charges. Net received will be 153,500
+So db will store 550 USD in debit and 153,500 in net_amount and 500 in fees_expenses
+You will store that 153500 in debit column of transactions table. and 550 USD in cc_amount column and 500 in fees_expenses column. Defining debit means cash inflow our bank or cash will have more money. And the cc_amount will be showin in customer ledger (We will get to now if this is credit or debit by seeing if the pkr is in debit or credit) if pkr is in debit that means customer paid us and in cusotmer ledger it will be shown as credit.
+Same is for delivery, It will stay almost same for charging the cusotmer for delivered products. by getting the price from order_items.price (order_items.price is the customer currency price now) multiply with delivered quantity.
+Like product price is 3 USD we deliverd 100 pcs so we should charge the customer 300 USD that will go in debit in customer ledger gettig it form delivery. And when customer pay us 300 USD it will go in credit in customer ledger and in debit column in transactions table in database. 
+
+Currently we are having 2 ledgers of customer as /cLedger/{id} and /cLedger2/{id}
+  No need of /cLedger2 Make current cLedger display in customer currency and remove the /cLedger2 and it's relevant code, route and customerDetail2.balde.php file. We will now only have customer currency ledger no in pkr 
+
+
 ===============================================================================================
 ==========   Delivered   ======================================================================
 ===============================================================================================

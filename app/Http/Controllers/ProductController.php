@@ -238,6 +238,23 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Print PTC template for product
+     */
+    public function printPTC($id)
+    {
+        $this->authorize('show', Product::class);
+        $product = $this->productRepository->get($id);
+        $size = $this->productTypeRepository->active($id);
+        $stage = $this->headRepository->getStage($product['stage_ids']);
+
+        return view('print.ptc-template', [
+            'product' => $product,
+            'size' => $size,
+            'stage' => $stage,
+        ]);
+    }
+
     public function edit(Product $id)
     {
         $this->authorize('edit', Product::class);
