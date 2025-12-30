@@ -37,4 +37,17 @@ class Purchase extends Model
                     : null
         );
     }
+    
+    protected function requireDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) =>
+                $value ? Carbon::parse($value)->format('d-m-Y') : null,
+
+            set: fn ($value) =>
+                $value
+                    ? Carbon::parse($value)->format('Y-m-d')
+                    : null
+        );
+    }
 }

@@ -122,7 +122,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{$material['description']}}</textarea>
+                    <textarea class="form-control" name="description">{{$material['description']}}</textarea>
                   </div>
                 </div>
               </div>

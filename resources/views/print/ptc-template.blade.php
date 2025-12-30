@@ -20,7 +20,7 @@
             <span class="info-label">Size:</span>
             <span class="info-value">
                 @if($size && $size->count() > 0)
-                    {{ $size->first()->size_name ?? 'N/A' }}
+                    {{ $size->pluck('name')->join(', ') }}
                 @else
                     N/A
                 @endif
@@ -35,7 +35,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Unit:</span>
-            <span class="info-value">{{ $product->uname ?? 'N/A' }}</span>
+            <span class="info-value">{{ $product->hname ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

@@ -581,6 +581,8 @@ class TransactionController extends Controller
                     $validatedData['debit'] = 0;
                     $validatedData['credit'] = null;
                 }
+                // Set ledger_flag=0 for customer general vouchers so they don't appear in Cash/Bank ledgers
+                $validatedData['ledger_flag'] = 0;
             } else {
                 // For other payees (Vendor, Contractor, Employee): Use traditional debit/credit
                 if ($voucherType === 'debit') {
@@ -592,10 +594,9 @@ class TransactionController extends Controller
                     $validatedData['debit'] = $amount;
                     $validatedData['credit'] = null;
                 }
+                // Set ledger_flag=1 so general vouchers for other payees appear in payee ledgers
+                $validatedData['ledger_flag'] = 1;
             }
-
-            // Set ledger_flag=1 so general vouchers appear in payee ledgers
-            $validatedData['ledger_flag'] = 1;
         }
 
         // For expense payments: handle debit/credit based on expense_type

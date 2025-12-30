@@ -41,6 +41,7 @@
                   <tbody>
                     <tr>
                       <td><b>Customer:</b> {{$customer['customer_no']}} - {{$customer['fname']}} {{$customer['lname']}}</td>
+                      <td><b>Currency:</b> {{$currencyName}}</td>
                       @if(!empty($dfrom) && !empty($dto))
                         <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
                         <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>

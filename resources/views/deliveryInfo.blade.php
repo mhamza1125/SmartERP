@@ -104,7 +104,7 @@
                   <tbody>
                     <tr><td><b>Delivery No:</b> {{$delivery['delivery_no'] ?? 'N/A'}}</td></tr>
                     @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
-                    <tr><td><b>Delivery Date:</b> {{$delivery['delivery_date']}}</td></tr>
+                    <tr><td><b>Delivery Date:</b> {{$delivery['delivery_date']->format('d-m-Y')}}</td></tr>
                     @endif
                     <tr><td><b>Shipping From:</b> {{$delivery['fshipping']}}</td></tr>
                     <tr><td><b>Port Name:</b> {{$delivery['fport_no']}}</td></tr>

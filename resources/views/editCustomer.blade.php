@@ -68,6 +68,13 @@
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
+                    <label>Port Name</label>
+                    <input type="text" class="form-control" name="port_no" required value="{{$customer['port_no']}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
                     <label>Country</label>
                     <select class="form-control select2" name="country_id" required>
                       <option value="" selected disabled>Select Country</option>
@@ -94,17 +101,6 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Currency</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>File / Images</label>
-                    <div class="custom-file">
-                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
-                      <label class="custom-file-label" for="customFile">Choose file</label>
-                    </div>
-                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
-                    <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
               </div>
@@ -135,6 +131,17 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>File / Images</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="customFile" name="image[]" multiple>
+                      <label class="custom-file-label" for="customFile">Choose file</label>
+                    </div>
+                    <div class="valid-feedback" id="fileSuccess">Good job!</div>
+                    <div class="invalid-feedback" id="fileError"></div>
+                  </div>
+                </div>
               </div>
               <div class="row">
                 <div class="col-md-12">
@@ -146,7 +153,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{$customer['description']}}</textarea>
+                    <textarea class="form-control" name="description">{{$customer['description']}}</textarea>
                   </div>
                 </div>
               </div>

@@ -72,7 +72,7 @@
                     @endphp
                     <tr>
                       <td>{{ $loop->iteration }}</td>
-                      <td>{{ $transaction->transaction_date?->format('Y-m-d') ?? 'N/A' }}</td>
+                      <td>{{ $transaction->transaction_date?->format('d-m-Y') ?? 'N/A' }}</td>
                       <td>
                         @if($transaction->transaction_type == 'purchase')
                           <span class="badge badge-success">Purchase</span>

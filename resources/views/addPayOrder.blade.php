@@ -29,7 +29,7 @@
                       <option value="" selected disabled>Select Customer</option>
                       @if($customer->count())
                         @foreach($customer as $item)
-                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}} [{{$item->currency_name}}]</option>
                         @endforeach
                       @endif
                     </select>
@@ -161,7 +161,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{old('description')}}</textarea>
+                    <textarea class="form-control" name="description">{{old('description')}}</textarea>
                   </div>
                 </div>
               </div>

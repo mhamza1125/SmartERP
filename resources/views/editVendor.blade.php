@@ -199,7 +199,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{$vendor['description']}}</textarea>
+                    <textarea class="form-control" name="description">{{$vendor['description']}}</textarea>
                   </div>
                 </div>
               </div>

@@ -21,6 +21,7 @@ class Customer extends Model
         'country_id',
         'currency_id',
         'address',
+        'port_no',
         'description',
         'created_by',
         'updated_at',

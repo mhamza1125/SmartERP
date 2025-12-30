@@ -130,7 +130,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{ $receive['desc'] }}</textarea>
+                    <textarea class="form-control" name="description">{{ $receive['desc'] }}</textarea>
                   </div>
                 </div>
               </div>

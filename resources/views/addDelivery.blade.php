@@ -276,8 +276,12 @@
                     if (!$tportNo && isset($editMode) && $editMode && isset($existingDelivery)) {
                       $tportNo = $existingDelivery['tport_no'] ?? '';
                     }
+                    // Auto-populate from customer port_no (server-side)
+                    if (!$tportNo && isset($customer)) {
+                      $tportNo = $customer['port_no'] ?? '';
+                    }
                   @endphp
-                  <input type="text" class="form-control" name="tport_no" placeholder="Port Name" value="{{$tportNo}}">
+                  <input type="text" class="form-control" id="tport_no" name="tport_no" placeholder="Port Name" value="{{$tportNo}}">
                 </div>
               </div>
 

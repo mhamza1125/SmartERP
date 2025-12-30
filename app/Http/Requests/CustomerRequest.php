@@ -28,6 +28,7 @@ class CustomerRequest extends FormRequest
             'email' => 'required|max:255',
             'phone' => 'required|max:255',
             'fax' => 'required|max:255',
+            'port_no' => 'required|max:255',
             'currency_id' => 'required',
             'country_id' => 'required',
             'address' => '',

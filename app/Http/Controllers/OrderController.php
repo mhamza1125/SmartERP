@@ -253,8 +253,10 @@ class OrderController extends Controller
             }
         }
 
-        // Get optional HS Code parameter
+        // Get optional parameters
         $hsCode = request()->input('hs_code');
+        $sellingType = request()->input('selling_type');
+        $uom = request()->input('uom');
 
         return view('print.order-proforma', [
             'order' => $order,
@@ -262,6 +264,8 @@ class OrderController extends Controller
             'bankDetails' => $bankDetails,
             'company' => $company,
             'hsCode' => $hsCode,
+            'sellingType' => $sellingType,
+            'uom' => $uom,
         ]);
     }
 

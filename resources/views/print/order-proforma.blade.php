@@ -5,6 +5,19 @@
 @section('content')
 <div class="document-title">Proforma Invoice</div>
 
+<style>
+    .document-info {
+        display: flex;
+        width: 100%;
+    }
+
+    .info-section {
+        width: 50%; /* static 50% width for each column */
+        box-sizing: border-box;
+        padding: 0 10px; /* optional padding between columns */
+    }
+</style>
+
 {{-- Customer Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -32,6 +45,18 @@
                 <span class="info-label">REX No:</span>
                 <span class="info-value">{{ $company->rex_no }}</span>
             </div>
+            @endif
+            @if(isset($sellingType) && !empty($sellingType))
+                <div class="info-row">
+                    <span class="info-label">Selling Type:</span>
+                    <span class="info-value">{{ $sellingType }}</span>
+                </div>
+                @endif
+                @if(isset($uom) && !empty($uom))
+                <div class="info-row">
+                    <span class="info-label">UOM:</span>
+                    <span class="info-value">{{ $uom }}</span>
+                </div>
             @endif
         @endif
     </div>
@@ -136,14 +161,9 @@ $currencyName = $firstItem->cname ?? 'PKR';
     </div>
 </div>
 
-{{-- Certification Statement --}}
-<div class="certification-statement avoid-break" style="margin-top: 30px; text-align: center; font-weight: bold;">
-    <p>CERTIFIED TO BE TRUE AND CORRECT: {{ $company->name ?? 'SAJJADSON LAB EQUIPMENT' }}</p>
-</div>
-
 {{-- Bank Account Details --}}
 @if(isset($bankDetails) && !empty($bankDetails))
-<div class="info-section avoid-break">
+<div class="info-section1 avoid-break">
     <h3>Bank Account Details</h3>
     <table class="print-table">
         <tbody>
@@ -183,5 +203,10 @@ $currencyName = $firstItem->cname ?? 'PKR';
     </table>
 </div>
 @endif
+
+{{-- Certification Statement --}}
+<div class="certification-statement avoid-break" style="margin-top: 30px; text-align: center; font-weight: bold;">
+    <p>CERTIFIED TO BE TRUE AND CORRECT: {{ $company->name ?? 'SAJJADSON LAB EQUIPMENT' }}</p>
+</div>
 
 @endsection

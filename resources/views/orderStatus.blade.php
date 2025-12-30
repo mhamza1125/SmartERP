@@ -109,6 +109,9 @@
                                 <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#orderStageModal{{ $productTypeId }}">
                                   <i class="fas fa-layer-group"></i> View Stages ({{ $stageItems->count() }})
                                 </button>
+                                <a href="{{ route('product.ptc', $firstItem->product_id) }}" class="btn btn-sm btn-warning" title="Print PTC" target="_blank">
+                                  <i class="fas fa-file-alt"></i> Print PTC
+                                </a>
                               </td>
                             </tr>
                             @php $prevProductId = $firstItem->product_id; @endphp

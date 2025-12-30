@@ -217,7 +217,7 @@
     @endif
 
     <div class="print-footer">
-        <p>{{ $company->footer_text ?? 'Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan' }}</p>
+        <p>{!! $company->footer_text ?? 'Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan' !!}</p>
         <p>Phone: {{ $company->phone ?? '+92 52 357 3727' }} || Email: {{ $company->email ?? 'info@sajjadsonlab.com' }} || Web: {{ $company->website ?? 'sajjadsonlab.com' }}</p>
     </div>
 

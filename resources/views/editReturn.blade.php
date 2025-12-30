@@ -113,7 +113,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{ $return['desc'] }}</textarea>
+                    <textarea class="form-control" name="description">{{ $return['desc'] }}</textarea>
                   </div>
                 </div>
               </div>

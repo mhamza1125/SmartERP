@@ -136,7 +136,7 @@
                               <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
                               <input type="hidden" name="product_stage_id[]" value="{{$item->product_stage_id}}"></td>
                             </td>
-                            <td>{{$item->uname}}</td>
+                            <td>{{$item->hname}}</td>
                             <td>{{$item->quantity}}
                               <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
                             </td>
@@ -165,7 +165,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="summernote" name="description">{{$purchase['description']}}</textarea>
+                    <textarea class="form-control" name="description">{{$purchase['description']}}</textarea>
                   </div>
                 </div>
               </div>

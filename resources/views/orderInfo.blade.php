@@ -216,11 +216,15 @@
 function printProformaInvoice() {
     var bankId = document.getElementById('proformaBankSelect').value;
     var hsCode = document.getElementById('proformaHsCode').value;
+    var sellingType = document.getElementById('proformaSellingType').value;
+    var uom = document.getElementById('proformaUOM').value;
     var url = "{{ route('order.proforma', $order['order_id']) }}";
 
     var params = new URLSearchParams();
     if (bankId) params.append('bank_id', bankId);
     if (hsCode) params.append('hs_code', hsCode);
+    if (sellingType) params.append('selling_type', sellingType);
+    if (uom) params.append('uom', uom);
 
     if (params.toString()) {
         url += '?' + params.toString();
@@ -245,6 +249,14 @@ function printProformaInvoice() {
         <div class="form-group">
           <label for="proformaHsCode"><strong>HS Code (Optional)</strong></label>
           <input type="text" class="form-control" id="proformaHsCode" placeholder="Enter HS Code">
+        </div>
+        <div class="form-group">
+          <label for="proformaSellingType"><strong>Selling Type (Optional)</strong></label>
+          <input type="text" class="form-control" id="proformaSellingType" placeholder="Ex Works, FOB, CIF, etc">
+        </div>
+        <div class="form-group">
+          <label for="proformaUOM"><strong>UOM (Optional)</strong></label>
+          <input type="text" class="form-control" id="proformaUOM" placeholder="Pair, Dozen, etc">
         </div>
         <div class="form-group">
           <label for="proformaBankSelect"><strong>Select Bank Account (Optional)</strong></label>

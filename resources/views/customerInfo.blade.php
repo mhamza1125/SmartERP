@@ -33,7 +33,8 @@
                   <td><b>Currency: </b> {{$customer['cuname']}}</td>
                 </tr>
                 <tr>
-                  <td colspan="4"><b>Address: </b> {{$customer['address']}}</td>
+                  <td><b>Port No: </b> {{$customer['port_no']}}</td>
+                  <td colspan="3"><b>Address: </b> {{$customer['address']}}</td>
                 </tr>
                 <tr>
                   <td colspan="4">
