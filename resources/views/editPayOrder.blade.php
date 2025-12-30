@@ -119,17 +119,17 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Domestic Bank Charges (PKR)</label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="db_charges" id="db_charges" value="{{ $transaction['db_charges'] ?? '' }}" placeholder="e.g., 500">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
                     <label>Amount Received (PKR) <span class="text-danger">*</span></label>
                     <input type="number" min="0" step="0.01" class="form-control" name="debit" id="debit" required value="{{ $transaction['debit'] }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount Received</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Domestic Bank Charges (PKR)</label>
+                    <input type="number" min="0" step="0.01" class="form-control" name="db_charges" id="db_charges" value="{{ $transaction['db_charges'] ?? '' }}" placeholder="e.g., 500">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>

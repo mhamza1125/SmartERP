@@ -119,17 +119,17 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Domestic Bank Charges (PKR)</label>
-                    <input type="number" min="0" step="0.01" class="form-control" name="db_charges" id="db_charges" value="{{ old('db_charges') }}" placeholder="e.g., 500">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
                     <label>Amount Received (PKR) <span class="text-danger">*</span></label>
                     <input type="number" min="0" step="0.01" class="form-control" name="debit" id="debit" required value="{{ old('debit') }}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount Received</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Domestic Bank Charges (PKR)</label>
+                    <input type="number" min="0" step="0.01" class="form-control" name="db_charges" id="db_charges" value="{{ old('db_charges') }}" placeholder="e.g., 500">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>
@@ -150,8 +150,8 @@
                     <ul class="mb-0">
                       <li><strong>CC Amount:</strong> Customer currency amount (e.g., 1000 USD)</li>
                       <li><strong>Foreign Bank Charges:</strong> Bank charges in customer's currency (e.g., 50 USD)</li>
-                      <li><strong>Domestic Bank Charges:</strong> Bank charges in local currency (e.g., 500 PKR)</li>
                       <li><strong>Amount Received:</strong> Actual amount received in PKR (affects cash/bank balance)</li>
+                      <li><strong>Domestic Bank Charges:</strong> Bank charges in local currency (e.g., 500 PKR)</li>
                     </ul>
                   </div>
                 </div>

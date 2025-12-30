@@ -19,8 +19,8 @@
         <div class="info-row">
             <span class="info-label">Size:</span>
             <span class="info-value">
-                @if($size && $size->count() > 0)
-                    {{ $size->pluck('name')->join(', ') }}
+                @if($size && count($size) > 0)
+                    {{ collect($size)->pluck('name')->join(', ') }}
                 @else
                     N/A
                 @endif

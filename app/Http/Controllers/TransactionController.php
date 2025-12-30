@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
+use App\Models\Head;
 use App\Models\Transaction;
 use App\Repositories\BankRepository;
 use App\Repositories\CustomerRepository;
@@ -675,6 +676,20 @@ class TransactionController extends Controller
             }
         }
 
+        // Handle bank charges for order payments
+        if ($validatedData['transaction_to'] == 'customer' &&
+            $validatedData['transaction_type'] == 'orderPayment') {
+            $dbCharges = $request->input('db_charges', 0);
+            if ($dbCharges > 0) {
+                $this->createBankChargesTransaction(
+                    $getId,
+                    $dbCharges,
+                    $validatedData['bank_id'],
+                    $validatedData['transaction_date']
+                );
+            }
+        }
+
         // Check if this is a general voucher (transaction_type = 'generalVoucher')
         if ($request->input('transaction_type') == 'generalVoucher') {
             return redirect()->route('transaction.showGeneralVoucher', $getId)->with('success', 'Record Inserted Successfully');
@@ -1092,6 +1107,19 @@ class TransactionController extends Controller
                 $this->storeImage($file, 'transaction', 'transactions', $id);
             }
         }
+
+        // Handle bank charges for order payments
+        if ($request->input('transaction_to') == 'customer' &&
+            $request->input('transaction_type') == 'orderPayment') {
+            $dbCharges = $request->input('db_charges', 0);
+            $this->updateBankChargesTransaction(
+                $id,
+                $dbCharges,
+                $request->input('bank_id'),
+                $request->input('transaction_date')
+            );
+        }
+
         // Check if this is a general voucher (transaction_type = 'generalVoucher')
         if ($request->input('transaction_type') == 'generalVoucher') {
             return redirect()->route('transaction.showGeneralVoucher', $id)->with('success', 'Record Updated Successfully');
@@ -1310,6 +1338,97 @@ class TransactionController extends Controller
             'transaction' => $transaction,
             'voucherNumber' => $voucherNumber,
         ]);
+    }
+
+    /**
+     * Get or create the "Bank Charges" expense head
+     * Returns the head_id of the Bank Charges expense head
+     */
+    private function getBankChargesHead()
+    {
+        // Check if Bank Charges head exists
+        $bankChargesHead = Head::where('head_type_id', 7)
+            ->where('name', 'Bank Charges')
+            ->where('head_status', 1)
+            ->where('action', 1)
+            ->first();
+
+        if ($bankChargesHead) {
+            return $bankChargesHead->head_id;
+        }
+
+        // Create Bank Charges head if it doesn't exist
+        $newHead = Head::create([
+            'head_type_id' => 7,
+            'name' => 'Bank Charges',
+            'head_status' => 1,
+            'action' => 1,
+            'created_by' => auth()->id(),
+        ]);
+
+        return $newHead->head_id;
+    }
+
+    /**
+     * Create a bank charges expense transaction
+     * Called when db_charges > 0 in a payment entry
+     */
+    private function createBankChargesTransaction($paymentTransactionId, $dbCharges, $bankId, $transactionDate)
+    {
+        $bankChargesHeadId = $this->getBankChargesHead();
+
+        $bankChargesData = [
+            'transaction_to' => 'expense',
+            'transaction_type' => 'bankCharges',
+            'transaction_date' => $transactionDate,
+            'order_id' => $paymentTransactionId,  // Link to payment transaction
+            'bank_id' => $bankId,
+            'credit' => $dbCharges,  // Expense is a cash outflow
+            'debit' => null,
+            'payee_id' => $bankChargesHeadId,
+            'payee_bank_id' => 0,
+            'description' => 'Bank charges for payment transaction #' . $paymentTransactionId,
+        ];
+
+        return $this->transactionRepository->store($bankChargesData);
+    }
+
+    /**
+     * Find existing bank charges transaction for a payment
+     */
+    private function findBankChargesTransaction($paymentTransactionId)
+    {
+        return Transaction::where('transaction_type', 'bankCharges')
+            ->where('order_id', $paymentTransactionId)
+            ->first();
+    }
+
+    /**
+     * Update or delete bank charges transaction
+     * Called when editing a payment entry
+     */
+    private function updateBankChargesTransaction($paymentTransactionId, $newDbCharges, $bankId, $transactionDate)
+    {
+        $existingBankCharges = $this->findBankChargesTransaction($paymentTransactionId);
+
+        if ($newDbCharges > 0) {
+            if ($existingBankCharges) {
+                // Update existing bank charges entry
+                $this->transactionRepository->update($existingBankCharges->transaction_id, [
+                    'credit' => $newDbCharges,
+                    'transaction_date' => $transactionDate,
+                    'bank_id' => $bankId,
+                ]);
+            } else {
+                // Create new bank charges entry if it doesn't exist
+                $this->createBankChargesTransaction($paymentTransactionId, $newDbCharges, $bankId, $transactionDate);
+            }
+        } else {
+            // If db_charges is 0 or null, delete the existing bank charges entry
+            if ($existingBankCharges) {
+                $existingBankCharges->delete();
+            }
+        }
     }
 
 }

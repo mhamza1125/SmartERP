@@ -158,7 +158,7 @@ class TransactionRepository implements GlobalInterface
 
     public function expense()
     {
-        return Transaction::where('transaction_to', 'expense')
+        return Transaction::whereIn('transaction_to', ['expense', 'bankCharges'])
             ->join('heads', 'heads.head_id', '=', 'transactions.payee_id')
             ->orderBy('transactions.created_at', 'desc')
             ->get();

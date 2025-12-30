@@ -198,9 +198,10 @@
                             $key = $di['product_type_id'] . '-' . $di['stage_id'];
                             $deliveryMap[$key] = $di['quantity'];
                         } @endphp
-                      @if($stock->count())
+                      @if(count($stock))
                       @php $index = 1; @endphp
                         @foreach($stock as $key => $item)
+                          @php $item = (object) $item; @endphp
                           @unless(($item->stockIn - $item->stockOut) <= 0)
                             @php  $key = $item->product_type_id . '-' . $item->stage_id;
                               $qty = $deliveryMap[$key] ?? 0; @endphp
@@ -261,7 +262,7 @@
                       foreach ($deliveryItem as $di) {
                           $deliveryMap[$di['material_id']] = $di['quantity'];
                       } @endphp
-                      @if($vehicle->count())
+                      @if(count($vehicle))
                         @foreach($vehicle as $key => $item)
                           @php  $key = $item->material_id;
                             $qty = $deliveryMap[$key] ?? 0;
@@ -297,9 +298,10 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @if($deliveryItem->count())
+                      @if(count($deliveryItem))
                         @php $index = 1; @endphp
                         @foreach($deliveryItem as $item)
+                          @php $item = (object) $item; @endphp
                           @unless($item->product_type_id != 0)
                             <tr>
                               <td>{{$index++}}</td>
@@ -406,10 +408,11 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @if($deliveryBox->count())
+                      @if(count($deliveryBox))
                         @php $total = 0; @endphp
                         @foreach($deliveryBox as $item)
                           @php
+                            $item = (object) $item;
                             $rowQtys = explode('|', $item->rowQty);
                             $total += $item->totalQty
                           @endphp
@@ -450,8 +453,9 @@
                     <label>Expense</label>
                     <select class="form-control select2" name="spayee_id">
                       <option value="" selected disabled>Select Expense Head</option>
-                      @if($expense->count())
+                      @if(count($expense))
                         @foreach($expense as $item)
+                          @php $item = (object) $item; @endphp
                           <option value="{{$item->head_id}}" {{ old('payee_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
@@ -463,8 +467,9 @@
                     <label>Cash / Bank (if any)</label>
                     <select class="form-control select2" name="sbank_id">
                       <option value="0" selected>Cash Payment</option>
-                      @if($bank->count())
+                      @if(count($bank))
                         @foreach($bank as $item)
+                          @php $item = (object) $item; @endphp
                           <option value="{{$item->bank_id}}" {{ old('bank_id') == $item->head_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
                         @endforeach
                       @endif
@@ -502,8 +507,9 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @if($transaction->count())
+                      @if(count($transaction))
                         @foreach($transaction as $item)
+                          @php $item = (object) $item; @endphp
                           <tr>
                             <td>{{$loop->index + 1}}</td>
                             <td>{{$item->name}}

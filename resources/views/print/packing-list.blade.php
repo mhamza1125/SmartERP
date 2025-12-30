@@ -245,34 +245,45 @@
                 $cartonWeight = 0;
             @endphp
 
-            <!-- Carton Range Row -->
-            <tr>
-                <td style="font-weight: bold;">
-                    @if($carton->carton_from == $carton->carton_to)
-                        Carton # {{ $carton->carton_from }}
-                    @else
-                        Carton # {{ $carton->carton_from }} to {{ $carton->carton_to }}
-                    @endif
-                </td>
-                <td colspan="4" style="border-left: none;"></td>
-            </tr>
+            @php
+    $itemCount = $carton->items->count();
+@endphp
 
-            <!-- Items in this carton -->
-            @foreach($carton->items as $item)
-            <tr>
-                <td></td>
-                <td>{{ $item->name }}</td>
-                <td style="text-align: center;">{{ $item->pcs_each_carton }} Each</td>
-                <td style="text-align: right;">{{ $item->pcs_each_carton * $cartonQty }}</td>
-                <td style="text-align: right;">
-                    @if($carton->box_weight)
-                        @php $cartonWeight += $carton->box_weight * $cartonQty; @endphp
-                        {{ number_format($carton->box_weight * $cartonQty, 2) }}
-                    @endif
-                </td>
-            </tr>
-            @php $cartonTotal += $item->pcs_each_carton * $cartonQty; @endphp
-            @endforeach
+@foreach($carton->items as $index => $item)
+<tr>
+    @if($index === 0)
+        <td rowspan="{{ $itemCount }}" style="font-weight: bold; vertical-align: top;">
+            @if($carton->carton_from == $carton->carton_to)
+                Carton # {{ $carton->carton_from }}
+            @else
+                Carton # {{ $carton->carton_from }} to {{ $carton->carton_to }}
+            @endif
+        </td>
+    @endif
+
+    <td>{{ $item->name }}</td>
+
+    <td style="text-align: center;">
+        {{ $item->pcs_each_carton }} Each
+    </td>
+
+    <td style="text-align: right;">
+        {{ $item->pcs_each_carton * $cartonQty }}
+    </td>
+
+    <td style="text-align: right;">
+        @if($carton->box_weight)
+            @php $cartonWeight += $carton->box_weight * $cartonQty; @endphp
+            {{ number_format($carton->box_weight * $cartonQty, 2) }}
+        @endif
+    </td>
+</tr>
+
+@php 
+    $cartonTotal += $item->pcs_each_carton * $cartonQty; 
+@endphp
+@endforeach
+
 
             <!-- Box Dimension Row -->
             @if($carton->box_dimension)

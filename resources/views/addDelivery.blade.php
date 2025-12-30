@@ -406,7 +406,7 @@
                           @endforeach
                         @endif
                       @else
-                        @if($stock->count())
+                        @if(count($stock))
                         @php
                           $aggregatedItems = [];
                           foreach($stock as $item) {
@@ -510,9 +510,9 @@
                     <label>Container / Vehicle</label>
                     <select class="form-control select2" name="smaterial_id[]" id="materialSelect">
                       <option value="" disabled selected>Select Material</option>
-                      @if($vehicle->count())
+                      @if(count($vehicle))
                         @foreach($vehicle as $item)
-                          @php $available = $item->total_received - $item->total_returned + $item->stockIn - $item->stockOut @endphp
+                          @php $item = (object) $item; $available = $item->total_received - $item->total_returned + $item->stockIn - $item->stockOut @endphp
                           <option value="{{$item->material_id}}" data-available="{{$available}}" {{ old('material_id') == $item->material_id ? 'selected' : '' }}>{{$item->material_no}} - {{$item->name}} - Qty [{{$available}}]</option>
                         @endforeach
                       @endif
@@ -654,8 +654,9 @@
                     <label>Expense</label>
                     <select class="form-control select2" name="spayee_id">
                       <option value="" selected disabled>Select Expense Head</option>
-                      @if($expense->count())
+                      @if(count($expense))
                         @foreach($expense as $item)
+                          @php $item = (object) $item; @endphp
                           <option value="{{$item->head_id}}" {{ old('payee_id') == $item->head_id ? 'selected' : '' }}>{{$item->name}}</option>
                         @endforeach
                       @endif
@@ -667,8 +668,9 @@
                     <label>Cash / Bank (if any)</label>
                     <select class="form-control select2" name="sbank_id">
                       <option value="0" selected>Cash Payment</option>
-                      @if($bank->count())
+                      @if(count($bank))
                         @foreach($bank as $item)
+                          @php $item = (object) $item; @endphp
                           <option value="{{$item->bank_id}}" {{ old('bank_id') == $item->head_id ? 'selected' : '' }}>{{$item->hname}} - {{$item->account_title}} - {{$item->account}}</option>
                         @endforeach
                       @endif
