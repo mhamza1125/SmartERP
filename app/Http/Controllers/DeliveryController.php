@@ -104,7 +104,7 @@ class DeliveryController extends Controller
         }
     }
 
-    private function handleSingleOrderCreate($id)
+    private function handleSingleOrderCreate($id, $editDeliveryId = null)
     {
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->orderDelivery($id);
@@ -120,6 +120,19 @@ class DeliveryController extends Controller
             $customer = $this->customerRepository->get($customerId);
         }
 
+        // Get order number for auto-population of stock_no
+        $orderNo = is_array($order) ? ($order['order_no'] ?? '') : ($order->order_no ?? '');
+        
+        // If this is an edit request, get existing delivery data
+        $existingDelivery = null;
+        $editMode = false;
+        $deliveryItem = null;
+        if ($editDeliveryId) {
+            $existingDelivery = $this->deliveryRepository->get($editDeliveryId);
+            $editMode = true;
+            $deliveryItem = $this->stockItemRepository->delivery($editDeliveryId);
+        }
+
         return view('addDelivery', [
             'bank' => $bank,
             'expense' => $expense,
@@ -129,6 +142,10 @@ class DeliveryController extends Controller
             'company' => $company,
             'customer' => $customer,
             'isMultiOrder' => false,
+            'orderNo' => $orderNo,
+            'editMode' => $editMode,
+            'existingDelivery' => $existingDelivery,
+            'deliveryItem' => $deliveryItem ?? [],
         ]);
     }
 
@@ -235,6 +252,14 @@ class DeliveryController extends Controller
             // Create multi-order stock number with comma-separated order numbers
             if (!empty($orderNumbers)) {
                 $validatedData['stock_no'] = 'Multi-Order: ' . implode(', ', $orderNumbers);
+            }
+        } else {
+            // Single-order delivery - ensure stock_no is set to order_no if empty
+            if (empty($validatedData['stock_no']) && $request->input('order_id')) {
+                $order = $this->orderRepository->get($request->input('order_id'));
+                if ($order) {
+                    $validatedData['stock_no'] = $order['order_no'];
+                }
             }
         }
 

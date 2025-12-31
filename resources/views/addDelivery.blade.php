@@ -131,7 +131,18 @@
                       @endphp
                       <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
                     @else
-                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', isset($order) ? $order['stock_no'] ?? '' : '')}}">
+                      @php
+                        // For single-order deliveries, use order_no for auto-population
+                        $singleOrderStockNo = '';
+                        if (isset($editMode) && $editMode && isset($existingDelivery)) {
+                          // In edit mode, use existing stock_no
+                          $singleOrderStockNo = $existingDelivery['stock_no'] ?? '';
+                        } elseif (isset($orderNo)) {
+                          // In create mode, use order_no
+                          $singleOrderStockNo = $orderNo;
+                        }
+                      @endphp
+                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $singleOrderStockNo)}}" {{(isset($orderNo) && (!isset($editMode) || !$editMode)) ? 'readonly' : ''}}>
                     @endif
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Stock No</div>
