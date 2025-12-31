@@ -46,17 +46,11 @@
                 <span class="info-value">{{ $company->rex_no }}</span>
             </div>
             @endif
-            @if(isset($sellingType) && !empty($sellingType))
-                <div class="info-row">
-                    <span class="info-label">Selling Type:</span>
-                    <span class="info-value">{{ $sellingType }}</span>
-                </div>
-                @endif
-                @if(isset($uom) && !empty($uom))
-                <div class="info-row">
-                    <span class="info-label">UOM:</span>
-                    <span class="info-value">{{ $uom }}</span>
-                </div>
+            @if(isset($uom) && !empty($uom))
+            <div class="info-row">
+                <span class="info-label">UOM:</span>
+                <span class="info-value">{{ $uom }}</span>
+            </div>
             @endif
         @endif
     </div>
@@ -122,13 +116,15 @@
                 @foreach($orderItem as $item)
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
-                    @if($item->product_id == $product_id)
+                    {{-- @if($item->product_id == $product_id)
                         <td colspan="2"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
                         <td class="text-center">{{ $item->pname }}</td>
                         @php $product_id = $item->product_id; @endphp
-                    @endif
+                    @endif --}}
+                    <td class="text-center">{{ $item->article_no }}</td>
+                    <td class="text-center">{{ $item->pname }}</td>    
                     <td class="text-center">{{ $item->name }}</td>
                     {{-- <td class="text-center">{{ $item->uname ?? 'N/A' }}</td> --}}
                     <td class="text-right">{{ number_format($item->quantity) }}</td>
@@ -149,14 +145,20 @@ $totalOriginal = $orderItem->sum(function($item) {
 });
 $firstItem = $orderItem->first();
 $currencyName = $firstItem->cname ?? 'PKR';
+
+// Determine the total label based on selling type
+$totalLabel = 'Grand Total:';
+if (isset($sellingType) && !empty($sellingType)) {
+    $totalLabel = 'Total ' . $sellingType . ' Amount:';
+}
 @endphp
 <div class="totals-section avoid-break">
     <div class="total-row grand-total">
-        <span>Grand Total:
+        <span>{{ $totalLabel }}
             @if(function_exists('numberToWordsWithCurrency'))
                 {{ numberToWordsWithCurrency($totalOriginal ?? 0) }} {{ $currencyName }}
             @endif
-        </span> 
+        </span>
         <span class="amount">{{ number_format($totalOriginal, 2) }} {{ $currencyName }}</span>
     </div>
 </div>

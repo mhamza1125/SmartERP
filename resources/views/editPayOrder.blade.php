@@ -112,7 +112,7 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Foreign Bank Charges</label>
+                    <label>Foreign Bank Charges (Customer Currency)</label>
                     <input type="number" min="0" step="0.01" class="form-control" name="fb_charges" id="fb_charges" value="{{ $transaction['fb_charges'] ?? '' }}" placeholder="e.g., 50">
                     <div class="valid-feedback">Good job!</div>
                   </div>

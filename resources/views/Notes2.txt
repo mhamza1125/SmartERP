@@ -1,3 +1,10 @@
+1. http://127.0.0.1:8000/addDelivery/49 auto full stock_no field
+2. Show payment record with print of purchase
+
+In add delivery auto fill the stock_no field as it is being filled by multi-order delivery, It should be same for normal single deliveyr, Auto fill it
+
+======================================================================
+
 1. Show ex-works payment type also in performa invoice
 2. Header of performa similar to commercial invoice (No Fi no)
 3. 2025-12-27 => 27-12-2025
@@ -10,6 +17,23 @@
 10. REmove pkr in 'Outstanding Balance' in addOPayment and show customer currency
 11. Separate expense entry for domestic bank charges
 12. Static column width of commercial / proforma invoice prints
+
+
+1. Add Selling type (Ex Works, FOB, CIF, etc) and UOM (Pair, Dozen, etc) in Proforma Invoice
+    Test it in orders > View Order > Proforma Invoice
+2. Remove auto line break in descriptions / narrations added in almost every data entry (Relevant to Accounts / Invoices)
+3. Add PTC print btn in orderStatus
+    Test it in Orders > View Order > Order Status
+4. Port Name added to customer table. And use it in AddDelivery for 'Port Name of customer'
+    Test it by adding Port Name in any customer and deliver any order to that customer, Port name will be auto filled in AddDelivery
+5. Update the view of packing list, Similar to given format
+    Create new or View any existing packing list form delivered orders
+6. Show customer currency in it's ledger. (Relevant to Accounts)
+7. Credit note to customer Updated to Show domestic bank charges (Pkr) as expense (Pkr) (As two entries of Cash In and Cash Out)
+    Like Received 50,000 (Cash In) Bank Charges 7k (Cash Out) Remainnig Balance 43k
+    Test it in General Voucher > Select Customer > Add credit note > View selected bank ledger to see two entries of Cash In and Cash Out (Relevant to accounts)
+8. Show customer currency while selecting customer in Add / Edit customer payment (Relevant to Accounts)
+9. Commercial and Proforma invoice header width set to 50% 50%
 
 ============================================================================================================
 ============================================================================================================

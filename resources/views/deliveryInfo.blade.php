@@ -148,12 +148,14 @@
                         @unless($item->product_type_id == 0)
                           <tr>
                             <td>{{$index++}}</td>
-                            @if($item->product_id == $product_id)
+                            {{-- @if($item->product_id == $product_id)
                               <td colspan="2"></td>
                             @else
                               <td>{{$item->article_no}}</td>
                               <td>{{$item->name}}</td>
-                            @endif
+                            @endif --}}
+                            <td>{{$item->article_no}}</td>
+                            <td>{{$item->name}}</td>
                             <td>{{$item->sname}}</td>
                             <td>{{$item->hname}}</td>
                             <td>{{$item->puname}}</td>

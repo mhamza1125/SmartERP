@@ -3,7 +3,7 @@
 @section('title', 'PTC_Template_' . ($product->article_no ?? 'N/A'))
 
 @section('content')
-<div class="document-title">Process Travel Card (PTC) - Template</div>
+<div class="document-title">Process Travel Card (PTC)</div>
 
 {{-- Product Header Information --}}
 <div class="document-info">

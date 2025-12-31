@@ -24,6 +24,11 @@
             <span class="info-label">Customer Name:</span>
             <span class="info-value">{{ $delivery['fname'] ?? 'N/A' }} {{ $delivery['lname'] ?? '' }}</span>
         </div>
+
+        <div class="info-row">
+            <span class="info-label">Port Name:</span>
+            <span class="info-value">{{ $delivery['tport_no'] ?? 'N/A' }}</span>
+        </div>
         
         <div class="info-row">
             <span class="info-label">Address:</span>
@@ -150,13 +155,15 @@
                 @foreach($deliveryItem as $item)
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
-                    @if($item->product_id == $product_id)
+                    {{-- @if($item->product_id == $product_id)
                         <td colspan="2"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
                         <td class="text-center">{{ $item->name }}</td>
                         @php $product_id = $item->product_id; @endphp
-                    @endif
+                    @endif --}}
+                    <td class="text-center">{{ $item->article_no }}</td>
+                    <td class="text-center">{{ $item->name }}</td>
                     <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
                     {{-- <td class="text-center">{{ $item->puname ?? 'N/A' }}</td> --}}
                     <td class="text-right">{{ number_format($item->quantity) }}</td>
