@@ -39,6 +39,26 @@ class EmployeeRequest extends FormRequest
             'address' => 'required|max:255',
             'designation' => '',
             'description' => '',
+            // New personal and professional fields
+            'marital_status' => 'nullable|in:married,single,divorced,widower',
+            'siblings_count' => 'nullable|integer|min:0',
+            'additional_skills' => 'nullable|string',
+            // Children details validation
+            'children_details.*.name' => 'nullable|string|max:255',
+            'children_details.*.gender' => 'nullable|in:male,female',
+            'children_details.*.age' => 'nullable|integer|min:0|max:100',
+            // Education validation
+            'education.*.institution_name' => 'nullable|string|max:255',
+            'education.*.degree' => 'nullable|string|max:255',
+            'education.*.year_of_passing' => 'nullable|integer|min:1900|max:2100',
+            'education.*.percentage' => 'nullable|numeric|min:0|max:100',
+            // Employment history validation
+            'employment_history.*.company_name' => 'nullable|string|max:255',
+            'employment_history.*.designation' => 'nullable|string|max:255',
+            'employment_history.*.from_date' => 'nullable|date',
+            'employment_history.*.to_date' => 'nullable|date',
+            'employment_history.*.salary' => 'nullable|numeric|min:0',
+            'employment_history.*.reason_for_leaving' => 'nullable|string|max:500',
         ];
     }
 }

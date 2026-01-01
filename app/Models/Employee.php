@@ -31,5 +31,23 @@ class Employee extends Model
         'employee_status',
         'created_by',
         'updated_at',
+        // New personal and professional fields
+        'marital_status',
+        'siblings_count',
+        'children_details',
+        'education',
+        'employment_history',
+        'additional_skills',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'children_details' => 'array',
+        'education' => 'array',
+        'employment_history' => 'array',
     ];
 }

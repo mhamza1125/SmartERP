@@ -61,6 +61,120 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- Personal Information Section -->
+            @if($employee['marital_status'] || $employee['siblings_count'])
+              <h5 class="mt-4 mb-3">Personal Information</h5>
+              <table class="table">
+                <tbody>
+                  @if($employee['marital_status'])
+                    <tr>
+                      <td><b>Marital Status: </b> {{ ucfirst($employee['marital_status']) }}</td>
+                    </tr>
+                  @endif
+                  @if($employee['siblings_count'])
+                    <tr>
+                      <td><b>Number of Siblings: </b> {{ $employee['siblings_count'] }}</td>
+                    </tr>
+                  @endif
+                </tbody>
+              </table>
+            @endif
+
+            <!-- Children Details Section -->
+            @if($employee['children_details'] && count($employee['children_details']) > 0)
+              <h5 class="mt-4 mb-3">Children Details</h5>
+              <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($employee['children_details'] as $child)
+                    @if(!empty($child['name']))
+                      <tr>
+                        <td>{{ $child['name'] }}</td>
+                        <td>{{ ucfirst($child['gender'] ?? '-') }}</td>
+                        <td>{{ $child['age'] ?? '-' }}</td>
+                      </tr>
+                    @endif
+                  @endforeach
+                </tbody>
+              </table>
+            @endif
+
+            <!-- Education Section -->
+            @if($employee['education'] && count($employee['education']) > 0)
+              <h5 class="mt-4 mb-3">Education</h5>
+              <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                  <tr>
+                    <th>Institution Name</th>
+                    <th>Degree/Qualification</th>
+                    <th>Year of Passing</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($employee['education'] as $edu)
+                    @if(!empty($edu['institution_name']))
+                      <tr>
+                        <td>{{ $edu['institution_name'] }}</td>
+                        <td>{{ $edu['degree'] ?? '-' }}</td>
+                        <td>{{ $edu['year_of_passing'] ?? '-' }}</td>
+                        <td>{{ $edu['percentage'] ? $edu['percentage'] . '%' : '-' }}</td>
+                      </tr>
+                    @endif
+                  @endforeach
+                </tbody>
+              </table>
+            @endif
+
+            <!-- Additional Skills Section -->
+            @if($employee['additional_skills'])
+              <h5 class="mt-4 mb-3">Additional Skills</h5>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <td>{{ $employee['additional_skills'] }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            @endif
+
+            <!-- Employment History Section -->
+            @if($employee['employment_history'] && count($employee['employment_history']) > 0)
+              <h5 class="mt-4 mb-3">Employment History</h5>
+              <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                  <tr>
+                    <th>Company Name</th>
+                    <th>Designation</th>
+                    <th>From Date</th>
+                    <th>To Date</th>
+                    <th>Salary</th>
+                    <th>Reason for Leaving</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($employee['employment_history'] as $emp)
+                    @if(!empty($emp['company_name']))
+                      <tr>
+                        <td>{{ $emp['company_name'] }}</td>
+                        <td>{{ $emp['designation'] ?? '-' }}</td>
+                        <td>{{ $emp['from_date'] ? \Carbon\Carbon::parse($emp['from_date'])->format('d-m-Y') : '-' }}</td>
+                        <td>{{ $emp['to_date'] ? \Carbon\Carbon::parse($emp['to_date'])->format('d-m-Y') : '-' }}</td>
+                        <td>{{ $emp['salary'] ? 'Rs. ' . number_format($emp['salary']) : '-' }}</td>
+                        <td>{{ $emp['reason_for_leaving'] ?? '-' }}</td>
+                      </tr>
+                    @endif
+                  @endforeach
+                </tbody>
+              </table>
+            @endif
             @if($image->count())
               <h5>Images</h5>
               <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

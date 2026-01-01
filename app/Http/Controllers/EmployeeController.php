@@ -69,6 +69,29 @@ class EmployeeController extends Controller
     public function store(EmployeeRequest $request)
     {
         $validatedData = $request->validated();
+
+        // Process JSON array fields - filter out empty entries
+        if ($request->has('children_details')) {
+            $children = array_filter($request->input('children_details', []), function ($child) {
+                return !empty($child['name']);
+            });
+            $validatedData['children_details'] = !empty($children) ? array_values($children) : null;
+        }
+
+        if ($request->has('education')) {
+            $education = array_filter($request->input('education', []), function ($edu) {
+                return !empty($edu['institution_name']);
+            });
+            $validatedData['education'] = !empty($education) ? array_values($education) : null;
+        }
+
+        if ($request->has('employment_history')) {
+            $history = array_filter($request->input('employment_history', []), function ($emp) {
+                return !empty($emp['company_name']);
+            });
+            $validatedData['employment_history'] = !empty($history) ? array_values($history) : null;
+        }
+
         $getId = $this->employeeRepository->store($validatedData);
         $salary = ['employee_id' => $getId, 'amount' => $request->input('salary')];
         $this->salaryRepository->store($salary);
@@ -335,7 +358,31 @@ class EmployeeController extends Controller
 
     public function update(Request $request, $id)
     {
-        $getId = $this->employeeRepository->update($id, $request->input());
+        $updateData = $request->input();
+
+        // Process JSON array fields - filter out empty entries
+        if ($request->has('children_details')) {
+            $children = array_filter($request->input('children_details', []), function ($child) {
+                return !empty($child['name']);
+            });
+            $updateData['children_details'] = !empty($children) ? array_values($children) : null;
+        }
+
+        if ($request->has('education')) {
+            $education = array_filter($request->input('education', []), function ($edu) {
+                return !empty($edu['institution_name']);
+            });
+            $updateData['education'] = !empty($education) ? array_values($education) : null;
+        }
+
+        if ($request->has('employment_history')) {
+            $history = array_filter($request->input('employment_history', []), function ($emp) {
+                return !empty($emp['company_name']);
+            });
+            $updateData['employment_history'] = !empty($history) ? array_values($history) : null;
+        }
+
+        $getId = $this->employeeRepository->update($id, $updateData);
         $salary = ['employee_id' => $id, 'amount' => $request->input('salary')];
         $this->salaryRepository->update($id, $salary);
         if ($request->hasFile('image')) {
