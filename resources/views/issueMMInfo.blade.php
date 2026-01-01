@@ -24,7 +24,7 @@
                   <tbody>
                     <tr><td><b>Employee:</b> {{$issue['employee_no']}} - {{$issue['name']}}</td></tr>
                     <tr><td><b>Department:</b> {{$issue['hname']}}</td></tr>                  
-                    <tr><td><b>Issuance Date:</b> {{$issue['stock_date']}}</td></tr>
+                    <tr><td><b>Issuance Date:</b> {{\Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y')}}</td></tr>
                     @if($issue['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td>@php echo $issue['description'] @endphp</td></tr>@endif
                   </tbody>

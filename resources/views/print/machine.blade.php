@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Machine_Info_' . ($machine['machine_no'] ?? 'N/A') . '_' . date('Y-m-d'))
+@section('title', 'Machine_Info_' . ($machine['machine_no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
 @section('content')
 <div class="document-title">Machine Information</div>

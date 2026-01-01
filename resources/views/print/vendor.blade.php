@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Vendor_Info_' . ($vendor['vendor_no'] ?? 'N/A') . '_' . date('Y-m-d'))
+@section('title', 'Vendor_Info_' . ($vendor['vendor_no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
 @section('content')
 <div class="document-title">Vendor Information</div>

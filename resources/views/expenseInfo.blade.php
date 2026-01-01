@@ -52,7 +52,7 @@
                 <table class="table table-sm">
                   <tbody>
                     <tr><td><b>Expense Head:</b> {{$transaction['hname']}}</td></tr>
-                    <tr><td><b>Expense Date:</b> {{$transaction['transaction_date']}}</td></tr>
+                    <tr><td><b>Expense Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
                   </tbody>
                 </table>
               </div>

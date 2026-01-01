@@ -43,7 +43,7 @@
 
             @if(!empty($dfrom) && !empty($dto))
               <div class="alert alert-info">
-                <strong>Filtered Results:</strong> Showing transactions from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+                <strong>Filtered Results:</strong> Showing transactions from {{ date("d-m-Y", strtotime($dfrom)) }} to {{ date("d-m-Y", strtotime($dto)) }}
               </div>
             @endif
 
@@ -68,8 +68,8 @@
                       @unless($item->transaction_type == 'openingBalance')
                         <tr>
                           <td>{{$index++}}</td>
-                          <td>SSL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
-                          <td>{{$item->transaction_date}}</td>
+                          <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                          <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                           <td>
                             {{ucfirst($item->transaction_to)}}
                             @if(isset($item->vendor_no)) <br>

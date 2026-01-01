@@ -42,8 +42,8 @@
                     <tr>
                       <td><b>Employee:</b> {{$employee['employee_no']}} - {{$employee['name']}}</td>
                       @if(!empty($dfrom) && !empty($dto))
-                        <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
-                        <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
+                        <td><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</td>
+                        <td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td>
                       @endif
                       {{-- <td><b>Department:</b> {{$employee['dname']}} </td> --}}
                       {{-- <td><b>Contact:</b> {{$employee['phone']}}</td> --}}
@@ -73,7 +73,7 @@
                     @if($oBalance != 0)
                       <tr>
                         <td>{{$index++}}</td>
-                        <td>{{$dfrom}}</td>
+                        <td>{{\Carbon\Carbon::parse($dfrom)->format('d-m-Y')}}</td>
                         <td>Opening Balance</td>
                         <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
@@ -98,7 +98,7 @@
                       @endphp
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
-                        <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
+                        <td>{{ isset($item->purchase_date) ? \Carbon\Carbon::parse($item->purchase_date)->format('d-m-Y') : (isset($item->transaction_date) ? \Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y') : '') }}</td>
                         <td>
                           @if(isset($item->transaction_type))
                             @switch($item->transaction_type)
@@ -153,7 +153,7 @@
                     @if($cBalance != 0)
                       <tr>
                         <td>{{$index++}}</td>
-                        <td>{{$dto}}</td>
+                        <td>{{\Carbon\Carbon::parse($dto)->format('d-m-Y')}}</td>
                         <td>Closing Balance</td>
                         <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>
                         <td>{{ $cBalance > 0 ? number_format(abs($cBalance)) : '' }}</td>

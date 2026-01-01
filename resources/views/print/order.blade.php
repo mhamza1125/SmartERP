@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Order_' . ($order['order_no'] ?? 'N/A') . '_' . ($order['order_date'] ?? date('Y-m-d')))
+@section('title', 'Order_' . ($order['order_no'] ?? 'N/A') . '_' . ($order['order_date'] ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">Order Information</div>

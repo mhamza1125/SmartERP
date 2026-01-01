@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Material_Process_' . ($purchase['purchase_no'] ?? 'N/A') . '_' . ($purchase['purchase_date'] ?? date('Y-m-d')))
+@section('title', 'Material_Process_' . ($purchase['purchase_no'] ?? 'N/A') . '_' . ($purchase['purchase_date'] ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">Material Processing</div>

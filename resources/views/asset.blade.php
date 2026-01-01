@@ -49,7 +49,7 @@
                           <span class="badge badge-secondary">{{ number_format($item->net_value, 2) }}</span>
                         @endif
                       </td>
-                      <td>{{ $item->last_transaction_date ?? 'N/A' }}</td>
+                      <td>{{ \Carbon\Carbon::parse($item->last_transaction_date)->format('d-m-Y') ?? 'N/A' }}</td>
                       <td>
                         <a href="{{ route('asset.show', $item->asset_name) }}" class="btn btn-info btn-sm">View Ledger</a>
                       </td>

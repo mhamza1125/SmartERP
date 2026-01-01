@@ -34,7 +34,7 @@
                     @foreach($purchase as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->purchase_date}}</td>                      
+                      <td>{{\Carbon\Carbon::parse($item->purchase_date)->format('d-m-Y')}}</td>                      
                       <td>{{$item->purchase_no}}</td>
                       <td><span class="badge {{ $item->purchase_type == 'material' ? 'badge-secondary' : 'badge-dark' }}">{{ucfirst($item->purchase_type)}}</span></td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>

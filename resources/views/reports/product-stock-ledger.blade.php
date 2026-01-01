@@ -112,7 +112,7 @@
                           <strong>{{ $row['balance'] }}</strong>
                         </td>
                         <td class="text-right">
-                          <small>{{ \Carbon\Carbon::parse($row['date'])->format('Y-m-d') }}</small>
+                          <small>{{ \Carbon\Carbon::parse($row['date'])->format('d-m-Y') }}</small>
                         </td>
                       </tr>
                     @endforeach

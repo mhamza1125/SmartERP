@@ -45,7 +45,7 @@
                     @else
                     <tr><td><b>Vendor:</b> {{$issue['vendor_no']}} - {{$issue['fname']}}</td></tr>
                     @endif
-                    <tr><td><b>Date:</b> {{$issue['stock_date']}}</td></tr>
+                    <tr><td><b>Date:</b> {{\Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y')}}</td></tr>
                     @if($issue['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td>@php echo $issue['description'] @endphp</td></tr>@endif
                   </tbody>

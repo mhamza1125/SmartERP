@@ -77,7 +77,7 @@
                         N/A
                       @endif
                     </td></tr>
-                    <tr><td><b>Voucher Date:</b> {{$transaction['transaction_date']}}</td></tr>
+                    <tr><td><b>Voucher Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
                   </tbody>
                 </table>
               </div>

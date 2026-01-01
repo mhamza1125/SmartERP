@@ -248,7 +248,7 @@
                       <tr>
                         <td>PTC-{{ $ptc->stock_no }} / I{{ str_pad($idx + 1, 3, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $issuance->stage_name ?? 'N/A' }}</td>
-                        <td>{{ $issuance->stock_date }}</td>
+                        <td>{{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }}</td>
                         <td>{{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}</td>
                       </tr>
                     @endforeach

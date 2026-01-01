@@ -48,7 +48,7 @@
               <div class="alert alert-info">
                 <strong>Filtered Results:</strong>
                 @if(!empty($dfrom) && !empty($dto))
-                  Showing expenses from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+                  Showing expenses from {{ date("d-m-Y", strtotime($dfrom)) }} to {{ date("d-m-Y", strtotime($dto)) }}
                 @endif
                 @if(!empty($head_id))
                   @php
@@ -93,8 +93,8 @@
                     @endphp
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->transaction_date}}</td>
-                      <td>SSL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                      <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
+                      <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                       <td>{{$item->name}}</td>
                       <td class="text-right">{{ $credit > 0 ? number_format($credit, 2) : '-' }}</td>
                       <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>

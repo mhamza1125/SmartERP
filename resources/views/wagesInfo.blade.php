@@ -53,10 +53,10 @@
                 <table class="table table-sm">
                   <tbody>
                     @if(!empty($dfrom) && !empty($dto))
-                      <tr><td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td></tr>
-                      <tr><td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td></tr>
+                      <tr><td><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</td></tr>
+                      <tr><td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td></tr>
                     @else
-                      <tr><td><b>Month:</b> {{date("F Y", strtotime($issue['stock_date']))}}</td></tr>
+                      <tr><td><b>Month:</b> {{date("M Y", strtotime($issue['stock_date']))}}</td></tr>
                     @endif
                     <tr><td><b>Total Wages:</b> {{ number_format($totalWages) }} Rupee</td></tr>
                   </tbody>
@@ -82,7 +82,7 @@
                       @foreach($wages as $item)
                         <tr>
                           <td>{{$loop->index + 1}}</td>
-                          <td>{{$item->stock_date}}</td>
+                          <td>{{\Carbon\Carbon::parse($item->stock_date)->format('d-m-Y')}}</td>
                           <td>{{$item->article_no}} - Size {{$item->sname}}</td>
                           <td>{{$item->stage}}</td>
                           <td>

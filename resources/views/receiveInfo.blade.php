@@ -38,8 +38,8 @@
                     <tr><td><b>P.O.#:</b> {{$receive['purchase_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($receive['job_no'])? $receive['job_no']:'Default Purchase'}}</td></tr>
                     {{-- <tr><td><b>Date:</b> {{$receive['purchase_date']}}</td></tr> --}}
-                    <tr><td><b>Required Date:</b> {{$receive['require_date']}}</td></tr>
-                    <tr><td><b>Received Date:</b> {{$receive['receive_date']}}</td></tr>
+                    <tr><td><b>Required Date:</b> {{\Carbon\Carbon::parse($receive['require_date'])->format('d-m-Y')}}</td></tr>
+                    <tr><td><b>Received Date:</b> {{\Carbon\Carbon::parse($receive['receive_date'])->format('d-m-Y')}}</td></tr>
                   </tbody>
                 </table>
               </div> 
@@ -69,7 +69,7 @@
                         @if($item->quantity)
                         <tr>
                           <td>{{$loopIndex++}}</td>
-                          <td>{{$item->inspection_date}}</td>
+                          <td>{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
                           {{-- <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}</td> --}}
                           <td>

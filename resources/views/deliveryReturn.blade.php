@@ -33,7 +33,7 @@
                     <tr>
                       <td>{{ $loop->index + 1 }}</td>
                       <td>{{ $return->return_no }}</td>
-                      <td>{{ $return->return_date }}</td>
+                      <td>{{ \Carbon\Carbon::parse($return->return_date)->format('d-m-Y') }}</td>
                       <td>{{ $return->order_no }}</td>
                       <td>{{ $return->job_no }}</td>
                       <td>{{ $return->fname }} {{ $return->lname }}</td>

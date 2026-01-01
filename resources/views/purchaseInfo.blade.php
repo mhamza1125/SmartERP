@@ -68,8 +68,8 @@
                   <tbody>
                     <tr><td><b>P.O.#:</b> {{$purchase['purchase_no']}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($purchase['job_no'])? $purchase['job_no']:'Default Purchase'}}</td></tr>
-                    <tr><td><b>{{ isset($process) ? 'Processing' : 'Purchase' }} Date:</b> {{$purchase['purchase_date']}}</td></tr>
-                    <tr><td><b>Required Date:</b> {{$purchase['require_date']}}</td></tr>
+                    <tr><td><b>{{ isset($process) ? 'Processing' : 'Purchase' }} Date:</b> {{\Carbon\Carbon::parse($purchase['purchase_date'])->format('d-m-Y')}}</td></tr>
+                    <tr><td><b>Required Date:</b> {{\Carbon\Carbon::parse($purchase['require_date'])->format('d-m-Y')}}</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -267,7 +267,7 @@
                             <tr>
                               <td>{{$loop->index + 1}}</td>
                               <td>{{number_format($item->credit)}}</td>
-                              <td>{{$item->transaction_date}}</td>
+                              <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                               <td><a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a></td>
                             </tr>
                             @php $total2 += $item->credit ; @endphp
@@ -324,7 +324,7 @@
                                   {{-- <td>@if($item->inspection_status == 1) Pending
                                     @elseif($item->inspection_status == 2) Approved
                                     @else Rejected @endif</td> --}}
-                                  <td>{{$item->inspection_date}}</td>
+                                  <td>{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
                                 </tr>
                               @endif
                             @endforeach
@@ -472,7 +472,7 @@
                   @foreach($sortedTransactions as $transaction)
                     <tr>
                       <td>{{$sr++}}</td>
-                      <td>{{ date('Y-m-d', strtotime($transaction['created_at'])) }}</td>
+                      <td>{{ date('d-m-Y', strtotime($transaction['created_at'])) }}</td>
                       <td>{{$transaction['no']}}</td>
                       <td>{{$transaction['type'] == 'receive' ? $transaction['qty'] : ''}}</td>
                       <td>{{$transaction['type'] == 'return' ? $transaction['qty'] : ''}}</td>

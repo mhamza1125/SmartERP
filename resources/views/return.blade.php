@@ -30,7 +30,7 @@
                     @foreach($return as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->return_date}}</td>                      
+                      <td>{{\Carbon\Carbon::parse($item->return_date)->format('d-m-Y')}}</td>                      
                       <td>{{$item->return_no}}</td>
                       {{-- <td>{{$item->receive_no}}</td> --}}
                       {{-- <td>{{$item->purchase_no}}</td> --}}

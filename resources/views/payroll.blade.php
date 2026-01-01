@@ -51,7 +51,7 @@
                       <td>
                         <strong>{{ \Carbon\Carbon::createFromFormat('Y-m', $batch->month)->format('F Y') }}</strong>
                       </td>
-                      <td>{{ \Carbon\Carbon::parse($batch->processing_date)->format('d M Y') }}</td>
+                      <td>{{ \Carbon\Carbon::parse($batch->processing_date)->format('d-m-Y') }}</td>
                       <td class="text-right">{{ $batch->employee_count }}</td>
                       <td class="text-right">{{ number_format($batch->total_amount, 2) }}</td>
                       <td>

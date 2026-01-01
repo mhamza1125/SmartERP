@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Machine_Issuance_' . ($issue['stock_no'] ?? 'N/A') . '_' . date('Y-m-d'))
+@section('title', 'Machine_Issuance_' . ($issue['stock_no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
 @section('content')
 <div class="document-title">Machine Material Issuance</div>

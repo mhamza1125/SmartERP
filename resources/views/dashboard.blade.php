@@ -132,7 +132,7 @@
                       <td>{{ $ptc->size_name }}</td>
                       <td>{{ $ptc->quantity }}</td>
                       <td><span class="badge badge-info">In Progress</span></td>
-                      <td>{{ \Carbon\Carbon::parse($ptc->stock_date)->format('d M Y') }}</td>
+                      <td>{{ \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') }}</td>
                       <td>
                         <a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-sm btn-info">
                           <i class="fas fa-eye"></i> View
@@ -180,8 +180,8 @@
                     <tr>
                       <td><strong>#{{ $order->job_no }}</strong></td>
                       <td>{{ $order->fname }} {{ $order->lname }}</td>
-                      <td>{{ \Carbon\Carbon::parse($order->order_date)->format('d M Y') }}</td>
-                      <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d M Y') }}</td>
+                      <td>{{ \Carbon\Carbon::parse($order->order_date)->format('d-m-Y') }}</td>
+                      <td>{{ \Carbon\Carbon::parse($order->due_date)->format('d-m-Y') }}</td>
                       <td>{{ $order->item_count }}</td>
                       <td><span class="badge badge-warning">Confirmed</span></td>
                       <td>

@@ -52,8 +52,8 @@
                     <tr>
                       <td><b>Report Type:</b> Purchase Ledger</td>
                       @if(!empty($dfrom) && !empty($dto))
-                        <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
-                        <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
+                        <td><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</td>
+                        <td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td>
                       @endif
                       <td><b>Payable Amount:</b> {{number_format(abs($summaryBalance), 2)}}</td>
                     </tr>
@@ -119,13 +119,13 @@
                           $description = 'Return';
                         } elseif(isset($item->transaction_id)) {
                           // This is a vendor payment
-                          $refNo = 'TXN-' . date('Y') . '-' . str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT);
+                          $refNo = 'SLE-' . date('Y') . '-' . str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT);
                           $description = $item->description ?? 'Vendor Payment';
                         }
                       @endphp
                       <tr>
                         <td>{{$index++}}</td>
-                        <td>{{ isset($item->purchase_date) ? $item->purchase_date : (isset($item->return_date) ? $item->return_date : ($item->transaction_date ?? 'N/A')) }}</td>
+                        <td>{{ isset($item->purchase_date) ? \Carbon\Carbon::parse($item->purchase_date)->format('d-m-Y') : (isset($item->return_date) ? \Carbon\Carbon::parse($item->return_date)->format('d-m-Y') : ($item->transaction_date ?? 'N/A')) }}</td>
                         <td>{{ $refNo }}</td>
                         <td>{{ strip_tags($description) }}</td>
                         <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>

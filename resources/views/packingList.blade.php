@@ -28,7 +28,7 @@
                     <td>{{ $packingList->stock_no }}</td>
                     <td>{{ $packingList->order_no }}</td>
                     <td>{{ $packingList->fname }} {{ $packingList->lname }}</td>
-                    <td>{{ \Carbon\Carbon::parse($packingList->created_at)->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($packingList->created_at)->format('d-m-Y') }}</td>
                     <td>
                       <a href="{{ route('packingList.show', $packingList->packing_list_id) }}" class="btn btn-sm btn-info">
                         <i class="fas fa-eye"></i> View

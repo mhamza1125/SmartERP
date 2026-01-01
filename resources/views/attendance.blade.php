@@ -57,8 +57,8 @@
                       @if(!empty($dfrom) && !empty($dto))
                         <tr>
                           <th colspan="2"><b>{{ $selectedEmployee }}</b></th>
-                          <th colspan="3"><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</th>
-                          <th colspan="3"><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</th>
+                          <th colspan="3"><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</th>
+                          <th colspan="3"><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</th>
                         </tr>
                       @endif
                       <tr>

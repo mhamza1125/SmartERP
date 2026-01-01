@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Material_Info_' . ($material['material_no'] ?? 'N/A') . '_' . date('Y-m-d'))
+@section('title', 'Material_Info_' . ($material['material_no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
 @section('content')
 <div class="document-title">Material Information</div>

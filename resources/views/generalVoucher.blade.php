@@ -31,8 +31,8 @@
                     @foreach($transaction as $item)
                       <tr>
                         <td>{{$index++}}</td>
-                        <td>SSL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
-                        <td>{{$item->transaction_date}}</td>
+                        <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                        <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                         <td>
                           @if($item->transaction_to == 'vendor')
                             Vendor

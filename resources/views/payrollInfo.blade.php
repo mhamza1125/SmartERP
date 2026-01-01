@@ -28,7 +28,7 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label><strong>Processing Date</strong></label>
-                  <p>{{ \Carbon\Carbon::parse($processingDate)->format('d M Y') }}</p>
+                  <p>{{ \Carbon\Carbon::parse($processingDate)->format('d-m-Y') }}</p>
                 </div>
               </div>
               <div class="col-md-3">

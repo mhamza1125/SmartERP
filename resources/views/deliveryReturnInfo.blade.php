@@ -33,7 +33,7 @@
                       </tr>
                       <tr>
                         <td><strong>Return Date:</strong></td>
-                        <td>{{ $return->return_date }}</td>
+                        <td>{{ \Carbon\Carbon::parse($return->return_date)->format('d-m-Y') }}</td>
                       </tr>
                       <tr>
                         <td><strong>Return Reason:</strong></td>
@@ -68,11 +68,11 @@
                       </tr>
                       <tr>
                         <td><strong>Stock No:</strong></td>
-                        <td>{{ $return->stock_no }}</td>
+                        <td>{{ $return->delivery_no }}</td>
                       </tr>
                       <tr>
                         <td><strong>Delivery Date:</strong></td>
-                        <td>{{ $return->stock_date }}</td>
+                        <td>{{ \Carbon\Carbon::parse($return->stock_date)->format('d-m-Y') }}</td>
                       </tr>
                     </table>
                   </div>

@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Proforma_Invoice_' . ($order['order_no'] ?? 'N/A') . '_' . ($order['order_date'] ?? date('Y-m-d')))
+@section('title', 'Proforma_Invoice_' . ($order['order_no'] ?? 'N/A') . '_' . ($order['order_date'] ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">Proforma Invoice</div>

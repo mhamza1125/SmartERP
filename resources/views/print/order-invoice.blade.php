@@ -146,9 +146,9 @@
             <h3>Order Information</h3>
             <p><strong>Order No:</strong> {{ $order->order_no }}</p>
             <p><strong>Job No:</strong> {{ $order->job_no }}</p>
-            <p><strong>Order Date:</strong> {{ \Carbon\Carbon::parse($order->order_date)->format('d M Y') }}</p>
+            <p><strong>Order Date:</strong> {{ \Carbon\Carbon::parse($order->order_date)->format('d-m-Y') }}</p>
             @if($order->due_date)
-            <p><strong>Due Date:</strong> {{ \Carbon\Carbon::parse($order->due_date)->format('d M Y') }}</p>
+            <p><strong>Due Date:</strong> {{ \Carbon\Carbon::parse($order->due_date)->format('d-m-Y') }}</p>
             @endif
             @if($order->payment_terms)
             <p><strong>Payment Terms:</strong> {{ $order->payment_terms }}</p>

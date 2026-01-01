@@ -65,9 +65,9 @@
                     {{-- <tr><td><b>Voucher No:</b> SLE-{{ date('Y') }}-{{ str_pad($order['order_id'], 4, '0', STR_PAD_LEFT) }}</td></tr> --}}
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                    <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                    <tr><td><b>Date:</b> {{\Carbon\Carbon::parse($order['order_date'])->format('d-m-Y')}}</td></tr>
                     @if($order['due_date'])
-                    <tr><td><b>Delivery Date:</b> {{$order['due_date']}}</td></tr>
+                    <tr><td><b>Delivery Date:</b> {{\Carbon\Carbon::parse($order['due_date'])->format('d-m-Y')}}</td></tr>
                     @endif
                     {{-- @if($order['expected_delivery_date'])
                     <tr><td><b>Expected Delivery:</b> {{$order['expected_delivery_date']}}</td></tr>
@@ -370,7 +370,7 @@ function printProformaInvoice() {
                       <span class="badge {{ $statusBadge }}">{{ $statusText }}</span>
                     </td>
                     <td>
-                      {{ $ptc->stock_date ?? 'N/A' }}
+                      {{ \carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') ?? 'N/A' }}
                     </td>
                     <td>
                       <a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-sm btn-info" title="View PTC Details">

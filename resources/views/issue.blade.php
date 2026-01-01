@@ -35,7 +35,7 @@
                     @foreach($issue as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->stock_date}}</td>                      
+                      <td>{{\Carbon\Carbon::parse($item->stock_date)->format('d-m-Y')}}</td>                      
                       <td>{{$item->stock_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default issue'}}</td>
                       <td>{{$item->sname}}</td>

@@ -34,7 +34,7 @@
                     @foreach($delivery as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->stock_date}}</td>                      
+                      <td>{{\Carbon\Carbon::parse($item->delivery_date)->format('d-m-Y')}}</td>                      
                       <td>
                         {{$item->stock_no}}
                         @if(isset($item->is_multi_order) && $item->is_multi_order)

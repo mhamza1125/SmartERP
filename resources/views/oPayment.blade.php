@@ -48,7 +48,7 @@
               <div class="alert alert-info">
                 <strong>Filtered Results:</strong>
                 @if(!empty($dfrom) && !empty($dto))
-                  Showing payments from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+                  Showing payments from {{ date("d-m-Y", strtotime($dfrom)) }} to {{ date("d-m-Y", strtotime($dto)) }}
                 @endif
                 @if(!empty($customer_id))
                   @php
@@ -81,7 +81,7 @@
                     <tr>
                       <td>{{$loop->index + 1}}</td>
                       <td>SLL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
-                      <td>{{$item->transaction_date}}</td>
+                      <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>{{$item->order_no}}</td>
                       <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>

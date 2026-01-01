@@ -50,8 +50,8 @@
                     <tr>
                       @php $item = $material->where('material_id', $mid)->first(); @endphp
                       <td><b>Material:</b> {{$item ? ($item->material_no . ' - ' . $item->name) : 'All'}}</td>
-                      <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
-                      <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
+                      <td><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</td>
+                      <td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td>
                       <td>
                         <a class="btn btn-info" href="{{ route('material.detail.print', ['dfrom' => $dfrom, 'dto' => $dto, 'material_id' => $mid]) }}" target="_blank">
                           <i class="fas fa-file-alt"></i> Print
@@ -84,7 +84,7 @@
                       @foreach($materialItem as $item)
                         <tr>
                           <td>{{$loopIndex++}}</td>
-                          <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td>
+                          <td>{{(new DateTime($item->timestamp))->format('d-m-Y')}}</td>
                           <td>{{$item->material_no}}</td>
                           <td>{{$item->name}}</td>
                           @if(isset($item->purchase_id) && !isset($item->return_material_id))

@@ -56,7 +56,7 @@
                     <tr><td><b>Adjustment Type:</b> {{ $adjustmentType }}</td></tr>
                     <tr><td><b>Amount:</b> {{number_format($adjustmentAmount)}}</td></tr>
                     <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($adjustmentAmount) }}</td></tr>
-                    <tr><td><b>Adjustment Date:</b> {{$transaction['transaction_date']}}</td></tr>
+                    <tr><td><b>Adjustment Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
                   </tbody>
                 </table>
               </div>

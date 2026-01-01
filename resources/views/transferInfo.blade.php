@@ -37,13 +37,13 @@
               <div class="col-md-5">
                 <table class="table table-sm">
                   <tbody>
-                    <tr><td><b>Voucher No:</b> TXN-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
+                    <tr><td><b>Voucher No:</b> SLE-{{ date('Y') }}-{{ str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT) }}</td></tr>
                     @php
                       $transferAmount = $transaction['credit'] ?? $transaction['debit'] ?? 0;
                     @endphp
                     <tr><td><b>Amount:</b> {{number_format($transferAmount)}}</td></tr>
                     <tr><td><b>Amount in Words:</b> {{ numberToWordsWithCurrency($transferAmount) }}</td></tr>
-                    <tr><td><b>Transfer Date:</b> {{$transaction['transaction_date']}}</td></tr>
+                    <tr><td><b>Transfer Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
                   </tbody>
                 </table>
               </div>

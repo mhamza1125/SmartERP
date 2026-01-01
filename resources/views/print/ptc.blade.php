@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'PTC_' . ($ptc->stock_no ?? 'N/A') . '_' . ($ptc->stock_date ?? date('Y-m-d')))
+@section('title', 'PTC_' . ($ptc->stock_no ?? 'N/A') . '_' . ($ptc->stock_date ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">Process Travel Card (PTC)</div>

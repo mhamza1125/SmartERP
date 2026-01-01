@@ -48,7 +48,7 @@
               <div class="alert alert-info">
                 <strong>Filtered Results:</strong>
                 @if(!empty($dfrom) && !empty($dto))
-                  Showing payments from {{ date("d F Y", strtotime($dfrom)) }} to {{ date("d F Y", strtotime($dto)) }}
+                  Showing payments from {{ date("d-m-Y", strtotime($dfrom)) }} to {{ date("d-m-Y", strtotime($dto)) }}
                 @endif
                 @if(!empty($employee_id))
                   @php
@@ -80,9 +80,9 @@
                     @foreach($transaction as $item)
                       @unless($item->transaction_type == 'openingBalance')
                         <tr>
-                          <td>{{$loop->index + 1}}</td>
-                          <td>TXN-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
-                          <td>{{$item->transaction_date}}</td>
+                          <td>{{$index++}}</td>
+                          <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                          <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                           <td>{{$item->employee_no}} - {{$item->name}}</td>
                           <td>{{ucfirst($item->transaction_type)}}</td>
                           <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>

@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Stock_Report_' . date('Y-m-d'))
+@section('title', 'Stock_Report_' . date('d-m-Y'))
 
 @section('content')
 <div class="document-title">Stock Report</div>

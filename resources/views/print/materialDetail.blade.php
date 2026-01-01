@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Material_Detail_Report_' . ($dfrom ?? date('Y-m-d')) . '_to_' . ($dto ?? date('Y-m-d')))
+@section('title', 'Material_Detail_Report_' . ($dfrom ?? date('d-m-Y')) . '_to_' . ($dto ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">Material Detail Report</div>
@@ -10,7 +10,7 @@
     <div class="info-section">
         <div class="info-row">
             <span class="info-label">Report Date:</span>
-            <span class="info-value">{{ date('d F Y') }}</span>
+            <span class="info-value">{{ date('d-m-Y') }}</span>
         </div>
         @php $selectedMaterial = $material->where('material_id', $mid)->first(); @endphp
         <div class="info-row">
@@ -19,11 +19,11 @@
         </div>
         <div class="info-row">
             <span class="info-label">Period From:</span>
-            <span class="info-value">{{ isset($dfrom) ? date('d F Y', strtotime($dfrom)) : 'N/A' }}</span>
+            <span class="info-value">{{ isset($dfrom) ? date('d-m-Y', strtotime($dfrom)) : 'N/A' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Period To:</span>
-            <span class="info-value">{{ isset($dto) ? date('d F Y', strtotime($dto)) : 'N/A' }}</span>
+            <span class="info-value">{{ isset($dto) ? date('d-m-Y', strtotime($dto)) : 'N/A' }}</span>
         </div>
     </div>
 </div>
@@ -49,7 +49,7 @@
             @foreach($materialItem as $item)
             <tr>
                 <td>{{ $loopIndex++ }}</td>
-                <td>{{ (new DateTime($item->timestamp))->format('Y-m-d') }}</td>
+                <td>{{ (new DateTime($item->timestamp))->format('d-m-Y') }}</td>
                 <td>{{ $item->material_no ?? 'N/A' }}</td>
                 <td>{{ $item->name ?? 'N/A' }}</td>
                 @if(isset($item->purchase_id) && !isset($item->return_material_id))

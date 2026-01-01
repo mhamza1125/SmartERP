@@ -68,8 +68,8 @@
                   <tbody>
                     <tr>
                       <td colspan="2"></td>
-                      <td><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</td>
-                      <td><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</td>
+                      <td><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</td>
+                      <td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td>
                       <td>
                         <div class="btn-group">
                           <a class="btn btn-info" href="{{ route('stock.daily.print', ['dfrom' => $dfrom, 'dto' => $dto, 'oid' => $oid, 'tid' => $tid, 'tname' => $tname]) }}" target="_blank">

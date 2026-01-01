@@ -41,7 +41,7 @@
                   <td><b>Current Status: </b> @if($employee['employee_status']) 
                     <span class="badge badge-success">Active</span> @else 
                     <span class="badge badge-danger">Inactive</span> @endif</td>
-                  <td><b>Joining Date: </b> {{$employee['joining_date']}}</td>
+                  <td><b>Joining Date: </b> {{\Carbon\Carbon::parse($employee['joining_date'])->format('d-m-Y')}}</td>
                 </tr>
                 <tr>
                   <td><b>Current Salary: </b> Rs. {{number_format($employee['salary'])}} </td>

@@ -35,8 +35,8 @@
                   @if(!empty($dfrom) && !empty($dto))
                     <tr>
                       <th colspan="2"></th>
-                      <th colspan="3"><b>Date From:</b> {{date("d F Y", strtotime($dfrom))}}</th>
-                      <th colspan="3"><b>Date To:</b> {{date("d F Y", strtotime($dto))}}</th>
+                      <th colspan="3"><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</th>
+                      <th colspan="3"><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</th>
                     </tr>
                   @endif
                   <tr>
@@ -63,7 +63,7 @@
                   @if($oBalance != 0)
                     <tr>
                       <td>{{$index++}}</td>
-                      <td>{{$dfrom}}</td>
+                      <td>{{\Carbon\Carbon::parse($dfrom)->format('d-m-Y')}}</td>
                       <td>Opening Balance</td>
                       <td>Opening Balance</td>
                       <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
@@ -84,7 +84,7 @@
                     @endphp
                     <tr>
                       <td>{{$index++}}</td>
-                      <td>{{$item->transaction_date}}</td>
+                      <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                       <td>{{ucfirst($item->transaction_to)}}</td>
                       <td>{{ucfirst($item->transaction_type)}}</td>
                       <td>{{isset($displayDebit) ? number_format($displayDebit) : ''}} ({{$displayDC}})</td>
@@ -109,7 +109,7 @@
                   @if($cBalance != 0)
                     <tr>
                       <td>{{$index++}}</td>
-                      <td>{{$dto}}</td>
+                      <td>{{\Carbon\Carbon::parse($dto)->format('d-m-Y')}}</td>
                       <td>Closing Balance</td>
                       <td>Closing Balance</td>
                       <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>

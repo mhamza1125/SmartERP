@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', (isset($process) ? 'Material_Process_' : 'Purchase_Order_') . ($purchase['purchase_no'] ?? 'N/A') . '_' . ($purchase['purchase_date'] ?? date('Y-m-d')))
+@section('title', (isset($process) ? 'Material_Process_' : 'Purchase_Order_') . ($purchase['purchase_no'] ?? 'N/A') . '_' . ($purchase['purchase_date'] ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">{{ isset($process) ? 'Material Processing' : 'Purchase Order' }}</div>

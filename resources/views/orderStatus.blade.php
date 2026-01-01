@@ -32,7 +32,7 @@
                   <tbody>
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                    <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                    <tr><td><b>Date:</b> {{\Carbon\Carbon::parse($order['order_date'])->format('d-m-Y')}}</td></tr>
                     <tr><td><b>Order Status:</b>
                       @if($order['order_status'] == 1) <span class="badge badge-secondary">Draft</span>
                       @elseif($order['order_status'] == 2) <span class="badge badge-success">Confirmed</span>

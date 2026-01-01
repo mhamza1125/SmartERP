@@ -28,7 +28,7 @@
                     @else
                     <tr><td><b>Vendor:</b> {{$issue['vendor_no']}} - {{$issue['fname']}}</td></tr>
                     @endif
-                    <tr><td><b>Receive Date:</b> {{$issue['stock_date']}}</td></tr>
+                    <tr><td><b>Receive Date:</b> {{\Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y')}}</td></tr>
                     @if($issue['description'])<tr><td><b>Detail:</b></td></tr>
                     <tr><td>@php echo $issue['description'] @endphp</td></tr>@endif
                   </tbody>
@@ -38,7 +38,7 @@
                 <table class="table table-sm">
                   <tbody>
                     <tr><td><b>Receive Issuance.#:</b> {{$issue['stock_no']}}</td></tr>
-                    <tr><td><b>Issue Date:</b> {{$issue['sdate']}}</td></tr>
+                    <tr><td><b>Issue Date:</b> {{\Carbon\Carbon::parse($issue['sdate'])->format('d-m-Y')}}</td></tr>
                     <tr><td><b>Job.#:</b> {{($issue['job_no'])? $issue['job_no']:'Default Purchase'}}</td></tr>
                   </tbody>
                 </table>

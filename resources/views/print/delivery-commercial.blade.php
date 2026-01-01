@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust  _no'] ?? 'N/A') . '_' . date('Y-m-d'))
+@section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust  _no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
 @section('content')
 <div class="document-title">Commercial Invoice</div>
@@ -73,7 +73,7 @@
     <div class="info-section">
         <div class="info-row">
             <span class="info-label">Invoice Date:</span>
-            <span class="info-value">{{ date('Y-m-d') }}</span>
+            <span class="info-value">{{ date('d-m-Y') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Invoice No:</span>

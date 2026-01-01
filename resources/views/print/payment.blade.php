@@ -1,6 +1,6 @@
 @extends('print.layout-voucher')
 
-@section('title', 'Payment_Voucher_' . ($voucherNumber ?? 'N/A') . '_' . ($transaction['transaction_date'] ?? date('Y-m-d')))
+@section('title', 'Payment_Voucher_' . ($voucherNumber ?? 'N/A') . '_' . ($transaction['transaction_date'] ?? date('d-m-Y')))
 
 @section('content')
 <style>

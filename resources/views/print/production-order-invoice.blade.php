@@ -132,9 +132,9 @@
         <div class="left">
             <h3>Production Information</h3>
             <p><strong>Job No:</strong> {{ $order->job_no }}</p>
-            <p><strong>Order Date:</strong> {{ \Carbon\Carbon::parse($order->order_date)->format('d M Y') }}</p>
+            <p><strong>Order Date:</strong> {{ \Carbon\Carbon::parse($order->order_date)->format('d-m-Y') }}</p>
             @if($order->due_date)
-            <p><strong>Delivery Date:</strong> {{ \Carbon\Carbon::parse($order->due_date)->format('d M Y') }}</p>
+            <p><strong>Delivery Date:</strong> {{ \Carbon\Carbon::parse($order->due_date)->format('d-m-Y') }}</p>
             @endif
         </div>
         <div class="right">

@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Item_Group_' . ($igroup['igroup_no'] ?? 'N/A') . '_' . ($igroup['igroup_date'] ?? date('Y-m-d')))
+@section('title', 'Item_Group_' . ($igroup['igroup_no'] ?? 'N/A') . '_' . ($igroup['igroup_date'] ?? date('d-m-Y')))
 
 @section('content')
 <div class="document-title">Item Group Information</div>

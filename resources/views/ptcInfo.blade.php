@@ -58,7 +58,7 @@
                 <strong>PTC No:</strong> PTC-{{ $ptc->stock_no }}
               </div>
               <div class="col-md-3">
-                <strong>Date:</strong> {{ $ptc->stock_date }}
+                <strong>Date:</strong> {{ \carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') }}
               </div>
               <div class="col-md-3">
                 <strong>Order:</strong> {{ $ptc->job_no ?? 'Default PTC' }}
@@ -179,7 +179,7 @@
                         @endif
                       </td>
                       <td><span class="badge badge-primary">{{ $issuance->stage_name ?? 'N/A' }}</span></td>
-                      <td>{{ $issuance->stock_date }}</td>
+                      <td>{{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }}</td>
                       <td>{{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}</td>
                       <td>
                         @if($isReceived)
@@ -283,7 +283,7 @@
                             {{ $movement->issue_stage_name ?? $movement->stage_name ?? 'N/A' }}
                           @endif
                         </td>
-                        <td>{{ $movement->stock_date }}</td>
+                        <td>{{ \carbon\Carbon::parse($movement->stock_date)->format('d-m-Y') }}</td>
                         <td>{{ $movement->employee_name ?? $movement->vendor_name ?? '-' }}</td>
                         <td>
                           <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#movementModal{{ $movement->stock_id }}">
@@ -477,7 +477,7 @@
             <div class="alert alert-info mb-3">
               <strong>Issuance:</strong> PTC-{{ $ptc->stock_no }} / I{{ $issuanceSeqNoForModal }} |
               <strong>Stage:</strong> {{ $issuance->stage_name ?? 'N/A' }} |
-              <strong>Date:</strong> {{ $issuance->stock_date }} |
+              <strong>Date:</strong> {{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }} |
               <strong>Total Receivings:</strong> {{ $relatedReceivings->count() }}
             </div>
 
@@ -487,7 +487,7 @@
                   <strong>PTC-{{ $ptc->stock_no }} / {{ $receiving->stock_no }}</strong>
                   <span class="float-right">
                     <span class="badge badge-success">{{ $receiving->stage_name ?? 'N/A' }}</span>
-                    {{ $receiving->stock_date }}
+                    {{ \carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') }}
                   </span>
                 </div>
                 <div class="card-body py-2">

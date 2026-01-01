@@ -49,7 +49,7 @@
                 <table class="table table-sm">
                   <tbody>
                     <tr><td><b>Contractor:</b> {{$transaction['vendor_no']}} - {{$transaction['fname']}}</td></tr>
-                    <tr><td><b>Pay Date:</b> {{$transaction['transaction_date']}}</td></tr>
+                    <tr><td><b>Pay Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
                     <tr><td><b>Payment Type:</b> {{ucfirst($transaction['transaction_type'])}}</td></tr>
                     @if($transaction['purchase_no'])<tr>
                       <td><b>Purchase No:</b> {{$transaction['purchase_no']}}</td>
