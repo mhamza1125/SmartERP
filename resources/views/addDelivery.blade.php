@@ -122,28 +122,22 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Stock No <small class="text-muted">(Auto-populated from order)</small></label>
-                    @if(isset($isMultiOrder) && $isMultiOrder && isset($orders) && count($orders) > 1)
-                      @php
-                        $orderNumbers = collect($orders)->pluck('order_no')->toArray();
-                        $multiOrderStockNo = 'Multi-Order: ' . implode(', ', $orderNumbers);
-                        $stockNoValue = isset($editMode) && $editMode && isset($existingDelivery) ? $existingDelivery['stock_no'] : $multiOrderStockNo;
-                      @endphp
-                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
-                    @else
-                      @php
-                        // For single-order deliveries, use order_no for auto-population
-                        $singleOrderStockNo = '';
-                        if (isset($editMode) && $editMode && isset($existingDelivery)) {
-                          // In edit mode, use existing stock_no
-                          $singleOrderStockNo = $existingDelivery['stock_no'] ?? '';
-                        } elseif (isset($orderNo)) {
-                          // In create mode, use order_no
-                          $singleOrderStockNo = $orderNo;
-                        }
-                      @endphp
-                      <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $singleOrderStockNo)}}" {{(isset($orderNo) && (!isset($editMode) || !$editMode)) ? 'readonly' : ''}}>
-                    @endif
+                    <label>Stock No <small class="text-muted">(Auto-generated)</small></label>
+                    @php
+                      // Auto-generate stock_no based on delivery type
+                      if (isset($isMultiOrder) && $isMultiOrder && isset($orderIds)) {
+                        // Multi-order: pipe-separated order IDs
+                        $stockNoValue = $orderIds;
+                      } elseif (isset($editMode) && $editMode && isset($existingDelivery)) {
+                        // Edit mode: use existing value
+                        $stockNoValue = $existingDelivery['stock_no'] ?? '';
+                      } else {
+                        // Single order: use order ID as stock_no
+                        $orderId = isset($order) ? (is_array($order) ? $order['order_id'] ?? '' : $order->order_id ?? '') : '';
+                        $stockNoValue = $orderId;
+                      }
+                    @endphp
+                    <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Stock No</div>
                   </div>
@@ -434,6 +428,7 @@
                             }
                           }
                           $index = 1;
+                          $hasDeliverableItems = false; 
                         @endphp
                           @foreach($aggregatedItems as $item)
                             @php
@@ -456,6 +451,7 @@
                               }
                             @endphp
                             @unless($deliverableQty <= 0)
+                              @php $hasDeliverableItems = true; @endphp 
                               <tr>
                                 <td>{{$index++}}</td>
                                 <td>{{$item->article_no}} - Size {{$item->sname}}
@@ -482,6 +478,15 @@
                               </tr>
                             @endunless
                           @endforeach
+
+                          {{-- ✅ SINGLE MESSAGE ONLY --}}
+                          @if(!$hasDeliverableItems)
+                            <tr class="text-muted">
+                              <td colspan="10" class="text-center">
+                                <em>No deliverable quantity available.</em>
+                              </td>
+                            </tr>
+                          @endif
                         @endif
                       @endif
                         <tr>

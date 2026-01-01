@@ -300,56 +300,34 @@ class DeliveryReturnController extends Controller
     }
 
     /**
-     * Get related orders for a multi-order delivery
+     * Get related orders for a multi-order delivery by parsing pipe-separated order IDs from stock_no
+     * Format: order_id1|order_id2|order_id3
      */
     private function getRelatedOrdersForDelivery($delivery)
     {
         if (!$delivery) return [];
 
-        $customerId = is_array($delivery) ? ($delivery['customer_id'] ?? null) : ($delivery->customer_id ?? null);
-        $stockDate = is_array($delivery) ? ($delivery['stock_date'] ?? null) : ($delivery->stock_date ?? null);
         $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
-        $stockId = is_array($delivery) ? ($delivery['stock_id'] ?? null) : ($delivery->stock_id ?? null);
 
-        if (!$customerId || !$stockId) return [];
+        if (empty($stockNo)) return [];
 
         try {
-            // If stock_no contains multi-order patterns, try to extract order numbers
-            if (strpos($stockNo, ',') !== false || stripos($stockNo, 'Multi-Order') !== false) {
-                $orderNumbers = [];
+            // Check if stock_no contains pipe-separated order IDs (new format)
+            if (strpos($stockNo, '|') !== false) {
+                $orderIds = explode('|', $stockNo);
+                $orderIds = array_map('trim', $orderIds);
+                $orderIds = array_filter($orderIds); // Remove empty values
 
-                // Handle "Multi-Order: Order1, Order2" format
-                if (stripos($stockNo, 'Multi-Order:') !== false) {
-                    $orderPart = substr($stockNo, stripos($stockNo, ':') + 1);
-                    $orderNumbers = explode(',', $orderPart);
-                } else {
-                    // Handle direct comma-separated format
-                    $orderNumbers = explode(',', $stockNo);
-                }
-
-                $orderNumbers = array_map('trim', $orderNumbers);
-                $orderNumbers = array_filter($orderNumbers); // Remove empty values
-
-                if (!empty($orderNumbers)) {
-                    $ordersFromStockNo = \DB::table('orders')
-                        ->whereIn('order_no', $orderNumbers)
+                if (!empty($orderIds)) {
+                    $relatedOrders = \DB::table('orders')
+                        ->whereIn('order_id', $orderIds)
                         ->get();
 
-                    if ($ordersFromStockNo->count() > 0) {
-                        return $ordersFromStockNo->toArray();
-                    }
+                    return $relatedOrders->toArray();
                 }
             }
 
-            // Fallback: Look for orders with similar dates and same customer
-            $relatedOrders = \DB::table('orders')
-                ->where('customer_id', $customerId)
-                ->where('order_date', '>=', \Carbon\Carbon::parse($stockDate ?? now())->subDays(30))
-                ->where('order_date', '<=', \Carbon\Carbon::parse($stockDate ?? now())->addDays(7))
-                ->where('order_status', '!=', 'Cancelled')
-                ->get();
-
-            return $relatedOrders->toArray();
+            return [];
 
         } catch (\Exception $e) {
             return [];

@@ -139,7 +139,7 @@
                               <td>{{$item->uname}}</td>
                               <td>{{$item->quantity}}</td>
                               {{-- <td>{{ $item->box_quantity ? number_format($item->box_quantity) . ' boxes' : 'N/A' }}</td> --}}
-                              <td>{{number_format($item->price, 2)}} {{$item->cname}}</td>
+                              <td>{{number_format($item->price, 2)}} {{-- {{$item->cname}} --}}</td>
                               <td>{{number_format($item->quantity * $item->price, 2)}}</td>
                             </tr>
                           @php $product_id = $item->product_id; @endphp

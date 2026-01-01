@@ -43,4 +43,33 @@ class Delivery extends Model
 
         return "SLE-D{$sequentialNo}-{$lastTwoDigits}";
     }
+
+    /**
+     * MULTI-ORDER DELIVERY PRICING LOGIC
+     *
+     * When a single delivery contains items from multiple orders, pricing should be calculated as follows:
+     *
+     * 1. PRODUCT AGGREGATION: Group all items by product_type_id and stage_id across all orders
+     * 2. QUANTITY SUMMATION: Sum quantities for the same product across different orders
+     * 3. WEIGHTED PRICING: Calculate weighted average price based on quantities from each order
+     *    - For each product: (qty1 * price1 + qty2 * price2) / (qty1 + qty2)
+     * 4. DELIVERY COST ALLOCATION: Distribute delivery charges proportionally by order value
+     *    - Order share = Order total value / Total delivery value
+     *    - Order delivery cost = Total delivery cost * Order share
+     * 5. INVOICE GENERATION: Create separate line items per order showing:
+     *    - Order number
+     *    - Product details
+     *    - Aggregated quantity
+     *    - Weighted average price
+     *    - Order-specific delivery cost allocation
+     *
+     * Example:
+     * Order 1: Product A (100 units @ $10) = $1000
+     * Order 2: Product A (50 units @ $12) = $600
+     * Total delivery cost: $200
+     *
+     * Aggregated: Product A (150 units @ $10.67 weighted avg)
+     * Order 1 share: $1000/$1600 = 62.5% → $125 delivery cost
+     * Order 2 share: $600/$1600 = 37.5% → $75 delivery cost
+     */
 }

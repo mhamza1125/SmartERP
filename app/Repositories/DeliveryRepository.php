@@ -26,11 +26,15 @@ class DeliveryRepository implements GlobalInterface
                 ->distinct()
                 ->count(\DB::raw('CONCAT(product_type_id, "_", stage_id)'));
 
-            // If there are many distinct item types, it's likely a multi-order delivery
-            // Also check if stock_no contains comma or multiple order indicators
-            $hasMultiOrderPattern = strpos($delivery->stock_no, ',') !== false ||
-                                   strpos($delivery->stock_no, 'Multi') !== false ||
-                                   $distinctItemTypes > 5; // Threshold for multi-order detection
+            // Check if stock_no contains pipe-separated order IDs (new format: order_id1|order_id2|order_id3)
+            $hasMultiOrderPattern = strpos($delivery->stock_no, '|') !== false;
+
+            // Fallback: Check for old patterns (for backward compatibility)
+            if (!$hasMultiOrderPattern) {
+                $hasMultiOrderPattern = strpos($delivery->stock_no, ',') !== false ||
+                                       strpos($delivery->stock_no, 'Multi') !== false ||
+                                       $distinctItemTypes > 5; // Threshold for multi-order detection
+            }
 
             $delivery->is_multi_order = $hasMultiOrderPattern;
         }

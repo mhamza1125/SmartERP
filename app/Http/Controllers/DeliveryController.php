@@ -104,7 +104,7 @@ class DeliveryController extends Controller
         }
     }
 
-    private function handleSingleOrderCreate($id, $editDeliveryId = null)
+    private function handleSingleOrderCreate($id)
     {
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->orderDelivery($id);
@@ -120,19 +120,6 @@ class DeliveryController extends Controller
             $customer = $this->customerRepository->get($customerId);
         }
 
-        // Get order number for auto-population of stock_no
-        $orderNo = is_array($order) ? ($order['order_no'] ?? '') : ($order->order_no ?? '');
-        
-        // If this is an edit request, get existing delivery data
-        $existingDelivery = null;
-        $editMode = false;
-        $deliveryItem = null;
-        if ($editDeliveryId) {
-            $existingDelivery = $this->deliveryRepository->get($editDeliveryId);
-            $editMode = true;
-            $deliveryItem = $this->stockItemRepository->delivery($editDeliveryId);
-        }
-
         return view('addDelivery', [
             'bank' => $bank,
             'expense' => $expense,
@@ -142,10 +129,6 @@ class DeliveryController extends Controller
             'company' => $company,
             'customer' => $customer,
             'isMultiOrder' => false,
-            'orderNo' => $orderNo,
-            'editMode' => $editMode,
-            'existingDelivery' => $existingDelivery,
-            'deliveryItem' => $deliveryItem ?? [],
         ]);
     }
 
@@ -235,31 +218,18 @@ class DeliveryController extends Controller
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
 
-        // Handle multi-order delivery stock number generation
+        // Handle stock number generation for both single and multi-order deliveries
         $orderIds = $request->input('order_ids');
         if ($orderIds) {
-            // Multi-order delivery - generate special stock_no with multi-order pattern
+            // Multi-order delivery - generate stock_no with pipe-separated order IDs
             $orderIdArray = explode(',', $orderIds);
-            $orderNumbers = [];
-
-            foreach ($orderIdArray as $orderId) {
-                $order = $this->orderRepository->get($orderId);
-                if ($order) {
-                    $orderNumbers[] = $order['order_no'];
-                }
-            }
-
-            // Create multi-order stock number with comma-separated order numbers
-            if (!empty($orderNumbers)) {
-                $validatedData['stock_no'] = 'Multi-Order: ' . implode(', ', $orderNumbers);
-            }
+            $cleanOrderIds = array_map('trim', $orderIdArray);
+            $validatedData['stock_no'] = implode('|', $cleanOrderIds);
         } else {
-            // Single-order delivery - ensure stock_no is set to order_no if empty
-            if (empty($validatedData['stock_no']) && $request->input('order_id')) {
-                $order = $this->orderRepository->get($request->input('order_id'));
-                if ($order) {
-                    $validatedData['stock_no'] = $order['order_no'];
-                }
+            // Single-order delivery - generate stock_no with the single order ID
+            $orderId = $request->input('order_id');
+            if ($orderId) {
+                $validatedData['stock_no'] = (string) $orderId;
             }
         }
 
@@ -465,7 +435,13 @@ class DeliveryController extends Controller
 
         if (!$stockId) return false;
 
-        // Check if stock_no contains patterns suggesting multi-order
+        // Check if stock_no contains pipe-separated order IDs (new format: order_id1|order_id2|order_id3)
+        if (strpos($stockNo, '|') !== false) {
+            $orderIds = explode('|', $stockNo);
+            return count($orderIds) > 1;
+        }
+
+        // Fallback: Check for old patterns (for backward compatibility)
         $hasMultiOrderPattern = strpos($stockNo, ',') !== false ||
                                strpos($stockNo, 'Multi') !== false ||
                                stripos($stockNo, 'combined') !== false;
@@ -485,72 +461,34 @@ class DeliveryController extends Controller
     }
 
     /**
-     * Get related orders for a multi-order delivery
+     * Get related orders for a multi-order delivery by parsing pipe-separated order IDs from stock_no
+     * Format: order_id1|order_id2|order_id3
      */
     private function getRelatedOrdersForDelivery($delivery)
     {
         if (!$delivery) return [];
 
-        // Handle both array and object access
-        $customerId = is_array($delivery) ? ($delivery['customer_id'] ?? null) : ($delivery->customer_id ?? null);
-        $stockDate = is_array($delivery) ? ($delivery['stock_date'] ?? null) : ($delivery->stock_date ?? null);
         $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
-        $stockId = is_array($delivery) ? ($delivery['stock_id'] ?? null) : ($delivery->stock_id ?? null);
 
-        if (!$customerId || !$stockId) return [];
+        if (empty($stockNo)) return [];
 
         try {
-            // Try to find orders that might be related to this delivery
-            // Method 1: Look for orders with similar dates and same customer
-            $relatedOrders = \DB::table('orders')
-                ->where('customer_id', $customerId)
-                ->where('order_date', '>=', \Carbon\Carbon::parse($stockDate ?? now())->subDays(30))
-                ->where('order_date', '<=', \Carbon\Carbon::parse($stockDate ?? now())->addDays(7))
-                ->where('order_status', '!=', 'Cancelled')
-                ->get();
+            // Check if stock_no contains pipe-separated order IDs (new format)
+            if (strpos($stockNo, '|') !== false) {
+                $orderIds = explode('|', $stockNo);
+                $orderIds = array_map('trim', $orderIds);
+                $orderIds = array_filter($orderIds); // Remove empty values
 
-            // Method 2: If stock_no contains multi-order patterns, try to extract order numbers
-            if (strpos($stockNo, ',') !== false || stripos($stockNo, 'Multi-Order') !== false) {
-                $orderNumbers = [];
-
-                // Handle "Multi-Order: Order1, Order2" format
-                if (stripos($stockNo, 'Multi-Order:') !== false) {
-                    $orderPart = substr($stockNo, stripos($stockNo, ':') + 1);
-                    $orderNumbers = explode(',', $orderPart);
-                } else {
-                    // Handle direct comma-separated format
-                    $orderNumbers = explode(',', $stockNo);
-                }
-
-                $orderNumbers = array_map('trim', $orderNumbers);
-                $orderNumbers = array_filter($orderNumbers); // Remove empty values
-
-                if (!empty($orderNumbers)) {
-                    $ordersFromStockNo = \DB::table('orders')
-                        ->whereIn('order_no', $orderNumbers)
+                if (!empty($orderIds)) {
+                    $relatedOrders = \DB::table('orders')
+                        ->whereIn('order_id', $orderIds)
                         ->get();
 
-                    if ($ordersFromStockNo->count() > 0) {
-                        return $ordersFromStockNo->toArray();
-                    }
+                    return $relatedOrders->toArray();
                 }
             }
 
-            // Method 3: Look for orders that have stock items in the same stock_id
-            $stockBasedOrders = \DB::table('orders')
-                ->join('stocks', 'stocks.order_id', '=', 'orders.order_id')
-                ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-                ->where('stock_items.stock_id', $stockId)
-                ->select('orders.*')
-                ->distinct()
-                ->get();
-
-            if ($stockBasedOrders->count() > 1) {
-                return $stockBasedOrders->toArray();
-            }
-
-            // Return the most likely related orders
-            return $relatedOrders->take(5)->toArray();
+            return [];
 
         } catch (\Exception $e) {
             $deliveryId = is_array($delivery) ? ($delivery['delivery_id'] ?? 'unknown') : ($delivery->delivery_id ?? 'unknown');

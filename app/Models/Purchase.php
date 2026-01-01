@@ -24,30 +24,4 @@ class Purchase extends Model
         'created_by',
         'updated_at',
     ];
-
-    protected function purchaseDate(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) =>
-                $value ? Carbon::parse($value)->format('d-m-Y') : null,
-
-            set: fn ($value) =>
-                $value
-                    ? Carbon::parse($value)->format('Y-m-d')
-                    : null
-        );
-    }
-    
-    protected function requireDate(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) =>
-                $value ? Carbon::parse($value)->format('d-m-Y') : null,
-
-            set: fn ($value) =>
-                $value
-                    ? Carbon::parse($value)->format('Y-m-d')
-                    : null
-        );
-    }
 }
