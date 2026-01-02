@@ -544,7 +544,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea class="form" name="description">{{$order['description']}}</textarea>
+                    <textarea class="form-control" name="description">{{$order['description']}}</textarea>
                   </div>
                 </div>
               </div>
