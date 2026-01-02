@@ -115,14 +115,6 @@
                         $deliveryNoValue = $existingDelivery['delivery_no'] ?? '';
                       }
                     @endphp
-                    <input type="text" class="form-control" name="delivery_no" placeholder="Leave empty for auto-generation" value="{{$deliveryNoValue}}">
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Delivery No</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Stock No <small class="text-muted">(Auto-generated)</small></label>
                     @php
                       // Auto-generate stock_no based on delivery type
                       if (isset($isMultiOrder) && $isMultiOrder && isset($orderIds)) {
@@ -137,27 +129,21 @@
                         $stockNoValue = $orderId;
                       }
                     @endphp
-                    <input type="text" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
+                    <input type="hidden" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
+                    <input type="text" class="form-control" name="delivery_no" placeholder="Leave empty for auto-generation" value="{{$deliveryNoValue}}">
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Stock No</div>
+                    <div class="invalid-feedback">Enter Delivery No</div>
                   </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Stock Date</label>
+                    <label>Delivery Date</label>
                     @php
                       $deliveryDate = old('stock_date');
                       if (!$deliveryDate && isset($editMode) && $editMode && isset($existingDelivery)) {
                         $deliveryDate = $existingDelivery['stock_date'] ?? '';
                       }
                     @endphp
-                    <input type="text" class="form-control datepicker" name="stock_date" required value="{{$deliveryDate}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Delivery Date</label>
                     @php
                       $actualDeliveryDate = old('delivery_date');
                       if (!$actualDeliveryDate && isset($editMode) && $editMode && isset($existingDelivery)) {
@@ -165,6 +151,7 @@
                       }
                     @endphp
                     <input type="text" class="form-control datepicker" name="delivery_date" value="{{$actualDeliveryDate}}">
+                    <input type="hidden" class="form-control datepicker" name="stock_date" required value="{{$deliveryDate}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
