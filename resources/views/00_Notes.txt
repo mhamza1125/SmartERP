@@ -2,93 +2,13 @@
 ==========   Testing   ========================================================================
 ===============================================================================================
 
-Todo: Fix migration of update material and product id columns in vendors table
-
-1. Manual hs code in performa invoice and commercial invoice
-3. Manual statement of origin
-2. Remove email, Add customer address in both invoices
-13. Add order no in commercial invoice and performa invoice
-8. Customer address and detail in performan and commercial invoice
-9. Manual invoice number and add Customer order no from order in performa and commercial
-12. TXN => SLE (Transaction number)
-    Current: TXN-2025-0040
-    New: SLE-001-26
-        SLE-(First delivery of 2026)-(Year 2026) (Commercial invoice print) Invoice No
-        Same in performa mentioned as Invoice No
-4. Customer ledger in dollor not in pkr
-10. Delivery date in performa invoice
-11. Overall total pcs remove form packing list
-7. Divide qty of pcs in packing list
-
-
-
-Feture update of order, it's payment and ledger and delivery
-Currently we are taking two currency input of order items in pkr and in customer currency
-Remove the usage of pkr in customer order only show the customer currency
-There is a column order_items.price2 which is customer currency. Remove that column and use the price column as customer currency. The naem of the currency is fetched from customer table as customers.currency_id = heads.head_id
-In case of receiving payment of customer. We will take three inputs just like now 
-Cusomer currency, Pkr currency, fees_expenses
-Like customer paid us the 550 USD and converted to pkr we received 154,000 and we paid 500 rs as bank charges. Net received will be 153,500
-So db will store 550 USD in debit and 153,500 in net_amount and 500 in fees_expenses
-You will store that 153500 in debit column of transactions table. and 550 USD in cc_amount column and 500 in fees_expenses column. Defining debit means cash inflow our bank or cash will have more money. And the cc_amount will be showin in customer ledger (We will get to now if this is credit or debit by seeing if the pkr is in debit or credit) if pkr is in debit that means customer paid us and in cusotmer ledger it will be shown as credit.
-Same is for delivery, It will stay almost same for charging the cusotmer for delivered products. by getting the price from order_items.price (order_items.price is the customer currency price now) multiply with delivered quantity.
-Like product price is 3 USD we deliverd 100 pcs so we should charge the customer 300 USD that will go in debit in customer ledger gettig it form delivery. And when customer pay us 300 USD it will go in credit in customer ledger and in debit column in transactions table in database. 
-
-Currently we are having 2 ledgers of customer as /cLedger/{id} and /cLedger2/{id}
-  No need of /cLedger2 Make current cLedger display in customer currency and remove the /cLedger2 and it's relevant code, route and customerDetail2.balde.php file. We will now only have customer currency ledger no in pkr 
-
-
-===============================================================================================
-==========   Delivered   ======================================================================
-===============================================================================================
-
-Todo (Required): 
-1. Commercial Invoice
-2. Add ntn and REX No fields in company
-3. Default issuance should show all products
-    Keep Select Order as default selected not the Default Issuance
-    Clicking on it will show all products, Just like ptc modal
-4. Show material unit along with it
-    Add / edit / view purchase
-    Add / edit / view receive
-    Add / edit / view return
-5. Editing of people should keep showing the opening balance. Currently it's always 0
-6. Multiple order same perfomra Invoice / commercial invoice / packing list
-7. Order Status view update
-    Show delivered qty if partially or fully delivered
-    Virtual stock: What is in production (Will get to stock)
-    Available stock based on Running order
-8. Show ptc of each product with order in order details
-9. http://127.0.0.1:8000/ptc/create?order_id=43&product_type_id=51&start_stage_id=72&end_stage_id=118
-    Along with order qty also show the already issued qty from other ptcs
-    On create PTC show already issued ptc quantity for the product in order
-10. Don't receive extra product in issuance / receiving (Can receive more when material is issued)
-
-Accounts Task: 
-1. Add city + button in add employee and other pages
-2. Show active / inactive status of employee and other person
-3. Increase limit of field as Varchar => long text in vendor (Product and Material selection)
-4. Bank to cash and cash to bank transfer (Add Check No in desc should show up in print)
-5. Expense.blade.php view columns update
-Date, Voucher No, Desc, Debit, Credit, Balance (Debit +, Credit -)
-6. Description in printing showing <p> tag. Don't display html tags in printing
-7. Single entry General Voucher (Show in the ledgers) Fixed
-    Debit Voucher: Removed form the cash 
-    Credit: Increased cash
-8. Purchase ledger just like expense ledger
-9. Tested: Above Hr/Payroll
-
-Admin Task: 
-1. Add production order btn to order status (Done)
-2. Remove the product stage from production order
-    Also show available stock of product in that print
-3. Hs code in packing list, performa invoice, 
-4. Pickup rex and ntn number and moove to company detail
-5. FI no is needed on commercial no. Not needed on perfoma invoice
-6. Only central display of footer in prints
-
-Running order stock view (All)
-Virtual Stock (Stock what we will get)
+Todo: 
+1. Fix migration of update material and product id columns in vendors table
+2. Fix purchase print
+3. Fix js ledger fetching for Order
+4. Don't receive extra product in issuance / receiving (Can receive more when material is issued)
+5. Fix description view in payments. Show it with our print row in table
+6. Order is always the last stage of product
 
 Todo (Optional):
 
