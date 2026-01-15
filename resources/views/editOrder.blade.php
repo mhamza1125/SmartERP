@@ -48,7 +48,7 @@
                     <div class="invalid-feedback">Select Customer</div>
                   </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Currency</label>
                     <input type="text" class="form-control" id="customer_currency" placeholder="Currency" readonly>

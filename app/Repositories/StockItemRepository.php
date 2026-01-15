@@ -863,9 +863,9 @@ class StockItemRepository implements GlobalInterface
                 'sthead.name as stname',
                 'stock_items.stage_id', // Just stage_id from stock_items
                 'uhead.name as uname',
-                'order_items.quantity',
                 DB::raw('COALESCE(box_materials.bqty, 0) as bqty')
             )
+            ->selectRaw('MAX(order_items.quantity) as quantity')
             ->selectRaw('
                 (
                     SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END)
@@ -903,8 +903,7 @@ class StockItemRepository implements GlobalInterface
                 'products.article_no',
                 'shead.name',
                 'sthead.name',
-                'uhead.name',
-                'order_items.quantity'
+                'uhead.name'
             )
             ->get();
     }

@@ -224,8 +224,8 @@ class EmployeeController extends Controller
         // DB debit (displayed as Credit) = work done, increases liability = ADD to balance
         // DB credit (displayed as Debit) = payments made, decreases liability = SUBTRACT from balance
         // Include ALL transaction types - no filtering
-        $totalDebit = $detail->sum('debit') ?? 0;
-        $totalCredit = $detail->sum('credit') ?? 0;
+        $totalDebit = $detail->where('transaction_type', '!=', 'salary')->sum('debit');
+        $totalCredit = $detail->where('transaction_type', '!=', 'salary')->sum('credit');
         $balance = $oBalance + $totalDebit - $totalCredit;
 
         return view('employeeDetail', [

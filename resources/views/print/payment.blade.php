@@ -74,10 +74,10 @@
                     @endif
                 </span>
             </div>
-            <div class="info-row">
+            {{-- <div class="info-row">
                 <span class="info-label">Payment Method:</span>
                 <span class="info-value">{{ $transaction['bank_id'] ? 'Bank Transfer' : 'Cash' }}</span>
-            </div>
+            </div> --}}
         </div>
 
         <div class="info-section">
@@ -294,7 +294,7 @@
                 </tr>
                 @if($transaction['bank_id'])
                 <tr>
-                    <td>{{ $transaction['bname'] ?? 'Bank Account' }} - {!! $transaction['description'] ?? '' !!}</td>
+                    <td>{{ $transaction['bname'] ?? 'Bank Account' }} {!! $transaction['description'] ?? '' !!}</td>
                     <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
                     <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
                 </tr>
@@ -335,8 +335,9 @@
 {{-- Amount in Words --}}
 @if(function_exists('numberToWordsWithCurrency'))
 <div class="amount-words avoid-break" style="margin-top: 8px; margin-bottom: 8px;">
-    <div class="amount-words-label">Amount in Words:</div>
-    <div>{{ numberToWordsWithCurrency(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0) }}</div>
+    <span class="amount-words-label">Amount in Words:</span>
+    <span>{{ numberToWordsWithCurrency(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0) }}</span>
+    {{-- <div>{{ numberToWordsWithCurrency(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0) }}</div> --}}
 </div>
 @endif
 

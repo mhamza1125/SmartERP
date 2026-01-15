@@ -90,8 +90,10 @@
                         // Include ALL transaction types - no filtering
                         $debit = $item->debit ?? 0;
                         $credit = $item->credit ?? 0;
-                        $balance += $debit - $credit;
-
+                        if($item->transaction_type != 'salary'){
+                          $balance += $debit - $credit;
+                        }
+                        
                         // For employee ledger, reverse the display (DB debit shown in credit column, DB credit shown in debit column)
                         $displayDebit = $credit;
                         $displayCredit = $debit;

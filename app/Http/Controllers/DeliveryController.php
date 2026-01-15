@@ -218,20 +218,8 @@ class DeliveryController extends Controller
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
 
-        // Handle stock number generation for both single and multi-order deliveries
-        $orderIds = $request->input('order_ids');
-        if ($orderIds) {
-            // Multi-order delivery - generate stock_no with pipe-separated order IDs
-            $orderIdArray = explode(',', $orderIds);
-            $cleanOrderIds = array_map('trim', $orderIdArray);
-            $validatedData['stock_no'] = implode('|', $cleanOrderIds);
-        } else {
-            // Single-order delivery - generate stock_no with the single order ID
-            $orderId = $request->input('order_id');
-            if ($orderId) {
-                $validatedData['stock_no'] = (string) $orderId;
-            }
-        }
+        // Set a temporary stock_no (will be updated to delivery_id after delivery is created)
+        $validatedData['stock_no'] = '0';
 
         // Stock Items / Delivery Items / Container Vehicles
         $ptid = $request->input('product_type_id');
@@ -254,6 +242,9 @@ class DeliveryController extends Controller
         // Insertion to DB
         $get = $this->deliveryRepository->store($validatedData);
         $validatedData['delivery_id'] = $get;
+
+        // Update stock_no with delivery_id
+        $this->stockRepository->update($getId, ['stock_no' => (string) $get]);
 
         // Handle both single and multi-order deliveries
         $orderIds = $request->input('order_ids');
@@ -548,8 +539,17 @@ class DeliveryController extends Controller
         $isMultiOrder = $this->isMultiOrderDelivery($delivery);
 
         $this->transactionRepository->updateDE($id, $request->input());
-        $this->stockRepository->update($request->input('stock_id'), $request->input());
+
+        // Update stock but exclude stock_no (will be set separately)
+        $stockData = $request->input();
+        unset($stockData['stock_no']);
+        $this->stockRepository->update($request->input('stock_id'), $stockData);
+
         $this->deliveryRepository->update($id, $request->input());
+
+        // Update stock_no with delivery_id
+        $this->stockRepository->update($request->input('stock_id'), ['stock_no' => (string) $id]);
+
         $orderStatus = ['order_status' => $request->input('order_status')];
 
         // Handle both single and multi-order deliveries

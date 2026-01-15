@@ -416,11 +416,11 @@ class TransactionController extends Controller
                     $totalGeneralCredit = 0;
                     foreach ($generalVouchers as $gv) {
                         if ($gv->credit == 0 && $gv->credit === null) {
-                            // Debit voucher - increases receivable
-                            $totalGeneralDebit += $gv->cc_amount ?? 0;
-                        } else {
                             // Credit voucher - decreases receivable
                             $totalGeneralCredit += $gv->cc_amount ?? 0;
+                        } else {
+                            // Debit voucher - increases receivable
+                            $totalGeneralDebit += $gv->cc_amount ?? 0;
                         }
                     }
 
@@ -1294,7 +1294,7 @@ class TransactionController extends Controller
         }
 
         // Generate voucher number
-        $voucherNumber = 'TXN-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT);
+        $voucherNumber = 'SLE-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT);
 
         return view('print.payment', [
             'transaction' => $transaction,
@@ -1332,7 +1332,7 @@ class TransactionController extends Controller
         }
 
         // Generate voucher number
-        $voucherNumber = 'TXN-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT);
+        $voucherNumber = 'SLE-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT);
 
         return view('print.payment', [
             'transaction' => $transaction,

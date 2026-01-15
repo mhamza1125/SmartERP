@@ -80,7 +80,7 @@
                     @foreach($transaction as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>SLL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
+                      <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                       <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>{{$item->order_no}}</td>

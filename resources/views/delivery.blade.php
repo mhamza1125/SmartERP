@@ -36,7 +36,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{\Carbon\Carbon::parse($item->delivery_date)->format('d-m-Y')}}</td>                      
                       <td>
-                        {{$item->stock_no}}
+                        {{$item->delivery_no}}
                         @if(isset($item->is_multi_order) && $item->is_multi_order)
                           <span class="badge badge-secondary ml-1">Multi-Order</span>
                         @endif

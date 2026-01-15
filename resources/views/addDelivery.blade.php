@@ -116,20 +116,14 @@
                       }
                     @endphp
                     @php
-                      // Auto-generate stock_no based on delivery type
-                      if (isset($isMultiOrder) && $isMultiOrder && isset($orderIds)) {
-                        // Multi-order: pipe-separated order IDs
-                        $stockNoValue = $orderIds;
-                      } elseif (isset($editMode) && $editMode && isset($existingDelivery)) {
-                        // Edit mode: use existing value
+                      // stock_no will be set to delivery_id after delivery is created
+                      // For edit mode, use existing value
+                      $stockNoValue = '';
+                      if (isset($editMode) && $editMode && isset($existingDelivery)) {
                         $stockNoValue = $existingDelivery['stock_no'] ?? '';
-                      } else {
-                        // Single order: use order ID as stock_no
-                        $orderId = isset($order) ? (is_array($order) ? $order['order_id'] ?? '' : $order->order_id ?? '') : '';
-                        $stockNoValue = $orderId;
                       }
                     @endphp
-                    <input type="hidden" class="form-control" name="stock_no" placeholder="Stock No" required value="{{old('stock_no', $stockNoValue)}}" readonly>
+                    <input type="hidden" class="form-control" name="stock_no" placeholder="Stock No" value="{{old('stock_no', $stockNoValue)}}" readonly>
                     <input type="text" class="form-control" name="delivery_no" placeholder="Leave empty for auto-generation" value="{{$deliveryNoValue}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Delivery No</div>
@@ -408,14 +402,12 @@
                               $aggregatedItems[$key] = $item;
                             } else {
                               $aggregatedItems[$key]->quantity += $item->quantity;
-                              // Don't sum stockOut or stockOutDelivered - they represent totals for this product/stage
+                              // Don't sum stockIn, stockOut or stockOutDelivered - they represent totals for this product/stage
                               // Just keep the value from the first item (they should all be the same)
-                              $aggregatedItems[$key]->stockIn += $item->stockIn;
-                              // stockOut and stockOutDelivered are NOT summed - they're already totals
                             }
                           }
                           $index = 1;
-                          $hasDeliverableItems = false; 
+                          $hasDeliverableItems = false;
                         @endphp
                           @foreach($aggregatedItems as $item)
                             @php

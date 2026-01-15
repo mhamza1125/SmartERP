@@ -41,14 +41,14 @@
                 <span class="info-label">Date:</span>
                 <span class="info-value">{{ $expense['transaction_date'] ?? 'N/A' }}</span>
             </div>
-            <div class="info-row">
+            {{-- <div class="info-row">
                 <span class="info-label">Expense Head/Category:</span>
                 <span class="info-value">{{ $expense['hname'] ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
+            </div> --}}
+            {{-- <div class="info-row">
                 <span class="info-label">Payment Method:</span>
                 <span class="info-value">{{ $expense['bank_id'] ? 'Bank Transfer' : 'Cash' }}</span>
-            </div>
+            </div> --}}
         </div>
 
         <div class="info-section">
@@ -66,10 +66,10 @@
                 <span class="info-value">{{ $expense['account'] ?? 'N/A' }}</span>
             </div>
             @endif
-            <div class="info-row">
+            {{-- <div class="info-row">
                 <span class="info-label">Amount:</span>
                 <span class="info-value amount">{{ number_format($expense['debit'] ?? $expense['credit'] ?? 0, 2) }}</span>
-            </div>
+            </div> --}}
         </div>
     </div>
 
@@ -86,7 +86,8 @@
         </thead>
         <tbody>
             <tr>
-                <td style="padding: 4px;">{{ strip_tags($expense['description'] ?? 'Expense Transaction') }}</td>
+                {{-- <td style="padding: 4px;">{{ strip_tags($expense['description'] ?? 'Expense Transaction') }}</td> --}}
+                <td style="padding: 4px;">{{ $expense['hname'] ?? 'Expense Transaction' }} {{ strip_tags($expense['description'] ?? '') }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['credit'] ? number_format($expense['credit'], 2) : '-' }}</td>
                 <td class="text-right amount" style="padding: 4px;">{{ $expense['debit'] ? number_format($expense['debit'], 2) : '-' }}</td>
             </tr>
@@ -125,8 +126,9 @@
 {{-- Amount in Words --}}
 @if(function_exists('numberToWordsWithCurrency'))
 <div class="amount-words avoid-break" style="margin-bottom: 8px;">
-    <div class="amount-words-label">Amount in Words:</div>
-    <div style="font-size: 11px;">{{ numberToWordsWithCurrency(($expense['debit'] > 0 ? $expense['debit'] : $expense['credit']) ?? 0) }}</div>
+    <span class="amount-words-label">Amount in Words:</span>
+    <span>{{ numberToWordsWithCurrency(($expense['debit'] > 0 ? $expense['debit'] : $expense['credit']) ?? 0) }}</span>
+    {{-- <div style="font-size: 11px;">{{ numberToWordsWithCurrency(($expense['debit'] > 0 ? $expense['debit'] : $expense['credit']) ?? 0) }}</div> --}}
 </div>
 @endif
 
