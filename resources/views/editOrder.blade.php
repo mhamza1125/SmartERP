@@ -17,6 +17,27 @@
             <form action="{{ route('order.update', $order['order_id']) }}" method="POST" class="needs-validation" novalidate="">
               @csrf
               <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Customer</label>
+                    <select class="form-control select2" id="customer_id" name="customer_id" required>
+                      <option value="" selected disabled>Select Customer</option>
+                      @if($customer->count())
+                      @foreach($customer as $item)
+                      <option value="{{$item->customer_id}}" data-currency="{{$item->currency_name ?? 'PKR'}}" {{ $order['customer_id'] == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
+                      @endforeach
+                      @endif
+                    </select>
+                    <div class="valid-feedback">Good job!</div>
+                    <div class="invalid-feedback">Select Customer</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Currency</label>
+                    <input type="text" class="form-control" id="customer_currency" placeholder="Currency" readonly>
+                  </div>
+                </div>
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Order No</label>
@@ -33,28 +54,10 @@
                     <div class="invalid-feedback">Enter Job No</div>
                   </div>
                 </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label>Customer</label>
-                    <select class="form-control select2" id="customer_id" name="customer_id" required>
-                      <option value="" selected disabled>Select Customer</option>
-                      @if($customer->count())
-                        @foreach($customer as $item)
-                          <option value="{{$item->customer_id}}" data-currency="{{$item->currency_name ?? 'PKR'}}" {{ $order['customer_id'] == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Customer</div>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label>Currency</label>
-                    <input type="text" class="form-control" id="customer_currency" placeholder="Currency" readonly>
-                  </div>
-                </div>
-                <div class="col-md-2">
+              </div>
+
+              <div class="row">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Order Status</label>
                     <select class="form-control select2" name="order_status" required {{ in_array($order['order_status'], [3, 4, 5]) ? 'disabled' : '' }}>
@@ -66,22 +69,19 @@
                       <option value="5" {{ $order['order_status'] == 5 ? 'selected' : '' }}>Cancelled</option>
                     </select>
                     @if(in_array($order['order_status'], [3, 4, 5]))
-                      <input type="hidden" name="order_status" value="{{ $order['order_status'] }}">
-                      <small class="text-muted">Status cannot be changed for Dispatched, Delivered, or Cancelled orders</small>
+                    <input type="hidden" name="order_status" value="{{ $order['order_status'] }}">
+                    <small class="text-muted">Status cannot be changed for Dispatched, Delivered, or Cancelled orders</small>
                     @endif
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Order Date</label>
                     <input type="text" class="form-control datepicker" name="order_date" required value="{{$order['order_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-              </div>
-
-              <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
                     <label>Due Date <small class="text-muted">(Optional)</small></label>
@@ -100,15 +100,15 @@
 
               <h6>Order Items</h6>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Products</label>
                     <select class="form-control select2" name="product_type_id" id="product_type_id">
                       <option value="" disabled selected>Select Product</option>
                       @if($product->count())
-                        @foreach($product as $item)
-                          <option value="{{$item->product_type_id}}" data-size-id="{{$item->size_id}}" {{ old('sproduct_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
-                        @endforeach
+                      @foreach($product as $item)
+                      <option value="{{$item->product_type_id}}" data-size-id="{{$item->size_id}}" {{ old('sproduct_type_id') == $item->product_type_id ? 'selected' : '' }}>{{$item->article_no}} - Size {{$item->hname}}</option>
+                      @endforeach
                       @endif
                     </select>
                   </div>
@@ -130,16 +130,16 @@
                     <input type="number" min="0" class="form-control" name="quantity" placeholder="0">
                   </div>
                 </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Price (Customer Currency)</label>
+                    <input type="number" min="0" class="form-control" name="price" id="price" placeholder="0">
+                  </div>
+                </div>
                 <div class="col-md-1">
                   <div class="form-group">
                     <label>Add</label> <br>
                     <button type="button" id="addBtn" class="btn btn-primary">Add</button>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label>Price (Customer Currency)</label>
-                    <input type="number" min="0" class="form-control" name="price" id="price" placeholder="0">
                   </div>
                 </div>
               </div>
@@ -160,28 +160,31 @@
                     <tbody>
                       <tr>
                         @if($orderItem->count())
-                          @foreach($orderItem as $item)
-                            <tr data-item-id="{{ $item->order_item_id }}">
-                              <td></td>
-                              <td>{{$item->article_no}} - Size {{$item->name}}
-                                <input type="hidden" name="name[]" value="{{$item->article_no}} - Size {{$item->name}}">
-                                <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
-                              </td>
-                              <td>{{$item->sname}}
-                                <input type="hidden" name="sname[]" value="{{$item->sname}}">
-                                <input type="hidden" name="product_stage_id[]" value="{{$item->product_stage_id}}"></td>
-                              </td>
-                              <td>{{$item->quantity}}
-                                <input type="hidden" name="quantity[]" value="{{$item->quantity}}"></td>
-                              <td>{{$item->price}} {{$item->cname}}
-                                <input type="hidden" name="price[]" value="{{$item->price}}"></td>
-                              <td>{{$item->quantity * $item->price}}
-                                <input type="hidden" name="total[]" value="{{$item->total}}">
-                              </td>
-                              <td><button class="deleteRowBtn btn btn-danger">X</button></td>
-                            </tr>
-                          @endforeach
-                        @endif
+                        @foreach($orderItem as $item)
+                      <tr data-item-id="{{ $item->order_item_id }}">
+                        <td></td>
+                        <td>{{$item->article_no}} - Size {{$item->name}}
+                          <input type="hidden" name="name[]" value="{{$item->article_no}} - Size {{$item->name}}">
+                          <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}">
+                        </td>
+                        <td>{{$item->sname}}
+                          <input type="hidden" name="sname[]" value="{{$item->sname}}">
+                          <input type="hidden" name="product_stage_id[]" value="{{$item->product_stage_id}}">
+                        </td>
+                        </td>
+                        <td>{{$item->quantity}}
+                          <input type="hidden" name="quantity[]" value="{{$item->quantity}}">
+                        </td>
+                        <td>{{$item->price}} {{$item->cname}}
+                          <input type="hidden" name="price[]" value="{{$item->price}}">
+                        </td>
+                        <td>{{$item->quantity * $item->price}}
+                          <input type="hidden" name="total[]" value="{{$item->total}}">
+                        </td>
+                        <td><button class="deleteRowBtn btn btn-danger">X</button></td>
+                      </tr>
+                      @endforeach
+                      @endif
                       <!-- Table rows will be dynamically added here -->
                     </tbody>
                     <tfoot>
@@ -277,5 +280,5 @@
       $('#customer_currency').val(currency);
     }
   });
-  </script>
+</script>
 @endsection
