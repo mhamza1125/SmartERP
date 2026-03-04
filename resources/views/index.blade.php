@@ -137,8 +137,8 @@
                     {{-- Products links --}}
                     @can('access', App\Models\Product::class)
                         <li><a class="nav-link" href="{{ route('product') }}">Products</a></li>
-                        <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li>
-                        <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing / Wages</a></li>
+                        {{-- <li><a class="nav-link" href="{{ route('productMaterial') }}">Product Material</a></li> --}}
+                        {{-- <li><a class="nav-link" href="{{ route('productCost') }}">Product Costing / Wages</a></li> --}}
                     @endcan
 
                     {{-- Materials links --}}

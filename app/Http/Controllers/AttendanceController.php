@@ -32,6 +32,7 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
+        dd("This feature works when attendence machine is connected");
         dd(auth()->user()->can('attendance_access', \App\Models\User::class));
 
         $this->authorize('attendance_access', User::class);
