@@ -357,7 +357,7 @@
                     <div class="row">
                       <div class="col-md-12">
                         <h5 class="mt-2">Product Costing
-                          <a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Edit</a>
+                          <a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Add/Edit</a>
                         </h5>
                         <table class="table table-sm table-striped">
                           <thead>

@@ -56,7 +56,7 @@ class ProductCostController extends Controller
     public function create()
     {
         $this->authorize('create', Product::class);
-        $head = $this->headRepository->get('14');
+        $head = collect();
         $product = $this->productRepository->cost();
         $employee = $this->employeeRepository->wages();
         $vendor = $this->vendorRepository->all();
@@ -116,7 +116,7 @@ class ProductCostController extends Controller
     {
         $this->authorize('edit', Product::class);
         $product = $this->productRepository->get($id);
-        $head = $this->headRepository->get('14');
+        $head = $this->headRepository->getStage($product['stage_ids']);
         $productType = $this->productTypeRepository->get($id);
         $productCost = $this->productCostRepository->get($id);
         $employee = $this->employeeRepository->wages();

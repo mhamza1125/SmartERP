@@ -13,6 +13,8 @@ class HeadRepository implements GlobalInterface
             ->select('heads.*', 'head_types.name as htname')
             ->orderBy('head_types.name')
             ->orderBy('heads.name', 'asc')
+            // Exclude Product Costing
+            ->where('heads.head_type_id', '!=', '14')
             ->get();
     }
 
@@ -125,7 +127,5 @@ class HeadRepository implements GlobalInterface
         $update->update($data);
     }
 
-    public function delete($id)
-    {
-    }
+    public function delete($id) {}
 }

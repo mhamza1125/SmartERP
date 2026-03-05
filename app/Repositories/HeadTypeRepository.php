@@ -8,22 +8,15 @@ class HeadTypeRepository implements GlobalInterface
 {
     public function all()
     {
-        return HeadType::all();
+        // Exclude Product Costing
+        return HeadType::where('head_type_id', '!=', '14')->get();
     }
 
-    public function get($id)
-    {
-    }
+    public function get($id) {}
 
-    public function store(array $data)
-    {
-    }
+    public function store(array $data) {}
 
-    public function update($id, array $data)
-    {
-    }
+    public function update($id, array $data) {}
 
-    public function delete($id)
-    {
-    }
+    public function delete($id) {}
 }
