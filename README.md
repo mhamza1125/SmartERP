@@ -79,8 +79,6 @@ SmartERP is a comprehensive **Enterprise Resource Planning (ERP)** system built 
 
 ## 📂 Project Structure
 
-```
-
 app/
 ├── Console/
 ├── Exceptions/
@@ -106,7 +104,6 @@ database/
 
 tests/
 
-````
 
 ---
 
@@ -126,7 +123,6 @@ tests/
 ```bash
 git clone https://github.com/yourusername/SmartERP.git
 cd SmartERP
-````
 
 2. Install dependencies:
 
@@ -134,7 +130,6 @@ cd SmartERP
 composer install
 npm install
 npm run dev
-```
 
 3. Configure `.env` file and set database credentials
 
@@ -142,13 +137,11 @@ npm run dev
 
 ```bash
 php artisan migrate --seed
-```
 
 5. Serve the application:
 
 ```bash
 php artisan serve
-```
 
 ---
 
@@ -158,7 +151,6 @@ Run unit and feature tests:
 
 ```bash
 php artisan test
-```
 
 ---
 
