@@ -53,20 +53,19 @@
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Delivery No <small class="text-muted">(Auto-generated)</small></label>
+                    <label>Delivery No <small class="text-muted">(Auto)</small></label>
                     <input type="hidden" name="order_id" value="{{$order['order_id']}}" required>
                     <input type="hidden" name="table_name" value="delivery" required>
                     <input type="hidden" name="employee_id" value="0" required>
                     <input type="hidden" name="stock_type" value="2" required>
                     <input type="hidden" name="stock_status" required value="3">
                     <input type="hidden" name="stock_id" required value="{{$order['stock_id']}}">
-                    <input type="hidden" class="form-control" name="stock_no" placeholder="Stock No" required value="{{$order['stock_no']}}" readonly>
-                    <input type="text" class="form-control" name="delivery_no" placeholder="Stock No" required value="{{$order['delivery_no']}}" readonly>
+                    <input type="text" class="form-control" name="delivery_no" placeholder="Delivery No" required value="{{$order['delivery_no']}}" readonly>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Enter Stock No</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Delivery Date</label>
                     <input type="hidden" class="form-control datepicker" name="stock_date" required value="{{$order['stock_date']}}">
@@ -253,6 +252,7 @@
                 </div>
               </div>
 
+              <div class="hide-delivery-sections">
               <h5 class="mt-4">Delivery Container / Vehicle</h5>
               <div class="row">
                 <div class="col-md-6">
@@ -446,6 +446,7 @@
                     </tfoot>
                   </table>
                 </div>
+              </div>
               </div>
 
               <h5 class="mt-2">Delivery Expense</h5>

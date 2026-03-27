@@ -92,7 +92,7 @@
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Delivery No <small class="text-muted">(Auto-generated if empty)</small></label>
+                    <label>Delivery No <small class="text-muted">(Auto)</small></label>
                     @if(!isset($isMultiOrder) || !$isMultiOrder)
                       <input type="hidden" name="order_id" value="{{$order['order_id']}}" required>
                     @else
@@ -115,21 +115,13 @@
                         $deliveryNoValue = $existingDelivery['delivery_no'] ?? '';
                       }
                     @endphp
-                    @php
-                      // stock_no will be set to delivery_id after delivery is created
-                      // For edit mode, use existing value
-                      $stockNoValue = '';
-                      if (isset($editMode) && $editMode && isset($existingDelivery)) {
-                        $stockNoValue = $existingDelivery['stock_no'] ?? '';
-                      }
-                    @endphp
-                    <input type="hidden" class="form-control" name="stock_no" placeholder="Stock No" value="{{old('stock_no', $stockNoValue)}}" readonly>
                     <input type="text" class="form-control" name="delivery_no" placeholder="Leave empty for auto-generation" value="{{$deliveryNoValue}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Delivery No</div>
                   </div>
                 </div>
-                <div class="col-md-3">
+
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Delivery Date</label>
                     @php
@@ -498,6 +490,7 @@
                 </div>
               </div>
 
+              <div class="hide-delivery-sections">
               <h5 class="mt-4">Delivery Container / Vehicle</h5>
               <div class="row">
                 <div class="col-md-6">
@@ -640,6 +633,7 @@
                     </tfoot>
                   </table>
                 </div>
+              </div>
               </div>
 
               <h5 class="mt-2">Delivery Expense</h5>

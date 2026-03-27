@@ -137,10 +137,20 @@ class DeliveryReturnController extends Controller
         $this->authorize('show', Delivery::class);
         $return = $this->deliveryReturnRepository->get($id);
         $returnItems = $this->deliveryReturnItemRepository->get($id);
+        $deliveryInfo = $this->deliveryRepository->get($return->delivery_id);
+
+        $isMultiOrder = $this->isMultiOrderDelivery($deliveryInfo);
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($deliveryInfo);
+        }
 
         return view('deliveryReturnInfo', [
             'return' => $return,
             'returnItems' => $returnItems,
+            'deliveryInfo' => $deliveryInfo,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
         ]);
     }
 
@@ -152,10 +162,20 @@ class DeliveryReturnController extends Controller
         $this->authorize('show', Delivery::class);
         $return = $this->deliveryReturnRepository->get($id);
         $returnItems = $this->deliveryReturnItemRepository->get($id);
+        $deliveryInfo = $this->deliveryRepository->get($return->delivery_id);
+
+        $isMultiOrder = $this->isMultiOrderDelivery($deliveryInfo);
+        $relatedOrders = [];
+        if ($isMultiOrder) {
+            $relatedOrders = $this->getRelatedOrdersForDelivery($deliveryInfo);
+        }
 
         return view('print.delivery-return', [
             'return' => $return,
             'returnItems' => $returnItems,
+            'deliveryInfo' => $deliveryInfo,
+            'isMultiOrder' => $isMultiOrder,
+            'relatedOrders' => $relatedOrders,
         ]);
     }
 
@@ -280,21 +300,37 @@ class DeliveryReturnController extends Controller
         return 'DR-' . $yearMonth . '-' . str_pad($count + 1, 3, '0', STR_PAD_LEFT);
     }
 
-    /**
-     * Check if a delivery is a multi-order delivery
-     */
     private function isMultiOrderDelivery($delivery)
     {
         if (!$delivery) return false;
 
+        // Handle both array and object access
         $stockNo = is_array($delivery) ? ($delivery['stock_no'] ?? '') : ($delivery->stock_no ?? '');
+        $stockId = is_array($delivery) ? ($delivery['stock_id'] ?? null) : ($delivery->stock_id ?? null);
 
-        // Check for multi-order patterns in stock_no
-        if (strpos($stockNo, ',') !== false ||
-            stripos($stockNo, 'Multi') !== false ||
-            stripos($stockNo, 'combined') !== false) {
-            return true;
+        if (!$stockId) return false;
+
+        // Check if stock_no contains pipe-separated order IDs (new format: order_id1|order_id2|order_id3)
+        if (strpos($stockNo, '|') !== false) {
+            $orderIds = explode('|', $stockNo);
+            return count($orderIds) > 1;
         }
+
+        // Fallback: Check for old patterns (for backward compatibility)
+        $hasMultiOrderPattern = strpos($stockNo, ',') !== false ||
+            strpos($stockNo, 'Multi') !== false ||
+            stripos($stockNo, 'combined') !== false;
+
+        if ($hasMultiOrderPattern) return true;
+
+        // Check if there are many distinct item types (suggesting multiple orders)
+        $distinctItemTypes = DB::table('stock_items')
+            ->where('stock_id', $stockId)
+            ->distinct()
+            ->count(DB::raw('CONCAT(product_type_id, "_", stage_id)'));
+
+        // If there are many distinct item types, likely multi-order
+        if ($distinctItemTypes > 3) return true;
 
         return false;
     }
@@ -319,7 +355,7 @@ class DeliveryReturnController extends Controller
                 $orderIds = array_filter($orderIds); // Remove empty values
 
                 if (!empty($orderIds)) {
-                    $relatedOrders = \DB::table('orders')
+                    $relatedOrders = DB::table('orders')
                         ->whereIn('order_id', $orderIds)
                         ->get();
 

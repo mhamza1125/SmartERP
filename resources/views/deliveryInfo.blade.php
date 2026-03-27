@@ -103,6 +103,7 @@
                 <table class="table table-sm">
                   <tbody>
                     <tr><td><b>Delivery No:</b> {{$delivery['delivery_no'] ?? 'N/A'}}</td></tr>
+                    <tr><td><b>Stock No:</b> {{$delivery['stock_no'] ?? 'N/A'}}</td></tr>
                     @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
                     <tr><td><b>Delivery Date:</b> {{\Carbon\Carbon::parse($delivery['delivery_date'])->format('d-m-Y')}}</td></tr>
                     @endif
@@ -181,6 +182,7 @@
               </div>
             </div>
 
+            <div class="hide-delivery-sections">
             <h5>Delivery to Container</h5>
             @if($deliveryBox && $deliveryBox->count())
             <div class="row">
@@ -268,6 +270,7 @@
             @else
               <blockquote> No Delivery Conatiner / Vehicle </blockquote>
             @endif
+            </div>
 
             <h5>Delivery Expense</h5>
             @if($transaction && $transaction->count())

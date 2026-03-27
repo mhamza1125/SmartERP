@@ -23,7 +23,7 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Delivery No</th>
-                    <th>Order No</th>
+                    <th>Job No</th>
                     <th>Customer</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -38,10 +38,26 @@
                       <td>
                         {{$item->delivery_no}}
                         @if(isset($item->is_multi_order) && $item->is_multi_order)
-                          <span class="badge badge-secondary ml-1">Multi-Order</span>
+                          <br><span class="badge badge-secondary ml-1">Multi-Order</span>
                         @endif
                       </td>
-                      <td>{{$item->job_no}}</td>
+                      <td>
+                        @if(isset($item->is_multi_order) && $item->is_multi_order && isset($relatedOrdersMap[$item->delivery_id]))
+                          @php $relatedOrders = $relatedOrdersMap[$item->delivery_id]; @endphp
+                          @foreach($relatedOrders as $index => $order)
+                            @if($index < 5)
+                            <span class="badge badge-secondary mr-1 mb-1">{{$order->job_no ?? 'N/A'}}</span>
+                            <br>
+                            @endif
+                          @endforeach
+                          @if(count($relatedOrders) > 5)
+                          <span class="badge badge-light">+{{count($relatedOrders) - 5}} more</span>
+                          @endif
+                        @else
+                          <span class="badge badge-secondary mr-1 mb-1">{{$item->job_no ?? 'N/A'}}</span>
+
+                        @endif
+                      </td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       <td>
                         <div class="btn-group">
@@ -85,7 +101,7 @@
                   <tr>
                     <th>Sr.</th>
                     <th>Date</th>
-                    <th>Order No</th>
+                    <th>Delivery No</th>
                     <th>Job No</th>
                     <th>Customer</th>
                     <th>Status</th>

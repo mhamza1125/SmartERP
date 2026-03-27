@@ -23,7 +23,7 @@ class DeliveryRequest extends FormRequest
     {
         return [
             // Stock Table
-            'stock_no' => 'required|max:255', // Delivery No
+            // Note: stock_no is auto-generated server-side, not provided by user
             'stock_date' => 'required', // Delivery Date
             'order_id' => 'required_without:order_ids', // Required for single order delivery
             'order_ids' => 'required_without:order_id|string', // Required for multi-order delivery (comma-separated)
