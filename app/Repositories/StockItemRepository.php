@@ -572,6 +572,19 @@ class StockItemRepository implements GlobalInterface
         })->values();
     }
 
+    /**
+     * Get stock data for multiple product types in a single pStock() call.
+     * Returns a Collection keyed by product_type_id; each value is a Collection
+     * of stage rows (same shape as pStock() rows: stage_id, stockIn, stockOut).
+     * Use this instead of calling pStockByProductType() in a loop to avoid N+1.
+     */
+    public function pStockForProductTypes(array $productTypeIds): \Illuminate\Support\Collection
+    {
+        return $this->pStock()
+            ->filter(fn($item) => in_array($item->product_type_id, $productTypeIds))
+            ->groupBy('product_type_id');
+    }
+
     public function gStock()
     {
         // Fetch igroup_items for the given order

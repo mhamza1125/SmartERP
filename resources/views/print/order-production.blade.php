@@ -63,13 +63,13 @@
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     @if($item->product_id == $product_id)
-                        <td colspan="3"></td>
+                        <td colspan="2"></td>
                     @else
                         <td class="text-center">{{ $item->article_no }}</td>
                         <td class="text-center">{{ $item->pname }}</td>
-                        <td class="text-center">{{ $item->name }}</td>
                         @php $product_id = $item->product_id; @endphp
                     @endif
+                    <td class="text-center">{{ $item->name }}</td>
                     <td class="text-center">{{ $item->sname ?? 'N/A' }}</td>
                     <td class="text-center">{{ number_format($item->quantity) }}</td>
                     <td class="text-center">{{ number_format($finishedStock) }}</td>

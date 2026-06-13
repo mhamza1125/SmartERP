@@ -179,53 +179,71 @@ class OrderController extends Controller
         $order = $this->orderRepository->get($id);
         $orderItem = $this->orderItemRepository->get($id);
 
-        // Fetch stock data for each product using the same logic as the /stock page
+        // Fetch stock for ALL product types in the order with a single pStock() call.
+        $productTypeIds = $orderItem->pluck('product_type_id')->unique()->values()->toArray();
+        $stockByProductType = $this->stockItemRepository->pStockForProductTypes($productTypeIds);
+
+        // Resolve the DEFINED final stage for each product type from products.stage_ids.
+        // stage_ids is a pipe-separated ordered list of head_ids (e.g. "45|67|89").
+        // The last non-zero entry is the final production stage (e.g. Packing).
+        // This must come from the workflow definition, NOT from which stages have stock,
+        // because a product may have stock only in intermediate stages.
+        $finalStageByProductType = DB::table('product_types')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->whereIn('product_types.product_type_id', $productTypeIds)
+            ->select('product_types.product_type_id', 'products.stage_ids')
+            ->get()
+            ->mapWithKeys(function ($row) {
+                $stages = array_values(array_filter(
+                    array_map('intval', explode('|', $row->stage_ids ?? '')),
+                    fn($s) => $s > 0
+                ));
+                return [$row->product_type_id => !empty($stages) ? (int) end($stages) : null];
+            });
+
+        // Cache per product_type_id so the stage calculation runs at most once per product.
+        $productTypeCache = [];
+
         $stockData = [];
+        foreach ($orderItem as $item) {
+            $ptid = $item->product_type_id;
+            $key  = $ptid . '_' . $item->product_stage_id;
 
-        // Get unique product_type_ids from order items
-        $productTypeIds = $orderItem->pluck('product_type_id')->unique();
+            if (!isset($productTypeCache[$ptid])) {
+                // All stages for this product type (same data as /stock Products Stock tab).
+                $stages = $stockByProductType->get($ptid, collect());
 
-        foreach ($productTypeIds as $productTypeId) {
-            // Get stock data for this product type using the repository method
-            // This uses the same calculation logic as the /stock page
-            $allStockForProduct = $this->stockItemRepository->pStockByProductType($productTypeId);
+                // Rejection stage (head_id = 105) is excluded from usable stock,
+                // matching the exclusion in stock.blade.php line 114.
+                $usableStages = $stages->filter(fn($s) => $s->stage_id != 105);
 
-            // Store stock by stage_id for easy lookup
-            $stageStockMap = [];
-            foreach ($allStockForProduct as $stock) {
-                $stageStockMap[$stock->stage_id] = [
-                    'stockIn' => $stock->stockIn ?? 0,
-                    'stockOut' => $stock->stockOut ?? 0,
-                ];
-            }
+                // Final stage comes from the product's defined workflow order, not from
+                // which stages happen to hold stock today.
+                $finalStageId = $finalStageByProductType->get($ptid);
 
-            // For each order item with this product type, calculate finished and unfinished stock
-            $itemsWithThisProduct = $orderItem->where('product_type_id', $productTypeId);
-            foreach ($itemsWithThisProduct as $item) {
-                $orderedStageId = $item->product_stage_id;
-
-                // Finished Stock: Stock at the ordered stage only
-                $finishedStockData = $stageStockMap[$orderedStageId] ?? ['stockIn' => 0, 'stockOut' => 0];
-                $finishedStockQty = $finishedStockData['stockIn'] - $finishedStockData['stockOut'];
-
-                // Unfinished Stock: Sum of stock at all OTHER stages (excluding the ordered stage)
-                $unfinishedStockQty = 0;
-                foreach ($stageStockMap as $stageId => $stockData) {
-                    if ($stageId != $orderedStageId) {
-                        $unfinishedStockQty += $stockData['stockIn'] - $stockData['stockOut'];
-                    }
+                // Finished Stock = stock sitting in the final production stage (e.g. Packing).
+                $finishedQty = 0;
+                if ($finalStageId !== null) {
+                    $finalRow    = $usableStages->firstWhere('stage_id', $finalStageId);
+                    $finishedQty = max(0, ($finalRow->stockIn ?? 0) - ($finalRow->stockOut ?? 0));
                 }
 
-                $key = $item->product_type_id . '_' . $item->product_stage_id;
-                $stockData[$key] = [
-                    'finished_stock' => max(0, $finishedStockQty), // Ensure non-negative
-                    'unfinished_stock' => max(0, $unfinishedStockQty), // Ensure non-negative
+                // Unfinished Stock = stock in every usable stage that is NOT the final stage.
+                $unfinishedQty = max(0, $usableStages
+                    ->filter(fn($s) => $s->stage_id != $finalStageId)
+                    ->sum(fn($s) => ($s->stockIn ?? 0) - ($s->stockOut ?? 0)));
+
+                $productTypeCache[$ptid] = [
+                    'finished_stock'   => $finishedQty,
+                    'unfinished_stock' => $unfinishedQty,
                 ];
             }
+
+            $stockData[$key] = $productTypeCache[$ptid];
         }
 
         return view('print.order-production', [
-            'order' => $order,
+            'order'     => $order,
             'orderItem' => $orderItem,
             'stockData' => $stockData,
         ]);
