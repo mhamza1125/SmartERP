@@ -124,16 +124,11 @@
                       </thead>
                       <tbody>
                         @if($orderItem->count())
-                          @php $product_id = 0; @endphp
                           @foreach($orderItem as $item)
                             <tr>
                               <td>{{$loop->index + 1}}</td>
-                              @if($item->product_id == $product_id)
-                                <td colspan="2"></td>
-                              @else
-                                <td>{{$item->article_no}}</td>
-                                <td>{{$item->pname}}</td>
-                              @endif
+                              <td>{{$item->article_no}}</td>
+                              <td>{{$item->pname}}</td>
                               <td>{{$item->sname}}</td>
                               <td>{{$item->name}}</td>
                               <td>{{$item->uname}}</td>
@@ -142,7 +137,6 @@
                               <td>{{number_format($item->price, 2)}} {{-- {{$item->cname}} --}}</td>
                               <td>{{number_format($item->quantity * $item->price, 2)}}</td>
                             </tr>
-                          @php $product_id = $item->product_id; @endphp
                           @endforeach
                         @endif
                       </tbody>

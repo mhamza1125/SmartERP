@@ -84,47 +84,30 @@
                     </thead>
                     <tbody>
                       @if($remainingItems->count())
-                      @php $prev_product_name = ''; $prev_size_name = ''; $rowIndex = 1; @endphp
+                      @php $rowIndex = 1; @endphp
                       @foreach($remainingItems as $item)
                       @php
-                      // Calculate total stock for this product + size
                       $stageStockItems = $groupedStock->get($item->product_type_id, collect());
                       $totalStock = $stageStockItems->sum(function($si) {
-                      return ($si->stockIn ?? 0) - ($si->stockOut ?? 0);
+                        return ($si->stockIn ?? 0) - ($si->stockOut ?? 0);
                       });
-
-                      $isNewProduct = ($item->product_name != $prev_product_name);
-                      $isNewSize = ($isNewProduct || $item->size_name != $prev_size_name);
                       @endphp
                       <tr>
                         <td>{{ $rowIndex++ }}</td>
-                        @if($isNewProduct)
                         <td>{{$item->article_no}}</td>
                         <td>{{$item->product_name}}</td>
-                        @else
-                        <td colspan="2"></td>
-                        @endif
-
-                        @if($isNewSize)
                         <td>{{$item->size_name}}</td>
-                        @else
-                        <td></td>
-                        @endif
-
                         <td>{{$item->stage_name}}</td>
                         <td>{{number_format($item->ordered_quantity)}} {{$item->unit_name}}</td>
 
-                        {{-- Total Stock Column from deleted tab --}}
                         <td>
-                          @if($isNewSize)
                           @if($totalStock > 0)
                           <span class="badge badge-success">{{ number_format($totalStock) }} {{$item->unit_name}}</span>
                           @elseif($totalStock < 0)
-                            <span class="badge badge-danger">{{ number_format($totalStock) }} {{$item->unit_name}}</span>
-                            @else
-                            <span class="badge badge-secondary">0 {{$item->unit_name}}</span>
-                            @endif
-                            @endif
+                          <span class="badge badge-danger">{{ number_format($totalStock) }} {{$item->unit_name}}</span>
+                          @else
+                          <span class="badge badge-secondary">0 {{$item->unit_name}}</span>
+                          @endif
                         </td>
 
                         <td>
@@ -157,22 +140,15 @@
                             @endif
                         </td> -->
 
-                        {{-- Actions Column from deleted tab --}}
                         <td>
-                          @if($isNewSize)
                           <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#orderStageModal{{ $item->product_type_id }}" title="View Stages">
                             <i class="fas fa-layer-group"></i>
                           </button>
                           <a href="{{ route('product.ptc', $item->product_id) }}" class="btn btn-sm btn-warning" title="Print PTC" target="_blank">
                             <i class="fas fa-file-alt"></i>
                           </a>
-                          @endif
                         </td>
                       </tr>
-                      @php
-                      $prev_product_name = $item->product_name;
-                      $prev_size_name = $item->size_name;
-                      @endphp
                       @endforeach
                       @else
                       <tr>
