@@ -23,6 +23,7 @@ class PayrollController extends Controller
         TransactionRepository $transactionRepository,
         BankRepository $bankRepository
     ) {
+        $this->middleware(['auth', 'all']);
         $this->employeeRepository = $employeeRepository;
         $this->transactionRepository = $transactionRepository;
         $this->bankRepository = $bankRepository;
@@ -174,45 +175,47 @@ class PayrollController extends Controller
         $transactionCount = 0;
         $totalAmount = 0;
 
-        foreach ($employees as $employee) {
-            $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
-            $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
+        DB::transaction(function () use ($employees, $validated, $bankId, $paymentDate, $monthLabel, &$transactionCount, &$totalAmount) {
+            foreach ($employees as $employee) {
+                $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
+                $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
 
-            if ($salaryAmount > 0) {
-                $transactionData = [
-                    'payee_id' => $employee->employee_id,
-                    'bank_id' => $bankId,
-                    'transaction_to' => 'employee',
-                    'transaction_type' => 'salary',
-                    'transaction_date' => $paymentDate,
-                    'credit' => $salaryAmount,
-                    'debit' => 0,
-                    'payee_bank_id' => 0,
-                    'description' => 'Monthly Salary - ' . $monthLabel,
-                ];
+                if ($salaryAmount > 0) {
+                    $transactionData = [
+                        'payee_id' => $employee->employee_id,
+                        'bank_id' => $bankId,
+                        'transaction_to' => 'employee',
+                        'transaction_type' => 'salary',
+                        'transaction_date' => $paymentDate,
+                        'credit' => $salaryAmount,
+                        'debit' => 0,
+                        'payee_bank_id' => 0,
+                        'description' => 'Monthly Salary - ' . $monthLabel,
+                    ];
 
-                $this->transactionRepository->store($transactionData);
-                $transactionCount++;
-                $totalAmount += $salaryAmount;
+                    $this->transactionRepository->store($transactionData);
+                    $transactionCount++;
+                    $totalAmount += $salaryAmount;
+                }
+
+                // Process loan deduction
+                if ($loanDeduction > 0) {
+                    $loanDeductionData = [
+                        'payee_id' => $employee->employee_id,
+                        'bank_id' => $bankId,
+                        'transaction_to' => 'employee',
+                        'transaction_type' => 'receiveAdvance',
+                        'transaction_date' => $paymentDate,
+                        'debit' => $loanDeduction,
+                        'credit' => null,
+                        'payee_bank_id' => 0,
+                        'description' => 'Loan Repayment - ' . $monthLabel,
+                    ];
+
+                    $this->transactionRepository->store($loanDeductionData);
+                }
             }
-
-            // Process loan deduction
-            if ($loanDeduction > 0) {
-                $loanDeductionData = [
-                    'payee_id' => $employee->employee_id,
-                    'bank_id' => $bankId,
-                    'transaction_to' => 'employee',
-                    'transaction_type' => 'receiveAdvance',
-                    'transaction_date' => $paymentDate,
-                    'debit' => $loanDeduction,  // receiveAdvance stores as debit (cash inflow)
-                    'credit' => null,
-                    'payee_bank_id' => 0,
-                    'description' => 'Loan Repayment - ' . $monthLabel,
-                ];
-
-                $this->transactionRepository->store($loanDeductionData);
-            }
-        }
+        });
 
         return redirect()->route('payroll.index')
             ->with('success', "Payroll for {$monthLabel} processed successfully! {$transactionCount} employee(s) paid. Total amount: " . number_format($totalAmount, 2));
@@ -382,6 +385,17 @@ class PayrollController extends Controller
                     ->whereMonth('transaction_date', $selectedDate->month)
                     ->sum('debit');
 
+                // Include opening balance in pending loan calculation
+                $openingBalanceTransaction = Transaction::where('payee_id', $employee->employee_id)
+                    ->where('transaction_to', 'employee')
+                    ->where('transaction_type', 'openingBalance')
+                    ->first();
+
+                $openingBalance = 0;
+                if ($openingBalanceTransaction) {
+                    $openingBalance = ($openingBalanceTransaction->credit ?? 0) - ($openingBalanceTransaction->debit ?? 0);
+                }
+
                 // Check for pending loans (all time)
                 // Loans are stored as credit in 'advance' transactions (cash outflow)
                 $totalLoansGiven = Transaction::where('payee_id', $employee->employee_id)
@@ -396,7 +410,7 @@ class PayrollController extends Controller
                     ->where('transaction_type', 'receiveAdvance')
                     ->sum('debit');
 
-                $loansPending = max(0, $totalLoansGiven - $loanRepayments);
+                $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepayments);
 
                 $payrollData[] = [
                     'employee' => $employee,
@@ -463,13 +477,6 @@ class PayrollController extends Controller
             return redirect()->route('payroll.index')->with('error', 'Invalid month format');
         }
 
-        // Delete existing transactions for this month (salary and deductions)
-        Transaction::where('transaction_to', 'employee')
-            ->whereYear('transaction_date', $selectedDate->year)
-            ->whereMonth('transaction_date', $selectedDate->month)
-            ->whereIn('transaction_type', ['salary', 'receiveAdvance'])
-            ->delete();
-
         $paymentDate = $validated['payment_date'];
         $monthLabel = Carbon::createFromFormat('Y-m', $validated['month'])->format('F Y');
 
@@ -477,45 +484,63 @@ class PayrollController extends Controller
         $transactionCount = 0;
         $totalAmount = 0;
 
-        foreach ($employees as $employee) {
-            $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
-            $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
+        DB::transaction(function () use ($employees, $validated, $bankId, $paymentDate, $monthLabel, $selectedDate, &$transactionCount, &$totalAmount) {
+            // Delete all salary transactions for this month
+            Transaction::where('transaction_to', 'employee')
+                ->whereYear('transaction_date', $selectedDate->year)
+                ->whereMonth('transaction_date', $selectedDate->month)
+                ->where('transaction_type', 'salary')
+                ->delete();
 
-            if ($salaryAmount > 0) {
-                $transactionData = [
-                    'payee_id' => $employee->employee_id,
-                    'bank_id' => $bankId,
-                    'transaction_to' => 'employee',
-                    'transaction_type' => 'salary',
-                    'transaction_date' => $paymentDate,
-                    'credit' => $salaryAmount,
-                    'debit' => 0,
-                    'payee_bank_id' => 0,
-                    'description' => 'Monthly Salary - ' . $monthLabel,
-                ];
+            // Delete only payroll-created loan repayments (description starts with 'Loan Repayment')
+            // Manual loan repayments made outside payroll are NOT deleted
+            Transaction::where('transaction_to', 'employee')
+                ->whereYear('transaction_date', $selectedDate->year)
+                ->whereMonth('transaction_date', $selectedDate->month)
+                ->where('transaction_type', 'receiveAdvance')
+                ->where('description', 'LIKE', 'Loan Repayment%')
+                ->delete();
 
-                $this->transactionRepository->store($transactionData);
-                $transactionCount++;
-                $totalAmount += $salaryAmount;
+            foreach ($employees as $employee) {
+                $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
+                $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
+
+                if ($salaryAmount > 0) {
+                    $transactionData = [
+                        'payee_id' => $employee->employee_id,
+                        'bank_id' => $bankId,
+                        'transaction_to' => 'employee',
+                        'transaction_type' => 'salary',
+                        'transaction_date' => $paymentDate,
+                        'credit' => $salaryAmount,
+                        'debit' => 0,
+                        'payee_bank_id' => 0,
+                        'description' => 'Monthly Salary - ' . $monthLabel,
+                    ];
+
+                    $this->transactionRepository->store($transactionData);
+                    $transactionCount++;
+                    $totalAmount += $salaryAmount;
+                }
+
+                // Process loan deduction
+                if ($loanDeduction > 0) {
+                    $loanDeductionData = [
+                        'payee_id' => $employee->employee_id,
+                        'bank_id' => $bankId,
+                        'transaction_to' => 'employee',
+                        'transaction_type' => 'receiveAdvance',
+                        'transaction_date' => $paymentDate,
+                        'debit' => $loanDeduction,
+                        'credit' => null,
+                        'payee_bank_id' => 0,
+                        'description' => 'Loan Repayment - ' . $monthLabel,
+                    ];
+
+                    $this->transactionRepository->store($loanDeductionData);
+                }
             }
-
-            // Process loan deduction
-            if ($loanDeduction > 0) {
-                $loanDeductionData = [
-                    'payee_id' => $employee->employee_id,
-                    'bank_id' => $bankId,
-                    'transaction_to' => 'employee',
-                    'transaction_type' => 'receiveAdvance',
-                    'transaction_date' => $paymentDate,
-                    'debit' => $loanDeduction,  // receiveAdvance stores as debit (cash inflow)
-                    'credit' => null,
-                    'payee_bank_id' => 0,
-                    'description' => 'Loan Repayment - ' . $monthLabel,
-                ];
-
-                $this->transactionRepository->store($loanDeductionData);
-            }
-        }
+        });
 
         return redirect()->route('payroll.index')
             ->with('success', "Payroll for {$monthLabel} updated successfully! {$transactionCount} employee(s) paid. Total amount: " . number_format($totalAmount, 2));

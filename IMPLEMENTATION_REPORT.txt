@@ -1,0 +1,667 @@
+SMARTERP AUDIT IMPLEMENTATION REPORT
+Generated: 2026-06-17
+Implementer: Audit Fix Pass
+=====================================
+
+EXECUTIVE SUMMARY
+=================
+This report documents every fix applied in response to the AUDIT_REPORT.txt findings.
+Issues are grouped by priority (functional bugs first, then security/auth improvements).
+All database changes are fully backward-compatible: new columns are nullable and existing
+records continue working without any manual intervention.
+
+Database Migrations Applied
+----------------------------
+1. 2026_06_16_000001_add_transfer_pair_id_to_transactions_table
+   - Adds nullable `transfer_pair_id` (unsignedBigInteger) to transactions table.
+   - Existing records have NULL; no data loss or breakage.
+
+2. 2026_06_16_000002_add_source_id_to_stocks_table
+   - Adds nullable `source_id` (unsignedBigInteger) to stocks table.
+   - Used to link delivery_return stock entries back to their delivery_return_id.
+   - Existing records have NULL; no data loss or breakage.
+
+
+=============================================================================
+TIER 1 — CRITICAL FUNCTIONAL BUGS
+=============================================================================
+
+FIX #1: Issue #14 — Payroll update deletes ALL receiveAdvance transactions
+---------------------------------------------------------------------------
+File: app/Http/Controllers/PayrollController.php
+
+ORIGINAL PROBLEM:
+PayrollController::update() deleted ALL transactions of type 'receiveAdvance'
+for employees in the target month, including manually-entered loan repayments
+that were not created by the payroll process.
+
+IMPLEMENTED FIX:
+Split the single delete call into two targeted queries:
+  (a) Delete salary transactions: no condition change needed.
+  (b) Delete only payroll-created receiveAdvance transactions by matching
+      description LIKE 'Loan Repayment%' — this matches the description
+      set by store() and update() ('Loan Repayment - <Month Year>') but
+      does NOT match manual loan repayments entered by users with different
+      descriptions.
+
+DATABASE / MIGRATION NOTES:
+No schema change needed. The fix relies on the existing 'description' column
+which already contains 'Loan Repayment - <Month>' for payroll-created entries.
+
+TESTING STEPS:
+1. Log in as admin.
+2. Make a manual loan repayment for an employee via Transactions (type: advance
+   receive / receiveAdvance) with a description like "Manual Early Repayment".
+3. Process payroll for the current month including a loan deduction for that employee
+   (description will be "Loan Repayment - <Month>").
+4. Go to payroll edit and update it (change a salary amount, save).
+5. Verify in the Transactions list that the manual loan repayment ("Manual Early
+   Repayment") still exists and was NOT deleted.
+6. Verify that the payroll-created loan repayment ("Loan Repayment - <Month>") was
+   correctly replaced with the new values.
+
+EXPECTED RESULT: Only payroll-generated 'Loan Repayment - ...' transactions are
+removed on update; all other receiveAdvance entries remain intact.
+
+
+FIX #2: Issue #12 — Impossible compound condition for customer GV balance
+--------------------------------------------------------------------------
+File: app/Http/Controllers/TransactionController.php (ajaxBalance, ~line 418)
+
+ORIGINAL PROBLEM:
+The condition `if ($gv->credit == 0 && $gv->credit === null)` is logically
+impossible — a value cannot simultaneously equal 0 (loose) AND be null (strict).
+This meant ALL general vouchers were treated as Debit Vouchers, so Credit
+Vouchers (which should decrease customer receivable) were misclassified and
+overstated the customer balance.
+
+IMPLEMENTED FIX:
+Replaced the impossible condition with `if ($gv->credit === null)`.
+When a Credit Voucher is stored: credit=null, debit=0.
+When a Debit Voucher is stored: credit=0, debit=null.
+Checking credit===null correctly identifies Credit Vouchers.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Go to Transactions → New General Voucher for a Customer.
+2. Create a Debit Voucher (increases receivable) for PKR 5,000.
+3. Create a Credit Voucher (decreases receivable) for PKR 2,000.
+4. Open the customer's ledger / balance via ajaxBalance.
+5. Net balance from these vouchers should be +5,000 - 2,000 = +3,000 on the
+   receivable side. Before the fix it would show +7,000.
+
+EXPECTED RESULT: Customer balance correctly reflects Credit Vouchers reducing
+the receivable by the cc_amount value.
+
+
+FIX #3: CROSS-6 — AuthController reads non-existent 'pass' column
+------------------------------------------------------------------
+File: app/Http/Controllers/AuthController.php
+
+ORIGINAL PROBLEM:
+Line 33 read `auth()->user()->pass`, but the User model has no 'pass' column
+(it uses role_id). PHP returns null for undefined properties, causing the
+switch to always fall to 'default' — all users get the same generic redirect
+regardless of their role. The admin welcome message was never shown.
+
+IMPLEMENTED FIX:
+Replaced the switch/pass logic with `auth()->user()->isAdmin()` which correctly
+checks role_id === 1 (ROLE_ADMIN constant). Admins get a success flash message;
+other roles get a plain redirect. Both go to the same dashboard route.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Log in with an admin account (role_id = 1).
+2. Verify the "Logged In Successfully" flash message appears on the dashboard.
+3. Log in with a non-admin account.
+4. Verify redirect to dashboard works without an error or unexpected behaviour.
+
+EXPECTED RESULT: Admin login shows success toast; all users land on dashboard.
+
+
+FIX #4: Issue #16 — Payroll info page loan_pending ignores opening balance
+--------------------------------------------------------------------------
+File: app/Http/Controllers/PayrollController.php (info method, ~line 399)
+
+ORIGINAL PROBLEM:
+PayrollController::info() calculated loan_pending as:
+  max(0, totalLoansGiven - loanRepayments)
+But create() and edit() use:
+  max(0, openingBalance + totalLoansGiven - loanRepayments)
+For employees with an opening balance entry, the info page showed a lower
+(incorrect) pending loan balance.
+
+IMPLEMENTED FIX:
+Added the same opening balance lookup that exists in create() and edit():
+  max(0, openingBalance + totalLoansGiven - loanRepayments)
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Set an opening balance (transaction_type='openingBalance') for an employee,
+   e.g., credit=10,000 (meaning employee owes 10,000).
+2. Process and record payroll for any month for that employee.
+3. Navigate to Payroll → Info (view) for that month.
+4. The loans_pending column should include the opening balance in its calculation.
+5. Compare with the value shown on the Edit payroll page — they should match.
+
+EXPECTED RESULT: Loans pending shown on info page matches the value on the
+create/edit page for employees with opening balances.
+
+
+=============================================================================
+TIER 2 — HIGH-IMPACT FUNCTIONAL BUGS
+=============================================================================
+
+FIX #5: Issue #13 — Duplicate fields in Transaction::$fillable
+---------------------------------------------------------------
+File: app/Models/Transaction.php
+
+ORIGINAL PROBLEM:
+'fb_charges' and 'db_charges' were listed twice each in the $fillable array.
+Functionally harmless for Eloquent fill, but indicates copy-paste error.
+
+IMPLEMENTED FIX:
+Removed the duplicate entries. Each field now appears exactly once.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Create a transaction with fb_charges and db_charges values.
+2. Verify the record is stored correctly in the database.
+
+EXPECTED RESULT: No change in behavior; duplicates removed for code quality.
+
+
+FIX #6: Issue #8 — updateTransfer finds paired transaction by wrong bank_id
+---------------------------------------------------------------------------
+Files: app/Http/Controllers/TransactionController.php,
+       database/migrations/2026_06_16_000001_add_transfer_pair_id_to_transactions_table.php,
+       app/Models/Transaction.php
+
+ORIGINAL PROBLEM:
+updateTransfer() tried to find the paired transaction using:
+  bank_id = original transaction's bank_id (the FROM bank)
+But the paired (inflow) transaction has the TO bank's bank_id, which is
+different. This query would either return null (pair not updated) or, if two
+transfers from the same bank existed on the same date, update the wrong record.
+
+IMPLEMENTED FIX:
+1. Added nullable `transfer_pair_id` column to transactions via migration.
+2. storeTransfer() now links both transactions to each other:
+     Transaction::update(['transfer_pair_id' => $getId2]) for $getId1
+     Transaction::update(['transfer_pair_id' => $getId1]) for $getId2
+3. updateTransfer() first tries to find the paired transaction by transfer_pair_id
+   (deterministic). If null (legacy records created before this fix), it falls
+   back to a heuristic: same date, debit not null, credit null — the inflow side.
+4. After a successful update, pair_ids are re-synced in case the record changed.
+
+DATABASE / MIGRATION NOTES:
+Migration adds nullable column — zero impact on existing records.
+Existing transfers (created before this fix) will use the fallback heuristic on
+first edit; after one edit their pair_id is saved and future edits use the fast path.
+
+TESTING STEPS:
+1. Create two bank-to-bank transfers on the same day from the same source account.
+2. Edit the first transfer (change amount or date).
+3. Verify ONLY that transfer's paired inflow entry is updated (the second transfer
+   should remain unchanged).
+4. Edit the second transfer.
+5. Verify its paired entry updates correctly.
+
+EXPECTED RESULT: Each transfer edits only its own paired transaction, regardless
+of how many other transfers exist on the same date from the same bank.
+
+
+FIX #7: Issue #35 — DeliveryReturn update doesn't re-adjust stock
+-----------------------------------------------------------------
+Files: app/Http/Controllers/DeliveryReturnController.php,
+       database/migrations/2026_06_16_000002_add_source_id_to_stocks_table.php,
+       app/Models/Stock.php
+
+ORIGINAL PROBLEM:
+DeliveryReturnController::update() updated the return header and return items
+but did NOT update the stock adjustment entries that were created in store().
+Changing return quantities left the stock entries from the original store call
+in place, creating a stock discrepancy (stock records showed old quantities
+while return items showed new quantities).
+
+IMPLEMENTED FIX:
+1. Added nullable `source_id` column to stocks table to store the delivery_return_id
+   when table_name = 'delivery_returns'.
+2. adjustStock() now accepts an optional $deliveryReturnId parameter and saves it
+   as source_id on the new stock record.
+3. store() passes $returnId as the source_id to adjustStock().
+4. update() now:
+   (a) Finds the existing return stock via table_name='delivery_returns' AND
+       source_id = $id (the delivery_return_id).
+   (b) Deletes its stock_items and the stock record itself.
+   (c) Updates the return header and items.
+   (d) Calls adjustStock() with the new quantities to create fresh stock entries.
+
+DATABASE / MIGRATION NOTES:
+Migration adds nullable source_id — zero impact on existing records.
+Existing delivery returns (created before this fix) will have source_id=NULL on
+their stock records; the update() method will skip the stock reversal for these
+legacy records (no existing return stock found to delete). This is safe — the
+stock discrepancy existed before and is not made worse; only returns created
+AFTER this fix will have fully reversible stock adjustments.
+
+TESTING STEPS:
+1. Create a delivery and then a delivery return for 10 units of a product.
+2. Check stock: available quantity should increase by 10.
+3. Edit the delivery return and change the quantity to 6.
+4. Check stock again: available quantity should now reflect +6, not +10.
+5. Verify the delivery_return_items table shows qty=6.
+
+EXPECTED RESULT: Stock levels accurately reflect the updated return quantity after
+editing a delivery return.
+
+
+FIX #8: Issue #42 — Opening stock hardcoded to stock_id=1
+----------------------------------------------------------
+File: app/Http/Controllers/ProductController.php
+
+ORIGINAL PROBLEM:
+Both ProductController::store() and updateStageSpecificOpeningStock() hardcoded
+'stock_id' => '1' for opening stock entries. If the record at stock_id=1 is
+ever deleted or the database is rebuilt, opening stock writes silently orphan or
+fail with an FK violation.
+
+IMPLEMENTED FIX:
+Added private helper `getOpeningStockId()` that:
+1. Checks if stock_id=1 exists — returns 1 if so (fully backward compatible).
+2. If stock_id=1 is missing, searches for a stock with stock_no='OPENING-STOCK'
+   and table_name='opening_stock'.
+3. If that is also missing, creates a new "Master Opening Stock Record" and
+   returns its ID.
+Both store() and updateStageSpecificOpeningStock() now call this helper instead
+of hardcoding '1'.
+
+DATABASE / MIGRATION NOTES:
+No schema change needed. Existing data at stock_id=1 is completely unaffected;
+getOpeningStockId() returns 1 as long as that record exists.
+
+TESTING STEPS:
+1. Create a new product with opening stock quantities.
+2. Verify the stock_items records created have stock_id=1 (assuming that record
+   exists).
+3. To test the fallback: temporarily rename stock_no of stock_id=1 in the DB,
+   then create another product — verify a new OPENING-STOCK record is created
+   and stock_items link to it.
+4. Edit the product's opening stock — verify the stock_items update correctly.
+
+EXPECTED RESULT: Opening stock entries are always linked to a valid stock record,
+preventing orphaned foreign keys even if stock_id=1 is removed.
+
+
+=============================================================================
+TIER 3 — VALIDATION FIXES
+=============================================================================
+
+FIX #9: Issue #10 — TransactionRequest missing debit/credit validation
+-----------------------------------------------------------------------
+File: app/Http/Requests/TransactionRequest.php
+
+ORIGINAL PROBLEM:
+'debit' and 'credit' rules were empty strings (''), meaning any value (including
+non-numeric strings like 'abc') was accepted without validation.
+
+IMPLEMENTED FIX:
+  'debit'  => 'nullable|numeric|min:0'
+  'credit' => 'nullable|numeric|min:0'
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Open any transaction form (e.g., vendor payment).
+2. Enter 'abc' in the amount field and submit.
+3. Verify a validation error is returned instead of a DB error.
+4. Enter a valid numeric amount and verify normal operation.
+
+EXPECTED RESULT: Non-numeric or negative values are rejected with a clear
+validation message.
+
+
+FIX #10: Issue #11 — payee_type unvalidated in TransactionController::store()
+-----------------------------------------------------------------------------
+File: app/Http/Controllers/TransactionController.php (store method, ~line 565)
+
+ORIGINAL PROBLEM:
+When processing a general voucher, $payeeType from the request was assigned
+directly to transaction_to without validation. Submitting payee_type='brs' or
+'transfer' would corrupt the ledger by creating records with unexpected types.
+
+IMPLEMENTED FIX:
+Added explicit validation before assignment:
+  $allowedPayeeTypes = ['vendor', 'contractor', 'employee', 'customer'];
+  if (!in_array($payeeType, $allowedPayeeTypes)) {
+      return redirect()->back()->with('fails', 'Invalid payee type ...')->withInput();
+  }
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Submit a general voucher form (via browser dev tools or Postman) with
+   payee_type='transfer'.
+2. Verify the request is rejected with "Invalid payee type for general voucher".
+3. Submit with a valid payee_type='vendor' and verify normal processing.
+
+EXPECTED RESULT: Only the four allowed payee types are accepted; arbitrary values
+are rejected without creating database records.
+
+
+FIX #11: Issue #44 — quantity/price not validated as numeric in requests
+------------------------------------------------------------------------
+Files: app/Http/Requests/OrderRequest.php, app/Http/Requests/PurchaseRequest.php
+
+ORIGINAL PROBLEM:
+'quantity.*' and 'price.*' were validated only as 'required', allowing zero,
+negative, or non-numeric input. Multiplying price*quantity with non-numeric
+values produces PHP warnings or 0-value records.
+
+IMPLEMENTED FIX:
+OrderRequest:
+  'quantity.*' => 'required|numeric|min:0.01'
+  'price.*'    => 'required|numeric|min:0'
+
+PurchaseRequest:
+  'quantity.*'  => 'required|numeric|min:0.01'
+  'aquantity.*' => 'required|numeric|min:0'
+  'bquantity.*' => 'required|numeric|min:0'
+  'price.*'     => 'required|numeric|min:0'
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Create an order and enter '0' for a quantity — verify validation error.
+2. Enter 'abc' for price — verify validation error.
+3. Enter valid values and verify the order creates correctly.
+
+EXPECTED RESULT: Zero, negative, or non-numeric quantities/prices are rejected
+at the request validation layer.
+
+
+FIX #12: Issue #17 — Payroll store/update lack DB::transaction wrapping
+-----------------------------------------------------------------------
+File: app/Http/Controllers/PayrollController.php
+
+ORIGINAL PROBLEM:
+PayrollController::store() and update() issued multiple transaction INSERT/DELETE
+statements inside a foreach loop with no DB::transaction() wrapper. A connection
+drop or DB error mid-loop would leave payroll in a partial state (some employees
+paid, others not).
+
+IMPLEMENTED FIX:
+Wrapped the entire foreach (and the delete-then-insert block in update()) inside
+DB::transaction(). If any statement fails, all changes are automatically rolled back.
+PHP references (&$transactionCount, &$totalAmount) allow return values to propagate
+out of the closure.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Simulate a partial failure: temporarily add a throw inside the loop after the
+   first employee's INSERT, run payroll for multiple employees.
+2. Verify no salary records were written to the DB (full rollback).
+3. Remove the throw and confirm normal payroll processing works.
+
+EXPECTED RESULT: Either ALL employees are paid or NONE are — no partial states.
+
+
+=============================================================================
+TIER 4 — SECURITY & AUTHORIZATION IMPROVEMENTS
+=============================================================================
+
+FIX #13: Issue #6 — AuthServiceProvider Gates reference non-existent 'role' column
+------------------------------------------------------------------------------------
+File: app/Providers/AuthServiceProvider.php
+
+ORIGINAL PROBLEM:
+Global Gate definitions (show, create, edit, delete) checked $user->role
+against string values ('admin', 'operator'). The User model has no 'role' string
+column — it uses role_id (integer). All @can directives using these gates always
+returned false for every user.
+
+IMPLEMENTED FIX:
+Gates now check $user->role_id against the User model's constants:
+  ROLE_ADMIN   = 1
+  ROLE_MANAGER = 2  (treated as 'operator' equivalent)
+  show/create: role_id in [ROLE_ADMIN, ROLE_MANAGER]
+  edit/delete: role_id === ROLE_ADMIN
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Log in as admin (role_id=1).
+2. Verify that @can('edit') in blade templates shows edit buttons.
+3. Log in as a manager (role_id=2).
+4. Verify @can('show') and @can('create') pass, but @can('edit') does not.
+5. Log in as any other role (role_id > 2).
+6. Verify all @can directives return false and buttons are hidden.
+
+EXPECTED RESULT: Gate-protected UI elements are shown/hidden based on the user's
+actual role_id, not a non-existent 'role' column.
+
+
+FIX #14: Issue #5 — PayrollController has no middleware in constructor
+----------------------------------------------------------------------
+File: app/Http/Controllers/PayrollController.php
+
+ORIGINAL PROBLEM:
+The constructor did not call $this->middleware(). Route-level auth protection
+depended solely on per-method authorize() calls. If a method was added without
+an authorize() call, it would be publicly accessible.
+
+IMPLEMENTED FIX:
+Added `$this->middleware(['auth', 'all'])` in the constructor, consistent with
+all other controllers in the application.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Log out.
+2. Attempt to access /payroll directly in the browser.
+3. Verify you are redirected to the login page.
+
+EXPECTED RESULT: All payroll routes require authentication at the route layer,
+independent of per-method authorize() checks.
+
+
+FIX #15: Issue #4 — DeliveryReturnController missing 'all' middleware
+----------------------------------------------------------------------
+File: app/Http/Controllers/DeliveryReturnController.php
+
+ORIGINAL PROBLEM:
+The constructor called $this->middleware(['auth']) but not 'all', making it
+inconsistent with the rest of the application. The 'all' middleware is expected
+to be present for every authenticated route.
+
+IMPLEMENTED FIX:
+Changed to `$this->middleware(['auth', 'all'])`.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Log in as an authenticated user.
+2. Access any delivery return route.
+3. Verify the 'all' middleware check does not block legitimate users.
+4. Log out and attempt access — verify redirect to login.
+
+EXPECTED RESULT: Delivery return routes are protected by both auth and all
+middleware, consistent with other controllers.
+
+
+FIX #16: Issue #7 — TransactionController::update() has no authorization check
+-------------------------------------------------------------------------------
+File: app/Http/Controllers/TransactionController.php (update method)
+
+ORIGINAL PROBLEM:
+TransactionController::update() had no $this->authorize() call. Any authenticated
+user with any role could modify any financial transaction. store() was protected
+via TransactionRequest, but update() had no guard at all.
+
+IMPLEMENTED FIX:
+Added `$this->authorize('edit', Transaction::class)` as the first line of update().
+This uses the existing TransactionPolicy which enforces role-based permission.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Log in as a user without 'edit' permission on transactions.
+2. Attempt to submit a transaction update form (or POST to /transaction/{id}).
+3. Verify a 403 Forbidden response is returned.
+4. Log in as admin and verify updates work normally.
+
+EXPECTED RESULT: Only users with the 'edit' permission on Transaction can update
+financial records.
+
+
+FIX #17: Issue #22 — StockController AJAX endpoints had no authentication
+--------------------------------------------------------------------------
+File: app/Http/Controllers/StockController.php
+
+ORIGINAL PROBLEM:
+StockController::__construct() used ->except([...]) to exclude AJAX endpoints
+(ajaxPM, ajaxPT, ajaxPTStock, ajaxPC, ajaxPS, ajaxIG, ajaxMQty, ajaxAMQty,
+ajaxATMQty, getAllProducts) from ALL middleware, making them world-readable
+without any authentication. This exposed business-sensitive data including
+product costs, stock quantities, and material details.
+
+IMPLEMENTED FIX:
+Added an explicit `$this->middleware(['auth'])->only([...])` for the AJAX
+endpoint list BEFORE the existing except() line. This ensures these endpoints
+require authentication (login) while not requiring the 'all' role check, so
+they remain accessible to all logged-in users populating form dropdowns.
+
+DATABASE / MIGRATION NOTES: None.
+
+TESTING STEPS:
+1. Log out completely.
+2. Attempt to access /ajax/products (or any ajaxPM/ajaxPT endpoint) directly.
+3. Verify you receive a 401/redirect to login rather than JSON data.
+4. Log in and verify the AJAX endpoints still return data normally for form use.
+
+EXPECTED RESULT: AJAX data endpoints require a valid login session; unauthenticated
+requests are rejected.
+
+
+=============================================================================
+ISSUES SKIPPED (PER AUDIT REPORT INSTRUCTIONS)
+=============================================================================
+
+Issue #21 — OrderController packing box material_type_id hardcoded (id=61)
+  Status: SKIPPED per audit note: "Keep using the same id"
+
+Issue #31 — Delivery store does not create AR entry
+  Status: SKIPPED per audit note: "Skip as no payment is made on delivery"
+
+Issue #39 — AttendanceController has dd() in production path
+  Status: SKIPPED per audit note: "Keep the code as it is, don't touch that code"
+
+Issue #40 — AttendanceController hardcodes biometric file path
+  Status: SKIPPED per audit note: "Keep this code untouched"
+
+Issue #9 — storeTransfer balance calculation sign error
+  Status: DEFERRED — after reviewing the code, storeTransfer uses
+  `($fromBalance->tdebit ?? 0) - ($fromBalance->tcredit ?? 0)`, which is
+  consistent with the showBBalance() formula in the same controller and with
+  the bankBalance2 repository method. The audit's claim of a sign reversal
+  could not be confirmed without a full query-level review of bankBalance2;
+  the transfer creation logic correctly sets credit=amount for the outflow and
+  debit=amount for the inflow. No change made to avoid introducing a new bug.
+
+Issue #25 — PTC quantity stored in description field
+  Status: DEFERRED — Extracting QTY to a dedicated column requires a migration
+  plus updates to DashboardController and all PTC-related views/queries. This is
+  a larger refactor outside the scope of this audit pass.
+
+Issue #26 — Over-receive validation for PTC (finished/semi-finished products)
+  Status: PARTIALLY ADDRESSED — Audit note says material issuances allow more
+  receiving (cut cloth), but finished/semi-finished products should not. Full
+  implementation requires product_type classification checks across ptcReceiveStore
+  and ptcMoveStage. Deferred to a dedicated PTC improvement pass.
+
+Issue #30 — Purchase price always overwrites material cost price
+  Status: DEFERRED — Audit note requests a price history feature. Adding a
+  price history table is a new feature beyond bug fixing scope.
+
+Issue #32 — Multi-order delivery heuristic is unreliable
+  Status: DEFERRED — Adding `is_multi_order` boolean column requires migration
+  and updates to all delivery creation/display flows. Deferred to a delivery
+  module improvement pass.
+
+Issues #1/#2/#3 — Route middleware architecture (empty auth group, all routes
+  outside middleware, all middleware trivially satisfied)
+  Status: DEFERRED — Per instructions, route protection and security findings
+  are lower priority. Restructuring web.php would require testing every route.
+  This is a systemic refactor deferred to a dedicated security hardening pass.
+
+Issues #23/#29/#33/#37/#41/#43 — update() methods lacking FormRequest validation
+  Status: DEFERRED — Systemic pattern (CROSS-1). Applying FormRequests to all
+  update() methods requires careful review of each controller's update logic to
+  ensure rules are compatible with partial updates (PATCH semantics). Deferred
+  to a validation hardening pass.
+
+CROSS-2 — Multi-table writes lacking DB::transaction (OrderController,
+  PurchaseController, DeliveryController)
+  Status: PARTIALLY ADDRESSED — PayrollController's store and update are now
+  wrapped. OrderController, PurchaseController, DeliveryController transactions
+  are deferred as each requires deeper testing to ensure rollback behavior is safe.
+
+Issue #38 — Return quantity not validated against received quantity
+  Status: DEFERRED — Requires joining return_materials with receive_materials
+  to compute per-line remaining quantities. The validation note about pending
+  (not-yet-approved) purchase receives also requires stock approval state checks.
+  Deferred to a dedicated returns improvement pass.
+
+Issue #15 — Payroll bank balance check before disbursement
+  Status: DEFERRED — PayrollController::getBankBalance() exists as an AJAX
+  endpoint for client-side checks. Server-side enforcement before each INSERT
+  would require summing all employee salaries before the transaction loop.
+  The existing client-side check via getBankBalance() provides partial coverage.
+
+
+=============================================================================
+SUMMARY TABLE
+=============================================================================
+
+Issue   | Severity  | Status      | File(s) Modified
+--------|-----------|-------------|------------------------------------------
+#14     | Critical  | FIXED       | PayrollController.php
+#12     | High      | FIXED       | TransactionController.php
+CROSS-6 | Functional| FIXED       | AuthController.php
+#16     | High      | FIXED       | PayrollController.php
+#13     | Low       | FIXED       | Transaction.php (Model)
+#8      | High      | FIXED       | TransactionController.php + migration
+#35     | High      | FIXED       | DeliveryReturnController.php + migration
+#42     | Critical  | FIXED       | ProductController.php
+#10     | Medium    | FIXED       | TransactionRequest.php
+#11     | Medium    | FIXED       | TransactionController.php
+#44     | Medium    | FIXED       | OrderRequest.php, PurchaseRequest.php
+#17     | Medium    | FIXED       | PayrollController.php
+#6      | Low       | FIXED       | AuthServiceProvider.php
+#5      | Medium    | FIXED       | PayrollController.php (constructor)
+#4      | Medium    | FIXED       | DeliveryReturnController.php (constructor)
+#7      | High      | FIXED       | TransactionController.php (update method)
+#22     | High      | FIXED       | StockController.php (constructor)
+#9      | High      | DEFERRED    | See notes above
+#25     | Medium    | DEFERRED    | PTC column refactor needed
+#26     | Medium    | DEFERRED    | PTC over-receive validation
+#30     | Medium    | DEFERRED    | Price history feature
+#32     | Medium    | DEFERRED    | is_multi_order column + delivery refactor
+#1/#2   | Critical  | DEFERRED    | Route architecture refactor
+#3      | High      | DEFERRED    | All middleware logic improvement
+#15     | High      | DEFERRED    | Payroll bank balance server-side check
+#38     | Medium    | DEFERRED    | Return quantity vs received validation
+CROSS-1 | High      | DEFERRED    | Systemic update() FormRequest validation
+CROSS-2 | High      | PARTIAL     | Payroll done; Order/Purchase/Delivery deferred
+#21     | Low       | SKIPPED     | Per audit instructions (keep id=61)
+#31     | High      | SKIPPED     | Per audit instructions (no AR on delivery)
+#39     | High      | SKIPPED     | Per audit instructions (keep dd() intact)
+#40     | Medium    | SKIPPED     | Per audit instructions (keep hardcoded path)
+
+
+END OF IMPLEMENTATION REPORT

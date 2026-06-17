@@ -128,7 +128,7 @@ class ProductController extends Controller
 
                 if ($sizeId && $stageId && $quantity > 0 && $productTypeId) {
                     $stockItem = [
-                        'stock_id' => '1', // Opening stock ID
+                        'stock_id' => $this->getOpeningStockId(),
                         'product_type_id' => $productTypeId,
                         'material_id' => '0',
                         'quantity' => $quantity,
@@ -365,7 +365,7 @@ class ProductController extends Controller
 
                 if ($sizeId && $stageId && $quantity > 0 && $productTypeId) {
                     $stockItem = [
-                        'stock_id' => '1', // Opening stock ID
+                        'stock_id' => $this->getOpeningStockId(),
                         'product_type_id' => $productTypeId,
                         'material_id' => '0',
                         'quantity' => $quantity,
@@ -382,5 +382,42 @@ class ProductController extends Controller
     public function destroy(product $product)
     {
         $this->authorize('delete', Product::class);
+    }
+
+    /**
+     * Returns the stock_id to use for opening stock entries.
+     *
+     * Prefers the canonical stock_id=1 record for backward compatibility with
+     * existing data.  If that record is missing (e.g., after a DB reset or
+     * migration to a fresh environment) a dedicated "opening stock" master
+     * record is created instead, preventing silent foreign-key orphans.
+     */
+    private function getOpeningStockId(): int
+    {
+        $existing = DB::table('stocks')->where('stock_id', 1)->first();
+        if ($existing) {
+            return 1;
+        }
+
+        // No record at id=1 – find or create the canonical opening-stock record
+        $openingStock = DB::table('stocks')
+            ->where('stock_no', 'OPENING-STOCK')
+            ->where('table_name', 'opening_stock')
+            ->first();
+
+        if ($openingStock) {
+            return $openingStock->stock_id;
+        }
+
+        return DB::table('stocks')->insertGetId([
+            'stock_no'     => 'OPENING-STOCK',
+            'table_name'   => 'opening_stock',
+            'stock_type'   => 1,
+            'stock_date'   => now()->format('Y-m-d'),
+            'stock_status' => 1,
+            'description'  => 'Master Opening Stock Record',
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
     }
 }

@@ -33,8 +33,8 @@ class OrderRequest extends FormRequest
             // Purchase Items
             'product_type_id.*' => 'required',
             'product_stage_id.*' => 'required',
-            'quantity.*' => 'required',
-            'price.*' => 'required',
+            'quantity.*' => 'required|numeric|min:0.01',
+            'price.*' => 'required|numeric|min:0',
             // 'price2.*' => 'required',
             // 'head_id.*' => 'required',
             // 'exchange.*' => 'required',

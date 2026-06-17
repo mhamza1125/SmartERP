@@ -30,16 +30,11 @@ class AuthController extends Controller
             return back()->with('fails', 'Invalid Login Details');
         }
 
-        $role = auth()->user()->pass;
-
-        switch ($role) {
-            case 'admin':
-                return redirect()->route('dashboard')->with('success', 'Loged In Successfully');
-                break;
-            default:
-                return redirect()->route('dashboard');
-                break;
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('dashboard')->with('success', 'Logged In Successfully');
         }
+
+        return redirect()->route('dashboard');
     }
 
     public function logout()

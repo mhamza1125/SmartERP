@@ -68,6 +68,12 @@ class StockController extends Controller
         ProductCostRepository $productCostRepository,
         ProductMaterialRepository $productMaterialRepository,
     ) {
+        // All endpoints require authentication; the 'all' (role) check is lifted for
+        // AJAX endpoints so they work in read-only contexts for populating forms.
+        $this->middleware(['auth'])->only([
+            'ajaxPM', 'ajaxPT', 'ajaxPTStock', 'ajaxPC', 'ajaxPS',
+            'ajaxIG', 'ajaxMQty', 'ajaxAMQty', 'ajaxATMQty', 'getAllProducts'
+        ]);
         $this->middleware(['auth', 'all'])->except([
             'ajaxPM', 'ajaxPT', 'ajaxPTStock', 'ajaxPC', 'ajaxPS',
             'ajaxIG', 'ajaxMQty', 'ajaxAMQty', 'ajaxATMQty', 'getAllProducts'

@@ -1,6 +1,44 @@
 ===============================================================================================
 ===============================================================================================
 
+1. http://192.168.10.99:8080/ERP/public/order/45
+    http://192.168.10.99:8080/ERP/public/order
+Allow us to change the status of orders. Skipped
+
+2. /delivery/{id}
+Update it's print label from Delivery Chalan to valid text
+
+3. Fix date format in all over the software in 
+    Prouction order print
+        Production order print
+        Remove the text "Production items" in production order print
+4. Fix header logo
+And fix the footer at the bottom
+
+5. Purchase order print. Fix and display the Material / products accordingly. With sizes and details
+
+6. Printing width of all prints should be same
+
+7. REceive products / material print. Fix width and details showns and remove the table header
+
+8. Align print cells to the left not in the middle. ONly the product / material name column not all. And amounts / qty in center
+
+9. Order information print: There is no need of transaction number / voucher number
+
+10. No need of pending and rejection in purchase of material and product. Only approval and add up to the stock
+
+===============================================================================================
+
+1. Payroll should show the same outstanding balance as in the person's ledger, Including things like OpeningBalance, GeneralVoucher etc
+
+2. http://127.0.0.1:8000/order/53
+Show recent deliveries of the order along with It
+
+3. http://127.0.0.1:8000/delivery-return/5
+Add the button of delivery return, As it is already fixed 
+
+===============================================================================================
+
 1. http://127.0.0.1:8000/order/production/53
 Sizes are always grouped together. That should not be like this fix that. 
 

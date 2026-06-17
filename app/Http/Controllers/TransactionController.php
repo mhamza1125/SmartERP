@@ -415,7 +415,9 @@ class TransactionController extends Controller
                     $totalGeneralDebit = 0;
                     $totalGeneralCredit = 0;
                     foreach ($generalVouchers as $gv) {
-                        if ($gv->credit == 0 && $gv->credit === null) {
+                        // Credit voucher: credit=null, debit=0 (decreases receivable)
+                        // Debit voucher: credit=0, debit=null (increases receivable)
+                        if ($gv->credit === null) {
                             // Credit voucher - decreases receivable
                             $totalGeneralCredit += $gv->cc_amount ?? 0;
                         } else {
@@ -561,8 +563,12 @@ class TransactionController extends Controller
 
         // For generalVoucher: handle debit/credit based on voucher type and payee type
         if ($validatedData['transaction_to'] == 'generalVoucher') {
-            // Determine if payee is vendor, contractor, employee, or customer based on payee_type
+            // Validate payee_type to prevent arbitrary values from corrupting transaction_to
             $payeeType = $request->input('payee_type');
+            $allowedPayeeTypes = ['vendor', 'contractor', 'employee', 'customer'];
+            if (!in_array($payeeType, $allowedPayeeTypes)) {
+                return redirect()->back()->with('fails', 'Invalid payee type for general voucher')->withInput();
+            }
             $validatedData['transaction_to'] = $payeeType; // Set to 'vendor', 'contractor', 'employee', or 'customer'
 
             // Get the voucher type and amount
@@ -778,6 +784,10 @@ class TransactionController extends Controller
         // Store both transactions
         $getId1 = $this->transactionRepository->store($transaction1);
         $getId2 = $this->transactionRepository->store($transaction2);
+
+        // Link the two transfer transactions so they can be found deterministically during update
+        Transaction::where('transaction_id', $getId1)->update(['transfer_pair_id' => $getId2]);
+        Transaction::where('transaction_id', $getId2)->update(['transfer_pair_id' => $getId1]);
 
         return redirect()->route('transaction.showTransfer', $getId1)->with('success', 'Transfer Created Successfully');
     }
@@ -1023,6 +1033,8 @@ class TransactionController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Transaction::class);
+
         // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
         if ($request->input('transaction_type') == 'receiveAdvance') {
             $request->merge(['debit' => $request->input('credit'), 'credit' => null]);
@@ -1185,13 +1197,23 @@ class TransactionController extends Controller
         ]);
 
         // Find and update the paired transaction (inflow)
-        // Look for another transfer transaction with opposite debit/credit
-        $pairedTransaction = Transaction::where('transaction_to', 'transfer')
-            ->where('transaction_type', 'transfer')
-            ->where('transaction_date', $originalTransaction->transaction_date)
-            ->where('transaction_id', '!=', $id)
-            ->where('bank_id', $originalTransaction->bank_id)
-            ->first();
+        // Prefer the explicit transfer_pair_id link for accuracy; fall back to
+        // date + debit-not-null heuristic for legacy records created before this column existed
+        $pairedTransaction = null;
+        if ($originalTransaction->transfer_pair_id) {
+            $pairedTransaction = Transaction::find($originalTransaction->transfer_pair_id);
+        }
+
+        if (!$pairedTransaction) {
+            // Legacy fallback: find a transfer on the same date that is the inflow side (debit set, credit null)
+            $pairedTransaction = Transaction::where('transaction_to', 'transfer')
+                ->where('transaction_type', 'transfer')
+                ->where('transaction_date', $originalTransaction->transaction_date)
+                ->where('transaction_id', '!=', $id)
+                ->whereNotNull('debit')
+                ->whereNull('credit')
+                ->first();
+        }
 
         if ($pairedTransaction) {
             $this->transactionRepository->update($pairedTransaction->transaction_id, [
@@ -1201,6 +1223,10 @@ class TransactionController extends Controller
                 'transaction_date' => $transactionDate,
                 'description' => $fullDescription,
             ]);
+
+            // Ensure pair links are updated if they changed
+            Transaction::where('transaction_id', $id)->update(['transfer_pair_id' => $pairedTransaction->transaction_id]);
+            Transaction::where('transaction_id', $pairedTransaction->transaction_id)->update(['transfer_pair_id' => $id]);
         }
 
         return redirect()->route('transaction.showTransfer', $id)->with('success', 'Transfer Updated Successfully');

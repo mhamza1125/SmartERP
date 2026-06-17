@@ -33,12 +33,12 @@ class PurchaseRequest extends FormRequest
             'material_id.*' => 'required',
             'product_type_id.*' => 'required',
             'product_stage_id.*' => 'required',
-            'quantity.*' => 'required',
+            'quantity.*' => 'required|numeric|min:0.01',
             'amaterial_id.*' => 'required',
-            'aquantity.*' => 'required',
+            'aquantity.*' => 'required|numeric|min:0',
             'bmaterial_id.*' => 'required',
-            'bquantity.*' => 'required',
-            'price.*' => 'required',
+            'bquantity.*' => 'required|numeric|min:0',
+            'price.*' => 'required|numeric|min:0',
         ];
     }
 }

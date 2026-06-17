@@ -32,7 +32,7 @@ class DeliveryReturnController extends Controller
         DeliveryReturnRepository $deliveryReturnRepository,
         DeliveryReturnItemRepository $deliveryReturnItemRepository
     ) {
-        $this->middleware(['auth']);
+        $this->middleware(['auth', 'all']);
         $this->deliveryRepository = $deliveryRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->stockRepository = $stockRepository;
@@ -119,8 +119,8 @@ class DeliveryReturnController extends Controller
             
             $this->storeReturnItems($returnId, $stockItemIds, $returnQuantities, $reasons);
             
-            // Create stock adjustment entries
-            $this->adjustStock($validatedData['delivery_id'], $stockItemIds, $returnQuantities);
+            // Create stock adjustment entries (pass returnId so the stock can be reversed on update)
+            $this->adjustStock($validatedData['delivery_id'], $stockItemIds, $returnQuantities, $returnId);
             
             DB::commit();
             
@@ -203,18 +203,36 @@ class DeliveryReturnController extends Controller
         }
 
         DB::beginTransaction();
-        
+
         try {
-            // Update delivery return
+            $deliveryId = $request->input('delivery_id');
+
+            // Reverse existing stock adjustment created when this return was originally stored
+            $existingReturnStock = DB::table('stocks')
+                ->where('table_name', 'delivery_returns')
+                ->where('source_id', $id)
+                ->first();
+
+            if ($existingReturnStock) {
+                DB::table('stock_items')->where('stock_id', $existingReturnStock->stock_id)->delete();
+                DB::table('stocks')->where('stock_id', $existingReturnStock->stock_id)->delete();
+            }
+
+            // Update delivery return header
             $this->deliveryReturnRepository->update($id, $request->input());
-            
+
             // Update return items
             $this->deliveryReturnItemRepository->update($id, $request->input());
-            
+
+            // Re-create stock adjustment with updated quantities
+            $stockItemIds = $request->input('stock_item_id');
+            $returnQuantities = $request->input('return_quantity');
+            $this->adjustStock($deliveryId, $stockItemIds, $returnQuantities, $id);
+
             DB::commit();
-            
+
             return redirect()->route('delivery-return.show', $id)->with('success', 'Return updated successfully');
-            
+
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()->with(['fails' => 'Error updating return: ' . $e->getMessage()])->withInput();
@@ -240,7 +258,7 @@ class DeliveryReturnController extends Controller
         }
     }
 
-    private function adjustStock($deliveryId, $stockItemIds, $returnQuantities)
+    private function adjustStock($deliveryId, $stockItemIds, $returnQuantities, $deliveryReturnId = null)
     {
         // Get the original delivery stock record
         $deliveryStock = DB::table('stocks')
@@ -257,6 +275,7 @@ class DeliveryReturnController extends Controller
         $returnStockData = [
             'stock_no' => 'RET-' . $deliveryStock->stock_no,
             'order_id' => $deliveryStock->order_id,
+            'source_id' => $deliveryReturnId,
             'table_name' => 'delivery_returns',
             'employee_id' => $deliveryStock->employee_id,
             'stock_type' => 1, // Stock In

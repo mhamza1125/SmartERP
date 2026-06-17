@@ -73,28 +73,21 @@ class AuthServiceProvider extends ServiceProvider
         // These are only to Show / Hide Buttons by @can Method for .blade
         // To Restrict user access these must be used in Controller Methods
 
+        // role_id=1 is admin, role_id=2 is manager (operator equivalent)
         Gate::define('show', function (User $user) {
-            $allowedRoles = ['admin', 'operator'];
-
-            return in_array($user->role, $allowedRoles);
+            return in_array($user->role_id, [User::ROLE_ADMIN, User::ROLE_MANAGER]);
         });
 
         Gate::define('create', function (User $user) {
-            $allowedRoles = ['admin', 'operator'];
-
-            return in_array($user->role, $allowedRoles);
+            return in_array($user->role_id, [User::ROLE_ADMIN, User::ROLE_MANAGER]);
         });
 
         Gate::define('edit', function (User $user) {
-            $allowedRoles = ['admin'];
-
-            return in_array($user->role, $allowedRoles);
+            return $user->role_id === User::ROLE_ADMIN;
         });
 
         Gate::define('delete', function (User $user) {
-            $allowedRoles = ['admin'];
-
-            return in_array($user->role, $allowedRoles);
+            return $user->role_id === User::ROLE_ADMIN;
         });
     }
 }

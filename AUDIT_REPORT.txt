@@ -1,0 +1,841 @@
+SMARTERP COMPREHENSIVE AUDIT REPORT
+Generated: 2026-06-15
+Reviewer: Automated Code Review
+=====================================
+
+EXECUTIVE SUMMARY
+=================
+This audit covers the SmartERP Laravel application spanning approximately 42 controllers,
+40+ models, and a routes file with ~200 routes. Findings are organized by severity.
+
+Total Issues Found:
+  Critical:  5
+  High:     14
+  Medium:   18
+  Low:       9
+
+The most severe problems are: (1) nearly all routes are completely unprotected by the
+'auth' middleware, (2) the 'All' middleware authorization check is trivially bypassed,
+(3) the Payroll update deletes all receiveAdvance transactions for the month and not just
+payroll-created ones, (4) the balance calculation for bank transfers uses the wrong sign,
+and (5) the opening-stock mechanism writes to a hardcoded stock_id=1 record with no
+referential integrity guard.
+
+
+MODULE REVIEWS
+==============
+
+=============================================================================
+AUTH / USER MANAGEMENT (AuthController, AdminController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #1:
+  Severity: Critical
+  Title: Dashboard route has no authentication middleware
+  Description: The '/dashboard' GET route is listed outside the 'auth' middleware group
+               on line 43 of web.php. Any anonymous visitor can hit /dashboard directly.
+  Expected: Route::get('/dashboard', ...) should be inside the auth middleware group.
+  Actual: Route is declared at the top level with only DashboardController::class which
+          applies its own middleware in __construct, but the ROUTE itself has no guard
+          for the route layer, meaning if the controller middleware check is ever removed
+          or bypassed the route is wide open.
+  File(s): routes/web.php:43, app/Http/Controllers/DashboardController.php:12
+
+Issue #2:
+  Severity: Critical
+  Title: Almost all routes are outside the auth middleware group
+  Description: The route file defines a Route::group(['middleware' => 'auth']) block
+               (lines 45-51) that contains zero actual routes – it is an empty shell.
+               Every operational route (/admin, /user, /role, /attendance, /payroll, etc.)
+               is declared outside any middleware group. Protection relies 100% on
+               controller constructors calling $this->middleware(['auth', 'all']).
+               If a single controller forgets to call $this->middleware() in its constructor,
+               that entire module is publicly accessible. This is a systemic architectural
+               risk. Best practice is to wrap routes in the group so route-level enforcement
+               exists independent of controller code.
+  Expected: All authenticated routes should be within Route::middleware('auth')->group(...)
+  Actual: Empty auth group; all routes are top-level.
+  File(s): routes/web.php:45-51 and entire file
+
+Issue #3:
+  Severity: High
+  Title: 'All' middleware authorization check is trivially satisfied
+  Description: The All middleware (app/Http/Middleware/All.php:18) passes any request where
+               auth()->user()->role_id !== null. Since every valid user in the system has a
+               role_id assigned (including non-admin roles), this check passes for all logged-in
+               users. The isAdmin() shortcut on line 18 is effectively dead code here because
+               the OR condition ensures ALL logged-in users with any role pass through.
+  Expected: The middleware should enforce specific role permissions, not just "has a role".
+  Actual: Any authenticated user with role_id set (which is all users) bypasses restrictions.
+  File(s): app/Http/Middleware/All.php:18
+
+Issue #4:
+  Severity: Medium
+  Title: DeliveryReturnController uses only 'auth' middleware, not 'all'
+  Description: The DeliveryReturnController constructor calls $this->middleware(['auth'])
+               (line 35) rather than $this->middleware(['auth', 'all']). While it does use
+               $this->authorize() calls for individual actions, the 'all' middleware check
+               is missing, making this inconsistent with the rest of the application.
+  Expected: $this->middleware(['auth', 'all'])
+  Actual: $this->middleware(['auth'])
+  File(s): app/Http/Controllers/DeliveryReturnController.php:35
+
+Issue #5:
+  Severity: Medium
+  Title: PayrollController has no middleware applied in constructor
+  Description: PayrollController::__construct() (lines 24-29) does not call
+               $this->middleware() at all. Route-level protection therefore depends entirely
+               on the individual authorize() calls inside each action method. If an authorize
+               check were ever removed from a method, that method would be publicly accessible.
+  Expected: $this->middleware(['auth', 'all']) in the constructor.
+  Actual: No middleware call in __construct.
+  File(s): app/Http/Controllers/PayrollController.php:24-29
+
+Issue #6:
+  Severity: Low
+  Title: Global Gate definitions in AuthServiceProvider use 'role' column that does not exist
+  Description: AuthServiceProvider::boot() defines global Gates (show, create, edit, delete)
+               that check $user->role against string values like 'admin', 'operator'
+               (lines 76-98). However, the User model stores role information in role_id
+               (integer), not a 'role' string column. These global gates are therefore
+               always false for every user. They appear to be used only for blade @can
+               directives described in the comment, but they silently fail if someone
+               relies on them.
+  Expected: Gates should reference $user->role_id or call $user->isAdmin().
+  Actual: Gates reference $user->role which does not exist on the model.
+  File(s): app/Providers/AuthServiceProvider.php:76-98
+
+
+=============================================================================
+FINANCE: TRANSACTIONS (TransactionController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #7:
+  Severity: High
+  Title: Transaction 'update' method has no authorization middleware call
+  Description: TransactionController::update() (line 1024) does not call $this->authorize()
+               before updating a transaction. Any logged-in user (with any role) can modify
+               any financial transaction. The store() method does use authorize() via
+               TransactionRequest, but update() skips it.
+  Expected: $this->authorize('edit', Transaction::class) at the start of update().
+  Actual: No authorization check; any authenticated user can update any transaction.
+  File(s): app/Http/Controllers/TransactionController.php:1024
+
+Issue #8:
+  Severity: High
+  Title: Bank transfer update finds paired transaction by date/bank – fragile and incorrect
+  Description: updateTransfer() (line 1189) attempts to find the paired transfer transaction
+               by matching transaction_to='transfer', transaction_date (the ORIGINAL date),
+               and bank_id (the original from-bank). If two transfers were made on the same
+               day from the same bank, this query could find the wrong transaction and update
+               it instead, corrupting two unrelated transfers. There is no explicit pair_id
+               linking the two halves.
+  Expected: The two transfer transactions should share a transfer_pair_id or similar link
+             so the paired record is found deterministically.
+  Actual: Pair found by date + bank_id match which is ambiguous.
+  File(s): app/Http/Controllers/TransactionController.php:1189-1203
+
+Issue #9:
+  Severity: High
+  Title: storeTransfer balance calculation sign error
+  Description: storeTransfer() (line 737-742) computes the from-bank balance as:
+               $balance = ($fromBalance->tdebit ?? 0) - ($fromBalance->tcredit ?? 0)
+               but the bank balance display in showBBalance() (line 899) computes it as:
+               $balance = ($bBalance->tdebit ?? 0) - ($bBalance->tcredit ?? 0)
+               The naming is consistent, but in storeTransfer the field names are reversed:
+               `tdebit` accumulates credits (inflows) and `tcredit` accumulates debits
+               (outflows) based on how transactions are inserted. This inconsistency means
+               balance validation may use an inverted number, potentially allowing transfers
+               when the balance is actually negative.
+  Expected: Consistent balance formula matching the pattern used in showBBalance().
+  Actual: Formula may compute a negative of the true balance.
+  File(s): app/Http/Controllers/TransactionController.php:737-742
+
+Issue #10:
+  Severity: Medium
+  Title: TransactionRequest does not validate 'debit' or 'credit' as numeric
+  Description: TransactionRequest::rules() (lines 30-31) leaves 'debit' and 'credit' with
+               empty string rules (no validation). A user could submit non-numeric values
+               which would cause silent failures or DB errors when storing.
+  Expected: 'debit' => 'nullable|numeric|min:0', 'credit' => 'nullable|numeric|min:0'
+  Actual: 'debit' => '', 'credit' => '' (no rules)
+  File(s): app/Http/Requests/TransactionRequest.php:30-31
+
+Issue #11:
+  Severity: Medium
+  Title: General voucher payee_type input is unvalidated and controls transaction_to column
+  Description: In TransactionController::store() (line 565-566), the payee_type value from
+               the request is directly assigned to transaction_to without validation. If an
+               attacker submits payee_type='brs' or payee_type='transfer', the transaction
+               would be stored with an unexpected transaction_to value, corrupting ledger
+               queries that filter on this column.
+  Expected: Validate payee_type against allowed values: ['vendor','contractor','employee','customer']
+  Actual: $validatedData['transaction_to'] = $payeeType; with no validation.
+  File(s): app/Http/Controllers/TransactionController.php:565-566
+
+Issue #12:
+  Severity: Medium
+  Title: Customer general voucher condition for credit voucher check is always false
+  Description: In TransactionController::ajaxBalance() (line 418):
+               if ($gv->credit == 0 && $gv->credit === null)
+               This compound condition requires credit to simultaneously equal 0 AND be null,
+               which is logically impossible. Credit vouchers will never enter this branch.
+               The logic for distinguishing debit vs credit general vouchers for customers is
+               therefore broken and all customer general vouchers are treated as debit
+               (increasing receivable).
+  Expected: Should be: if (!$gv->credit && $gv->debit == 0) or similar.
+  Actual: Impossible compound condition means credit vouchers are misclassified.
+  File(s): app/Http/Controllers/TransactionController.php:418
+
+Issue #13:
+  Severity: Low
+  Title: Transaction model has duplicate fields in $fillable
+  Description: Transaction::$fillable (lines 23-24) lists 'fb_charges' and 'db_charges'
+               twice each.
+  Expected: Each field listed once.
+  Actual: Duplicated; while functionally harmless it indicates copy-paste sloppiness.
+  File(s): app/Models/Transaction.php:23-24
+
+
+=============================================================================
+PAYROLL (PayrollController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #14:
+  Severity: Critical
+  Title: Payroll update deletes ALL receiveAdvance transactions for the month
+  Description: PayrollController::update() (line 467-471) deletes transactions with:
+               transaction_type IN ('salary', 'receiveAdvance') for the given month.
+               The 'receiveAdvance' type is also used for general loan repayments made
+               outside of payroll (e.g., an employee manually repaying an advance during
+               the month). Editing payroll will permanently delete these non-payroll
+               loan repayment records.
+  Expected: Delete only receiveAdvance records where description LIKE 'Loan Repayment%'
+             (i.e., only payroll-created ones).
+  Actual: Deletes all receiveAdvance transactions in the month for all employees.
+  File(s): app/Http/Controllers/PayrollController.php:467-471
+
+Issue #15:
+  Severity: High
+  Title: Payroll processing does not check bank balance before disbursement
+  Description: PayrollController::store() (lines 144-218) processes salary payments but
+               never validates whether the selected bank account (or cash) has sufficient
+               balance to cover the total payroll. TransactionController::store() does check
+               balance for individual transactions, but payroll bypasses this.
+  Expected: Calculate total payroll amount and validate against bank/cash balance before
+             creating any transaction records.
+  Actual: No balance check; can overdraw any account.
+  File(s): app/Http/Controllers/PayrollController.php:144-218
+
+Issue #16:
+  Severity: High
+  Title: Payroll info page loan_pending calculation ignores opening balance
+  Description: In PayrollController::info() (lines 399):
+               $loansPending = max(0, $totalLoansGiven - $loanRepayments);
+               Unlike the create() and edit() methods (lines 121, 292) which include
+               $openingBalance in the pending loan calculation, the info() view omits it.
+               This causes the displayed loan balance on the payroll info page to be
+               incorrect for employees who have an opening balance entry.
+  Expected: $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepayments)
+  Actual: Opening balance not included; loans_pending understated.
+  File(s): app/Http/Controllers/PayrollController.php:399
+
+Issue #17:
+  Severity: Medium
+  Title: Payroll store and update have no DB transaction wrapping
+  Description: PayrollController::store() and update() issue multiple transaction inserts
+               in a foreach loop with no DB::transaction() wrapper. If an insert fails
+               mid-loop (e.g., DB connection drop), some employees will have salary records
+               and others will not, leaving payroll in a partial state.
+  Expected: Wrap the foreach loop in DB::transaction() with rollback on failure.
+  Actual: No transaction wrapper; partial payroll execution is possible.
+  File(s): app/Http/Controllers/PayrollController.php:176-215, 480-516
+
+
+=============================================================================
+PRODUCTION ORDERS (OrderController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #18:
+  Severity: High
+  Title: Job number generation has a race condition
+  Description: OrderController::generateJobNumber() (lines 106-126) counts existing orders
+               and adds 1 to determine the next number, but there is no database lock or
+               unique constraint. Two concurrent users creating orders for the same customer
+               in the same year could receive the same job number.
+  Expected: Use DB::select('SELECT GET_LOCK(...)') or a unique DB constraint with retry logic.
+  Actual: Count-then-insert pattern with race condition window.
+  File(s): app/Http/Controllers/OrderController.php:106-126
+
+Issue #19:
+  Severity: Medium
+  Title: OrderController::update() has no input validation
+  Description: OrderController::update() (line 417) uses $request->input() directly with
+               no FormRequest validation, while store() uses OrderRequest. An attacker can
+               send arbitrary fields in the update request including order_status, customer_id,
+               and prices with no type or range validation.
+  Expected: Apply OrderRequest (or a dedicated UpdateOrderRequest) to the update method.
+  Actual: $request->input() passed raw to repository.
+  File(s): app/Http/Controllers/OrderController.php:417-442
+
+Issue #20:
+  Severity: Medium
+  Title: Order status transition from any status to any value is allowed via updateStatus
+  Description: OrderController::updateStatus() (line 457) only blocks changes for statuses
+               3, 4, 5 (Dispatched/Delivered/Cancelled). A status of 1 (Pending) can be
+               directly set to 2 (Confirmed) to 0 or back, with no business logic validation
+               that the transition makes sense. There is no check that deliveries exist before
+               marking an order as Dispatched, for instance.
+  Expected: Implement a state machine or at minimum validate allowed transitions.
+  Actual: Any status to any status transition (other than the blocked ones) is accepted.
+  File(s): app/Http/Controllers/OrderController.php:457-472
+
+Issue #21:
+  Severity: Low (Keep using the same id)
+  Title: OrderController::getPackingList packing box material_type_id hardcoded
+  Description: getPackingList() (line 304) hardcodes material_type_id = 61 as the packing
+               box material type. This magic number has no named constant, comment explaining
+               what ID 61 refers to, or configurable setting.
+  Expected: Named constant or config value: config('erp.packing_box_material_type_id')
+  Actual: Hardcoded integer 61.
+  File(s): app/Http/Controllers/OrderController.php:304
+
+
+=============================================================================
+INVENTORY / STOCK / ISSUANCE (StockController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #22:
+  Severity: High
+  Title: Several AJAX endpoints have no authentication
+  Description: StockController::__construct() (line 71-74) exempts the following endpoints
+               from the 'auth' AND 'all' middleware:
+               ajaxPM, ajaxPT, ajaxPTStock, ajaxPC, ajaxPS, ajaxIG, ajaxMQty, ajaxAMQty,
+               ajaxATMQty, getAllProducts.
+               These endpoints return sensitive business data including product materials,
+               product types, costs, stock quantities, and issuance groups. They are
+               accessible to unauthenticated users (no 'auth' in the except list means
+               no auth at all for these routes).
+  Expected: At minimum, require authentication: $this->middleware(['auth'])->only([...])
+             or remove from the except() list.
+  Actual: No auth middleware on these AJAX endpoints; world-readable.
+  File(s): app/Http/Controllers/StockController.php:71-74
+
+Issue #23:
+  Severity: High
+  Title: StockController::update() has no authorization check or input validation
+  Description: StockController::update() (line 711) does not call $this->authorize() and
+               does not validate input through a FormRequest. It calls
+               $this->stockRepository->update($id, $request->input()) with raw input
+               from the request, potentially allowing mass assignment of any stock field.
+  Expected: Authorize and validate before updating.
+  Actual: Raw input passed to repository with no guards.
+  File(s): app/Http/Controllers/StockController.php:711-735
+
+Issue #24:
+  Severity: Medium
+  Title: PTC stage advancement does not validate receive completion before moving
+  Description: ptcNextStage() and ptcMoveStage() allow advancing to the next stage without
+               verifying that all issued items for the current stage have been received.
+               This can result in PTCs showing incorrect stage positions where items from
+               stage N are still "out" but the PTC is already recorded as being in stage N+1.
+  Expected: Verify that outstanding issued quantity equals received quantity before
+             allowing stage advancement.
+  Actual: Stage advancement is unconditional.
+  File(s): app/Http/Controllers/StockController.php:2533-2580, 2784-2927
+
+Issue #25:
+  Severity: Medium
+  Title: PTC quantity stored in description field using regex pattern
+  Description: ptcStore() (line 1209) embeds the product quantity inside the description
+               field as '[QTY:X]'. The dashboard (DashboardController.php:90) and
+               ptcCreate() (line 1042) must then parse this with regex to recover the
+               quantity. Storing structured data in a free-text description field is fragile:
+               any user who edits the description can corrupt or remove the quantity data.
+  Expected: Add a dedicated 'product_quantity' integer column to the stocks table.
+  Actual: Quantity parsed from description string with preg_match.
+  File(s): app/Http/Controllers/StockController.php:1209,
+            app/Http/Controllers/DashboardController.php:90
+
+Issue #26:
+  Severity: Medium
+  Title: ptcReceiveStore and ptcMoveStage do not prevent receiving more than was issued
+  Description: ptcReceiveStore() (line 2440-2528) accepts arbitrary quantities without
+               comparing them against the total issued quantity. A user could receive 1000
+               units against a 10-unit issuance. Similarly ptcMoveStage() (line 2784) has
+               no over-receive guard.
+  Expected: Validate r_quantity[i] <= (issued_quantity[i] - already_received_quantity[i]).
+  Actual: No over-receive validation; stock can become inflated.
+  File(s): app/Http/Controllers/StockController.php:2440-2528, 2784-2857
+  This should allow more receiving if issuance was of material only, but if any finished / semi-finished product was also issued. IT should not allow the more receiving of that good. More receiving of material is allowed because we gives the roll of cloth to cut small pieces and that extimated cut quantity could vary a bit so that is why more receiving to materila issuance should be allowed. 
+
+Issue #27:
+  Severity: Low
+  Title: DashboardController N+1 query for order item counts
+  Description: DashboardController::index() (lines 113-119) iterates over all in-progress
+               orders and issues a separate DB::table('order_items')->count() query for each.
+               If there are 100 in-progress orders this is 101 queries just for the dashboard.
+  Expected: Use a single query with COUNT via a join or subquery.
+  Actual: N+1 query pattern.
+  File(s): app/Http/Controllers/DashboardController.php:113-119
+
+Issue #28:
+  Severity: Low
+  Title: DashboardController low-stock filter uses PHP collection instead of SQL
+  Description: Lines 42-63 load all distinct product_type_ids, then for each one issues
+               another DB query to calculate total stock. This is an O(N) query problem
+               (one query per product type) that should be a single aggregated SQL query.
+  Expected: Single GROUP BY query to calculate stock per product type.
+  Actual: Per-item DB queries inside PHP filter closure.
+  File(s): app/Http/Controllers/DashboardController.php:42-63
+
+
+=============================================================================
+PURCHASES (PurchaseController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #29:
+  Severity: High
+  Title: PurchaseController::update() has no input validation
+  Description: PurchaseController::update() (line 247) uses Request $request and calls
+               $this->purchaseRepository->update($id, $request->input()) with no
+               FormRequest validation. store() uses PurchaseRequest but update() does not.
+  Expected: Apply PurchaseRequest to the update method.
+  Actual: Raw unvalidated input written to DB.
+  File(s): app/Http/Controllers/PurchaseController.php:247-255
+
+Issue #30:
+  Severity: Medium
+  Title: Purchase price update always overwrites material cost price
+  Description: PurchaseController::storePI() (line 281):
+               if (!$stage) $this->materialRepository->update($material, ['cprice' => $price]);
+               Every time a purchase is created without a product stage, the last purchase
+               price is written back to the material's cprice. If multiple line items have
+               different prices (e.g., different purchase quantities of the same material),
+               only the last iteration's price survives. This is an intentional "update
+               cost price on purchase" design, but it is silent and lossy.
+  Expected: At minimum document this behavior; consider using a weighted-average or
+             explicitly prompting the user.
+  Actual: Silently overwrites with whatever price was in the last row.
+  File(s): app/Http/Controllers/PurchaseController.php:281
+  Do something to have a history of previous prices and allow the current overiding of the prices
+
+
+=============================================================================
+DELIVERY (DeliveryController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #31: (Skip as no payment is made on delivery)
+  Severity: High
+  Title: Delivery store does not create the financial transaction (AR entry)
+  Description: When a delivery is created in DeliveryController::store() (lines 227-299),
+               there is no corresponding accounts-receivable transaction created in the
+               transactions table to record that the customer now owes money. The customer
+               ledger (CustomerController::detail) shows deliveries based on the
+               TransactionRepository, but if no transaction is stored on delivery, the
+               customer's balance will be incorrect unless the view fetches from a different
+               source. This needs cross-verification with the delivery repository, but the
+               pattern is inconsistent with how vendor payables are recorded through purchases.
+  Expected: Create a transaction record (debit: customer receivable) on delivery.
+  Actual: Only a stock entry and optional expense entries are stored; no receivable entry.
+  File(s): app/Http/Controllers/DeliveryController.php:227-299
+
+Issue #32:
+  Severity: Medium
+  Title: Multi-order delivery isMultiOrderDelivery() heuristic is unreliable
+  Description: isMultiOrderDelivery() (line 445-477) uses several heuristics to detect
+               multi-order deliveries: pipe in stock_no, comma in stock_no, string 'Multi'
+               or 'combined' in stock_no, and a count of distinct product-type+stage
+               combinations > 3. A legitimate single-order delivery with 4+ different
+               product types will be incorrectly classified as multi-order, potentially
+               causing the wrong edit view to be displayed.
+  Expected: Use an explicit is_multi_order boolean column in the deliveries table.
+  Actual: Heuristic detection that can misclassify deliveries.
+  File(s): app/Http/Controllers/DeliveryController.php:445-477
+  Make this multi order delivery better also make sure it's update is also correctly functional. If possible standarize that module. 
+
+Issue #33:
+  Severity: Medium
+  Title: DeliveryController::update() does not re-validate quantity or stock
+  Description: DeliveryController::update() (line 556) uses plain Request with only a
+               quantity sum check but no FormRequest validation. Update can freely change
+               product types, quantities, and stages without the rules defined in
+               DeliveryRequest.
+  Expected: Use DeliveryRequest for update or a dedicated UpdateDeliveryRequest.
+  Actual: Raw input with minimal validation.
+  File(s): app/Http/Controllers/DeliveryController.php:556-607
+
+Issue #34:
+  Severity: Low
+  Title: Delivery updateStatus() has no authorization check
+  Description: DeliveryController::updateStatus() (line 610-616) does not call
+               $this->authorize(). Any logged-in user can change a delivery's status.
+  Expected: $this->authorize('edit', Delivery::class)
+  Actual: No authorization check.
+  File(s): app/Http/Controllers/DeliveryController.php:610-616
+
+
+=============================================================================
+DELIVERY RETURNS (DeliveryReturnController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #35:
+  Severity: High
+  Title: DeliveryReturn update does not re-adjust stock
+  Description: DeliveryReturnController::update() (line 198-222) updates the return header
+               and return items but does NOT update the stock adjustment entries created
+               during store() (the adjustStock() call). Changing return quantities after
+               the fact results in return-item records and delivery_return_item records
+               being updated but the corresponding stock_items entries remain at the original
+               values, creating a stock discrepancy.
+  Expected: On update, reverse the original stock adjustment and create a new one, or
+             update the existing stock_items records to match.
+  Actual: Only header and item quantities updated; stock not re-adjusted.
+  File(s): app/Http/Controllers/DeliveryReturnController.php:198-222
+
+Issue #36:
+  Severity: Medium
+  Title: adjustStock() does not validate that original delivery stock record is found
+  Description: adjustStock() (line 243) throws an Exception if $deliveryStock is null,
+               but this Exception is caught by the transaction wrapper in store() and shown
+               to the user as a generic error message. There is no validation before calling
+               adjustStock() that the delivery has an associated stock record, so legitimate
+               data issues result in opaque user-facing errors.
+  Expected: Validate delivery has a stock record before entering the try/catch.
+  Actual: Exception thrown inside transaction, caught and shown as generic error.
+  File(s): app/Http/Controllers/DeliveryReturnController.php:243-293
+
+
+=============================================================================
+PURCHASE RECEIVE (ReceiveController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #37:
+  Severity: Medium
+  Title: ReceiveController::update() has no authorization or validation
+  Description: ReceiveController::update() (line 138) uses plain Request and does not call
+               $this->authorize(). Any logged-in user can update any receive record without
+               any permission check.
+  Expected: Add authorization check and use ReceiveRequest for validation.
+  Actual: No authorization, no FormRequest validation.
+  File(s): app/Http/Controllers/ReceiveController.php:138-147
+
+Issue #38:
+  Severity: Medium
+  Title: Return quantity is not validated against received quantity
+  Description: ReceiveController::store() and ReturnController::store() do not validate
+               that the return quantity does not exceed the received quantity per line item.
+               A user could return more materials than were received, creating negative
+               inventory.
+  Expected: Validate return quantity <= received quantity for each purchase item.
+  Also validate the case if we received the purchase but still it's in pending (not approved). It only goes to stock when approved. So returning that purchsae will deduct the stock from where. If there is some error also fix that. 
+  Actual: Any positive quantity accepted.
+  File(s): app/Http/Controllers/ReturnController.php:71-83,
+            app/Http/Controllers/ReceiveController.php:64-80
+
+
+=============================================================================
+HR: EMPLOYEES & ATTENDANCE (EmployeeController, AttendanceController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #39: (Keep the code as it is don't touch that code)
+  Severity: High
+  Title: AttendanceController::index() has dead code (dd()) in production path
+  Description: AttendanceController::index() (lines 35-36) has two consecutive dd() calls:
+               dd("This feature works when attendence machine is connected")
+               dd(auth()->user()->can('attendance_access', ...))
+               This means the attendance module is permanently broken – it always dumps and
+               dies. The feature is shipped in a debug/incomplete state.
+  Expected: Remove dd() calls or implement proper redirect/error when machine is not connected.
+  Actual: dd() halts all requests to /attendance.
+  File(s): app/Http/Controllers/AttendanceController.php:35-36
+
+Issue #40: (Keep this code untouched)
+  Severity: Medium
+  Title: AttendanceController hardcodes biometric file path
+  Description: The attendance() private method (line 205) hardcodes:
+               $dbPath = 'D:\ZKTeco\att2000.mdb';
+               This is an absolute Windows path for the developer's local machine. On any
+               server deployment, this path will not exist and attendance returns an empty
+               array silently.
+  Expected: Move the path to config/erp.php or .env: ZKTECO_DB_PATH.
+  Actual: Hardcoded path 'D:\ZKTeco\att2000.mdb'.
+  File(s): app/Http/Controllers/AttendanceController.php:205
+
+Issue #41:
+  Severity: Medium
+  Title: EmployeeController::update() lacks FormRequest validation
+  Description: EmployeeController::update() (line 359) uses plain Request $request with no
+               FormRequest validation rules, while store() uses EmployeeRequest. Employee
+               fields such as salary, CNIC, phone can be updated with no type or format
+               checking.
+  Expected: Apply EmployeeRequest (or UpdateEmployeeRequest) to update().
+  Actual: Raw input used.
+  File(s): app/Http/Controllers/EmployeeController.php:359
+
+
+=============================================================================
+PRODUCTS (ProductController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #42:
+  Severity: High
+  Title: Opening stock always written to hardcoded stock_id=1
+  Description: ProductController::store() and the updateStageSpecificOpeningStock() helper
+               both create stock items with 'stock_id' => '1' (lines 132, 371). This assumes
+               a "master opening stock" record with primary key 1 exists in the stocks table.
+               If that record is ever deleted or the database is migrated, all opening stock
+               data will have an orphaned foreign key or will never be written. There is no
+               DB transaction around this multi-step insert, and no referential integrity
+               check that stock_id=1 exists.
+  Expected: Create a dedicated "opening stock" record dynamically, or use a config-driven
+             stock_id, or add a DB-enforced foreign key constraint.
+  Actual: Hardcoded integer '1' with no validation.
+  File(s): app/Http/Controllers/ProductController.php:132, 371
+
+Issue #43:
+  Severity: Medium
+  Title: ProductController::update() lacks FormRequest validation
+  Description: ProductController::update() (line 294) uses plain Request $request with
+               no FormRequest validation. Product fields, price inputs, and material IDs
+               can be submitted with no validation.
+  Expected: Apply ProductRequest to update().
+  Actual: Raw input with no validation.
+  File(s): app/Http/Controllers/ProductController.php:294
+
+
+=============================================================================
+ORDER ITEMS / PURCHASE ITEMS (Validation)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #44:
+  Severity: Medium
+  Title: quantity.* and price.* validated only as 'required' with no numeric check
+  Description: OrderRequest (lines 33-37) and PurchaseRequest (lines 31-38) validate
+               quantity.* and price.* as 'required' but not 'numeric|min:0'. A user can
+               submit quantity as '0', '-5', or 'abc'. The storeOI() and storePI() helpers
+               multiply price * quantity without casting, so non-numeric input can cause
+               PHP warnings or store 0 values.
+  Expected: 'quantity.*' => 'required|numeric|min:0.01',
+             'price.*' => 'required|numeric|min:0'
+  Actual: 'quantity.*' => 'required', 'price.*' => 'required'
+  File(s): app/Http/Requests/OrderRequest.php:33-37,
+            app/Http/Requests/PurchaseRequest.php:38-41
+
+
+=============================================================================
+COMPANY / ASSETS (CompanyController, AssetController)
+=============================================================================
+Status: NO OBVIOUS CRITICAL ISSUES
+
+Notes:
+- AssetController.php has proper CRUD with validation and authorization.
+- CompanyController not reviewed in full but follows the same pattern.
+- Asset 'adjustment' type is always treated as a debit (purchase) which may be
+  incorrect for negative adjustments. There is no way to record a negative adjustment.
+
+
+=============================================================================
+MATERIAL / CATEGORY / HEAD (MaterialController, CategoryController, HeadController)
+=============================================================================
+Status: NOT REVIEWED IN FULL (consistent patterns observed)
+
+Notes:
+- HeadController is referenced in AuthServiceProvider but the HeadController itself
+  is not listed in the Glob results, suggesting the file may exist but in an unexpected
+  location, or it is aliased.
+- Category, Material, Head controllers follow the middleware pattern.
+
+
+=============================================================================
+VENDOR / CUSTOMER (VendorController, CustomerController)
+=============================================================================
+Status: ISSUES FOUND
+
+Issue #45:
+  Severity: Low
+  Title: Vendor and Customer detail pages use POST for filtering (non-idiomatic)
+  Description: Routes for filtering vendor/customer ledgers use POST (lines 103, 113, 136-137
+               in web.php). Filter/search operations should use GET with query parameters so
+               they are bookmarkable and can be shared. Using POST for filters can also cause
+               "resubmit form" browser warnings on refresh.
+  Expected: Use GET for filter/search endpoints.
+  Actual: POST routes for /cLedger/{id}, /eLedger/{id}, /vLedger/{id}.
+  File(s): routes/web.php:103,113,136-137
+
+
+CROSS-CUTTING CONCERNS
+=======================
+
+CROSS-1:
+  Severity: High
+  Title: Systemic pattern: update() methods lack FormRequest validation
+  Description: Across at least 8 controllers (OrderController, PurchaseController,
+               ProductController, EmployeeController, ReturnController, ReceiveController,
+               DeliveryController, StockController), the store() method uses a FormRequest
+               but the update() method falls back to plain Request $request with no rules.
+               This is a systemic validation gap where update operations are entirely
+               unvalidated. Any field – including sensitive ones like prices, quantities,
+               status codes, and foreign keys – can be submitted with arbitrary values on edit.
+  Files: Multiple update() methods across all controllers listed above.
+
+CROSS-2:
+  Severity: High
+  Title: No DB::transaction() wrapping for multi-table write operations
+  Description: Multiple operations that write to 2+ tables simultaneously are not wrapped
+               in a database transaction:
+               - OrderController::store() (stocks + order_items + orders)
+               - PurchaseController::store() (purchases + purchase_items + material cprice)
+               - DeliveryController::store() (stocks + deliveries + transactions + stock_items
+                 + delivery_boxes)
+               - PayrollController::store() (multiple transaction rows)
+               DeliveryReturnController::store() is the ONLY controller that properly wraps
+               its operations in DB::beginTransaction()/commit()/rollback().
+               If any individual DB write fails mid-operation, data will be left in an
+               inconsistent state.
+  Files: OrderController.php:86-103, PurchaseController.php:123-137,
+          DeliveryController.php:227-299, PayrollController.php:144-218
+
+CROSS-3:
+  Severity: Medium
+  Title: No soft deletes; destroy() methods are empty stubs throughout
+  Description: Every controller has a destroy() method that is an empty function body
+               (e.g., OrderController line 474, PurchaseController line 258,
+               StockController line 897, ReturnController line 150, etc.).
+               None of the primary models use SoftDeletes. Records can never be deleted
+               through the application, yet the routes exist (AssetController is the lone
+               exception with a working destroy). This means orphaned records accumulate
+               (e.g., items for a cancelled purchase) and there is no cleanup mechanism.
+  Files: Nearly every controller's destroy() method.
+
+CROSS-4:
+  Severity: Medium (Keep using them or you can create a file or define the hardcoded valus of the software someewhere)
+  Title: Hardcoded head_type_id values (magic numbers) throughout
+  Description: Multiple controllers use hardcoded integer IDs to fetch "heads" (lookup
+               records) by type:
+               - HeadRepository::get('16') for order stages
+               - HeadRepository::get('12') for production stages
+               - HeadRepository::get('14') for issuance units
+               - HeadRepository::get('7') for expense categories
+               - HeadRepository::get('3') for departments
+               - HeadRepository::get('8') for cities
+               - HeadRepository::get('9') for employee types
+               - HeadRepository::get('1') for sizes
+               - HeadRepository::get('4') for units
+               If any head_type record is deleted or its ID changes, multiple modules break
+               silently. No named constants or config entries define these IDs.
+  Files: OrderController.php:77, StockController.php:377, 491, etc.
+
+CROSS-5:
+  Severity: Medium
+  Title: Mass assignment vectors in repository update methods
+  Description: Multiple controllers pass $request->input() directly to repository update
+               methods without filtering (e.g., StockController::update() line 717,
+               OrderController::update() line 440, DeliveryController::update() line 573).
+               While Laravel's $fillable on models provides protection, several models have
+               broad $fillable arrays including status fields and foreign keys that should
+               not be user-modifiable (e.g., created_by, stock_type in Stock model).
+  Files: Multiple update() methods.
+
+CROSS-6:
+  Severity: Low
+  Title: 'pass' column used for role but 'role_id' is the actual column
+  Description: AuthController::login() (line 33) reads auth()->user()->pass to determine
+               the role for redirect, but the User model has no 'pass' column – it has
+               role_id. This means $role will always be null or 0, and the switch statement
+               always falls to the 'default' branch, redirecting all users (including admins)
+               the same way.
+  Files: app/Http/Controllers/AuthController.php:33-42
+
+
+OBSERVATIONS & RISKS
+====================
+
+1. AUTHORIZATION MODEL COMPLETENESS
+   The permission system uses a permissions table with permission_role pivot. However,
+   hasPermission() (User.php:46) issues a raw DB query on every permission check. For a
+   page with 5+ authorize() calls, this is 5+ queries per request. Consider caching the
+   user's permissions at login.
+
+2. ATTENDANCE MODULE (Keep this untouched)
+   The attendance module is non-functional (dd() in index()) and depends on an Access
+   Database file at a hardcoded Windows path. This entire module needs to be redesigned
+   for production deployment.
+
+3. STOCK BALANCE TRACKING APPROACH
+   Stock levels are computed by summing stock_items.quantity (IN records) minus
+   stock_items.quantity (OUT records) with no denormalized balance column. For large
+   datasets with many stock movements, every stock balance query scans all history.
+   Consider adding a running balance or snapshot table.
+
+4. PIPE-SEPARATED FOREIGN KEYS
+   The products.material_id and products.stage_ids columns store pipe-separated integers
+   (e.g., '12|45|67'). This violates 1NF, prevents proper JOIN operations, and requires
+   PHP-side string parsing. The existing product_materials table is the correct normalized
+   approach; the pipe-separated columns appear to be a legacy holdover.
+
+5. DELIVERY RETURN STOCK ADJUSTMENT
+   When a delivery return is stored, adjustStock() creates a NEW stock record for the
+   returned goods. However, this returned stock goes into general stock (not back to a
+   specific PTC or order). The system does not update the original delivery's stock
+   items. This means the original delivery_item quantities remain unchanged even after
+   a return. Reports on "delivered quantity" will overstate actual net delivery.
+
+6. PTC (PROCESS TRAVEL CARD) COMPLEXITY
+   The PTC module reuses the stocks and stock_items tables for issuance, receiving,
+   and stage movements. All records are distinguished by is_ptc_master, ptc_id, and
+   stock_type columns. This table design creates very complex queries (seen in ptcShow())
+   with multiple self-joins and left-joins. Consider extracting PTCs into dedicated tables
+   (ptc_records, ptc_issuances, ptc_receivings) for clarity and query performance.
+
+7. MISSING API RATE LIMITING
+   The AJAX endpoints (ajaxPM, ajaxPT, ajaxBank, ajaxBalance, ajaxOrder, etc.) have no
+   rate limiting. A malicious authenticated user could hammer these endpoints to enumerate
+   all data or cause DoS-level query load.
+
+8. PAYROLL DOES NOT ENFORCE DOUBLE-PAYMENT PREVENTION
+   PayrollController::create() checks if payroll exists and redirects to edit. However,
+   PayrollController::store() does NOT check for existing payroll before inserting. If
+   a user bypasses the create() redirect (e.g., by posting directly), duplicate salary
+   transactions will be created.
+
+9. PRODUCT OPENING STOCK ON EDIT DELETES AND RECREATES
+   ProductController::updateStageSpecificOpeningStock() (line 339) deletes ALL opening
+   stock entries for a product and recreates them. If any other process has added
+   stock_items with stock_id=1 for this product independently, those will also be deleted.
+
+10. NO AUDIT TRAIL FOR FINANCIAL CORRECTIONS
+    When transactions are updated or payroll is reprocessed, the original records are
+    simply overwritten or deleted. There is no audit log of what the original values were.
+    The spatie/activitylog package is installed (visible in User.php) but is not configured
+    for financial models (Transaction, Stock, Order, Purchase).
+
+11. CUSTOMER BALANCE CALCULATION INCONSISTENCY
+    The customer balance is calculated differently in:
+    - TransactionController::ajaxBalance() (lines 397-427): filters deliveries vs payments
+    - CustomerController::detail(): uses transaction repository
+    - EmployeeController::detail() (line 227): filters out salary transactions from balance
+    These inconsistencies could result in different balance figures shown in different parts
+    of the UI for the same customer/employee.
+
+12. FOREIGN KEY CONSTRAINTS
+    The migration files reviewed do not add explicit FOREIGN KEY constraints between:
+    - stock_items.stock_id -> stocks.stock_id
+    - stocks.ptc_id -> stocks.stock_id (self-referential)
+    - stocks.order_id -> orders.order_id
+    - transactions.payee_id -> employees/vendors/customers (polymorphic, hard to constrain)
+    Without FK constraints, orphaned records can accumulate silently.
+
+END OF AUDIT REPORT
