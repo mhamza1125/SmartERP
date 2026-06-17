@@ -94,38 +94,14 @@ class PayrollController extends Controller
         foreach ($employees as $employee) {
             $salary = $employee->salary ?? 0;
 
-            // Calculate opening balance from transactions table
-            // Opening Balance = credit - debit from openingBalance transaction
-            // (credit means employee owes us, debit means we owe employee)
-            $openingBalanceTransaction = Transaction::where('payee_id', $employee->employee_id)
-                ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'openingBalance')
-                ->first();
-
-            $openingBalance = 0;
-            if ($openingBalanceTransaction) {
-                $openingBalance = ($openingBalanceTransaction->credit ?? 0) - ($openingBalanceTransaction->debit ?? 0);
-            }
-
-            // Loans are stored as credit in 'advance' transactions (cash outflow)
-            $totalLoansGiven = Transaction::where('payee_id', $employee->employee_id)
-                ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'advance')
-                ->sum('credit');
-
-            // Loan repayments are stored as debit in 'receiveAdvance' transactions (cash inflow, swapped)
-            $loanRepaymentsMade = Transaction::where('payee_id', $employee->employee_id)
-                ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'receiveAdvance')
-                ->sum('debit');
-
-            $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepaymentsMade);
+            $outstandingBalance = $this->getEmployeeOutstandingBalance($employee->employee_id);
+            $deductableAmount = max(0, -$outstandingBalance);
 
             $payrollData[] = [
                 'employee' => $employee,
                 'salary' => $salary,
-                'loans_pending' => $loansPending,
-                'net_salary' => $salary - $loansPending,
+                'outstanding_balance' => $outstandingBalance,
+                'net_salary' => $salary - $deductableAmount,
             ];
         }
 
@@ -267,32 +243,7 @@ class PayrollController extends Controller
         foreach ($employees as $employee) {
             $salary = $employee->salary ?? 0;
 
-            // Calculate opening balance from transactions table
-            // Opening Balance = credit - debit from openingBalance transaction
-            // (credit means employee owes us, debit means we owe employee)
-            $openingBalanceTransaction = Transaction::where('payee_id', $employee->employee_id)
-                ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'openingBalance')
-                ->first();
-
-            $openingBalance = 0;
-            if ($openingBalanceTransaction) {
-                $openingBalance = ($openingBalanceTransaction->credit ?? 0) - ($openingBalanceTransaction->debit ?? 0);
-            }
-
-            // Loans are stored as credit in 'advance' transactions (cash outflow)
-            $totalLoansGiven = Transaction::where('payee_id', $employee->employee_id)
-                ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'advance')
-                ->sum('credit');
-
-            // Loan repayments are stored as debit in 'receiveAdvance' transactions (cash inflow, swapped)
-            $loanRepaymentsMade = Transaction::where('payee_id', $employee->employee_id)
-                ->where('transaction_to', 'employee')
-                ->where('transaction_type', 'receiveAdvance')
-                ->sum('debit');
-
-            $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepaymentsMade);
+            $outstandingBalance = $this->getEmployeeOutstandingBalance($employee->employee_id);
 
             // Get existing salary transaction amount if it exists
             $paidAmount = 0;
@@ -309,7 +260,7 @@ class PayrollController extends Controller
             $payrollData[] = [
                 'employee' => $employee,
                 'salary' => $salary,
-                'loans_pending' => $loansPending,
+                'outstanding_balance' => $outstandingBalance,
                 'paid_amount' => $paidAmount,
                 'is_paid' => $paidAmount > 0,
                 'loan_deduction_amount' => $loanDeductionAmount,
@@ -385,39 +336,14 @@ class PayrollController extends Controller
                     ->whereMonth('transaction_date', $selectedDate->month)
                     ->sum('debit');
 
-                // Include opening balance in pending loan calculation
-                $openingBalanceTransaction = Transaction::where('payee_id', $employee->employee_id)
-                    ->where('transaction_to', 'employee')
-                    ->where('transaction_type', 'openingBalance')
-                    ->first();
-
-                $openingBalance = 0;
-                if ($openingBalanceTransaction) {
-                    $openingBalance = ($openingBalanceTransaction->credit ?? 0) - ($openingBalanceTransaction->debit ?? 0);
-                }
-
-                // Check for pending loans (all time)
-                // Loans are stored as credit in 'advance' transactions (cash outflow)
-                $totalLoansGiven = Transaction::where('payee_id', $employee->employee_id)
-                    ->where('transaction_to', 'employee')
-                    ->where('transaction_type', 'advance')
-                    ->sum('credit');
-
-                // Deduct loan repayments already made
-                // Loan repayments are stored as debit in 'receiveAdvance' transactions (cash inflow, swapped)
-                $loanRepayments = Transaction::where('payee_id', $employee->employee_id)
-                    ->where('transaction_to', 'employee')
-                    ->where('transaction_type', 'receiveAdvance')
-                    ->sum('debit');
-
-                $loansPending = max(0, $openingBalance + $totalLoansGiven - $loanRepayments);
+                $outstandingBalance = $this->getEmployeeOutstandingBalance($employee->employee_id);
 
                 $payrollData[] = [
                     'employee' => $employee,
                     'salary' => $salary,
                     'salary_advance' => $salaryAdvance,
-                    'loans_pending' => $loansPending,
-                    'net_salary' => $salary - $salaryAdvance - $loansPending,
+                    'outstanding_balance' => $outstandingBalance,
+                    'net_salary' => $salary - $salaryAdvance - max(0, -$outstandingBalance),
                     'paid_amount' => $paidAmount,
                 ];
 
@@ -544,6 +470,41 @@ class PayrollController extends Controller
 
         return redirect()->route('payroll.index')
             ->with('success', "Payroll for {$monthLabel} updated successfully! {$transactionCount} employee(s) paid. Total amount: " . number_format($totalAmount, 2));
+    }
+
+    /**
+     * Outstanding balance matching the eLedger formula exactly.
+     * Positive = company owes employee (Payable), Negative = employee owes company (Receivable).
+     */
+    private function getEmployeeOutstandingBalance($employeeId)
+    {
+        $txSums = Transaction::where('payee_id', $employeeId)
+            ->where('transaction_to', 'employee')
+            ->where('transaction_type', '!=', 'salary')
+            ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
+            ->first();
+
+        $txDebit = (float) ($txSums->total_debit ?? 0);
+        $txCredit = (float) ($txSums->total_credit ?? 0);
+
+        // Wages from stock items (same source as eLedger wages display)
+        $wagesData = DB::table('stocks')
+            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->where('stocks.employee_id', $employeeId)
+            ->where('stocks.table_name', 'employee')
+            ->where('stocks.stock_type', '1')
+            ->where('stock_items.work_wages', '!=', '0')
+            ->select('stock_items.quantity', 'stock_items.work_wages')
+            ->get();
+
+        $wagesTotal = 0;
+        foreach ($wagesData as $wage) {
+            foreach (explode('|', $wage->work_wages) as $wageAmount) {
+                $wagesTotal += (int) $wageAmount * $wage->quantity;
+            }
+        }
+
+        return $txDebit - $txCredit + $wagesTotal;
     }
 
     /**

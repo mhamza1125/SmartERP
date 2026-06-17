@@ -87,7 +87,7 @@
                       <th>Employee No</th>
                       <th>Employee Name</th>
                       <th class="text-right">Monthly Salary</th>
-                      <th class="text-right">Outstanding Loan</th>
+                      <th class="text-right">Outstanding Balance</th>
                       <th class="text-right">Deduct Loan</th>
                       <th class="text-right">Net Payable</th>
                       <th class="text-right">Actual Salary Paid <span class="text-danger">*</span></th>
@@ -104,19 +104,21 @@
                         <td>{{ $data['employee']->name }}</td>
                         <td class="text-right">{{ number_format($data['salary'], 2) }}</td>
                         <td class="text-right">
-                          @if($data['loans_pending'] > 0)
-                            <span class="badge badge-danger">{{ number_format($data['loans_pending'], 2) }}</span>
+                          @if($data['outstanding_balance'] < 0)
+                            <span class="badge badge-danger">{{ number_format(abs($data['outstanding_balance']), 2) }} Rcv.</span>
+                          @elseif($data['outstanding_balance'] > 0)
+                            <span class="badge badge-success">{{ number_format($data['outstanding_balance'], 2) }} Pay.</span>
                           @else
                             -
                           @endif
                         </td>
                         <td class="text-right">
-                          <input type="number" step="0.01" min="0" max="{{ $data['loans_pending'] }}" class="form-control form-control-sm text-right loan-deduction"
+                          <input type="number" step="0.01" min="0" max="{{ max(0, -$data['outstanding_balance']) }}" class="form-control form-control-sm text-right loan-deduction"
                                  name="loan_deductions[{{ $data['employee']->employee_id }}]"
                                  value="0"
                                  placeholder="0.00"
                                  data-employee-id="{{ $data['employee']->employee_id }}"
-                                 data-loans-pending="{{ $data['loans_pending'] }}">
+                                 data-loans-pending="{{ max(0, -$data['outstanding_balance']) }}">
                         </td>
                         <td class="text-right font-weight-bold">{{ number_format($data['net_salary'], 2) }}</td>
                         <td class="text-right">

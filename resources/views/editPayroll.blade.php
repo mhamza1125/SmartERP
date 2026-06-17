@@ -81,7 +81,7 @@
                       <th>Employee No</th>
                       <th>Employee Name</th>
                       <th class="text-right">Monthly Salary</th>
-                      <th class="text-right">Outstanding Loan</th>
+                      <th class="text-right">Outstanding Balance</th>
                       <th class="text-right">Deduct Loan</th>
                       <th class="text-right">Net Payable</th>
                       <th class="text-right">Actual Salary Paid <span class="text-danger">*</span></th>
@@ -98,21 +98,27 @@
                         <td>{{ $data['employee']->name }}</td>
                         <td class="text-right">{{ number_format($data['salary'], 2) }}</td>
                         <td class="text-right">
-                          @if($data['loans_pending'] > 0)
-                            <span class="badge badge-danger">{{ number_format($data['loans_pending'] + $data['loan_deduction_amount'], 2) }}</span>
+                          @php
+                            // Pre-deduction balance: remove this month's already-recorded deduction to show ledger state before payroll
+                            $preDeductBalance = $data['outstanding_balance'] - $data['loan_deduction_amount'];
+                          @endphp
+                          @if($preDeductBalance < 0)
+                            <span class="badge badge-danger">{{ number_format(abs($preDeductBalance), 2) }} Rcv.</span>
+                          @elseif($preDeductBalance > 0)
+                            <span class="badge badge-success">{{ number_format($preDeductBalance, 2) }} Pay.</span>
                           @else
                             -
                           @endif
                         </td>
                         <td class="text-right">
-                          <input type="number" step="0.01" min="0" max="{{ $data['loans_pending'] + $data['loan_deduction_amount'] }}" class="form-control form-control-sm text-right loan-deduction"
+                          <input type="number" step="0.01" min="0" max="{{ max(0, -$preDeductBalance) }}" class="form-control form-control-sm text-right loan-deduction"
                                  name="loan_deductions[{{ $data['employee']->employee_id }}]"
                                  value="{{ $data['loan_deduction_amount'] }}"
                                  placeholder="0.00"
                                  data-employee-id="{{ $data['employee']->employee_id }}"
-                                 data-loans-pending="{{ $data['loans_pending'] }}">
+                                 data-loans-pending="{{ max(0, -$preDeductBalance) }}">
                         </td>
-                        <td class="text-right font-weight-bold">{{ number_format($data['salary'] - $data['loans_pending'], 2) }}</td>
+                        <td class="text-right font-weight-bold">{{ number_format($data['salary'] - $data['loan_deduction_amount'], 2) }}</td>
                         <td class="text-right">
                           <input type="number" step="0.01" min="0" class="form-control form-control-sm text-right salary-input"
                                  name="salary_amounts[{{ $data['employee']->employee_id }}]"

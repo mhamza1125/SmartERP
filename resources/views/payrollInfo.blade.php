@@ -55,7 +55,7 @@
                     <th>Employee Name</th>
                     <th class="text-right">Monthly Salary</th>
                     <th class="text-right">Salary Advance</th>
-                    <th class="text-right">Pending Loans</th>
+                    <th class="text-right">Outstanding Balance</th>
                     <th class="text-right">Net Payable</th>
                     <th class="text-right">Actual Salary Paid</th>
                   </tr>
@@ -75,8 +75,10 @@
                         @endif
                       </td>
                       <td class="text-right">
-                        @if($data['loans_pending'] > 0)
-                          <span class="badge badge-danger">{{ number_format($data['loans_pending'], 2) }}</span>
+                        @if($data['outstanding_balance'] < 0)
+                          <span class="badge badge-danger">{{ number_format(abs($data['outstanding_balance']), 2) }} Rcv.</span>
+                        @elseif($data['outstanding_balance'] > 0)
+                          <span class="badge badge-success">{{ number_format($data['outstanding_balance'], 2) }} Pay.</span>
                         @else
                           -
                         @endif
