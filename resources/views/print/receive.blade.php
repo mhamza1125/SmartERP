@@ -75,7 +75,7 @@
 @if(isset($receiveMaterial) && $receiveMaterial->count() > 0)
 <div class="items-section avoid-break">
     <h3>Received Materials</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>

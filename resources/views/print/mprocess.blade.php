@@ -44,14 +44,14 @@
             <span class="info-value">
                 @if(isset($purchase['status']))
                     @if($purchase['status'] == 'completed')
-                        <span class="badge badge-success">Completed</span>
+                        <span class="status-badge status-badge-success">Completed</span>
                     @elseif($purchase['status'] == 'pending')
-                        <span class="badge badge-warning">Pending</span>
+                        <span class="status-badge status-badge-warning">Pending</span>
                     @else
-                        <span class="badge badge-info">{{ ucfirst($purchase['status']) }}</span>
+                        <span class="status-badge status-badge-info">{{ ucfirst($purchase['status']) }}</span>
                     @endif
                 @else
-                    <span class="badge badge-secondary">N/A</span>
+                    <span class="status-badge status-badge-secondary">N/A</span>
                 @endif
             </span>
         </div>
@@ -72,7 +72,7 @@
 @if(isset($purchaseItem) && $purchaseItem->count() > 0)
 <div class="items-section avoid-break">
     <h3>Processing Items</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>
@@ -128,7 +128,7 @@
 @if(isset($receiveSum) && $receiveSum->count() > 0)
 <div class="items-section avoid-break">
     <h3>Receive Summary</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>

@@ -1,10 +1,11 @@
-@php
-    // Fetch company data from database
-    $company = \App\Models\Company::first();
-@endphp
-{{-- Contact Information --}}
+{{--
+    $company is injected by App\Http\View\Composers\PrintComposer
+    for all print.* views. No DB query needed here.
+--}}
 <div class="footer-center">
     @if($company && $company->footer_text)
-        <div>{!! $company->footer_text !!}</div>
+        {!! $company->footer_text !!}
+    @elseif($company && $company->email)
+        {{ $company->email }}
     @endif
 </div>

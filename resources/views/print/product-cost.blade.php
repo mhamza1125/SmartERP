@@ -2,6 +2,18 @@
 
 @section('title', 'Product_Cost_' . ($product['article_no'] ?? 'N/A') . '_' . ($product['name'] ?? 'N/A'))
 
+@push('styles')
+<style>
+    .document-info  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .info-section   { border: 1px solid #ddd; padding: 12px; }
+    .info-value     { flex: 1; text-align: right; }
+    .document-section { margin-bottom: 20px; }
+    .document-section h3 { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 4px; }
+    .alert          { padding: 10px; margin-bottom: 16px; border: 1px solid #ddd; }
+    .alert-warning  { background-color: #fff3cd; border-color: #ffc107; color: #856404; }
+</style>
+@endpush
+
 @section('content')
 <div class="document-title">Product Cost Information</div>
 
@@ -82,108 +94,5 @@
 </div>
 @endif
 
-<style>
-    .document-title {
-        font-size: 24px;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-        text-decoration: underline;
-    }
-
-    .document-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-    .info-section {
-        border: 1px solid #ddd;
-        padding: 15px;
-        border-radius: 4px;
-    }
-
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 13px;
-    }
-
-    .info-label {
-        font-weight: bold;
-        min-width: 150px;
-    }
-
-    .info-value {
-        flex: 1;
-        text-align: right;
-    }
-
-    .document-section {
-        margin-bottom: 30px;
-    }
-
-    .document-section h3 {
-        font-size: 16px;
-        font-weight: bold;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #333;
-        padding-bottom: 5px;
-    }
-
-    .print-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 15px;
-    }
-
-    .print-table thead {
-        background-color: #f5f5f5;
-    }
-
-    .print-table th,
-    .print-table td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        font-size: 12px;
-    }
-
-    .print-table th {
-        font-weight: bold;
-        text-align: left;
-    }
-
-    .print-table tfoot {
-        background-color: #f9f9f9;
-        font-weight: bold;
-    }
-
-    .text-center {
-        text-align: center;
-    }
-
-    .text-right {
-        text-align: right;
-    }
-
-    .total-row {
-        border-top: 2px solid #333;
-    }
-
-    .alert {
-        padding: 15px;
-        margin-bottom: 20px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
-
-    .alert-warning {
-        background-color: #fff3cd;
-        border-color: #ffc107;
-        color: #856404;
-    }
-</style>
 @endsection
 

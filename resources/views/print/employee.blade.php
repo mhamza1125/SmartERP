@@ -43,9 +43,9 @@
             <span class="info-label">Status:</span>
             <span class="info-value">
                 @if($employee['employee_status'] ?? false)
-                    <span class="badge badge-success">Active</span>
+                    <span class="status-badge status-badge-success">Active</span>
                 @else
-                    <span class="badge badge-danger">Inactive</span>
+                    <span class="status-badge status-badge-danger">Inactive</span>
                 @endif
             </span>
         </div>

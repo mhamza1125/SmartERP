@@ -2,6 +2,17 @@
 
 @section('title', 'PTC_Template_' . ($product->article_no ?? 'N/A'))
 
+@push('styles')
+<style>
+    .document-info  { display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ddd; padding: 12px; background-color: #f9f9f9; }
+    .info-section   { flex: 1; margin-right: 16px; }
+    .info-section:last-child { margin-right: 0; }
+    .document-section { margin-top: 20px; }
+    .document-section h3 { font-size: 13px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 4px; }
+    .print-table td { height: 28px; }
+</style>
+@endpush
+
 @section('content')
 <div class="document-title">Process Travel Card (PTC)</div>
 
@@ -100,94 +111,5 @@
     </table>
 </div>
 
-<style>
-    .document-title {
-        font-size: 18px;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-        text-decoration: underline;
-    }
-
-    .document-info {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 30px;
-        border: 1px solid #ddd;
-        padding: 15px;
-        background-color: #f9f9f9;
-    }
-
-    .info-section {
-        flex: 1;
-        margin-right: 20px;
-    }
-
-    .info-section:last-child {
-        margin-right: 0;
-    }
-
-    .info-row {
-        display: flex;
-        margin-bottom: 8px;
-    }
-
-    .info-label {
-        font-weight: bold;
-        width: 120px;
-        margin-right: 10px;
-    }
-
-    .info-value {
-        flex: 1;
-    }
-
-    .document-section {
-        margin-top: 30px;
-    }
-
-    .document-section h3 {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #333;
-        padding-bottom: 5px;
-    }
-
-    .print-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-    }
-
-    .print-table thead {
-        background-color: #e8e8e8;
-    }
-
-    .print-table th {
-        border: 1px solid #333;
-        padding: 8px;
-        text-align: left;
-        font-weight: bold;
-        font-size: 12px;
-    }
-
-    .print-table td {
-        border: 1px solid #333;
-        padding: 8px;
-        height: 30px;
-        font-size: 12px;
-    }
-
-    @media print {
-        body {
-            margin: 0;
-            padding: 10px;
-        }
-        .print-table {
-            page-break-inside: avoid;
-        }
-    }
-</style>
 @endsection
 

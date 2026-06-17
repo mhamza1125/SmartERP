@@ -56,12 +56,12 @@
         <div class="info-row">
             <span class="info-label">Order Status:</span>
             <span class="info-value">
-                @if($order['order_status'] == 1) <span class="badge badge-secondary">Draft</span>
-                @elseif($order['order_status'] == 2) <span class="badge badge-success">Confirmed</span>
-                @elseif($order['order_status'] == 3) <span class="badge badge-info">Dispatched</span>
-                @elseif($order['order_status'] == 4) <span class="badge badge-primary">Delivered</span>
-                @elseif($order['order_status'] == 5) <span class="badge badge-danger">Cancelled</span>
-                @else <span class="badge badge-secondary">Unknown</span> @endif
+                @if($order['order_status'] == 1) <span class="status-badge status-badge-secondary">Draft</span>
+                @elseif($order['order_status'] == 2) <span class="status-badge status-badge-success">Confirmed</span>
+                @elseif($order['order_status'] == 3) <span class="status-badge status-badge-info">Dispatched</span>
+                @elseif($order['order_status'] == 4) <span class="status-badge status-badge-primary">Delivered</span>
+                @elseif($order['order_status'] == 5) <span class="status-badge status-badge-danger">Cancelled</span>
+                @else <span class="status-badge status-badge-secondary">Unknown</span> @endif
             </span>
         </div>
     </div>

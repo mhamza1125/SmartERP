@@ -31,9 +31,9 @@
             <span class="info-label">Current Status:</span>
             <span class="info-value status-badge">
                 @if($product['product_status']) 
-                    <span class="badge badge-success">Active</span> 
+                    <span class="status-badge status-badge-success">Active</span> 
                 @else 
-                    <span class="badge badge-danger">Inactive</span> 
+                    <span class="status-badge status-badge-danger">Inactive</span> 
                 @endif
             </span>
         </div>

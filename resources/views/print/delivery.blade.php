@@ -26,11 +26,11 @@
             <span class="info-value">
                 @foreach($relatedOrders as $index => $order)
                     @if($index < 5)
-                    <span class="badge badge-secondary mr-1">{{ $order->order_no ?? 'N/A' }}</span>
+                    <span class="status-badge status-badge-secondary">{{ $order->order_no ?? 'N/A' }}</span>
                     @endif
                 @endforeach
                 @if(count($relatedOrders) > 5)
-                <span class="badge badge-light">+{{ count($relatedOrders) - 5 }} more</span>
+                <span class="status-badge status-badge-light">+{{ count($relatedOrders) - 5 }} more</span>
                 @endif
             </span>
         </div>
@@ -83,11 +83,11 @@
         <div class="info-row">
             <span class="info-label">Delivery Status:</span>
             <span class="info-value">
-                @if($delivery['delivery_status'] == 1) <span class="badge badge-warning">Pending</span>
-                @elseif($delivery['delivery_status'] == 2) <span class="badge badge-info">Dispatched</span>
-                @elseif($delivery['delivery_status'] == 3) <span class="badge badge-success">Delivered</span>
-                @elseif($delivery['delivery_status'] == 4) <span class="badge badge-danger">Returned</span>
-                @else <span class="badge badge-secondary">Unknown</span> @endif
+                @if($delivery['delivery_status'] == 1) <span class="status-badge status-badge-warning">Pending</span>
+                @elseif($delivery['delivery_status'] == 2) <span class="status-badge status-badge-info">Dispatched</span>
+                @elseif($delivery['delivery_status'] == 3) <span class="status-badge status-badge-success">Delivered</span>
+                @elseif($delivery['delivery_status'] == 4) <span class="status-badge status-badge-danger">Returned</span>
+                @else <span class="status-badge status-badge-secondary">Unknown</span> @endif
             </span>
         </div>
         @if(isset($delivery['fi_no']) && !empty($delivery['fi_no']))

@@ -79,7 +79,7 @@
 @if(isset($issueItem) && $issueItem->count() > 0)
 <div class="items-section avoid-break">
     <h3>Received Items</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>
@@ -96,15 +96,15 @@
             <tr>
                 <td>{{ $loop->iteration }}</td>
                 @if($item->component_product_type_id)
-                    <td><span class="badge badge-warning">Component</span></td>
+                    <td><span class="status-badge status-badge-warning">Component</span></td>
                     <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
                     <td>{{ $item->component_article_no ?? 'N/A' }} - {{ $item->component_name ?? 'N/A' }}</td>
                 @elseif($item->material_id > 0)
-                    <td><span class="badge badge-info">Material</span></td>
+                    <td><span class="status-badge status-badge-info">Material</span></td>
                     <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
                     <td>{{ $item->name ?? 'N/A' }}</td>
                 @else
-                    <td><span class="badge badge-success">Product</span></td>
+                    <td><span class="status-badge status-badge-success">Product</span></td>
                     <td>{{ $item->article_no ?? 'N/A' }} - Size {{ $item->sname ?? '' }}</td>
                     <td>{{ $item->stage ?? 'N/A' }}</td>
                 @endif
@@ -145,7 +145,7 @@
     </div>
     <div class="total-row">
         <span>Receive Status:</span>
-        <span class="badge badge-success">Completed</span>
+        <span class="status-badge status-badge-success">Completed</span>
     </div>
 </div>
 

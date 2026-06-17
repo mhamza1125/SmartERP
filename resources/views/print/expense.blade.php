@@ -3,34 +3,11 @@
 @section('title', 'Expense_Voucher_' . ($expense['transaction_id'] ?? 'N/A') . '_' . ($expense['transaction_date'] ?? date('d-m-Y')))
 
 @section('content')
-<style>
-    .my-div {
-        position: relative;
-        z-index: 1;
-    }
-
-    .my-div::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-image: url("{{ asset('assets/print-logo2.png') }}");
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 650px;
-        opacity: 0.1;
-        z-index: 0;
-    }
-
-    .my-div > * {
-        position: relative;
-        z-index: 1;
-    }
-</style>
 
 <div class="document-title">Expense Voucher</div>
 
 {{-- Expense Header Information --}}
-<div class="my-div">
+<div class="watermark-container">
     <div class="document-info">
         <div class="info-section">
             <div class="info-row">
@@ -74,7 +51,7 @@
     </div>
 
 {{-- Expense Details Table --}}
-<div class="avoid-break" style="margin-top: -25px">
+<div class="avoid-break" >
     <h3 style="margin-bottom: 8px;">Expense Details</h3>
     <table class="print-table" style="font-size: 11px;">
         <thead>
@@ -118,7 +95,7 @@
 {{-- Expense Summary --}}
 <div class="totals-section avoid-break" style="margin-top: 8px; margin-bottom: 8px;">
     <div class="total-row grand-total">
-        <span>Expense Amount: &nbsp &nbsp </span>
+        <span>Expense Amount: &nbsp;&nbsp; </span>
         <span class="amount">{{ number_format(($expense['debit'] > 0 ? $expense['debit'] : $expense['credit']) ?? 0, 2) }}</span>
     </div>
 </div>
@@ -135,19 +112,19 @@
 {{-- Signatures --}}
 <div class="signatures avoid-break" style="margin-top: 8px;">
     <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line" style="margin-right: 15px; height: 20px;"></div>
+        <div class="signature-line-sm"></div>
         <div style="font-size: 10px;">Prepared By</div>
     </div>
     <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line" style="margin-right: 15px; height: 20px;"></div>
+        <div class="signature-line-sm"></div>
         <div style="font-size: 10px;">Verified By</div>
     </div>
     <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line" style="margin-right: 15px; height: 20px;"></div>
+        <div class="signature-line-sm"></div>
         <div style="font-size: 10px;">Approved By</div>
     </div>
     <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line" style="height: 20px;"></div>
+        <div class="signature-line-sm"></div>
         <div style="font-size: 10px;">Received By</div>
     </div>
 </div>

@@ -1,203 +1,173 @@
-/* Print-specific CSS for Laravel ERP Application */
+/* ============================================================
+   SmartERP – Print Stylesheet
+   Single source of truth for all print document styles.
+   Inline <style> blocks in layout files are intentionally
+   minimal; everything reusable lives here.
+   ============================================================ */
 
-/* Reset and base styles for print */
+/* ------------------------------------------------------------
+   1. Box model reset
+   ------------------------------------------------------------ */
 * {
     box-sizing: border-box;
 }
 
-/* Print page setup */
+/* ------------------------------------------------------------
+   2. Page setup
+   margin: 0 cancels the browser's default print-dialog margins.
+   Content spacing is handled entirely by body padding in
+   @media print below, keyed to the fixed header/footer heights.
+   ------------------------------------------------------------ */
 @page {
     size: A4;
-    margin: 20mm 15mm 25mm 15mm;
+    margin: 0;
 }
 
-/* Print media queries */
-@media print {
-
-    /* Hide screen-only elements */
-    .no-print,
-    .btn,
-    .button,
-    .navbar,
-    .sidebar,
-    .breadcrumb,
-    .pagination,
-    .alert,
-    .modal,
-    .tooltip,
-    .popover,
-    .dropdown-menu,
-    .card-header-action,
-    .form-control,
-    input,
-    select,
-    textarea,
-    .edit-link,
-    .delete-link,
-    .action-buttons {
-        display: none !important;
-    }
-
-    /* Ensure proper colors for print */
-    body {
-        background: white !important;
-        color: black !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    /* Remove shadows and backgrounds */
-    .card,
-    .table,
-    .panel {
-        box-shadow: none !important;
-        background: white !important;
-        border: 1px solid #333 !important;
-    }
-
-    /* Optimize table printing */
-    table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-
-    th,
-    td {
-        border: 1px solid #333 !important;
-        padding: 6px !important;
-        font-size: 11px !important;
-    }
-
-    th {
-        background-color: #f5f5f5 !important;
-        font-weight: bold !important;
-    }
-
-    /* Page breaks */
-    .page-break {
-        page-break-before: always;
-    }
-
-    .avoid-break {
-        page-break-inside: avoid;
-    }
-
-    /* Ensure text is readable */
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        color: black !important;
-        page-break-after: avoid;
-    }
-
-    /* Links should show URL in print */
-    a[href]:after {
-        content: " (" attr(href) ")";
-        font-size: 10px;
-        color: #666;
-    }
-
-    /* Remove link styling */
-    a {
-        color: black !important;
-        text-decoration: none !important;
-    }
+/* ------------------------------------------------------------
+   3. Body base
+   ------------------------------------------------------------ */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    color: #000;
+    background: white;
 }
 
-/* Screen styles for print preview */
-@media screen {
-    .print-preview {
-        max-width: 210mm;
-        margin: 20px auto;
-        padding: 20px;
-        background: white;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        border: 1px solid #ddd;
-    }
-}
-
-/* Common print table styles */
-.print-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    font-size: 11px;
-}
-
-.print-table th,
-.print-table td {
-    border: 1px solid #333;
-    padding: 6px;
-    text-align: left;
-    vertical-align: top;
-}
-
-.print-table th {
-    background-color: #f5f5f5;
-    font-weight: bold;
-    text-align: center;
-}
-
-.print-table .text-right {
-    text-align: right;
-}
-
-.print-table .text-center {
-    text-align: center;
-}
-
-.print-table .amount {
-    text-align: right;
-    font-family: 'Courier New', monospace;
-}
-
-/* Print-specific utility classes */
-.print-only {
-    display: none;
-}
-
-@media print {
-    .print-only {
-        display: block !important;
-    }
-}
-
-/* Document sections */
-.document-header {
-    margin-bottom: 20px;
+/* ------------------------------------------------------------
+   4. Fixed header – repeats on every page in modern browsers
+      (Chrome/Edge 15+, Firefox 35+) when position: fixed is
+      used inside @media print.
+   ------------------------------------------------------------ */
+.print-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 18mm;
+    background: white;
     border-bottom: 2px solid #333;
-    padding-bottom: 10px;
+    padding: 3px 15mm;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.document-title {
-    font-size: 18px;
-    font-weight: bold;
+/* ------------------------------------------------------------
+   5. Fixed footer – repeats on every page
+   ------------------------------------------------------------ */
+.print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 14mm;
+    background: white;
+    border-top: 1px solid #333;
+    padding: 4px 15mm;
+    z-index: 1000;
+    font-size: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer-center { text-align: center; width: 100%; }
+
+/* ------------------------------------------------------------
+   6. Company header elements
+   ------------------------------------------------------------ */
+.company-logo {
+    height: 55px;
+    width: auto;
+}
+
+.company-info {
     text-align: center;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+    flex-grow: 1;
+    margin: 0 20px;
 }
 
+.company-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.company-tagline {
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+}
+
+.company-reg {
+    font-size: 9px;
+    color: #777;
+    margin-top: 2px;
+}
+
+.document-meta {
+    text-align: right;
+    font-size: 9px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   7. Content area
+   No margin-top needed here – @page margins handle spacing.
+   We do need a small padding so the first line of content
+   isn't flush with the top margin edge.
+   ------------------------------------------------------------ */
+.print-content {
+    padding: 5mm 0 0;
+}
+
+/* ------------------------------------------------------------
+   8. Document title
+   ------------------------------------------------------------ */
+.document-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+}
+
+/* ------------------------------------------------------------
+   9. Two-column info layout
+   ------------------------------------------------------------ */
 .document-info {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
+    margin-bottom: 14px;
 }
 
 .info-section {
-    margin-bottom: 20px;
+    flex: 1;
+    margin-bottom: 14px;
+    padding-right: 10px;
+}
+
+.info-section:last-child {
+    padding-right: 0;
 }
 
 .info-row {
     display: flex;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
+    font-size: 11px;
 }
 
 .info-label {
     font-weight: bold;
-    width: 120px;
+    width: 140px;
     flex-shrink: 0;
 }
 
@@ -205,107 +175,276 @@
     flex-grow: 1;
 }
 
-/* Totals and summaries */
+/* ------------------------------------------------------------
+   10. Tables
+   ------------------------------------------------------------ */
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 11px;
+}
+
+.print-table th,
+.print-table td {
+    border: 1px solid #333;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.print-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    text-align: center;
+}
+
+.print-table .text-right  { text-align: right; }
+.print-table .text-center { text-align: center; }
+.print-table .amount      { text-align: right; font-family: 'Courier New', monospace; }
+
+/* Zebra-stripe totals row */
+.print-table tfoot tr {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+/* ------------------------------------------------------------
+   11. Totals / summary sections
+   ------------------------------------------------------------ */
 .totals-section {
-    margin-top: 20px;
-    /* Temporarily commented out */
-    /* border-top: 2px solid #333; */
-    padding-top: 10px;
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 2px solid #333;
 }
 
 .total-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     font-weight: bold;
+    font-size: 11px;
 }
 
 .grand-total {
-    font-size: 14px;
-    /* Temporarily commented out */
-    /* border-top: 1px solid #333; */
-    padding-top: 5px;
-    margin-top: 10px;
+    font-size: 13px;
+    border-top: 1px solid #333;
+    padding-top: 4px;
+    margin-top: 8px;
 }
 
-/* Amount in words styling */
+/* ------------------------------------------------------------
+   12. Amount in words
+   ------------------------------------------------------------ */
 .amount-words {
-    margin-top: 15px;
-    padding: 10px;
+    margin-top: 12px;
+    padding: 8px 10px;
     border: 1px solid #333;
     background-color: #f9f9f9;
+    font-size: 11px;
 }
 
 .amount-words-label {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-right: 6px;
 }
 
-/* Signature sections */
+/* ------------------------------------------------------------
+   13. Signature section
+   ------------------------------------------------------------ */
 .signatures {
-    margin-top: 40px;
+    margin-top: 30px;
     display: flex;
     justify-content: space-between;
 }
 
 .signature-box {
     text-align: center;
-    width: 30%;
+    width: 22%;
 }
 
 .signature-line {
     border-bottom: 1px solid #333;
-    height: 40px;
-    margin-bottom: 5px;
+    height: 30px;
+    margin-bottom: 4px;
 }
 
-/* Voucher number styling */
+.signature-line-sm {
+    border-bottom: 1px solid #333;
+    height: 20px;
+    margin-bottom: 4px;
+}
+
+.signature-label {
+    font-size: 10px;
+}
+
+/* ------------------------------------------------------------
+   14. Print-safe status badges
+   Replaces Bootstrap .badge-* classes which are not available
+   in the standalone print layout (no Bootstrap loaded).
+   ------------------------------------------------------------ */
+.status-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid #666;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.status-badge-success  { background: #d4edda; border-color: #4cae4c; color: #2d6a2d; }
+.status-badge-warning  { background: #fff3cd; border-color: #e0a800; color: #7d5800; }
+.status-badge-danger   { background: #f8d7da; border-color: #d9534f; color: #8b1a1a; }
+.status-badge-info     { background: #d1ecf1; border-color: #31b0d5; color: #1a5d6e; }
+.status-badge-secondary { background: #e2e3e5; border-color: #999;    color: #383d41; }
+.status-badge-primary  { background: #cce5ff; border-color: #004085; color: #004085; }
+.status-badge-light    { background: #fefefe; border-color: #aaa;    color: #333; }
+
+/* ------------------------------------------------------------
+   15. Utility classes
+   ------------------------------------------------------------ */
+.text-right  { text-align: right; }
+.text-center { text-align: center; }
+.text-left   { text-align: left; }
+.amount      { font-family: 'Courier New', monospace; }
+
 .voucher-number {
     font-weight: bold;
-    font-size: 14px;
-    color: #333;
+    font-size: 13px;
 }
 
-/* Status badges for print */
-.status-badge {
-    padding: 2px 6px;
+/* Watermark container (used in payment/expense vouchers) */
+.watermark-container {
+    position: relative;
+    z-index: 1;
+}
+
+.watermark-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url('../print-logo2.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 650px;
+    opacity: 0.08;
+    z-index: 0;
+}
+
+.watermark-container > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Description/note boxes */
+.note-box {
     border: 1px solid #333;
-    border-radius: 3px;
-    font-size: 10px;
+    padding: 8px 10px;
+    background-color: #f9f9f9;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Bank / certification sections */
+.certification-statement {
+    margin-top: 24px;
+    text-align: center;
     font-weight: bold;
+    font-size: 11px;
 }
 
-.status-pending {
-    background-color: #fff3cd;
-    border-color: #ffeaa7;
+/* Account status block used in ledgers */
+.account-status {
+    padding: 8px 10px;
+    border: 1px solid #333;
+    font-size: 11px;
 }
 
-.status-completed {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
+.account-status-credit { background-color: #d4edda; }
+.account-status-debit  { background-color: #f8d7da; }
+.account-status-zero   { background-color: #f9f9f9; }
+
+/* ------------------------------------------------------------
+   16. Page-break helpers
+   ------------------------------------------------------------ */
+.page-break   { page-break-before: always; }
+.avoid-break  { page-break-inside: avoid; }
+
+/* ------------------------------------------------------------
+   17. Print button (screen only – hidden when printing)
+   ------------------------------------------------------------ */
+.print-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    padding: 10px 22px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.status-cancelled {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-}
+.print-button:hover { background: #0056b3; }
 
-/* Responsive adjustments for smaller content */
-@media print and (max-width: 210mm) {
-    .print-table {
-        font-size: 10px;
+/* ------------------------------------------------------------
+   18. @media print overrides
+   Keep position: fixed on header/footer so they repeat on
+   every page. DO NOT override to position: static.
+   ------------------------------------------------------------ */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        /* top  = header height (18mm) so content never slides under the fixed header.
+           btm  = footer height (14mm) so content never slides over the fixed footer.
+           sides = content margin (15mm) replacing the zeroed @page side margins. */
+        padding: 18mm 15mm 14mm 15mm;
     }
 
-    .print-table th,
-    .print-table td {
-        padding: 4px;
-    }
+    .no-print { display: none !important; }
 
-    .document-title {
-        font-size: 16px;
-    }
+    /* Prevent table rows from splitting awkwardly */
+    .print-table tbody tr { page-break-inside: avoid; }
 
-    .info-label {
-        width: 100px;
+    /* Keep critical sections together */
+    .avoid-break       { page-break-inside: avoid; }
+    .signatures        { page-break-inside: avoid; }
+    .totals-section    { page-break-inside: avoid; }
+    .amount-words      { page-break-inside: avoid; }
+
+    /* Headings should not be orphaned at the bottom of a page */
+    h1, h2, h3, h4 { page-break-after: avoid; }
+
+    /* Links should NOT show raw URLs in printed ERP documents */
+    a { color: black !important; text-decoration: none !important; }
+
+    /* Remove shadows/outlines added for screen presentation */
+    .card, .table, .panel {
+        box-shadow: none !important;
+    }
+}
+
+/* ------------------------------------------------------------
+   19. Screen preview styles
+   ------------------------------------------------------------ */
+@media screen {
+    .print-header { position: relative; border-bottom: 2px solid #333; }
+    .print-footer { position: relative; border-top: 1px solid #333; }
+
+    .print-content {
+        max-width: 210mm;
+        margin: 20px auto;
+        padding: 10px 15mm;
+        background: white;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
     }
 }

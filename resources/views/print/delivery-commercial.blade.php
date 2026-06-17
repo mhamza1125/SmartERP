@@ -2,20 +2,15 @@
 
 @section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust  _no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
+@push('styles')
+<style>
+    .document-info { display: flex; width: 100%; }
+    .info-section   { width: 50%; box-sizing: border-box; padding: 0 10px; }
+</style>
+@endpush
+
 @section('content')
 <div class="document-title">Commercial Invoice</div>
-<style>
-    .document-info {
-        display: flex;
-        width: 100%;
-    }
-
-    .info-section {
-        width: 50%; /* static 50% width for each column */
-        box-sizing: border-box;
-        padding: 0 10px; /* optional padding between columns */
-    }
-</style>
 
 {{-- Customer Information --}}
 <div class="document-info">
@@ -212,7 +207,7 @@ if (isset($sellingType) && !empty($sellingType)) {
 
 {{-- Bank Account Details --}}
 @if(isset($bankDetails) && !empty($bankDetails))
-<div class="info-section1 avoid-break">
+<div class="info-section avoid-break">
     <h3>Bank Account Details</h3>
     <table class="print-table">
         <tbody>
@@ -254,10 +249,9 @@ if (isset($sellingType) && !empty($sellingType)) {
 @endif
 
 {{-- Certification Statement --}}
-<div class="certification-statement avoid-break" style="margin-top: 30px; text-align: center; font-weight: bold;">
-    <p>CERTIFIED TO BE TRUE AND CORRECT: {{ $company->name ?? 'SAJJADSON LAB EQUIPMENT' }}</p>
+<div class="certification-statement avoid-break">
+    <p>CERTIFIED TO BE TRUE AND CORRECT: {{ $company->name ?? '' }}</p>
 </div>
 @endif
-
 
 @endsection

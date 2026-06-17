@@ -79,7 +79,7 @@
 @if(isset($issueItem) && $issueItem->count() > 0)
 <div class="items-section avoid-break">
     <h3>Issued Items Summary</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>
@@ -113,7 +113,7 @@
     @foreach($totalTimes as $i => $receiveTime)
     <div class="receive-record" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px;">
         <h4>Record {{ $i + 1 }} - {{ $receiveTime['stock_no'] ?? 'N/A' }}</h4>
-        <table class="items-table">
+        <table class="print-table">
             <thead>
                 <tr>
                     <th>Sr.</th>

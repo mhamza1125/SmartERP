@@ -71,7 +71,7 @@
 @if(isset($returnMaterial) && $returnMaterial->count() > 0)
 <div class="items-section avoid-break">
     <h3>Returned Materials</h3>
-    <table class="items-table">
+    <table class="print-table">
         <thead>
             <tr>
                 <th>Sr.</th>
