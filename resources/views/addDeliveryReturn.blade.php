@@ -45,7 +45,7 @@
                       </div>
                       <div class="col-md-6">
                         <strong>Stock No:</strong> {{ $delivery->stock_no }}<br>
-                        <strong>Delivery Date:</strong> {{ $delivery->stock_date }}<br>
+                        <strong>Delivery Date:</strong> {{ $delivery->stock_date ? \Carbon\Carbon::parse($delivery->stock_date)->format('d-m-Y') : 'N/A' }}<br>
                         <strong>Delivery Method:</strong> {{ $delivery->delivery_method }}
                       </div>
                     </div>

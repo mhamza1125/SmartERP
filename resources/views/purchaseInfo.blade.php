@@ -8,34 +8,30 @@
           <div class="card-header">
             <h4>{{ isset($process) ? 'Process Material' : 'Purchase' }} Info</h4>
             <div class="card-header-action">
-              <div class="btn-group">
-                <div class="dropdown">
-                  <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
-                    <i class="fas fa-print"></i> Print
-                  </button>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{ isset($process) ? route('mprocess.print', $purchase['purchase_id']) : route('purchase.print', $purchase['purchase_id']) }}" target="_blank">
-                      <i class="fas fa-file-alt"></i> {{ isset($process) ? 'Process Material' : 'Purchase Order' }}
-                    </a>
-                    @if($count >= 1)
-                      <div class="dropdown-divider"></div>
-                      <span class="dropdown-header">Receiving Records</span>
-                      @for($i=1; $i<=$count; $i++)
-                        <a class="dropdown-item" href="{{ route('receive.print', $receiveTimes[$i-1]['receive_id']) }}" target="_blank">
-                          <i class="fas fa-file-alt"></i> {{ $receiveTimes[$i-1]['receive_no'] }}
-                        </a>
-                      @endfor
-                    @endif
-                    @if($count2 >= 1)
-                      <div class="dropdown-divider"></div>
-                      <span class="dropdown-header">Return Records</span>
-                      @for($i=1; $i<=$count2; $i++)
-                        <a class="dropdown-item" href="{{ route('return.print', $returnTimes[$i-1]['return_id']) }}" target="_blank">
-                          <i class="fas fa-file-alt"></i> {{ $returnTimes[$i-1]['return_no'] }}
-                        </a>
-                      @endfor
-                    @endif
-                  </div>
+              <div class="dropdown">
+                <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="{{ isset($process) ? route('mprocess.print', $purchase['purchase_id']) : route('purchase.print', $purchase['purchase_id']) }}" target="_blank">
+                    <i class="fas fa-file-alt"></i> {{ isset($process) ? 'Process Material' : 'Purchase Order' }}
+                  </a>
+                  @if($count >= 1)
+                    <span class="dropdown-header pdd-header">Receiving Records</span>
+                    @for($i=1; $i<=$count; $i++)
+                      <a class="dropdown-item" href="{{ route('receive.print', $receiveTimes[$i-1]['receive_id']) }}" target="_blank">
+                        <i class="fas fa-file-alt"></i> {{ $receiveTimes[$i-1]['receive_no'] }}
+                      </a>
+                    @endfor
+                  @endif
+                  @if($count2 >= 1)
+                    <span class="dropdown-header pdd-header">Return Records</span>
+                    @for($i=1; $i<=$count2; $i++)
+                      <a class="dropdown-item" href="{{ route('return.print', $returnTimes[$i-1]['return_id']) }}" target="_blank">
+                        <i class="fas fa-file-alt"></i> {{ $returnTimes[$i-1]['return_no'] }}
+                      </a>
+                    @endfor
+                  @endif
                 </div>
               </div>
               <div class="btn-group">

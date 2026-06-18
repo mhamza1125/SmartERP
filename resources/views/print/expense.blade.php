@@ -16,7 +16,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Date:</span>
-                <span class="info-value">{{ $expense['transaction_date'] ?? 'N/A' }}</span>
+                <span class="info-value">{{ !empty($expense['transaction_date']) ? \Carbon\Carbon::parse($expense['transaction_date'])->format('d-m-Y') : 'N/A' }}</span>
             </div>
             {{-- <div class="info-row">
                 <span class="info-label">Expense Head/Category:</span>

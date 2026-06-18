@@ -40,7 +40,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Receive Date:</span>
-            <span class="info-value">{{ $receive['receive_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($receive['receive_date']) ? \Carbon\Carbon::parse($receive['receive_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Status:</span>

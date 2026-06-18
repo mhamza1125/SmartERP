@@ -1,11 +1,12 @@
 @extends('print.layout')
 
-@section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust  _no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust_no'] ?? 'N/A') . '_' . date('d-m-Y'))
 
 @push('styles')
 <style>
     .document-info { display: flex; width: 100%; }
-    .info-section   { width: 50%; box-sizing: border-box; padding: 0 10px; }
+    .info-section   { width: 50%; box-sizing: border-box; }
+    .full-width-section { width: 100%; box-sizing: border-box; }
 </style>
 @endpush
 
@@ -21,18 +22,19 @@
         </div>
 
         <div class="info-row">
-            <span class="info-label">Port Name:</span>
-            <span class="info-value">{{ $delivery['tport_no'] ?? 'N/A' }}</span>
-        </div>
-        
-        <div class="info-row">
             <span class="info-label">Address:</span>
             @if(isset($delivery['tshipping']) && !empty($delivery['tshipping']))
                 <span class="info-value">{{ $delivery['tshipping'] }}</span>
             @else
-                <span class="info-value">{{ $delivery['address'] }}</span>
+                <span class="info-value">{{ $delivery['address'] ?? 'N/A' }}</span>
             @endif
         </div>
+
+        <div class="info-row">
+            <span class="info-label">Destination Port:</span>
+            <span class="info-value">{{ $delivery['tport_no'] ?? 'N/A' }}</span>
+        </div>
+
         {{-- Company info (no title) --}}
         @if(isset($company))
             @if(!empty($company->ntn))
@@ -77,7 +79,7 @@
         @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
         <div class="info-row">
             <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ $delivery['delivery_date'] }}</span>
+            <span class="info-value">{{ \Carbon\Carbon::parse($delivery['delivery_date'])->format('d-m-Y') }}</span>
         </div>
         @endif
         @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 0)
@@ -96,7 +98,7 @@
             <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
         </div>
         @endif
-        
+
         @if(isset($uom) && !empty($uom))
         <div class="info-row">
             <span class="info-label">UOM:</span>
@@ -120,17 +122,9 @@
     </div>
 </div>
 
-{{-- Total Quantity Display --}}
-{{-- <div class="document-info">
-    <div class="info-section">
-        
-    </div>
-</div> --}}
-
 {{-- Delivered Items Table --}}
 @if(isset($deliveryItem) && $deliveryItem->count() > 0)
 <div class="avoid-break">
-    <h3>Delivered Items</h3>
     <table class="print-table">
         <thead>
             <tr>
@@ -146,24 +140,16 @@
         </thead>
         <tbody>
             @if($deliveryItem->count())
-                @php $product_id = 0;@endphp
                 @foreach($deliveryItem as $item)
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
-                    {{-- @if($item->product_id == $product_id)
-                        <td colspan="2"></td>
-                    @else
-                        <td class="text-center">{{ $item->article_no }}</td>
-                        <td class="text-center">{{ $item->name }}</td>
-                        @php $product_id = $item->product_id; @endphp
-                    @endif --}}
                     <td class="text-center">{{ $item->article_no }}</td>
-                    <td class="text-center">{{ $item->name }}</td>
+                    <td class="text-left">{{ $item->name }}</td>
                     <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
                     {{-- <td class="text-center">{{ $item->puname ?? 'N/A' }}</td> --}}
                     <td class="text-right">{{ number_format($item->quantity) }}</td>
-                    <td class="text-right amount">{{ number_format($item->price ?? 0, 2) }} {{-- {{ $item->cname }} --}}</td>
-                    <td class="text-right amount">{{ number_format($item->quantity * ($item->price ?? 0), 2) }} {{-- {{ $item->cname }} --}}</td>
+                    <td class="text-right amount">{{ number_format($item->price ?? 0, 2) }}</td>
+                    <td class="text-right amount">{{ number_format($item->quantity * ($item->price ?? 0), 2) }}</td>
                 </tr>
                 @endforeach
             @endif
@@ -198,16 +184,15 @@ if (isset($sellingType) && !empty($sellingType)) {
 
 {{-- Statement of Origin (if provided) --}}
 @if(isset($statementOfOrigin) && !empty($statementOfOrigin))
-<div class="statement-of-origin avoid-break">
+<div class="avoid-break" style="margin-top: 15px;">
     <h3>Statement of Origin</h3>
     <p>{{ $statementOfOrigin }}</p>
 </div>
 @endif
 
-
 {{-- Bank Account Details --}}
 @if(isset($bankDetails) && !empty($bankDetails))
-<div class="info-section avoid-break">
+<div class="avoid-break" style="margin-top: 15px;">
     <h3>Bank Account Details</h3>
     <table class="print-table">
         <tbody>

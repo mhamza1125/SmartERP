@@ -29,7 +29,7 @@
                     @foreach($issue as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->stock_date}}</td>                      
+                      <td>{{ $item->stock_date ? \Carbon\Carbon::parse($item->stock_date)->format('d-m-Y') : 'N/A' }}</td>
                       <td>{{$item->machine_no}}</td>
                       <td>{{$item->hname}}</td>
                       <td>{{$item->employee_no}} - {{$item->name}}</td>

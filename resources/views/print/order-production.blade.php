@@ -23,12 +23,12 @@
     <div class="info-section">
         <div class="info-row">
             <span class="info-label">Order Date:</span>
-            <span class="info-value">{{ $order['order_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($order['order_date']) ? \Carbon\Carbon::parse($order['order_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         @if(isset($order['due_date']) && !empty($order['due_date']))
         <div class="info-row">
             <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ $order['due_date'] }}</span>
+            <span class="info-value">{{ \Carbon\Carbon::parse($order['due_date'])->format('d-m-Y') }}</span>
         </div>
         @endif
     </div>
@@ -37,7 +37,6 @@
 {{-- Production Items Table --}}
 @if(isset($orderItem) && $orderItem->count() > 0)
 <div class="avoid-break">
-    <h3>Production Items</h3>
     <table class="print-table">
         <thead>
             <tr>
@@ -53,7 +52,6 @@
         </thead>
         <tbody>
             @if($orderItem->count())
-                @php $product_id = 0; @endphp
                 @foreach($orderItem as $item)
                 @php
                     $key = $item->product_type_id . '_' . $item->product_stage_id;
@@ -62,13 +60,8 @@
                 @endphp
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
-                    @if($item->product_id == $product_id)
-                        <td colspan="2"></td>
-                    @else
-                        <td class="text-center">{{ $item->article_no }}</td>
-                        <td class="text-center">{{ $item->pname }}</td>
-                        @php $product_id = $item->product_id; @endphp
-                    @endif
+                    <td class="text-center">{{ $item->article_no }}</td>
+                    <td class="text-left">{{ $item->pname }}</td>
                     <td class="text-center">{{ $item->name }}</td>
                     <td class="text-center">{{ $item->sname ?? 'N/A' }}</td>
                     <td class="text-center">{{ number_format($item->quantity) }}</td>

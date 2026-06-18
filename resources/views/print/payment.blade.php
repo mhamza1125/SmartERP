@@ -14,7 +14,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Date:</span>
-                <span class="info-value">{{ $transaction['transaction_date'] ?? 'N/A' }}</span>
+                <span class="info-value">{{ !empty($transaction['transaction_date']) ? \Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y') : 'N/A' }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Transaction Type:</span>
@@ -88,8 +88,8 @@
                     <span class="info-value">
                         @if($transaction['transaction_type'] == 'orderPayment' && isset($transaction['order_id']) && $transaction['order_id'])
                             Order #{{ $transaction['order_id'] }}
-                            @if(isset($transaction['order_date']))
-                                ({{ $transaction['order_date'] }})
+                            @if(isset($transaction['order_date']) && !empty($transaction['order_date']))
+                                ({{ \Carbon\Carbon::parse($transaction['order_date'])->format('d-m-Y') }})
                             @endif
                         @elseif($transaction['transaction_type'] == 'receiveAdvance')
                             Advance Payment from Customer
@@ -253,8 +253,8 @@
                     <td>
                         @if($transaction['transaction_to'] == 'customer' && isset($transaction['order_id']))
                             Payment for Order #{{ $transaction['order_id'] ?? 'N/A' }}
-                            @if(isset($transaction['order_date']))
-                                ({{ $transaction['order_date'] }})
+                            @if(isset($transaction['order_date']) && !empty($transaction['order_date']))
+                                ({{ \Carbon\Carbon::parse($transaction['order_date'])->format('d-m-Y') }})
                             @endif
                         @else
                             Payment Transaction

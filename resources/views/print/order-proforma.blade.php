@@ -51,17 +51,21 @@
 
     <div class="info-section">
         <div class="info-row">
-            <span class="info-label">Invoice No:</span>
+            <span class="info-label">Order No:</span>
             <span class="info-value">{{ $order['order_no'] ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
+            <span class="info-label">Proforma Invoice No:</span>
+            <span class="info-value">PI-{{ $order['order_id'] ?? '' }}</span>
+        </div>
+        <div class="info-row">
             <span class="info-label">Invoice Date:</span>
-            <span class="info-value">{{ $order['order_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($order['order_date']) ? \Carbon\Carbon::parse($order['order_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         @if(isset($order['due_date']) && !empty($order['due_date']))
         <div class="info-row">
             <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ $order['due_date'] }}</span>
+            <span class="info-value">{{ \Carbon\Carbon::parse($order['due_date'])->format('d-m-Y') }}</span>
         </div>
         @endif
         @if(isset($hsCode) && !empty($hsCode))
@@ -90,7 +94,6 @@
 {{-- Order Items Table --}}
 @if(isset($orderItem) && $orderItem->count() > 0)
 <div class="avoid-break">
-    <h3>Invoice Items</h3>
     <table class="print-table">
         <thead>
             <tr>
@@ -118,7 +121,7 @@
                         @php $product_id = $item->product_id; @endphp
                     @endif --}}
                     <td class="text-center">{{ $item->article_no }}</td>
-                    <td class="text-center">{{ $item->pname }}</td>    
+                    <td class="text-left">{{ $item->pname }}</td>
                     <td class="text-center">{{ $item->name }}</td>
                     {{-- <td class="text-center">{{ $item->uname ?? 'N/A' }}</td> --}}
                     <td class="text-right">{{ number_format($item->quantity) }}</td>

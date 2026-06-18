@@ -13,7 +13,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Receive Date:</span>
-            <span class="info-value">{{ $issue['stock_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($issue['stock_date']) ? \Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Job No:</span>

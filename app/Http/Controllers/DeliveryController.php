@@ -364,6 +364,26 @@ class DeliveryController extends Controller
             $relatedOrders = $this->getRelatedOrdersForDelivery($delivery);
         }
 
+        // Load packing list summary for this delivery
+        $packingListInfo = null;
+        $packingListData = DB::table('packing_lists')
+            ->where('delivery_id', $id)
+            ->first();
+
+        if ($packingListData) {
+            $totalCartons = DB::table('packing_cartons')
+                ->where('packing_list_id', $packingListData->packing_list_id)
+                ->selectRaw('SUM(carton_to - carton_from + 1) as total')
+                ->value('total');
+
+            $packingListInfo = [
+                'packing_list_id' => $packingListData->packing_list_id,
+                'total_cartons' => (int) $totalCartons,
+            ];
+        }
+
+        $company = $this->companyRepository->first();
+
         return view('print.delivery', [
             'delivery' => $delivery,
             'deliveryBox' => $deliveryBox,
@@ -371,6 +391,8 @@ class DeliveryController extends Controller
             'deliveryItem' => $deliveryItem,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
+            'packingListInfo' => $packingListInfo,
+            'company' => $company,
         ]);
     }
 
@@ -409,14 +431,14 @@ class DeliveryController extends Controller
             ->first();
 
         if ($packingListData) {
-            // Count the number of cartons/packages for this packing list
             $cartonCount = DB::table('packing_cartons')
                 ->where('packing_list_id', $packingListData->packing_list_id)
-                ->count();
+                ->selectRaw('SUM(carton_to - carton_from + 1) as total')
+                ->value('total');
 
             $packingList = [
                 'packing_list_id' => $packingListData->packing_list_id,
-                'carton_count' => $cartonCount,
+                'carton_count' => (int) $cartonCount,
             ];
         }
 

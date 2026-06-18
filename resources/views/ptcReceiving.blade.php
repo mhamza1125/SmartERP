@@ -366,7 +366,7 @@
                       <tr>
                         <td>PTC-{{ $ptc->stock_no }} / {{ $receiving->stock_no }}</td>
                         <td>{{ $receiving->stage_name ?? 'N/A' }}</td>
-                        <td>{{ $receiving->stock_date }}</td>
+                        <td>{{ $receiving->stock_date ? \Carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') : 'N/A' }}</td>
                         <td>{{ $receiving->employee_name ?? $receiving->vendor_name ?? '-' }}</td>
                       </tr>
                     @endforeach

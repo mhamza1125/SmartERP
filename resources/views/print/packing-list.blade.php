@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Packing_List_' . ($packingList->order_no ?? 'N/A') . '_' . date('d-m-Y'))
+@section('title', 'Packing_List_' . ($packingList->delivery_no ?? 'N/A') . '_' . date('d-m-Y'))
 
 @push('scripts')
 <script>
@@ -9,20 +9,16 @@
 @endpush
 
 @section('content')
-<div class="document-title">Packing Details</div>
+<div class="document-title">Packing List</div>
 
 <div class="document-info" style="margin-bottom:12px;">
     <div class="info-section">
         <div class="info-row">
-            <span class="info-label">Order No:</span>
-            <span class="info-value">{{ $packingList->order_no }}</span>
+            <span class="info-label">Invoice No:</span>
+            <span class="info-value">{{ $packingList->delivery_no ?? 'N/A' }}</span>
         </div>
     </div>
     <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Customer:</span>
-            <span class="info-value">{{ $packingList->fname }} {{ $packingList->lname }}</span>
-        </div>
     </div>
 </div>
 

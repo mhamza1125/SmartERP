@@ -142,12 +142,33 @@ class OrderController extends Controller
             ->orderBy('stocks.stock_no')
             ->get();
 
+        // Get all deliveries linked to this order (single-order and multi-order)
+        $relatedDeliveries = DB::table('deliveries')
+            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
+            ->where('stocks.stock_status', 3)
+            ->where(function ($q) use ($id) {
+                $q->where('stocks.order_id', $id)
+                  ->orWhere('stocks.stock_no', 'LIKE', $id . '|%')
+                  ->orWhere('stocks.stock_no', 'LIKE', '%|' . $id . '|%')
+                  ->orWhere('stocks.stock_no', 'LIKE', '%|' . $id);
+            })
+            ->select(
+                'deliveries.delivery_id',
+                'deliveries.delivery_no',
+                'deliveries.delivery_date',
+                'deliveries.delivery_status',
+                'deliveries.delivery_method'
+            )
+            ->orderBy('deliveries.delivery_date', 'desc')
+            ->get();
+
         return view('orderInfo', [
             'order' => $order,
             'orderItem' => $orderItem,
             'banks' => $banks,
             'packingList' => $packingList,
             'ptcs' => $ptcs,
+            'relatedDeliveries' => $relatedDeliveries,
         ]);
     }
 

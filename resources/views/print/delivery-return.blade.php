@@ -30,7 +30,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Return Date:</span>
-            <span class="info-value">{{ $return['return_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($return['return_date']) ? \Carbon\Carbon::parse($return['return_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Return Reason:</span>
@@ -61,7 +61,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Original Delivery Date:</span>
-            <span class="info-value">{{ $return['stock_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($return['stock_date']) ? \Carbon\Carbon::parse($return['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
     </div>
 </div>

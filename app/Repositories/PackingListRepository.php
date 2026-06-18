@@ -27,7 +27,7 @@ class PackingListRepository implements GlobalInterface
             ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
             ->join('orders', 'orders.order_id', '=', 'packing_lists.order_id')
             ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
-            ->select('packing_lists.*', 'stocks.stock_no', 'stocks.stock_date', 'orders.order_no', 'orders.job_no', 'customers.fname', 'customers.lname', 'customers.customer_no')
+            ->select('packing_lists.*', 'stocks.stock_no', 'stocks.stock_date', 'orders.order_no', 'orders.job_no', 'customers.fname', 'customers.lname', 'customers.customer_no', 'deliveries.delivery_no')
             ->first();
     }
 
@@ -43,7 +43,7 @@ class PackingListRepository implements GlobalInterface
             ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
             ->join('orders', 'orders.order_id', '=', 'packing_lists.order_id')
             ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
-            ->select('packing_lists.*', 'stocks.stock_no', 'stocks.stock_date', 'orders.order_no', 'orders.job_no', 'customers.fname', 'customers.lname', 'customers.customer_no')
+            ->select('packing_lists.*', 'stocks.stock_no', 'stocks.stock_date', 'orders.order_no', 'orders.job_no', 'customers.fname', 'customers.lname', 'customers.customer_no', 'deliveries.delivery_no')
             ->first();
     }
 

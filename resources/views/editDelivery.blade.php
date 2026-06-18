@@ -43,7 +43,10 @@
                         @endif
                       </td></tr>
                       @endif
-                      <tr><td><b>Date:</b> {{is_array($order) ? $order['order_date'] : $order->order_date}}</td></tr>
+                      @php $editOrderDate = is_array($order) ? ($order['order_date'] ?? null) : ($order->order_date ?? null); @endphp
+                      @if($editOrderDate)
+                      <tr><td><b>Date:</b> {{\Carbon\Carbon::parse($editOrderDate)->format('d-m-Y')}}</td></tr>
+                      @endif
                     </tbody>
                   </table>
                 </div>

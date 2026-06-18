@@ -342,7 +342,7 @@
           </div>
           <div class="modal-body">
             <div class="row mb-3">
-              <div class="col-md-4"><strong>Date:</strong> {{ $movement->stock_date }}</div>
+              <div class="col-md-4"><strong>Date:</strong> {{ $movement->stock_date ? \Carbon\Carbon::parse($movement->stock_date)->format('d-m-Y') : 'N/A' }}</div>
               <div class="col-md-4"><strong>By:</strong> {{ $movement->employee_name ?? $movement->vendor_name ?? '-' }}</div>
               <div class="col-md-4"><strong>Notes:</strong> {{ $movement->description ?? '-' }}</div>
             </div>
@@ -410,7 +410,7 @@
       </div>
       <div class="modal-body">
         <div class="row mb-3">
-          <div class="col-md-4"><strong>Date:</strong> {{ $ptc->stock_date }}</div>
+          <div class="col-md-4"><strong>Date:</strong> {{ $ptc->stock_date ? \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') : 'N/A' }}</div>
           <div class="col-md-4"><strong>By:</strong> {{ $ptc->employee_name ?? $ptc->vendor_name ?? '-' }}</div>
           <div class="col-md-4"><strong>Notes:</strong> {{ $ptc->description ?? '-' }}</div>
         </div>

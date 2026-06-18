@@ -163,7 +163,7 @@
     <h3>Receive Records</h3>
     @foreach($receiveTimes as $index => $receiveTime)
     <div class="receive-record" style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px;">
-        <h4>{{ $receiveTime->receive_no ?? 'N/A' }} - {{ $receiveTime->receive_date ?? 'N/A' }}</h4>
+        <h4>{{ $receiveTime->receive_no ?? 'N/A' }} - {{ $receiveTime->receive_date ? \Carbon\Carbon::parse($receiveTime->receive_date)->format('d-m-Y') : 'N/A' }}</h4>
     </div>
     @endforeach
 </div>

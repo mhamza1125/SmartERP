@@ -30,7 +30,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Date:</span>
-            <span class="info-value">{{ $ptc->stock_date ?? 'N/A' }}</span>
+            <span class="info-value">{{ $ptc->stock_date ? \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') : 'N/A' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Order:</span>
@@ -166,7 +166,7 @@
                         @endif
                     </td>
                     <td class="text-center">{{ $avgQty }}</td>
-                    <td class="text-center">{{ $movement->stock_date }}</td>
+                    <td class="text-center">{{ $movement->stock_date ? \Carbon\Carbon::parse($movement->stock_date)->format('d-m-Y') : 'N/A' }}</td>
                     <td>{{ $movement->employee_name ?? $movement->vendor_name ?? '-' }}</td>
                 </tr>
             @endforeach

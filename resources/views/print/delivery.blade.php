@@ -1,9 +1,9 @@
 @extends('print.layout')
 
-@section('title', 'Delivery_Challan_' . ($delivery['delivery_no'] ?? 'N/A') . '_' . ($delivery['delivery_date'] ?? date('d-m-Y')))
+@section('title', 'Delivery_Details_' . ($delivery['delivery_no'] ?? 'N/A') . '_' . ($delivery['delivery_date'] ?? date('d-m-Y')))
 
 @section('content')
-<div class="document-title">Delivery Challan</div>
+<div class="document-title">Delivery Details</div>
 
 {{-- Delivery Header Information --}}
 <div class="document-info">
@@ -14,25 +14,12 @@
         </div>
         @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
         <div class="info-row">
-            <span class="info-label">Primary Order:</span>
-            <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
+            <span class="info-label">Order No(s):</span>
+            <span class="info-value">{{ collect($relatedOrders)->pluck('order_no')->filter()->implode(', ') }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Primary Job No:</span>
-            <span class="info-value">{{ $delivery['job_no'] ?? 'N/A' }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">All Orders:</span>
-            <span class="info-value">
-                @foreach($relatedOrders as $index => $order)
-                    @if($index < 5)
-                    <span class="status-badge status-badge-secondary">{{ $order->order_no ?? 'N/A' }}</span>
-                    @endif
-                @endforeach
-                @if(count($relatedOrders) > 5)
-                <span class="status-badge status-badge-light">+{{ count($relatedOrders) - 5 }} more</span>
-                @endif
-            </span>
+            <span class="info-label">Job No(s):</span>
+            <span class="info-value">{{ collect($relatedOrders)->pluck('job_no')->filter()->implode(', ') }}</span>
         </div>
         @else
         <div class="info-row">
@@ -46,21 +33,45 @@
         @endif
         <div class="info-row">
             <span class="info-label">Order Date:</span>
-            <span class="info-value">{{ $delivery['order_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($delivery['order_date']) ? \Carbon\Carbon::parse($delivery['order_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
+        @if(isset($delivery['fi_no']) && !empty($delivery['fi_no']))
+        <div class="info-row">
+            <span class="info-label">FI No:</span>
+            <span class="info-value">{{ $delivery['fi_no'] }}</span>
+        </div>
+        @endif
+        @if(isset($company) && !empty($company->rex_no))
+        <div class="info-row">
+            <span class="info-label">REX No:</span>
+            <span class="info-value">{{ $company->rex_no }}</span>
+        </div>
+        @endif
+        @if(isset($company) && !empty($company->ntn))
+        <div class="info-row">
+            <span class="info-label">NTN:</span>
+            <span class="info-value">{{ $company->ntn }}</span>
+        </div>
+        @endif
     </div>
 
     <div class="info-section">
         <div class="info-row">
             <span class="info-label">Delivery No:</span>
-            <span class="info-value">{{ $delivery['customer_no'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
         </div>
+        @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
+        <div class="info-row">
+            <span class="info-label">Delivery Date:</span>
+            <span class="info-value">{{ \Carbon\Carbon::parse($delivery['delivery_date'])->format('d-m-Y') }}</span>
+        </div>
+        @endif
         <div class="info-row">
             <span class="info-label">Shipping From:</span>
             <span class="info-value">{{ $delivery['fshipping'] ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Port No:</span>
+            <span class="info-label">Origin Port:</span>
             <span class="info-value">{{ $delivery['fport_no'] ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
@@ -68,7 +79,7 @@
             <span class="info-value">{{ $delivery['tshipping'] ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Port No:</span>
+            <span class="info-label">Destination Port:</span>
             <span class="info-value">{{ $delivery['tport_no'] ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
@@ -83,31 +94,13 @@
         <div class="info-row">
             <span class="info-label">Delivery Status:</span>
             <span class="info-value">
-                @if($delivery['delivery_status'] == 1) <span class="status-badge status-badge-warning">Pending</span>
-                @elseif($delivery['delivery_status'] == 2) <span class="status-badge status-badge-info">Dispatched</span>
-                @elseif($delivery['delivery_status'] == 3) <span class="status-badge status-badge-success">Delivered</span>
-                @elseif($delivery['delivery_status'] == 4) <span class="status-badge status-badge-danger">Returned</span>
-                @else <span class="status-badge status-badge-secondary">Unknown</span> @endif
+                @if($delivery['delivery_status'] == 1) Pending
+                @elseif($delivery['delivery_status'] == 2) Dispatched
+                @elseif($delivery['delivery_status'] == 3) Delivered
+                @elseif($delivery['delivery_status'] == 4) Returned
+                @else Unknown @endif
             </span>
         </div>
-        @if(isset($delivery['fi_no']) && !empty($delivery['fi_no']))
-        <div class="info-row">
-            <span class="info-label">FI No:</span>
-            <span class="info-value">{{ $delivery['fi_no'] }}</span>
-        </div>
-        @endif
-        @if(isset($delivery['rex_no']) && !empty($delivery['rex_no']))
-        <div class="info-row">
-            <span class="info-label">REX No:</span>
-            <span class="info-value">{{ $delivery['rex_no'] }}</span>
-        </div>
-        @endif
-        @if(isset($delivery['ntn']) && !empty($delivery['ntn']))
-        <div class="info-row">
-            <span class="info-label">NTN:</span>
-            <span class="info-value">{{ $delivery['ntn'] }}</span>
-        </div>
-        @endif
     </div>
 </div>
 
@@ -134,13 +127,12 @@
 {{-- Delivery Items Table --}}
 @if(isset($deliveryItem) && $deliveryItem->count() > 0)
 <div class="avoid-break">
-    <h3>Delivered Items</h3>
     <table class="print-table">
         <thead>
             <tr>
                 <th style="width: 8%">Sr.</th>
                 <th style="width: 15%">Article No</th>
-                <th style="width: 30%">Product</th>
+                <th style="width: 30%">Product Name</th>
                 <th style="width: 15%">Size</th>
                 <th style="width: 12%">Delivered</th>
                 <th style="width: 10%">Boxes</th>
@@ -152,7 +144,7 @@
                 <tr>
                     <td class="text-center">{{ $loop->index + 1 }}</td>
                     <td class="text-center">{{ $item->article_no }}</td>
-                    <td class="text-center">{{ $item->name }}</td>
+                    <td class="text-left">{{ $item->name }}</td>
                     <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
                     <td class="text-right">{{ number_format($item->quantity) }}</td>
                     <td class="text-right">{{ number_format(ceil($item->quantity * ($item->bqty ?? 1))) }}</td>
@@ -181,6 +173,12 @@
         <span>Total Boxes:</span>
         <span>{{ number_format($deliveryItem->sum(function($item) { return ceil($item->quantity * ($item->bqty ?? 1)); }) ?? 0) }}</span>
     </div>
+    @if(isset($packingListInfo) && $packingListInfo)
+    <div class="total-row">
+        <span>Total Cartons (Packing List):</span>
+        <span>{{ number_format($packingListInfo['total_cartons']) }}</span>
+    </div>
+    @endif
     @if(isset($delivery['delivery_charges']) && $delivery['delivery_charges'] > 0)
     <div class="total-row">
         <span>Delivery Charges:</span>
@@ -198,19 +196,6 @@
     </div>
 </div>
 @endif
-
-{{-- Terms and Conditions --}}
-<div class="info-section avoid-break">
-    <h3>Terms and Conditions</h3>
-    <div style="font-size: 10px; line-height: 1.3;">
-        <ul style="margin: 0; padding-left: 15px;">
-            <li>Goods once delivered will not be taken back without prior approval.</li>
-            <li>Any damage or shortage must be reported within 24 hours of delivery.</li>
-            <li>This delivery challan is subject to verification and final billing.</li>
-            <li>Customer signature confirms receipt of goods in good condition.</li>
-        </ul>
-    </div>
-</div>
 
 {{-- Signatures --}}
 <div class="signatures avoid-break">

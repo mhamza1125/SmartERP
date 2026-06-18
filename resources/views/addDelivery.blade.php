@@ -81,7 +81,7 @@
                       <tbody>
                         <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                         <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                        <tr><td><b>Date:</b> {{$order['order_date']}}</td></tr>
+                        <tr><td><b>Date:</b> {{ !empty($order['order_date']) ? \Carbon\Carbon::parse($order['order_date'])->format('d-m-Y') : 'N/A' }}</td></tr>
                       </tbody>
                     </table>
                   </div>

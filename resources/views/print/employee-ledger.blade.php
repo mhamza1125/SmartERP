@@ -93,7 +93,7 @@
                     $displayCredit = $debit;
                 @endphp
                 <tr>
-                    <td>{{ $transaction->transaction_date ?? 'N/A' }}</td>
+                    <td>{{ $transaction->transaction_date ? \Carbon\Carbon::parse($transaction->transaction_date)->format('d-m-Y') : 'N/A' }}</td>
                     <td>
                         @if(isset($transaction->transaction_id))
                             TXN-{{ date('Y') }}-{{ str_pad($transaction->transaction_id, 4, '0', STR_PAD_LEFT) }}

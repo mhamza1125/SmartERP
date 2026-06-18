@@ -23,18 +23,7 @@
               <div class="col-md-6">
                 <table class="table table-sm table-borderless">
                   <tbody>
-                    {{-- <tr><td><b>Stock No:</b> {{ $packingList->stock_no }}</td></tr> --}}
-                    <tr><td><b>Order No:</b> {{ $packingList->order_no }}</td></tr>
-                    {{-- <tr><td><b>Job No:</b> {{ $packingList->job_no }}</td></tr> --}}
-                  </tbody>
-                </table>
-              </div>
-              <div class="col-md-6">
-                <table class="table table-sm table-borderless">
-                  <tbody>
-                    <tr><td><b>Customer:</b> {{ $packingList->fname }} {{ $packingList->lname }}</td></tr>
-                    {{-- <tr><td><b>Customer No:</b> {{ $packingList->customer_no }}</td></tr> --}}
-                    {{-- <tr><td><b>Created:</b> {{ \Carbon\Carbon::parse($packingList->created_at)->format('d M Y, h:i A') }}</td></tr> --}}
+                    <tr><td><b>Invoice No:</b> {{ $packingList->delivery_no ?? 'N/A' }}</td></tr>
                   </tbody>
                 </table>
               </div>

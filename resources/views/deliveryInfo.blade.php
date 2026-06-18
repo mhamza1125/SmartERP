@@ -37,7 +37,7 @@
                     <i class="fas fa-box"></i> Create Packing List
                   </a>
                 @endif
-                <a href="{{ route('delivery') }}" class="btn {{ isset($isMultiOrder) && $isMultiOrder ? 'btn-light' : 'btn-primary' }}">Back</a>
+                <a href="{{ route('delivery') }}" class="btn btn-primary">Back</a>
                 @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
                   @php
                     $orderIds = collect($relatedOrders)->pluck('order_id')->implode(',');
@@ -83,7 +83,10 @@
                     <tr><td><b>Order No:</b> {{is_array($delivery) ? $delivery['order_no'] : $delivery->order_no}}</td></tr>
                     {{-- <tr><td><b>Job No:</b> {{is_array($delivery) ? $delivery['job_no'] : $delivery->job_no}}</td></tr> --}}
                     @endif
-                    <tr><td><b>Order Date:</b> {{is_array($delivery) ? $delivery['order_date'] : $delivery->order_date}}</td></tr>
+                    @php $deliveryOrderDate = is_array($delivery) ? ($delivery['order_date'] ?? null) : ($delivery->order_date ?? null); @endphp
+                    @if($deliveryOrderDate)
+                    <tr><td><b>Order Date:</b> {{\Carbon\Carbon::parse($deliveryOrderDate)->format('d-m-Y')}}</td></tr>
+                    @endif
                     @if($company && $company->rex_no)
                     <tr><td><b>REX No:</b> {{$company->rex_no}}</td></tr>
                     @endif
@@ -103,14 +106,14 @@
                 <table class="table table-sm">
                   <tbody>
                     <tr><td><b>Delivery No:</b> {{$delivery['delivery_no'] ?? 'N/A'}}</td></tr>
-                    <tr><td><b>Stock No:</b> {{$delivery['stock_no'] ?? 'N/A'}}</td></tr>
+                    {{-- <tr><td><b>Stock No:</b> {{$delivery['stock_no'] ?? 'N/A'}}</td></tr> --}}
                     @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
                     <tr><td><b>Delivery Date:</b> {{\Carbon\Carbon::parse($delivery['delivery_date'])->format('d-m-Y')}}</td></tr>
                     @endif
                     <tr><td><b>Shipping From:</b> {{$delivery['fshipping']}}</td></tr>
-                    <tr><td><b>Port Name:</b> {{$delivery['fport_no']}}</td></tr>
+                    <tr><td><b>Origin Port:</b> {{$delivery['fport_no']}}</td></tr>
                     <tr><td><b>Shipping To:</b> {{$delivery['tshipping']}}</td></tr>
-                    <tr><td><b>Port Name:</b> {{$delivery['tport_no']}}</td></tr>
+                    <tr><td><b>Destination Port:</b> {{$delivery['tport_no']}}</td></tr>
                     <tr><td><b>Delivery Method: </b>
                       @if($delivery['delivery_method'] == 1) Sea Freight
                       @elseif($delivery['delivery_method'] == 2) Air Freight
@@ -351,9 +354,9 @@ function generateDeliveryInvoiceContent(title, bankDetails, includeSO) {
                     </td>
                     <td style="width: 50%; vertical-align: top; text-align: right;">
                         <h4>Delivery Details:</h4>
-                        <p><strong>Delivery No:</strong> {{$delivery['customer_no']}}</p>
+                        <p><strong>Delivery No:</strong> {{$delivery['delivery_no'] ?? 'N/A'}}</p>
                         <p><strong>Order No:</strong> {{$delivery['order_no']}}</p>
-                        <p><strong>Order Date:</strong> {{$delivery['order_date']}}</p>
+                        <p><strong>Order Date:</strong> {{ !empty($delivery['order_date']) ? \Carbon\Carbon::parse($delivery['order_date'])->format('d-m-Y') : 'N/A' }}</p>
                         <p><strong>Shipping From:</strong> {{$delivery['fshipping']}}</p>
                         <p><strong>Shipping To:</strong> {{$delivery['tshipping']}}</p>
                     </td>
@@ -429,7 +432,7 @@ function generatePackingListContent() {
                     </td>
                     <td style="width: 50%; vertical-align: top; text-align: right;">
                         <h4>Shipping Details:</h4>
-                        <p><strong>Delivery No:</strong> {{$delivery['customer_no']}}</p>
+                        <p><strong>Delivery No:</strong> {{$delivery['delivery_no'] ?? 'N/A'}}</p>
                         <p><strong>Order No:</strong> {{$delivery['order_no']}}</p>
                         <p><strong>Shipping From:</strong> {{$delivery['fshipping']}}</p>
                         <p><strong>Shipping To:</strong> {{$delivery['tshipping']}}</p>

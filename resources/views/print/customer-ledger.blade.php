@@ -139,7 +139,8 @@
                     }
                 @endphp
                 <tr>
-                    <td>{{ $transaction->stock_date ?? $transaction->transaction_date ?? 'N/A' }}</td>
+                    @php $clDate = $transaction->stock_date ?? $transaction->transaction_date ?? null; @endphp
+                    <td>{{ $clDate ? \Carbon\Carbon::parse($clDate)->format('d-m-Y') : 'N/A' }}</td>
                     <td>
                         @if(isset($transaction->transaction_id))
                             TXN-{{ date('Y') }}-{{ str_pad($transaction->transaction_id, 4, '0', STR_PAD_LEFT) }}

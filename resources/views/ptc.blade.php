@@ -41,7 +41,7 @@
                     @endphp
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->stock_date}}</td>
+                      <td>{{ $item->stock_date ? \Carbon\Carbon::parse($item->stock_date)->format('d-m-Y') : 'N/A' }}</td>
                       <td>PTC-{{$item->stock_no}}</td>
                       <td>{{$item->job_no ?? 'Default PTC'}}</td>
                       <td>{{$item->product_name}} - {{$item->size_name}}</td>

@@ -40,22 +40,16 @@
         </div>
         <div class="info-row">
             <span class="info-label">Return Date:</span>
-            <span class="info-value">{{ $return['return_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($return['return_date']) ? \Carbon\Carbon::parse($return['return_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
+        @if(isset($return['receive_date']) && !empty($return['receive_date']))
+            <div class="info-row">
+                <span class="info-label">Received Date:</span>
+                <span class="info-value">{{ !empty($return['receive_date']) ? \Carbon\Carbon::parse($return['receive_date'])->format('d-m-Y') : 'N/A' }}</span>
+            </div>
+        @endif
     </div>
 </div>
-
-{{-- Additional Information --}}
-@if(isset($return['receive_date']) && !empty($return['receive_date']))
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Received Date:</span>
-            <span class="info-value">{{ $return['receive_date'] ?? 'N/A' }}</span>
-        </div>
-    </div>
-</div>
-@endif
 
 {{-- Description --}}
 @if(isset($return['desc']) && !empty($return['desc']))

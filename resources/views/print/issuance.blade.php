@@ -13,7 +13,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Issue Date:</span>
-            <span class="info-value">{{ $issue['stock_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ !empty($issue['stock_date']) ? \Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Job No:</span>
@@ -170,7 +170,7 @@
                 $statusText = 'Partially Received';
             }
         @endphp
-        <h4>{{ $receiveTime->stock_no }} - {{ $statusText }} ({{ $receiveTime->receive_date ?? 'N/A' }})</h4>
+        <h4>{{ $receiveTime->stock_no }} - {{ $statusText }} ({{ $receiveTime->receive_date ? \Carbon\Carbon::parse($receiveTime->receive_date)->format('d-m-Y') : 'N/A' }})</h4>
     </div>
     @endforeach
 </div>

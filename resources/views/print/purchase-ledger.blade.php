@@ -84,7 +84,8 @@
                 @endphp
                 <tr>
                     <td>{{ $index++ }}</td>
-                    <td>{{ isset($transaction->purchase_date) ? $transaction->purchase_date : (isset($transaction->return_date) ? $transaction->return_date : ($transaction->transaction_date ?? 'N/A')) }}</td>
+                    @php $plDate = $transaction->purchase_date ?? $transaction->return_date ?? $transaction->transaction_date ?? null; @endphp
+                    <td>{{ $plDate ? \Carbon\Carbon::parse($plDate)->format('d-m-Y') : 'N/A' }}</td>
                     <td>{{ $refNo }}</td>
                     <td>{{ strip_tags($description) }}</td>
                     <td class="text-right amount">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>

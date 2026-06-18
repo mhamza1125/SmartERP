@@ -65,7 +65,7 @@
                     {{-- <tr><td><b>Voucher No:</b> SLE-{{ date('Y') }}-{{ str_pad($order['order_id'], 4, '0', STR_PAD_LEFT) }}</td></tr> --}}
                     <tr><td><b>Order No</b> {{$order['order_no']}}</td></tr>
                     <tr><td><b>Job No:</b> {{$order['job_no']}}</td></tr>
-                    <tr><td><b>Date:</b> {{\Carbon\Carbon::parse($order['order_date'])->format('d-m-Y')}}</td></tr>
+                    <tr><td><b>Order Date:</b> {{\Carbon\Carbon::parse($order['order_date'])->format('d-m-Y')}}</td></tr>
                     @if($order['due_date'])
                     <tr><td><b>Delivery Date:</b> {{\Carbon\Carbon::parse($order['due_date'])->format('d-m-Y')}}</td></tr>
                     @endif
@@ -159,6 +159,52 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Related Deliveries -->
+              @if(isset($relatedDeliveries) && $relatedDeliveries->count() > 0)
+              <div class="row mt-3">
+                <div class="col-md-12">
+                  <h6 class="font-weight-bold">Deliveries ({{ $relatedDeliveries->count() }})</h6>
+                  <table class="table table-sm table-bordered">
+                    <thead class="thead-light">
+                      <tr>
+                        <th>Delivery No</th>
+                        <th>Date</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach($relatedDeliveries as $del)
+                      <tr>
+                        <td>{{ $del->delivery_no ?? 'N/A' }}</td>
+                        <td>{{ $del->delivery_date ? \Carbon\Carbon::parse($del->delivery_date)->format('d-m-Y') : 'N/A' }}</td>
+                        <td>
+                          @if($del->delivery_method == 1) Sea Freight
+                          @elseif($del->delivery_method == 2) Air Freight
+                          @elseif($del->delivery_method == 3) Road Transport
+                          @else N/A @endif
+                        </td>
+                        <td>
+                          @if($del->delivery_status == 1) <span class="badge badge-warning">Pending</span>
+                          @elseif($del->delivery_status == 2) <span class="badge badge-info">Dispatched</span>
+                          @elseif($del->delivery_status == 3) <span class="badge badge-success">Delivered</span>
+                          @elseif($del->delivery_status == 4) <span class="badge badge-danger">Returned</span>
+                          @else <span class="badge badge-secondary">Unknown</span> @endif
+                        </td>
+                        <td>
+                          <a href="{{ route('delivery.show', $del->delivery_id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i> View
+                          </a>
+                        </td>
+                      </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              @endif
 
               <!-- Packing List Tab -->
               <div class="tab-pane fade" id="packing-list" role="tabpanel" aria-labelledby="packing-list-tab">
