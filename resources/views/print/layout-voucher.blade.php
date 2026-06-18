@@ -6,29 +6,21 @@
     <title>@yield('title', 'Voucher')</title>
     <link rel="stylesheet" href="{{ asset('assets/css/print.css') }}">
     <style>
-        /* A5 landscape – exact half of A4 */
+        /* A4 portrait – voucher occupies the top portion of the page */
         @page {
-            size: 210mm 148mm;
+            size: A4 portrait;
             margin: 10mm;
         }
 
         body {
             font-size: 9px;
-            height: 128mm;
-            width: 190mm;
-        }
-
-        .print-content {
             padding: 0;
-            max-width: none;
-            box-shadow: none;
             margin: 0;
         }
 
         .voucher-container {
             border: 2px solid #000;
             padding: 6px;
-            height: 100%;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -76,7 +68,7 @@
         }
 
         .signatures {
-            margin-top: auto;
+            margin-top: 10px;
             padding-top: 4px;
         }
 
@@ -84,11 +76,11 @@
         .signature-line { height: 16px; }
         .signature-label { font-size: 9px; }
 
-        /* Screen preview for vouchers */
+        /* Screen preview */
         @media screen {
             body { background: #e0e0e0; }
             .voucher-container {
-                max-width: 210mm;
+                max-width: 190mm;
                 margin: 20px auto;
                 background: white;
                 box-shadow: 0 0 12px rgba(0,0,0,0.12);
