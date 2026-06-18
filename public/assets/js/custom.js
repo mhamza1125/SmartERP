@@ -573,12 +573,18 @@ $(document).ready(function () {
                 dataType: "json",
                 success: function (response) {
                     $('#stage_id').empty().append('<option disabled>Select Product Stage</option>');
-                    response.data.forEach(function (item) {
+                    var stages = response.data;
+                    stages.forEach(function (item) {
                         var optionText = item.name;
                         $('#stage_id').append(new Option(optionText, item.head_id));
                     });
+                    // Auto-select the last stage
+                    if (stages.length > 0) {
+                        $('#stage_id').val(stages[stages.length - 1].head_id);
+                    }
                     // Re-initialize select2 for the updated product cost select element
                     initializeSelect2();
+                    toggleAddButton();
                 },
             });
         });
