@@ -321,9 +321,6 @@
                                 <th class="text-center">Size</th>
                               @endif
                               <th class="text-center">Receive Qty</th>
-                              <th class="text-center">Pending</th>
-                              <th class="text-center">Approved</th>
-                              <th class="text-center">Rejected</th>
                               <th class="text-center">Inspection Date</th>
                             </tr>
                           </thead>
@@ -341,9 +338,6 @@
                                   @endif
                                   <td class="text-center">{{$item->hname}}</td>
                                   <td class="text-center">{{$item->rqty}}</td>
-                                  <td class="text-center">{{$item->pending_qty}}</td>
-                                  <td class="text-center">{{$item->approved_qty}}</td>
-                                  <td class="text-center">{{$item->rejected_qty}}</td>
                                   <td class="text-center">{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
                                 </tr>
                               @endif
@@ -362,9 +356,6 @@
                                 <th class="text-center">Size</th>
                               @endif
                               <th class="text-center">Receive Qty</th>
-                              <th class="text-center">Pending</th>
-                              <th class="text-center">Approved</th>
-                              <th class="text-center">Rejected</th>
                               <th class="text-center">Inspection Date</th>
                             </tr>
                           </tfoot>

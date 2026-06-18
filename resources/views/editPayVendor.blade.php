@@ -36,7 +36,8 @@
                     <div class="invalid-feedback">Select Vendor / Contractor</div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                
+                <div class="col-md-6 d-none">
                   <div class="form-group">
                     <label>Payment Type</label>
                     <select class="form-control" name="transaction_type" required id="transaction_type">
@@ -47,8 +48,7 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-              </div>
-              <div class="row">
+
                 <div class="col-md-6" id="display1">
                   <div class="form-group">
                     <label>Purchases / Processing</label>

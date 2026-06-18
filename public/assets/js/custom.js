@@ -978,14 +978,14 @@ $(document).ready(function () {
                 var total = parseInt(row.querySelector('.total').innerText, 10) || 0;
                 var enteredQuantity = parseInt(event.target.value, 10) || 0;
 
-                // Calculate the remaining quantity
+                // Calculate remaining quantity
                 var remaining = total - received - enteredQuantity;
 
-                // Ensure the entered quantity does not exceed the remaining quantity
+                // Maximum quantity that can be received
                 var maxQuantity = total - received;
                 event.target.setAttribute('max', maxQuantity);
 
-                // If the entered quantity exceeds the max, adjust it to the max
+                // Prevent over-receiving
                 if (enteredQuantity > maxQuantity) {
                     event.target.value = maxQuantity;
                     enteredQuantity = maxQuantity;
@@ -994,44 +994,31 @@ $(document).ready(function () {
                     remaining = 0;
                 }
 
-                // Update the remaining input value
+                // Update remaining quantity
                 var remainingInput = row.querySelector('.remaining');
-                remainingInput.value = remaining;
-
-                // Initialize pending_qty with receive-qty
-                var pendingQtyInput = row.querySelector('.pending_qty');
-                pendingQtyInput.value = enteredQuantity;
-
-                // Reset approved and rejected quantities
-                var approvedQtyInput = row.querySelector('.approved_qty');
-                var rejectedQtyInput = row.querySelector('.rejected_qty');
-                approvedQtyInput.value = 0;
-                rejectedQtyInput.value = 0;
-            } else if (event.target.classList.contains('approved_qty') || event.target.classList.contains('rejected_qty')) {
-                var row = event.target.closest('tr');
-                var receiveQty = parseInt(row.querySelector('.receive-qty').value, 10) || 0;
-                var approvedQty = parseInt(row.querySelector('.approved_qty').value, 10) || 0;
-                var rejectedQty = parseInt(row.querySelector('.rejected_qty').value, 10) || 0;
-
-                // Calculate the total approved and rejected quantity
-                var totalHandledQty = approvedQty + rejectedQty;
-
-                // Ensure the sum of approved and rejected does not exceed received quantity
-                if (totalHandledQty > receiveQty) {
-                    var excessQty = totalHandledQty - receiveQty;
-                    if (event.target.classList.contains('approved_qty')) {
-                        event.target.value = approvedQty - excessQty;
-                        approvedQty -= excessQty;
-                    } else {
-                        event.target.value = rejectedQty - excessQty;
-                        rejectedQty -= excessQty;
-                    }
-                    totalHandledQty = approvedQty + rejectedQty;
+                if (remainingInput) {
+                    remainingInput.value = remaining;
                 }
 
-                // Update pending quantity
+                // New workflow:
+                // Received Qty = Approved Qty
+                // Pending Qty = 0
+                // Rejected Qty = 0
+
+                var approvedQtyInput = row.querySelector('.approved_qty');
+                if (approvedQtyInput) {
+                    approvedQtyInput.value = enteredQuantity;
+                }
+
                 var pendingQtyInput = row.querySelector('.pending_qty');
-                pendingQtyInput.value = receiveQty - totalHandledQty;
+                if (pendingQtyInput) {
+                    pendingQtyInput.value = 0;
+                }
+
+                var rejectedQtyInput = row.querySelector('.rejected_qty');
+                if (rejectedQtyInput) {
+                    rejectedQtyInput.value = 0;
+                }
             }
         });
     }

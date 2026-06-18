@@ -62,10 +62,7 @@
                         <th>Sr.</th>
                         <th>Item / Material</th>
                         <th>Received / Total</th>
-                        <th>Receive</th>
-                        <th>Pending</th>
-                        <th>Approved</th>
-                        <th>Rejected</th>
+                        <th>Receive Qty</th>
                         <th>Remaining</th>
                         <th>Inspection Date</th>
                       </tr>
@@ -91,13 +88,9 @@
                           <td class="form-group">
                             <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0" value="{{$qty}}" style="width:100px">
                           </td>
-                          <td class="form-group">
+                          <td class="form-group d-none">
                             <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0" value="{{$receiveMaterial[$key]['pending_qty']}}" style="width:100px">
-                          </td>
-                          <td class="form-group">
                             <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0" value="{{$receiveMaterial[$key]['approved_qty']}}" style="width:100px">
-                          </td>
-                          <td class="form-group">
                             <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0" value="{{$receiveMaterial[$key]['rejected_qty']}}" style="width:100px">
                           </td>
                           <td class="form-group">
@@ -115,10 +108,7 @@
                         <th>Sr.</th>
                         <th>Item / Material</th>
                         <th>Received / Total</th>
-                        <th>Receive</th>
-                        <th>Pending</th>
-                        <th>Approved</th>
-                        <th>Rejected</th>
+                        <th>Receive Qty</th>
                         <th>Remaining</th>
                         <th>Inspection Date</th>
                       </tr>

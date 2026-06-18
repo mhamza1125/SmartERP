@@ -63,10 +63,7 @@
                         <th>Sr.</th>
                         <th>Item / Material</th>
                         <th>Received / Total</th>
-                        <th>Receive</th>
-                        <th>Pending</th>
-                        <th>Approved</th>
-                        <th>Rejected</th>
+                        <th>Receive Qty</th>
                         <th>Remaining</th>
                         <th>Inspection Date</th>
                       </tr>
@@ -85,23 +82,17 @@
                             <input type="hidden" name="purchase_item_id[]" value="{{$item->purchase_item_id}}">
                           </td>
                           <td class="form-group">
-                            {{-- <span class="received">{{$item->received}}</span> / <span class="total">{{$item->quantity}}</span> --}}
                             <span class="received">{{$item->received - $item->returned}}</span> / <span class="total">{{$item->quantity}}</span>
                           </td>
                           <td class="form-group">
                             <input type="number" class="receive-qty form-control" name="quantity[]" placeholder="0" style="width:100px">
                           </td>
-                          <td class="form-group">
-                            <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0" style="width:100px">
+                          <td class="form-group d-none">
+                              <input type="number" class="pending_qty form-control" name="pending_qty[]" placeholder="0" style="width:100px">
+                              <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0" style="width:100px">
+                              <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0" style="width:100px">
                           </td>
                           <td class="form-group">
-                            <input type="number" class="approved_qty form-control" name="approved_qty[]" placeholder="0" style="width:100px">
-                          </td>
-                          <td class="form-group">
-                            <input type="number" class="rejected_qty form-control" name="rejected_qty[]" placeholder="0" style="width:100px">
-                          </td>
-                          <td class="form-group">
-                            {{-- <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received}}" readonly> --}}
                             <input type="text" class="remaining form-control" value="{{$item->quantity - $item->received + $item->returned}}" style="width:100px" readonly>
                           </td>
                           <td>
@@ -116,10 +107,7 @@
                         <th>Sr.</th>
                         <th>Item / Material</th>
                         <th>Received / Total</th>
-                        <th>Receive</th>
-                        <th>Pending</th>
-                        <th>Approved</th>
-                        <th>Rejected</th>
+                        <th>Receive Qty</th>
                         <th>Remaining</th>
                         <th>Inspection Date</th>
                       </tr>

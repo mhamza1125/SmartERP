@@ -61,9 +61,6 @@
                         <th class="text-center">Size</th>
                       @endif
                       <th class="text-center">Receive Qty</th>
-                      <th class="text-center">Pending</th>
-                      <th class="text-center">Approved</th>
-                      <th class="text-center">Rejected</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -83,9 +80,6 @@
                           @endif
                           <td class="text-center">{{$item->hname}}</td>
                           <td class="text-center">{{$item->quantity}}</td>
-                          <td class="text-center">{{$item->pending_qty}}</td>
-                          <td class="text-center">{{$item->approved_qty}}</td>
-                          <td class="text-center">{{$item->rejected_qty}}</td>
                         </tr>
                         @endif
                       @endforeach
@@ -105,9 +99,6 @@
                         <th class="text-center">Size</th>
                       @endif
                       <th class="text-center">Receive Qty</th>
-                      <th class="text-center">Pending</th>
-                      <th class="text-center">Approved</th>
-                      <th class="text-center">Rejected</th>
                     </tr>
                   </tfoot>
                 </table>

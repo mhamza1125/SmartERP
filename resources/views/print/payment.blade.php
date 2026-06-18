@@ -2,6 +2,7 @@
 
 @section('title', 'Payment_Voucher_' . ($voucherNumber ?? 'N/A') . '_' . ($transaction['transaction_date'] ?? date('d-m-Y')))
 
+@section('content')
 <div class="document-title">Payment Voucher</div>
 
 {{-- Voucher Header Information --}}
