@@ -76,10 +76,16 @@
         <thead>
             <tr>
                 <th>Sr.</th>
-                <th>Material Code</th>
-                <th>Material Name</th>
+                @if($purchase['purchase_type'] == 'material')
+                    <th>Material No</th>
+                    <th>Material Name</th>
+                    <th>Unit</th>
+                @else
+                    <th>Article No</th>
+                    <th>Product Name</th>
+                    <th>Size</th>
+                @endif
                 <th>Quantity</th>
-                <th>Unit</th>
                 <th>Rate</th>
                 <th>Amount</th>
             </tr>
@@ -93,10 +99,15 @@
             @endphp
             <tr>
                 <td class="text-center">{{ $loop->iteration }}</td>
-                <td>{{ $item->material_no ?? 'N/A' }}</td>
-                <td>{{ $item->name ?? 'N/A' }}</td>
+                @if($purchase['purchase_type'] == 'material')
+                    <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                    <td>{{ $item->name ?? '' }}</td>
+                @else
+                    <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                    <td>{{ $item->name ?? '' }}</td>
+                @endif
+                <td class="text-center">{{ $item->hname ?? '' }}</td>
                 <td class="text-right">{{ number_format($item->quantity ?? 0, 2) }}</td>
-                <td>{{ $item->uname ?? 'N/A' }}</td>
                 <td class="text-right">{{ number_format($item->price ?? 0, 2) }}</td>
                 <td class="text-right">{{ number_format($amount, 2) }}</td>
             </tr>
@@ -130,8 +141,15 @@
         <thead>
             <tr>
                 <th>Sr.</th>
-                <th>Material / Product</th>
-                <th>Units</th>
+                @if($purchase['purchase_type'] == 'material')
+                    <th>Material No</th>
+                    <th>Material Name</th>
+                    <th>Unit</th>
+                @else
+                    <th>Article No</th>
+                    <th>Product Name</th>
+                    <th>Size</th>
+                @endif
                 <th>Order Qty</th>
                 <th>Receive Qty</th>
                 <th>Return Qty</th>
@@ -142,14 +160,14 @@
             @foreach($receiveSum as $item)
             <tr>
                 <td class="text-center">{{ $loop->iteration }}</td>
-                <td>
-                    @if($purchase['purchase_type'] == 'material')
-                        {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                    @else
-                        {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                    @endif
-                </td>
-                <td>{{ $item->hname }}</td>
+                @if($purchase['purchase_type'] == 'material')
+                    <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                    <td>{{ $item->name ?? '' }}</td>
+                @else
+                    <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                    <td>{{ $item->name ?? '' }}</td>
+                @endif
+                <td class="text-center">{{ $item->hname }}</td>
                 <td class="text-right">{{ $item->quantity }}</td>
                 <td class="text-right">{{ $item->rqty }}</td>
                 <td class="text-right">{{ $item->rqty2 ?? '0' }}</td>

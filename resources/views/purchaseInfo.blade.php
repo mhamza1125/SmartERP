@@ -99,35 +99,42 @@
                 </ul>
                 <div class="tab-content" id="myTabContent">
                   {{-- Purchase --}}
-                  <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
+                  <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
                     @if(!isset($process))
                     <table class="table table-sm table-striped">
                       <thead>
                         <tr>
-                          <th>Sr.</th>
-                          <th>Material / Product</th>
-                          <th>Units / Size</th>
-                          <th>Quantity</th>
-                          <th>Rate</th>
-                          <th>Amount</th>
+                          <th class="text-center">Sr.</th>
+                          @if($purchase['purchase_type'] == 'material')
+                            <th class="text-center">Material No</th>
+                            <th>Material Name</th>
+                            <th class="text-center">Unit</th>
+                          @else
+                            <th class="text-center">Article No</th>
+                            <th>Product Name</th>
+                            <th class="text-center">Size</th>
+                          @endif
+                          <th class="text-center">Quantity</th>
+                          <th class="text-center">Rate</th>
+                          <th class="text-center">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
                         @if($purchaseItem->count())
                           @foreach($purchaseItem as $item)
                             <tr>
-                              <td>{{$loop->index + 1}}</td>
-                              <td>
-                                @if($purchase['purchase_type'] == 'material')
-                                  {{ $item->material_no ?? '' }}
-                                @else
-                                  {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                                @endif
-                              </td>
-                              <td>{{$item->hname}}</td>
-                              <td>{{number_format($item->quantity)}}</td>
-                              <td>{{number_format($item->price)}}</td>
-                              <td>{{number_format($item->quantity * $item->price)}}</td>
+                              <td class="text-center">{{$loop->index + 1}}</td>
+                              @if($purchase['purchase_type'] == 'material')
+                                <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                                <td>{{ $item->name ?? '' }}</td>
+                              @else
+                                <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                                <td>{{ $item->name ?? '' }}</td>
+                              @endif
+                              <td class="text-center">{{$item->hname}}</td>
+                              <td class="text-center">{{number_format($item->quantity)}}</td>
+                              <td class="text-center">{{number_format($item->price)}}</td>
+                              <td class="text-center">{{number_format($item->quantity * $item->price)}}</td>
                             </tr>
                           @endforeach
                         @endif
@@ -137,7 +144,7 @@
                           return $item->quantity * $item->price;
                         }); @endphp
                         <tr>
-                          <th colspan="3"></th>
+                          <th colspan="4"></th>
                           <th colspan="2" class="text-center">Grand Total:</th>
                           <th>{{ number_format($total) }}</th>
                         </tr>
@@ -185,18 +192,25 @@
                     @endif
                   </div>
                   {{-- Receive All --}}
-                  <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">  
+                  <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">
                     <table class="table table-sm table-striped">
                       <thead>
                         <tr>
-                          <th>Sr.</th>
-                          <th>Material / Product</th>
-                          <th>Units / Size</th>
-                          <th>Order Qty</th>
-                          <th>Receive Qty</th>
-                          <th>Return Qty</th>
-                          <th>Remaining</th>
-                          <th>Action</th>
+                          <th class="text-center">Sr.</th>
+                          @if($purchase['purchase_type'] == 'material')
+                            <th class="text-center">Material No</th>
+                            <th>Material Name</th>
+                            <th class="text-center">Unit</th>
+                          @else
+                            <th class="text-center">Article No</th>
+                            <th>Product Name</th>
+                            <th class="text-center">Size</th>
+                          @endif
+                          <th class="text-center">Order Qty</th>
+                          <th class="text-center">Receive Qty</th>
+                          <th class="text-center">Return Qty</th>
+                          <th class="text-center">Remaining</th>
+                          <th class="text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -208,34 +222,41 @@
                         @if($receiveSum->count())
                           @foreach($receiveSum as $item)
                             <tr>
-                              <td>{{$loop->index + 1}}</td>
-                              <td>
-                                @if($purchase['purchase_type'] == 'material')
-                                  {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                                @else
-                                  {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                                @endif
-                              </td>
-                              <td>{{$item->hname}}</td>
-                              <td>{{$item->quantity}}</td>
-                              <td>{{$item->rqty}}</td>
-                              <td>{{ $item->rqty2 ?? '0' }}</td>
-                              <td>{{$item->quantity - $item->rqty + $item->rqty2}}</td>
-                              <td><button type="button" class="btn btn-icon btn-sm btn-info" data-toggle="modal" data-target="#exampleModal{{$item->purchase_item_id}}"><i class="fas fa-info-circle"></i></button></td>
+                              <td class="text-center">{{$loop->index + 1}}</td>
+                              @if($purchase['purchase_type'] == 'material')
+                                <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                                <td>{{ $item->name ?? '' }}</td>
+                              @else
+                                <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                                <td>{{ $item->name ?? '' }}</td>
+                              @endif
+                              <td class="text-center">{{$item->hname}}</td>
+                              <td class="text-center">{{$item->quantity}}</td>
+                              <td class="text-center">{{$item->rqty}}</td>
+                              <td class="text-center">{{ $item->rqty2 ?? '0' }}</td>
+                              <td class="text-center">{{$item->quantity - $item->rqty + $item->rqty2}}</td>
+                              <td class="text-center"><button type="button" class="btn btn-icon btn-sm btn-info" data-toggle="modal" data-target="#exampleModal{{$item->purchase_item_id}}"><i class="fas fa-info-circle"></i></button></td>
                             </tr>
                           @endforeach
                         @endif
                       </tbody>
                       <tfoot>
                         <tr>
-                          <th>Sr.</th>
-                          <th>Material / Product</th>
-                          <th>Units</th>
-                          <th>Order Qty</th>
-                          <th>Receive Qty</th>
-                          <th>Return Qty</th>
-                          <th>Remaining</th>
-                          <th>Action</th>
+                          <th class="text-center">Sr.</th>
+                          @if($purchase['purchase_type'] == 'material')
+                            <th class="text-center">Material No</th>
+                            <th>Material Name</th>
+                            <th class="text-center">Unit</th>
+                          @else
+                            <th class="text-center">Article No</th>
+                            <th>Product Name</th>
+                            <th class="text-center">Size</th>
+                          @endif
+                          <th class="text-center">Order Qty</th>
+                          <th class="text-center">Receive Qty</th>
+                          <th class="text-center">Return Qty</th>
+                          <th class="text-center">Remaining</th>
+                          <th class="text-center">Action</th>
                         </tr>
                       </tfoot>
                     </table>
@@ -282,60 +303,69 @@
                   </div>
                   {{-- Receive Times --}}
                   @if($count >= 1)
-                    @for($i=1; $i<=$count; $i++)  
+                    @for($i=1; $i<=$count; $i++)
                       @php $loopIndex = 1; @endphp
                       <div class="tab-pane fade" id="tab-content-{{ $i }}" role="tabpanel" aria-labelledby="tab-{{ $i }}">
                         <a href="{{ route('receive.edit', $receiveTimes[$i-1]['receive_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
                         <table class="table table-sm table-striped">
                           <thead>
                             <tr>
-                              <th>Sr.</th>
-                              <th>Material / Product</th>
-                              <th>Units</th>
-                              <th>Receive Qty</th>
-                              <th>Pending</th>
-                              <th>Approved</th>
-                              <th>Rejected</th>
-                              {{-- <th>Inspection Status</th> --}}
-                              <th>Inspection Date</th>
+                              <th class="text-center">Sr.</th>
+                              @if($purchase['purchase_type'] == 'material')
+                                <th class="text-center">Material No</th>
+                                <th>Material Name</th>
+                                <th class="text-center">Unit</th>
+                              @else
+                                <th class="text-center">Article No</th>
+                                <th>Product Name</th>
+                                <th class="text-center">Size</th>
+                              @endif
+                              <th class="text-center">Receive Qty</th>
+                              <th class="text-center">Pending</th>
+                              <th class="text-center">Approved</th>
+                              <th class="text-center">Rejected</th>
+                              <th class="text-center">Inspection Date</th>
                             </tr>
                           </thead>
                           <tbody>
                             @foreach($receiveAll as $item)
                               @if($receiveTimes[$i-1]['receive_no'] == $item->receive_no)
                                 <tr>
-                                  <td>{{$loopIndex++}}</td>
-                                  <td>
-                                    @if($purchase['purchase_type'] == 'material')
-                                      {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                                    @else
-                                      {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                                    @endif
-                                  </td>
-                                  <td>{{$item->hname}}</td>
-                                  <td>{{$item->rqty}}</td>
-                                  <td>{{$item->pending_qty}}</td>
-                                  <td>{{$item->approved_qty}}</td>
-                                  <td>{{$item->rejected_qty}}</td>
-                                  {{-- <td>@if($item->inspection_status == 1) Pending
-                                    @elseif($item->inspection_status == 2) Approved
-                                    @else Rejected @endif</td> --}}
-                                  <td>{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
+                                  <td class="text-center">{{$loopIndex++}}</td>
+                                  @if($purchase['purchase_type'] == 'material')
+                                    <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                                    <td>{{ $item->name ?? '' }}</td>
+                                  @else
+                                    <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                                    <td>{{ $item->name ?? '' }}</td>
+                                  @endif
+                                  <td class="text-center">{{$item->hname}}</td>
+                                  <td class="text-center">{{$item->rqty}}</td>
+                                  <td class="text-center">{{$item->pending_qty}}</td>
+                                  <td class="text-center">{{$item->approved_qty}}</td>
+                                  <td class="text-center">{{$item->rejected_qty}}</td>
+                                  <td class="text-center">{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
                                 </tr>
                               @endif
                             @endforeach
                           </tbody>
                           <tfoot>
                             <tr>
-                              <th>Sr.</th>
-                              <th>Material / Product</th>
-                              <th>Units</th>
-                              <th>Receive Qty</th>
-                              <th>Pending</th>
-                              <th>Approved</th>
-                              <th>Rejected</th>
-                              {{-- <th>Inspection Status</th> --}}
-                              <th>Inspection Date</th>
+                              <th class="text-center">Sr.</th>
+                              @if($purchase['purchase_type'] == 'material')
+                                <th class="text-center">Material No</th>
+                                <th>Material Name</th>
+                                <th class="text-center">Unit</th>
+                              @else
+                                <th class="text-center">Article No</th>
+                                <th>Product Name</th>
+                                <th class="text-center">Size</th>
+                              @endif
+                              <th class="text-center">Receive Qty</th>
+                              <th class="text-center">Pending</th>
+                              <th class="text-center">Approved</th>
+                              <th class="text-center">Rejected</th>
+                              <th class="text-center">Inspection Date</th>
                             </tr>
                           </tfoot>
                         </table>
@@ -344,34 +374,41 @@
                   @endif
                   {{-- Return Times --}}
                   @if($count2 >= 1)
-                    @for($i=1; $i<=$count2; $i++)  
+                    @for($i=1; $i<=$count2; $i++)
                       @php $loopIndex = 1; @endphp
                       <div class="tab-pane fade" id="rtab-content-{{ $i }}" role="tabpanel" aria-labelledby="rtab-{{ $i }}">
                         <a href="{{ route('return.edit', $returnTimes[$i-1]['return_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
                         <table class="table table-sm table-striped">
                           <thead>
                             <tr>
-                              <th>Sr.</th>
-                              <th>Material / Product</th>
-                              <th>Units</th>
-                              <th>Return Qty</th>
-                              <th>Remarks</th>
+                              <th class="text-center">Sr.</th>
+                              @if($purchase['purchase_type'] == 'material')
+                                <th class="text-center">Material No</th>
+                                <th>Material Name</th>
+                                <th class="text-center">Unit</th>
+                              @else
+                                <th class="text-center">Article No</th>
+                                <th>Product Name</th>
+                                <th class="text-center">Size</th>
+                              @endif
+                              <th class="text-center">Return Qty</th>
+                              <th class="text-center">Remarks</th>
                             </tr>
                           </thead>
                           <tbody>
                             @foreach($returnAll as $item)
                               @if($returnTimes[$i-1]['return_no'] == $item->return_no)
                                 <tr>
-                                  <td>{{$loopIndex++}}</td>
-                                  <td>
-                                    @if($purchase['purchase_type'] == 'material')
-                                      {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                                    @else
-                                      {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                                    @endif
-                                  </td>
-                                  <td>{{$item->hname}}</td>
-                                  <td>{{$item->rqty}}</td>
+                                  <td class="text-center">{{$loopIndex++}}</td>
+                                  @if($purchase['purchase_type'] == 'material')
+                                    <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                                    <td>{{ $item->name ?? '' }}</td>
+                                  @else
+                                    <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                                    <td>{{ $item->name ?? '' }}</td>
+                                  @endif
+                                  <td class="text-center">{{$item->hname}}</td>
+                                  <td class="text-center">{{$item->rqty}}</td>
                                   <td>{{$item->remarks}}</td>
                                 </tr>
                               @endif
@@ -379,11 +416,18 @@
                           </tbody>
                           <tfoot>
                             <tr>
-                              <th>Sr.</th>
-                              <th>Material / Product</th>
-                              <th>Units</th>
-                              <th>Return Qty</th>
-                              <th>Remarks</th>
+                              <th class="text-center">Sr.</th>
+                              @if($purchase['purchase_type'] == 'material')
+                                <th class="text-center">Material No</th>
+                                <th>Material Name</th>
+                                <th class="text-center">Unit</th>
+                              @else
+                                <th class="text-center">Article No</th>
+                                <th>Product Name</th>
+                                <th class="text-center">Size</th>
+                              @endif
+                              <th class="text-center">Return Qty</th>
+                              <th class="text-center">Remarks</th>
                             </tr>
                           </tfoot>
                         </table>

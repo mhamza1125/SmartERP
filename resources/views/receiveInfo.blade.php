@@ -49,17 +49,21 @@
                 <table class="table table-sm table-striped">
                   <thead>
                     <tr>
-                      <th>Sr.</th>
-                      <th>Inspection Date</th>
-                      {{-- <th>Code</th>
-                      <th>Material</th> --}}
-                      <th>Material / Product</th>
-                      <th>Units / Size</th>
-                      <th>Receive Qty</th>
-                      <th>Pending</th>
-                      <th>Approved</th>
-                      <th>Rejected</th>
-                      {{-- <th>Inspection Status</th> --}}
+                      <th class="text-center">Sr.</th>
+                      <th class="text-center">Inspection Date</th>
+                      @if($receive['purchase_type'] == 'material')
+                        <th class="text-center">Material No</th>
+                        <th>Material Name</th>
+                        <th class="text-center">Unit</th>
+                      @else
+                        <th class="text-center">Article No</th>
+                        <th>Product Name</th>
+                        <th class="text-center">Size</th>
+                      @endif
+                      <th class="text-center">Receive Qty</th>
+                      <th class="text-center">Pending</th>
+                      <th class="text-center">Approved</th>
+                      <th class="text-center">Rejected</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -68,25 +72,20 @@
                       @foreach($receiveMaterial as $item)
                         @if($item->quantity)
                         <tr>
-                          <td>{{$loopIndex++}}</td>
-                          <td>{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
-                          {{-- <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}</td> --}}
-                          <td>
-                            @if($receive['purchase_type'] == 'product')
-                              {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                            @else
-                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                            @endif
-                          </td>
-                          <td>{{$item->hname}}</td>
-                          <td>{{$item->quantity}}</td>
-                          <td>{{$item->pending_qty}}</td>
-                          <td>{{$item->approved_qty}}</td>
-                          <td>{{$item->rejected_qty}}</td>
-                          {{-- <td>@if($item->inspection_status == 1) Pending
-                          @elseif($item->inspection_status == 2) Approved
-                          @else Rejected @endif</td> --}}
+                          <td class="text-center">{{$loopIndex++}}</td>
+                          <td class="text-center">{{\Carbon\Carbon::parse($item->inspection_date)->format('d-m-Y')}}</td>
+                          @if($receive['purchase_type'] == 'material')
+                            <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                            <td>{{ $item->name ?? '' }}</td>
+                          @else
+                            <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                            <td>{{ $item->name ?? '' }}</td>
+                          @endif
+                          <td class="text-center">{{$item->hname}}</td>
+                          <td class="text-center">{{$item->quantity}}</td>
+                          <td class="text-center">{{$item->pending_qty}}</td>
+                          <td class="text-center">{{$item->approved_qty}}</td>
+                          <td class="text-center">{{$item->rejected_qty}}</td>
                         </tr>
                         @endif
                       @endforeach
@@ -94,17 +93,21 @@
                   </tbody>
                   <tfoot>
                     <tr>
-                      <th>Sr.</th>
-                      <th>Inspection Date</th>
-                      {{-- <th>Code</th>
-                      <th>Material</th> --}}
-                      <th>Material / Product</th>
-                      <th>Units / Size</th>
-                      <th>Receive Qty</th>
-                      <th>Pending</th>
-                      <th>Approved</th>
-                      <th>Rejected</th>
-                      {{-- <th>Inspection Status</th> --}}
+                      <th class="text-center">Sr.</th>
+                      <th class="text-center">Inspection Date</th>
+                      @if($receive['purchase_type'] == 'material')
+                        <th class="text-center">Material No</th>
+                        <th>Material Name</th>
+                        <th class="text-center">Unit</th>
+                      @else
+                        <th class="text-center">Article No</th>
+                        <th>Product Name</th>
+                        <th class="text-center">Size</th>
+                      @endif
+                      <th class="text-center">Receive Qty</th>
+                      <th class="text-center">Pending</th>
+                      <th class="text-center">Approved</th>
+                      <th class="text-center">Rejected</th>
                     </tr>
                   </tfoot>
                 </table>

@@ -50,13 +50,18 @@
                 <table class="table table-sm table-striped">
                   <thead>
                     <tr>
-                      <th>Sr.</th>
-                      {{-- <th>Code</th>
-                      <th>Material</th> --}}
-                      <th>Material / Product</th>
-                      <th>Units</th>
-                      <th>Return Qty</th>
-                      <th>Remarks</th>
+                      <th class="text-center">Sr.</th>
+                      @if($return['purchase_type'] == 'material')
+                        <th class="text-center">Material No</th>
+                        <th>Material Name</th>
+                        <th class="text-center">Unit</th>
+                      @else
+                        <th class="text-center">Article No</th>
+                        <th>Product Name</th>
+                        <th class="text-center">Size</th>
+                      @endif
+                      <th class="text-center">Return Qty</th>
+                      <th class="text-center">Remarks</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -65,18 +70,16 @@
                       @foreach($returnMaterial as $item)
                         @if($item->quantity)
                         <tr>
-                          <td>{{$loopIndex++}}</td>
-                          {{-- <td>{{$item->material_no}}</td>
-                          <td>{{$item->name}}</td> --}}
-                          <td>
-                            @if($return['purchase_type'] == 'material')
-                              {{ $item->material_no ?? '' }} - {{ $item->name ?? '' }}
-                            @else
-                              {{ $item->article_no ?? '' }} - {{ $item->sname ?? '' }}
-                            @endif
-                          </td>
-                          <td>{{$item->hname}}</td>
-                          <td>{{$item->quantity}}</td>
+                          <td class="text-center">{{$loopIndex++}}</td>
+                          @if($return['purchase_type'] == 'material')
+                            <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                            <td>{{ $item->name ?? '' }}</td>
+                          @else
+                            <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                            <td>{{ $item->name ?? '' }}</td>
+                          @endif
+                          <td class="text-center">{{$item->hname}}</td>
+                          <td class="text-center">{{$item->quantity}}</td>
                           <td>{{$item->remarks}}</td>
                         </tr>
                         @endif
@@ -85,13 +88,18 @@
                   </tbody>
                   <tfoot>
                     <tr>
-                      <th>Sr.</th>
-                      {{-- <th>Code</th>
-                      <th>Material</th> --}}
-                      <th>Material / Product</th>
-                      <th>Units</th>
-                      <th>Return Qty</th>
-                      <th>Remarks</th>
+                      <th class="text-center">Sr.</th>
+                      @if($return['purchase_type'] == 'material')
+                        <th class="text-center">Material No</th>
+                        <th>Material Name</th>
+                        <th class="text-center">Unit</th>
+                      @else
+                        <th class="text-center">Article No</th>
+                        <th>Product Name</th>
+                        <th class="text-center">Size</th>
+                      @endif
+                      <th class="text-center">Return Qty</th>
+                      <th class="text-center">Remarks</th>
                     </tr>
                   </tfoot>
                 </table>

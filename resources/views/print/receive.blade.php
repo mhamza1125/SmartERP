@@ -79,29 +79,40 @@
         <thead>
             <tr>
                 <th>Sr.</th>
-                <th>Material Code</th>
-                <th>Material / Product</th>
-                <th>Units / Size</th>
+                @if($receive['purchase_type'] == 'material')
+                    <th>Material No</th>
+                    <th>Material Name</th>
+                    <th>Unit</th>
+                @else
+                    <th>Article No</th>
+                    <th>Product Name</th>
+                    <th>Size</th>
+                @endif
                 <th>Receive Qty</th>
             </tr>
         </thead>
         <tbody>
             @foreach($receiveMaterial as $item)
             <tr>
-                <td>{{ $loop->iteration }}</td>
-                <td>{{ $item->material_no ?? 'N/A' }}</td>
-                <td>{{ $item->name ?? 'N/A' }}</td>
-                <td>{{ $item->uname ?? 'N/A' }}</td>
+                <td class="text-center">{{ $loop->iteration }}</td>
+                @if($receive['purchase_type'] == 'material')
+                    <td class="text-center">{{ $item->material_no ?? '' }}</td>
+                    <td>{{ $item->name ?? '' }}</td>
+                @else
+                    <td class="text-center">{{ $item->article_no ?? '' }}</td>
+                    <td>{{ $item->name ?? '' }}</td>
+                @endif
+                <td class="text-center">{{ $item->hname ?? '' }}</td>
                 <td class="text-right">{{ number_format($item->quantity ?? 0, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
-        <tfoot>
+        {{-- <tfoot>
             <tr class="total-row">
                 <td colspan="4" class="text-right"><strong>Total Items:</strong></td>
                 <td class="text-right"><strong>{{ $receiveMaterial->count() }}</strong></td>
             </tr>
-        </tfoot>
+        </tfoot> --}}
     </table>
 </div>
 @endif
