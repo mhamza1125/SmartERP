@@ -6,6 +6,16 @@
    ============================================================ */
 
 /* ------------------------------------------------------------
+   0. CSS custom properties
+   --header-height is updated at runtime by layout.blade.php's
+   inline script, which measures the actual .print-header height
+   after images load. The value here is a safe fallback only.
+   ------------------------------------------------------------ */
+:root {
+    --header-height: 25mm;
+}
+
+/* ------------------------------------------------------------
    1. Box model reset
    ------------------------------------------------------------ */
 * {
@@ -46,9 +56,9 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 18mm;
+    /* height: 18mm; */
     background: white;
-    border-bottom: 2px solid #333;
+    /* border-bottom: 2px solid #333; */
     padding: 3px 15mm;
     z-index: 1000;
     display: flex;
@@ -65,11 +75,13 @@ body {
     left: 0;
     right: 0;
     height: 14mm;
-    background: white;
-    border-top: 1px solid #333;
+    background: #03A3E1;
+    color: white;
     padding: 4px 15mm;
     z-index: 1000;
     font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -81,7 +93,7 @@ body {
    6. Company header elements
    ------------------------------------------------------------ */
 .company-logo {
-    height: 55px;
+    height: 80px;
     width: auto;
 }
 
@@ -404,10 +416,10 @@ body {
         color: black !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-        /* top  = header height (18mm) so content never slides under the fixed header.
+        /* top  = --header-height (set dynamically by JS in layout.blade.php)
            btm  = footer height (14mm) so content never slides over the fixed footer.
            sides = content margin (15mm) replacing the zeroed @page side margins. */
-        padding: 18mm 15mm 14mm 15mm;
+        padding: var(--header-height) 15mm 14mm 15mm;
     }
 
     .no-print { display: none !important; }
@@ -437,8 +449,14 @@ body {
    19. Screen preview styles
    ------------------------------------------------------------ */
 @media screen {
-    .print-header { position: relative; border-bottom: 2px solid #333; }
-    .print-footer { position: relative; border-top: 1px solid #333; }
+    .print-header { 
+        position: relative; 
+        /* border-bottom: 2px solid #333;  */
+    }
+    .print-footer { 
+        position: relative; 
+        /* border-top: 1px solid #333;  */
+    }
 
     .print-content {
         max-width: 210mm;

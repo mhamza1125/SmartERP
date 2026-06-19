@@ -9,6 +9,7 @@
             <h4>Transaction Table</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <a href="{{ route('expense') }}" class="btn btn-primary">Expense</a>
                 <a href="{{ route('ePayment') }}" class="btn btn-primary">Employee</a>
                 <a href="{{ route('vPayment') }}" class="btn btn-primary">Vendor</a>
                 <a href="{{ route('cPayment') }}" class="btn btn-primary">Contractor</a>
