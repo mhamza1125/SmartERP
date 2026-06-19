@@ -5,7 +5,7 @@
 @push('styles')
 <style>
     .document-info  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .info-section   { border: 1px solid #ddd; padding: 12px; }
+    .info-section   { border: 1px solid #ddd; padding: 12px !important;}
     .info-value     { flex: 1; text-align: right; }
     .document-section { margin-bottom: 20px; }
     .document-section h3 { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 4px; }

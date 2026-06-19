@@ -1,11 +1,6 @@
 {{--
-    $company is injected by App\Http\View\Composers\PrintComposer
-    for all print.* views. No DB query needed here.
+    $company is injected by App\Http\View\Composers\PrintComposer for all print.* views.
 --}}
-<div class="footer-center">
-    @if($company && $company->footer_text)
-        {!! $company->footer_text !!}
-    @elseif($company && $company->email)
-        {{ $company->email }}
-    @endif
-</div>
+@if($company && $company->footer_text)
+    <div class="doc-footer__line">{!! $company->footer_text !!}</div>
+@endif

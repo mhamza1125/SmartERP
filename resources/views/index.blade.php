@@ -85,9 +85,10 @@
                     @endcan
                     @can('access', App\Models\Stock::class)
                         <li><a class="nav-link" href="{{ route('ptc') }}">PTC</a></li>
-                        <li><a class="nav-link" href="{{ route('issue') }}">Issuance</a></li>
-                        <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li>
-                        <li><a class="nav-link" href="{{ route('igroup') }}">Groups / Lots</a></li>
+                        {{-- Commenting Out --}}
+                        {{-- <li><a class="nav-link" href="{{ route('issue') }}">Issuance</a></li> --}}
+                        {{-- <li><a class="nav-link" href="{{ route('receiveIssue') }}">Receive</a></li> --}}
+                        {{-- <li><a class="nav-link" href="{{ route('igroup') }}">Groups / Lots</a></li> --}}
                     @endcan
 
                     {{-- Machines links --}}
@@ -411,6 +412,8 @@
   <script src="{{ URL::asset('assets/js/scripts.js') }}"></script>
   <!-- Print JS File -->
   <script src="{{ URL::asset('assets/js/print.js') }}"></script>
+  <!-- DataTable Professional Print -->
+  <script src="{{ URL::asset('assets/js/datatable-print.js') }}"></script>
   <!-- Custom JS File -->
   <script src="{{ URL::asset('assets/js/custom.js') }}"></script>
 

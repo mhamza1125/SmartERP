@@ -41,9 +41,19 @@ $(document).ready(function () {
 });
 // End - Shortcut Keys
 
-// Start - Remove Header Of Export Table
+// Start - DataTable Export / Print
 $(document).ready(function () {
-    // Function to initialize DataTable with export buttons and custom header
+
+    /* Derive a report title from the page heading or browser title */
+    function getPageTitle() {
+        var el = document.querySelector(
+            '.card-header h4, .card-header .card-title, ' +
+            '.page-header h1, .page-title, h4.page-title'
+        );
+        if (el) return el.textContent.trim();
+        return document.title.replace(/\s*[-|]\s*SmartERP.*/i, '').trim() || 'Report';
+    }
+
     function initializeDataTable(tableId) {
         if ($.fn.DataTable.isDataTable(tableId)) {
             $(tableId).DataTable().destroy();
@@ -51,62 +61,44 @@ $(document).ready(function () {
 
         $(tableId).DataTable({
             dom: 'Bfrtip',
-            // lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
             pageLength: 200,
             buttons: [
                 {
                     extend: 'copyHtml5',
                     title: '',
-                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                    exportOptions: { columns: ':not(:contains("Action"))' }
                 },
                 {
                     extend: 'excelHtml5',
                     title: '',
-                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                    exportOptions: { columns: ':not(:contains("Action"))' }
                 },
                 {
                     extend: 'csvHtml5',
                     title: '',
-                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                    exportOptions: { columns: ':not(:contains("Action"))' }
                 },
                 {
                     extend: 'pdfHtml5',
                     title: '',
-                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                    exportOptions: { columns: ':not(:contains("Action"))' }
                 },
                 {
                     extend: 'print',
                     title: '',
                     customize: function (win) {
-                        $(win.document.body).prepend(customHeader);
+                        window.dtPrintCustomize(win, getPageTitle());
                     },
-                    exportOptions: { title: null, columns: ':not(:contains("Action"))' }
+                    exportOptions: { columns: ':not(:contains("Action"))' }
                 }
             ]
         });
     }
 
-    // Custom header HTML - will be populated dynamically
-    var customHeader = '<center><h1>Loading...</h1></center>';
-
-    // Fetch company data for table printing
-    fetch('/company/data')
-        .then(response => response.json())
-        .then(company => {
-            customHeader = `<center><h1>${company.name}</h1><h5>${company.address}</h5><h6>Phone: ${company.phone} || Email: ${company.email} || Web: ${company.website}</h6></center>`;
-        })
-        .catch(error => {
-            console.error('Error fetching company data:', error);
-            customHeader = '<center><h1>Sajjadson Lab Equipment</h1><h5>Near Sachi Sarkar Darbar, Opposite Qayyum Elahi Surgical, Harrar Sialkot, Pakistan</h5><h6>Phone no. +92 52 357 3727 || E-mail: info@sajjadsonlab.com || Web: sajjadsonlab.com</h6></center>';
-        });
-
-    // Initialize DataTable for table with ID #tableExport
     initializeDataTable('#tableExport');
-
-    // Initialize DataTable for table with ID #tableExport1
     initializeDataTable('#tableExport1');
 });
-// End - Remove Header Of Export Table
+// End - DataTable Export / Print
 
 // Start - Stock Table Save Stage
 $(document).ready(function () {
