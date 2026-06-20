@@ -437,6 +437,7 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Order::class);
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -477,6 +478,7 @@ class OrderController extends Controller
 
     public function updateStatus($id, $status)
     {
+        $this->authorize('edit', Order::class);
         // Get current order
         $currentOrder = Order::findOrFail($id);
 

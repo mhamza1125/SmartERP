@@ -16,17 +16,25 @@ class AdminRepository implements GlobalInterface
         return Permission::all();
     }
 
+    public function groupedPermissions()
+    {
+        return Permission::orderBy('name')->get()->groupBy(function ($perm) {
+            $pos = strrpos($perm->name, '_');
+            return $pos !== false ? substr($perm->name, 0, $pos) : $perm->name;
+        });
+    }
+
     public function all(){}
 
     public function get($id){}
 
     public function store(array $data)
     {
-        $store = Role::create($data);
-    
-        foreach ($data['permission_id'] as $item) {
+        $store = Role::create(['name' => $data['name']]);
+
+        foreach ($data['permission_id'] ?? [] as $item) {
             PermissionRole::create([
-                'role_id' => $store->id,
+                'role_id'       => $store->id,
                 'permission_id' => $item,
             ]);
         }
@@ -37,13 +45,13 @@ class AdminRepository implements GlobalInterface
     public function update($id, array $data)
     {
         $role = Role::findOrFail($id);
-        $role->update($data);
+        $role->update(['name' => $data['name']]);
 
         PermissionRole::where('role_id', $id)->delete();
 
-        foreach ($data['permission_id'] as $item) {
+        foreach ($data['permission_id'] ?? [] as $item) {
             PermissionRole::create([
-                'role_id' => $id,
+                'role_id'       => $id,
                 'permission_id' => $item,
             ]);
         }

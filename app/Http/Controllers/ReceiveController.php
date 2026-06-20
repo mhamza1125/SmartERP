@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ReceiveRequest;
+use App\Models\Receive;
 use App\Repositories\PurchaseItemRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\ReceiveMaterialRepository;
@@ -34,6 +35,7 @@ class ReceiveController extends Controller
 
     public function index()
     {
+        $this->authorize('access', Receive::class);
         $purchase = $this->purchaseRepository->all();
         $receive = $this->receiveRepository->all();
 
@@ -45,6 +47,7 @@ class ReceiveController extends Controller
 
     public function create($id)
     {
+        $this->authorize('create', Receive::class);
         $purchase = $this->purchaseRepository->get($id);
         if($purchase['purchase_type'] == 'product'){
             $purchaseItem = $this->purchaseItemRepository->receiveProducts($id);
@@ -63,6 +66,7 @@ class ReceiveController extends Controller
 
     public function store(ReceiveRequest $request)
     {
+        $this->authorize('create', Receive::class);
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -82,6 +86,7 @@ class ReceiveController extends Controller
 
     public function show($id)
     {
+        $this->authorize('show', Receive::class);
         $receive = $this->receiveRepository->get($id);
         if($receive['purchase_type'] == 'product'){
             $receiveMaterial = $this->receiveMaterialRepository->get2($id);
@@ -101,6 +106,7 @@ class ReceiveController extends Controller
      */
     public function printReceive($id)
     {
+        $this->authorize('show', Receive::class);
         $receive = $this->receiveRepository->get($id);
         if($receive['purchase_type'] == 'product'){
             $receiveMaterial = $this->receiveMaterialRepository->get2($id);
@@ -117,6 +123,7 @@ class ReceiveController extends Controller
 
     public function edit($id)
     {
+        $this->authorize('edit', Receive::class);
         $receive = $this->receiveRepository->get($id);
         $date = $this->purchaseRepository->get($receive['purchase_id']);
         if($receive['purchase_type'] == 'product'){
@@ -137,6 +144,7 @@ class ReceiveController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Receive::class);
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -148,6 +156,7 @@ class ReceiveController extends Controller
 
     public function updateStatus($id, $status)
     {
+        $this->authorize('edit', Receive::class);
         $receiveStatus = ['receive_status' => $status];
         $this->receiveRepository->update($id, $receiveStatus);
 

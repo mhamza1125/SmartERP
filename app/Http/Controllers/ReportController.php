@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Repositories\StockItemRepository;
 use App\Repositories\ProductMaterialRepository;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class ReportController extends Controller
      */
     public function productStockRequirements(Request $request)
     {
+        $this->authorize('reports_access', User::class);
         $productTypeId = $request->input('product_type_id');
 
         // Get all product types for the dropdown filter
@@ -144,6 +146,7 @@ class ReportController extends Controller
      */
     public function productStockLedger(Request $request)
     {
+        $this->authorize('reports_access', User::class);
         $productTypeId = $request->input('product_type_id');
 
         // Get all product types for the dropdown filter

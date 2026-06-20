@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ReturnRequest;
+use App\Models\Returns;
 use App\Repositories\ReceiveMaterialRepository;
 use App\Repositories\ReceiveRepository;
 use App\Repositories\ReturnMaterialRepository;
@@ -34,6 +35,7 @@ class ReturnController extends Controller
 
     public function index()
     {
+        $this->authorize('access', Returns::class);
         $return = $this->returnRepository->all();
         // $receive = $this->receiveRepository->pending();
         return view('return', [
@@ -44,6 +46,7 @@ class ReturnController extends Controller
 
     public function create($id)
     {
+        $this->authorize('create', Returns::class);
         $receive = $this->receiveRepository->get($id);
         $returned = $this->returnRepository->returned($id);
         $count = $this->returnRepository->refNo($id);
@@ -70,6 +73,7 @@ class ReturnController extends Controller
 
     public function store(ReturnRequest $request)
     {
+        $this->authorize('create', Returns::class);
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -85,6 +89,7 @@ class ReturnController extends Controller
 
     public function show($id)
     {
+        $this->authorize('show', Returns::class);
         $return = $this->returnRepository->get($id);
         if($return['purchase_type'] == 'material'){
             $returnMaterial = $this->returnMaterialRepository->get($id);
@@ -103,6 +108,7 @@ class ReturnController extends Controller
      */
     public function printReturn($id)
     {
+        $this->authorize('show', Returns::class);
         $return = $this->returnRepository->get($id);
         if($return['purchase_type'] == 'material'){
             $returnMaterial = $this->returnMaterialRepository->get($id);
@@ -118,6 +124,7 @@ class ReturnController extends Controller
 
     public function edit($id)
     {
+        $this->authorize('edit', Returns::class);
         $return = $this->returnRepository->get($id);
         $date = $this->receiveRepository->get($return['receive_id']);
         if($return['purchase_type'] == 'material'){
@@ -138,6 +145,7 @@ class ReturnController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Returns::class);
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }

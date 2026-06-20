@@ -9,6 +9,7 @@ use App\Repositories\StockItemRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+
 class PackingListController extends Controller
 {
     protected $packingListRepository;
@@ -28,6 +29,7 @@ class PackingListController extends Controller
 
     public function index()
     {
+        $this->authorize('access', PackingList::class);
         $packingLists = $this->packingListRepository->all();
 
         return view('packingList', [
@@ -37,6 +39,7 @@ class PackingListController extends Controller
 
     public function create($deliveryId)
     {
+        $this->authorize('create', PackingList::class);
         // Check if packing list already exists for this delivery
         $existingPackingList = $this->packingListRepository->getByDelivery($deliveryId);
         if ($existingPackingList) {
@@ -62,6 +65,7 @@ class PackingListController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', PackingList::class);
         $validatedData = $request->validate([
             'delivery_id' => 'required|exists:deliveries,delivery_id',
             'pallet_qty' => 'nullable|integer|min:1',
@@ -184,6 +188,7 @@ class PackingListController extends Controller
 
     public function show($id)
     {
+        $this->authorize('show', PackingList::class);
         $packingList = $this->packingListRepository->get($id);
         if (!$packingList) {
             return redirect()->route('delivery')->with('fails', 'Packing List not found');
@@ -204,6 +209,7 @@ class PackingListController extends Controller
 
     public function edit($id)
     {
+        $this->authorize('edit', PackingList::class);
         $packingList = $this->packingListRepository->get($id);
         if (!$packingList) {
             return redirect()->route('delivery')->with('fails', 'Packing List not found');
@@ -231,6 +237,7 @@ class PackingListController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', PackingList::class);
         $validatedData = $request->validate([
             'pallet_qty' => 'nullable|integer|min:1',
             'pallet_weight' => 'nullable|numeric|min:0',
@@ -349,6 +356,7 @@ class PackingListController extends Controller
 
     public function printPackingList($orderId)
     {
+        $this->authorize('show', PackingList::class);
         // Get packing list by order_id
         $packingList = $this->packingListRepository->getByOrder($orderId);
         if (!$packingList) {

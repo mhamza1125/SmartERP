@@ -34,35 +34,6 @@ class AdminPolicy
         return $user->role_id === 1 || $user->hasPermission('settings_delete');
     }
 
-    // ===================================
-    // This is being used for Attendances
-    // ===================================
-
-    public function attendances_access(User $user): bool
-    {
-        return $user->role_id === 1 || $user->hasPermission('attendances_access');
-    }
-
-    public function attendances_show(User $user): bool
-    {
-        return $user->role_id === 1 || $user->hasPermission('attendances_show');
-    }
-
-    public function attendances_create(User $user): bool
-    {
-        return $user->role_id === 1 || $user->hasPermission('attendances_create');
-    }
-
-    public function attendances_edit(User $user): bool
-    {
-        return $user->role_id === 1 || $user->hasPermission('attendances_edit');
-    }
-
-    public function attendances_delete(User $user): bool
-    {
-        return $user->role_id === 1 || $user->hasPermission('attendances_delete');
-    }
-
     // ===============================
     // This is being used for Reports
     // ===============================
@@ -119,5 +90,63 @@ class AdminPolicy
     public function payroll_delete(User $user): bool
     {
         return $user->role_id === 1 || $user->hasPermission('payroll_delete');
+    }
+
+    // ================================
+    // This is being used for Users
+    // ================================
+
+    public function users_access(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('users_access');
+    }
+
+    public function users_show(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('users_show');
+    }
+
+    public function users_create(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('users_create');
+    }
+
+    public function users_edit(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('users_edit');
+    }
+
+    public function users_delete(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('users_delete');
+    }
+
+    // ================================
+    // This is being used for Roles
+    // ================================
+
+    public function roles_access(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('roles_access');
+    }
+
+    public function roles_show(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('roles_show');
+    }
+
+    public function roles_create(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('roles_create');
+    }
+
+    public function roles_edit(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('roles_edit');
+    }
+
+    public function roles_delete(User $user): bool
+    {
+        return $user->role_id === 1 || $user->hasPermission('roles_delete');
     }
 }

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Asset;
 use App\Models\Bank;
+use App\Models\Category;
+use App\Models\Head;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Stock;
@@ -14,14 +16,22 @@ use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\Employee;
 use App\Models\Material;
+use App\Models\PackingList;
 use App\Models\Purchase;
+use App\Models\Receive;
+use App\Models\Returns;
 use App\Models\Attendance;
 use App\Models\Settings;
 use App\Models\Transaction;
 use App\Policies\AssetPolicy;
 use App\Policies\BankPolicy;
 use App\Policies\AdminPolicy;
+use App\Policies\CategoryPolicy;
+use App\Policies\HeadPolicy;
 use App\Policies\OrderPolicy;
+use App\Policies\PackingListPolicy;
+use App\Policies\ReceivePolicy;
+use App\Policies\ReturnPolicy;
 use App\Policies\StockPolicy;
 use App\Policies\VendorPolicy;
 use App\Policies\MachinePolicy;
@@ -45,22 +55,27 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        User::class => AdminPolicy::class,
-        Asset::class => AssetPolicy::class,
-        Material::class => MaterialPolicy::class,
-        Bank::class => BankPolicy::class,
-        Product::class => ProductPolicy::class,
-        Customer::class => CustomerPolicy::class,
-        Employee::class => EmployeePolicy::class,
-        Vendor::class => VendorPolicy::class,
-        Delivery::class => DeliveryPolicy::class,
-        Machine::class => MachinePolicy::class,
-        Order::class => OrderPolicy::class,
-        Stock::class => StockPolicy::class,
-        Purchase::class => PurchasePolicy::class,
+        User::class        => AdminPolicy::class,
+        Asset::class       => AssetPolicy::class,
+        Material::class    => MaterialPolicy::class,
+        Bank::class        => BankPolicy::class,
+        Product::class     => ProductPolicy::class,
+        Customer::class    => CustomerPolicy::class,
+        Employee::class    => EmployeePolicy::class,
+        Vendor::class      => VendorPolicy::class,
+        Delivery::class    => DeliveryPolicy::class,
+        Machine::class     => MachinePolicy::class,
+        Order::class       => OrderPolicy::class,
+        Stock::class       => StockPolicy::class,
+        Purchase::class    => PurchasePolicy::class,
         Transaction::class => TransactionPolicy::class,
-        Attendance::class => AttendancePolicy::class,
-        Settings::class => SettingsPolicy::class,
+        Attendance::class  => AttendancePolicy::class,
+        Settings::class    => SettingsPolicy::class,
+        Receive::class     => ReceivePolicy::class,
+        Returns::class     => ReturnPolicy::class,
+        PackingList::class => PackingListPolicy::class,
+        Category::class    => CategoryPolicy::class,
+        Head::class        => HeadPolicy::class,
     ];
 
     /**

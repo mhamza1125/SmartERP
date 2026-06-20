@@ -25,7 +25,7 @@ class HeadController extends Controller
 
     public function index()
     {
-        // $this->authorize('create');
+        $this->authorize('access', Head::class);
         $head = $this->headRepository->all();
         $headType = $this->headTypeRepository->all();
 
@@ -37,6 +37,7 @@ class HeadController extends Controller
 
     public function headType()
     {
+        $this->authorize('access', Head::class);
         $headType = $this->headRepository->headType();
 
         return view('headType', [
@@ -46,6 +47,7 @@ class HeadController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Head::class);
         $headType = $this->headTypeRepository->all();
 
         return view('addHead', [
@@ -55,6 +57,7 @@ class HeadController extends Controller
 
     public function store(HeadRequest $request)
     {
+        $this->authorize('create', Head::class);
         $validatedData = $request->validated();
         $duplicate = $this->headRepository->duplicate($validatedData);
         if ($duplicate) {
@@ -74,6 +77,7 @@ class HeadController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Head::class);
         $this->headRepository->update($id, $request->input());
 
         return redirect()->route('head')->with('success', 'Record Updated Successfully');

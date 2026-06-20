@@ -228,6 +228,8 @@
                 @can('access', App\Models\Attendance::class)
                   <li><a class="nav-link" href="{{ route('attendance') }}">Attendance</a></li>
                   <li><a class="nav-link" href="{{ route('attendance.summary') }}">Salary Calculation</a></li>
+                  <li><a class="nav-link" href="{{ route('workTime') }}">Work Hours</a></li>
+                  <li><a class="nav-link" href="{{ route('workHoliday') }}">Non Working Days</a></li>
                 @endcan
               </ul>
             </li>
@@ -260,15 +262,9 @@
                 <li><a class="nav-link" href="{{ route('company') }}">Company</a></li>
                 <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
                 <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
-                <li><a class="nav-link" href="{{ route('workTime') }}">Work Hours</a></li>
-                <li><a class="nav-link" href="{{ route('workHoliday') }}">Non Working Days</a></li>
               </ul>
             </li>
             @endcan
-            
-            @if(auth()->user()->role == 'admin')
-              {{-- Data to Display --}}
-            @endif
           </ul>
         </aside>
       </div>

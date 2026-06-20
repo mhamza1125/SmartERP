@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\RoleRequest;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +13,7 @@ use App\Repositories\AdminRepository;
 class AdminController extends Controller
 {
     protected $userRepository;
-    protected $roleRepository;
+    protected $adminRepository;
 
     public function __construct(
         UserRepository $userRepository,
@@ -30,6 +31,7 @@ class AdminController extends Controller
 
     public function user()
     {
+        $this->authorize('users_access', User::class);
         $user = $this->userRepository->all();
         $role = $this->adminRepository->role();
 
@@ -41,6 +43,7 @@ class AdminController extends Controller
 
     public function role()
     {
+        $this->authorize('roles_access', User::class);
         $role = $this->adminRepository->role();
 
         return view('role', [
@@ -50,25 +53,27 @@ class AdminController extends Controller
 
     public function create()
     {
-        $permission = $this->adminRepository->permission();
+        $this->authorize('roles_create', User::class);
+        $groupedPermissions = $this->adminRepository->groupedPermissions();
 
         return view('addRole', [
-            'permission' => $permission,
+            'groupedPermissions' => $groupedPermissions,
         ]);
     }
 
     public function store(RoleRequest $request)
     {
+        $this->authorize('roles_create', User::class);
         $validatedData = $request->validated();
-        $getId = $this->adminRepository->store($validatedData);
+        $this->adminRepository->store($validatedData);
 
         return redirect()->route('role.add')->with('success', 'Record Inserted Successfully');
     }
 
-
     public function edit(Role $id)
     {
-        $permission = $this->adminRepository->permission();
+        $this->authorize('roles_edit', User::class);
+        $groupedPermissions = $this->adminRepository->groupedPermissions();
 
         $rolePermissionIds = DB::table('permission_role')
             ->where('role_id', $id->id)
@@ -77,14 +82,15 @@ class AdminController extends Controller
 
         return view('editRole', [
             'role' => $id,
-            'permission' => $permission,
+            'groupedPermissions' => $groupedPermissions,
             'rolePermissionIds' => $rolePermissionIds,
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        $getId = $this->adminRepository->update($id, $request->input());
+        $this->authorize('roles_edit', User::class);
+        $this->adminRepository->update($id, $request->input());
 
         return redirect()->route('role.edit', $id)->with('success', 'Record Updated Successfully');
     }

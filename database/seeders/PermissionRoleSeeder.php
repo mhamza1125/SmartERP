@@ -20,53 +20,115 @@ class PermissionRoleSeeder extends Seeder
             );
         }
 
-        // 2. Create Permissions
-        $tables = [
-            'stocks', 'issuances', 'purchases', 'transactions', 'banks',
-            'machines', 'orders', 'deliveries', 'customers', 'employees', 'vendors',
-            'contractors', 'products', 'materials', 'attendance', 'payroll',
-            'reports', 'settings', 'assets'
-        ];        
+        // 2. Create Permissions grouped by module
+        // Format: module => [actions...]
+        $modules = [
+            // Sales & Delivery
+            'orders'        => ['access', 'show', 'create', 'edit', 'delete'],
+            'deliveries'    => ['access', 'show', 'create', 'edit', 'delete'],
+            'packing_lists' => ['access', 'show', 'create', 'edit', 'delete'],
 
-        $allPermissions = [];
+            // Procurement & Stock
+            'purchases'     => ['access', 'show', 'create', 'edit', 'delete'],
+            'receives'      => ['access', 'show', 'create', 'edit', 'delete'],
+            'returns'       => ['access', 'show', 'create', 'edit', 'delete'],
+            'stocks'        => ['access', 'show', 'create', 'edit', 'delete'],
+            'issuances'     => ['access', 'show', 'create', 'edit', 'delete'],
 
-        foreach ($tables as $table) {
-            foreach (['access', 'show' , 'create', 'edit', 'delete'] as $action) {
-                $name = "{$table}_{$action}";
+            // Products & Materials
+            'products'      => ['access', 'show', 'create', 'edit', 'delete'],
+            'materials'     => ['access', 'show', 'create', 'edit', 'delete'],
+            'machines'      => ['access', 'show', 'create', 'edit', 'delete'],
+
+            // Parties
+            'customers'     => ['access', 'show', 'create', 'edit', 'delete'],
+            'vendors'       => ['access', 'show', 'create', 'edit', 'delete'],
+            'contractors'   => ['access', 'show', 'create', 'edit', 'delete'],
+            'employees'     => ['access', 'show', 'create', 'edit', 'delete'],
+
+            // Finance
+            'transactions'  => ['access', 'show', 'create', 'edit', 'delete'],
+            'banks'         => ['access', 'show', 'create', 'edit', 'delete'],
+            'assets'        => ['access', 'show', 'create', 'edit', 'delete'],
+
+            // HR
+            'attendance'    => ['access', 'show', 'create', 'edit', 'delete'],
+            'payroll'       => ['access', 'show', 'create', 'edit', 'delete'],
+
+            // Reports
+            'reports'       => ['access', 'show', 'create', 'edit', 'delete'],
+
+            // Settings & Config
+            'settings'      => ['access', 'show', 'create', 'edit', 'delete'],
+            'categories'    => ['access', 'show', 'create', 'edit', 'delete'],
+            'heads'         => ['access', 'show', 'create', 'edit', 'delete'],
+
+            // Admin
+            'users'         => ['access', 'show', 'create', 'edit', 'delete'],
+            'roles'         => ['access', 'show', 'create', 'edit', 'delete'],
+        ];
+
+        foreach ($modules as $module => $actions) {
+            foreach ($actions as $action) {
+                $name = "{$module}_{$action}";
                 DB::table('permissions')->updateOrInsert(
                     ['name' => $name],
                     ['created_at' => Carbon::now(), 'updated_at' => Carbon::now()]
                 );
-                $allPermissions[] = $name;
             }
         }
 
-        // 3. Assign Permissions (manual DB insert into permission_role)
-        $roleIds = DB::table('roles')->pluck('id', 'name'); // ['Admin' => 1, ...]
+        // 3. Assign Permissions to Roles
+        $roleIds = DB::table('roles')->pluck('id', 'name');
+        $allPermissions = DB::table('permissions')->get();
 
-        $allPermissionRecords = DB::table('permissions')->get();
+        // Manager-accessible modules (operational access)
+        $managerModules = [
+            'orders', 'deliveries', 'packing_lists',
+            'purchases', 'receives', 'returns',
+            'stocks', 'issuances',
+            'products', 'materials', 'machines',
+            'customers', 'vendors', 'contractors', 'employees',
+            'attendance',
+        ];
 
-        foreach ($allPermissionRecords as $permission) {
+        // Accountant-accessible modules (finance & view-only)
+        $accountantModules = [
+            'orders', 'deliveries',
+            'purchases', 'receives',
+            'customers', 'vendors', 'employees',
+            'transactions', 'banks', 'assets',
+            'payroll', 'reports',
+        ];
+
+        foreach ($allPermissions as $permission) {
             $name = $permission->name;
 
-            // Assign to Admin: all
+            // Admin gets ALL permissions
             DB::table('permission_role')->updateOrInsert([
-                'role_id' => $roleIds['Admin'],
+                'role_id'       => $roleIds['Admin'],
                 'permission_id' => $permission->id,
             ]);
 
-            // Assign to Manager: only show, access, create
-            if (str_ends_with($name, '_show') || str_ends_with($name, '_access') || str_ends_with($name, '_create')) {
+            // Extract module and action from permission name (last segment after final _)
+            $lastUnderscore = strrpos($name, '_');
+            $module = substr($name, 0, $lastUnderscore);
+            $action = substr($name, $lastUnderscore + 1);
+
+            // Manager: access + show + create on their modules
+            if (in_array($module, $managerModules) &&
+                in_array($action, ['access', 'show', 'create'])) {
                 DB::table('permission_role')->updateOrInsert([
-                    'role_id' => $roleIds['Manager'],
+                    'role_id'       => $roleIds['Manager'],
                     'permission_id' => $permission->id,
                 ]);
             }
 
-            // Assign to Accountant: only show and access
-            if (str_ends_with($name, '_show') || str_ends_with($name, '_access')) {
+            // Accountant: access + show only on their modules
+            if (in_array($module, $accountantModules) &&
+                in_array($action, ['access', 'show'])) {
                 DB::table('permission_role')->updateOrInsert([
-                    'role_id' => $roleIds['Accountant'],
+                    'role_id'       => $roleIds['Accountant'],
                     'permission_id' => $permission->id,
                 ]);
             }
