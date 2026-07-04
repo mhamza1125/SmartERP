@@ -69,4 +69,45 @@ Todo (Optional):
 11. Default Stock of Material / Product Adjustment (Increase / Decrease)
 
 ===============================================================================================
+=====================================================================================================================
+================================================= Work to do ========================================================
+=====================================================================================================================
+I've commented out FireBird and OCI extension in PHP Production, Development & Configuration =====================================================================================================================
+
+1. Product component stage is not being defined
+
+2. Material / Product purchase the name is not shown (purchase/97)
+
+3. In material ledger report the stockIn / StockOut needs to be fixed
+https://erp.agilewebsolutions.net/public/materialDetail
+
+4. Here order qty needs to be fixed (It is showing the actual received after return)
+https://erp.agilewebsolutions.net/public/purchase/95
+
+5. Size not appraring on addIssuance product dropdown when order is selected
+
+6. SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '001' for key 'issue_no'
+Error on creating PTC Use some better approach for issue_no as it is being used to fetch something in deliveries
+
+7. Delivery return is not affecting the ledger
+
+8. How pricing is being managed in multi-order delivery?
+
+=====================================================================================================================
+=====================================================================================================================
+
+Peach tree
+Oracle Software
+Surgicraft software
+Impulse Application Software
+
+=====================================================================================================================
+=====================================================================================================================
+
+Security of Project
+Use mac address check in project
+Mac Address is placed in DB & time calculation starts
+System crashes after 3 months of deployment
+
+===============================================================================================
 ===============================================================================================
