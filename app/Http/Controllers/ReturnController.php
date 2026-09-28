@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ReturnRequest;
+use App\Models\ReceiveMaterial;
 use App\Models\Returns;
+use App\Models\ReturnMaterial;
 use App\Repositories\ReceiveMaterialRepository;
 use App\Repositories\ReceiveRepository;
 use App\Repositories\ReturnMaterialRepository;
@@ -81,6 +83,12 @@ class ReturnController extends Controller
         $rid = $request->input('receive_material_id');
         $quantities = $request->input('quantity');
         $remarks = $request->input('remarks');
+
+        $validationError = $this->validateReturnQuantities($rid, $quantities);
+        if ($validationError) {
+            return redirect()->back()->with(['fails' => $validationError])->withInput();
+        }
+
         $getId = $this->returnRepository->store($validatedData);
         $this->storeRM($getId, $rid, $quantities, $remarks);
 
@@ -149,6 +157,14 @@ class ReturnController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+
+        $rid = $request->input('receive_material_id');
+        $quantities = $request->input('quantity');
+        $validationError = $this->validateReturnQuantities($rid, $quantities, $id);
+        if ($validationError) {
+            return redirect()->back()->with(['fails' => $validationError])->withInput();
+        }
+
         $this->returnRepository->update($id, $request->input());
         $this->returnMaterialRepository->update($id, $request->input());
 
@@ -172,5 +188,46 @@ class ReturnController extends Controller
             ];
             $this->returnMaterialRepository->store($returnMaterial);
         }
+    }
+
+    /**
+     * Ensure each return quantity does not exceed what was actually approved on
+     * receiving, minus whatever has already been returned against that same
+     * receive line. This blocks two related problems: returning against a
+     * receive line that is still pending/rejected (approved_qty = 0, so nothing
+     * is returnable), and returning more than remains outstanding, either of
+     * which would silently understate the computed stock balance since stock
+     * totals are approved_qty minus returned quantity.
+     *
+     * @param  int|null  $excludeReturnId  when editing an existing return, exclude its own
+     *                                     rows from the "already returned" total
+     * @return string|null  an error message, or null when all quantities are valid
+     */
+    private function validateReturnQuantities(array $receiveMaterialIds, array $quantities, $excludeReturnId = null)
+    {
+        foreach ($quantities as $key => $quantity) {
+            if ($quantity <= 0) {
+                continue;
+            }
+
+            $receiveMaterialId = $receiveMaterialIds[$key] ?? null;
+            $receiveMaterial = ReceiveMaterial::find($receiveMaterialId);
+            if (! $receiveMaterial) {
+                return 'One or more selected receive items could not be found.';
+            }
+
+            $alreadyReturnedQuery = ReturnMaterial::where('receive_material_id', $receiveMaterialId);
+            if ($excludeReturnId) {
+                $alreadyReturnedQuery->where('return_id', '!=', $excludeReturnId);
+            }
+            $alreadyReturned = $alreadyReturnedQuery->sum('quantity');
+            $returnable = $receiveMaterial->approved_qty - $alreadyReturned;
+
+            if ($quantity > $returnable) {
+                return 'Return quantity exceeds the approved and not-yet-returned quantity for one or more items (only approved receive quantities can be returned).';
+            }
+        }
+
+        return null;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Purchase;
+use App\Models\Stock;
 use App\Repositories\MaterialRepository;
 use App\Repositories\MProcessRepository;
 use App\Repositories\OrderRepository;
@@ -12,6 +13,7 @@ use App\Repositories\PurchaseRepository;
 use App\Repositories\ReceiveMaterialRepository;
 use App\Repositories\ReturnMaterialRepository;
 use App\Repositories\StockItemRepository;
+use App\Repositories\StockRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\VendorRepository;
 use Illuminate\Http\Request;
@@ -27,6 +29,8 @@ class MProcessController extends Controller
     protected $materialRepository;
 
     protected $purchaseRepository;
+
+    protected $stockRepository;
 
     protected $stockItemRepository;
 
@@ -44,6 +48,7 @@ class MProcessController extends Controller
         MProcessRepository $mprocessRepository,
         PurchaseRepository $purchaseRepository,
         MaterialRepository $materialRepository,
+        StockRepository $stockRepository,
         StockItemRepository $stockItemRepository,
         TransactionRepository $transactionRepository,
         PurchaseItemRepository $purchaseItemRepository,
@@ -56,6 +61,7 @@ class MProcessController extends Controller
         $this->mprocessRepository = $mprocessRepository;
         $this->purchaseRepository = $purchaseRepository;
         $this->materialRepository = $materialRepository;
+        $this->stockRepository = $stockRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->transactionRepository = $transactionRepository;
         $this->purchaseItemRepository = $purchaseItemRepository;
@@ -215,8 +221,25 @@ class MProcessController extends Controller
                 'total' => $total,
             ];
 
+            // Create a real stock header for the raw material being sent out for
+            // processing (stock_type=2 issuance, status=Material Processing). Without
+            // this, the stock_item below had no matching `stocks` row to join to and
+            // its quantity was silently excluded from every stock balance calculation,
+            // so the raw material consumed here never actually left available stock.
+            $stockNo = $this->stockRepository->refNo();
+            $stockId = $this->stockRepository->store([
+                'stock_no' => $stockNo,
+                'order_id' => 0,
+                'table_name' => 'mprocess',
+                'employee_id' => 0,
+                'stock_type' => 2,
+                'stock_date' => now()->format('Y-m-d'),
+                'stock_status' => Stock::STATUS_MATERIAL_PROCESSING,
+                'description' => 'Material sent for processing (Purchase #'.$getId.')',
+            ]);
+
             $stockItem = [
-                'stock_id' => '0',
+                'stock_id' => $stockId,
                 'product_type_id' => '0',
                 'material_id' => $amaterial,
                 'quantity' => $aquantity,
@@ -238,7 +261,7 @@ class MProcessController extends Controller
             ];
 
             $this->mprocessRepository->store($mprocess);
-            // Direct Insertion - Not Used
+            // Direct Insertion - Used on line #216
             $stock = [
                 // 'stock_id' => '0', 'issue_id' => NULL, 'issue_for' => '0', 'stock_no' => 'I24000000', 'order_id' => '0', 'machine_id' => NULL, 'table_name' => 'mprocess', 'employee_id' => '0', 'stock_type' => '2', 'stock_date' => '2024-06-01', 'stock_status' => '5', 'description' => '',
             ];

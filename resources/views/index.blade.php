@@ -374,7 +374,7 @@
       </div>
       <footer class="main-footer">
         <div class="footer-left">
-          <a href="#">Company XYZ</a>
+          <a href="#">Smart ERP</a>
         </div>
         <div class="footer-right">
           Copyright &copy; Designed & Developed by <a href="#">Core Web Solutions</a> {{date("Y")}}

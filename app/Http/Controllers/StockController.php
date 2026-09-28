@@ -2570,6 +2570,24 @@ class StockController extends Controller
             return redirect()->route('ptc.show', $id)->with('fails', 'Already at final stage - use Close PTC instead');
         }
 
+        // Guard: this action advances current_stage_id directly with no receive/issue
+        // records of its own, so it must not be used while product quantity issued for
+        // the current stage is still outstanding (unreceived) - otherwise the PTC's
+        // stage pointer would race ahead of the actual physical stock movement history.
+        $currentStageId = $ptc->current_stage_id;
+        $issueRecordIds = Stock::where('ptc_id', $id)
+            ->where('stock_type', 2)
+            ->where('issue_for', $currentStageId)
+            ->pluck('stock_id')
+            ->toArray();
+        if ($currentStageIndex == 0) {
+            $issueRecordIds[] = $id; // initial PTC master issuance
+        }
+        $outstanding = $this->ptcOutstandingProductQty($id, $currentStageId, $issueRecordIds);
+        if ($outstanding->isNotEmpty()) {
+            return redirect()->route('ptc.show', $id)->with('fails', 'Cannot advance - product quantity issued for the current stage has not been fully received back yet. Please receive the outstanding items first.');
+        }
+
         // Move to next stage
         $nextStageId = $stageIds[$currentStageIndex + 1];
         $nextNextStageId = isset($stageIds[$currentStageIndex + 2]) ? $stageIds[$currentStageIndex + 2] : null;
@@ -2812,6 +2830,37 @@ class StockController extends Controller
         $nextIndex = $currentIndex + 1;
         $nextStageId = $stageIds[$nextIndex] ?? null;
 
+        // Guard: don't advance the stage (or issue to the next one) while product
+        // quantity issued for the current stage remains outstanding, counting the
+        // receive quantities submitted in this same request. Checked before any
+        // writes so a blocked request leaves no partial records behind.
+        $currentStageId = $ptc->current_stage_id;
+        $issueRecordIds = Stock::where('ptc_id', $id)
+            ->where('stock_type', 2)
+            ->where('issue_for', $currentStageId)
+            ->pluck('stock_id')
+            ->toArray();
+        if ($currentIndex === 0) {
+            $issueRecordIds[] = $id; // initial PTC master issuance
+        }
+        $outstanding = $this->ptcOutstandingProductQty($id, $currentStageId, $issueRecordIds);
+        if ($outstanding->isNotEmpty()) {
+            $rQuantitiesCheck = $request->input('r_quantity', []);
+            $rMaterialIdsCheck = $request->input('r_material_id', []);
+            $rProductTypeIdsCheck = $request->input('r_product_type_id', []);
+            foreach ($rQuantitiesCheck as $key => $qty) {
+                if ($qty > 0 && (int) ($rMaterialIdsCheck[$key] ?? 0) === 0) {
+                    $pt = $rProductTypeIdsCheck[$key] ?? $productTypeId;
+                    if (isset($outstanding[$pt])) {
+                        $outstanding[$pt] -= $qty;
+                    }
+                }
+            }
+            if ($outstanding->filter(fn ($qty) => $qty > 0)->isNotEmpty()) {
+                return redirect()->route('ptc.move.form', $id)->with('fails', 'Cannot move to next stage - please receive all outstanding product quantity for the current stage first.');
+            }
+        }
+
         // === SECTION 1: Create receive record for current stage ===
         $rQuantities = $request->input('r_quantity', []);
         $hasReceiveItems = !empty(array_filter($rQuantities, fn($q) => $q > 0));
@@ -2930,6 +2979,49 @@ class StockController extends Controller
 
             return redirect()->route('ptc.show', $id)->with('success', 'Moved to next stage successfully');
         }
+    }
+
+    /**
+     * Calculate, per finished/semi-finished product_type_id, how much of the quantity
+     * issued to the current PTC stage has not yet been received back at that stage.
+     * Only product items (material_id = 0) are checked - material items are excluded
+     * because partial material variance (e.g. cutting waste) is an expected and
+     * already-tolerated part of the workflow (see ptcReceiveStore).
+     *
+     * @return \Illuminate\Support\Collection keyed by product_type_id => outstanding qty (only entries > 0)
+     */
+    private function ptcOutstandingProductQty($ptcId, $currentStageId, array $issueRecordIds)
+    {
+        $issued = DB::table('stock_items')
+            ->whereIn('stock_id', $issueRecordIds)
+            ->where('material_id', 0)
+            ->select('product_type_id', DB::raw('SUM(quantity) as qty'))
+            ->groupBy('product_type_id')
+            ->pluck('qty', 'product_type_id');
+
+        if ($issued->isEmpty()) {
+            return collect();
+        }
+
+        $received = DB::table('stock_items')
+            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->where('stocks.ptc_id', $ptcId)
+            ->where('stocks.stock_type', 1)
+            ->where('stocks.current_stage_id', $currentStageId)
+            ->where('stock_items.material_id', 0)
+            ->select('stock_items.product_type_id', DB::raw('SUM(stock_items.quantity) as qty'))
+            ->groupBy('stock_items.product_type_id')
+            ->pluck('qty', 'product_type_id');
+
+        $outstanding = collect();
+        foreach ($issued as $productTypeId => $issuedQty) {
+            $remaining = $issuedQty - ($received[$productTypeId] ?? 0);
+            if ($remaining > 0) {
+                $outstanding[$productTypeId] = $remaining;
+            }
+        }
+
+        return $outstanding;
     }
 
     /**
