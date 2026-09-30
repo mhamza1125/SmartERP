@@ -37,7 +37,7 @@
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
                       {{-- <td>
                         @if($item->expected_delivery_date)
-                          <span class="badge badge-info">{{$item->expected_delivery_date}}</span>
+                          <span class="badge badge-info">{{ formatDate($item->expected_delivery_date) }}</span>
                         @else
                           <span class="text-muted">Not set</span>
                         @endif

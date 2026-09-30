@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Material_Process_' . ($purchase['purchase_no'] ?? 'N/A') . '_' . ($purchase['purchase_date'] ?? date('d-m-Y')))
+@section('title', 'Material_Process_' . ($purchase['purchase_no'] ?? 'N/A') . '_' . formatDate($purchase['purchase_date'] ?? now()))
 
 @section('content')
 <div class="document-title">Material Processing</div>
@@ -14,11 +14,11 @@
         </div>
         <div class="info-row">
             <span class="info-label">Processing Date:</span>
-            <span class="info-value">{{ $purchase['purchase_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ formatDate($purchase['purchase_date'] ?? null, 'N/A') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Required Date:</span>
-            <span class="info-value">{{ $purchase['require_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ formatDate($purchase['require_date'] ?? null, 'N/A') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Job No:</span>

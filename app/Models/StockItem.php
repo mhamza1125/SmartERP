@@ -18,6 +18,7 @@ class StockItem extends Model
         'quantity',
         'stage_id',
         'component_product_type_id',
+        'ptc_virtual',
         'work_logs',
         'work_wages',
         'created_by',

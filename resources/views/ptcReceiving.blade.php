@@ -38,6 +38,21 @@
                 PTC-{{ $ptc->stock_no }} / I{{ $issuanceSeqNo ?? str_pad(\App\Models\Stock::ptcDisplayNo($issuance->stock_no, $ptc->stock_no), 3, '0', STR_PAD_LEFT) }} | {{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}
                 <input type="hidden" name="issue_id" value="{{ $issuance->stock_id }}">
               </div>
+              @php $issuedProducts = collect($balance['products'] ?? [])->filter(fn ($line) => $line['issued'] > 0); @endphp
+              @if($issuedProducts->isNotEmpty())
+                <div class="alert alert-light border">
+                  <strong>Product on this issuance:</strong>
+                  @foreach($issuedProducts as $line)
+                    Issued {{ $line['issued'] + 0 }} | Received {{ $line['received'] + 0 }} |
+                    <strong class="{{ $line['outstanding'] > 0 ? 'text-danger' : 'text-success' }}">Outstanding {{ $line['outstanding'] + 0 }}</strong>
+                  @endforeach
+                  <br><small class="text-muted">Received product goes into this PTC's stock (not general stock). Use the Rejected stage for damaged pieces.</small>
+                </div>
+              @else
+                <div class="alert alert-light border">
+                  <small class="text-muted">Only materials/components were issued here, so product received is new output and goes into this PTC's stock (not general stock).</small>
+                </div>
+              @endif
               @endif
 
               <hr>
@@ -52,12 +67,10 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Receive From Stage <span class="text-danger">*</span></label>
-                    <select class="form-control select2" name="receive_stage_id" id="receive_stage_id" required>
-                      @foreach($stages as $stage)
-                        <option value="{{ $stage->head_id }}" {{ $ptc->current_stage_id == $stage->head_id ? 'selected' : '' }}>{{ $stage->name }}</option>
-                      @endforeach
-                    </select>
+                    <label>Receive From Stage</label>
+                    {{-- Fixed to the stage this issuance was made for --}}
+                    <input type="text" class="form-control" readonly
+                      value="{{ optional($stages->firstWhere('head_id', $receiveStageId ?? $ptc->current_stage_id))->name ?? 'N/A' }}">
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -412,6 +425,8 @@ var ajaxPCUrl = "{{ route('ajaxPC') }}";
 var ajaxPSUrl = "{{ route('ajaxPS') }}";
 var ptcProductTypeId = '{{ $product ? $product->product_type_id : 0 }}';
 var ptcProductName = '{{ $product ? $product->name . " - " . $product->size_name : "N/A" }}';
+// product_type_id => quantity still outstanding on this issuance (products issued here only)
+var productOutstanding = @json(collect($balance['products'] ?? [])->filter(fn ($line) => $line['issued'] > 0)->map(fn ($line) => $line['outstanding']));
 
 // Component Product Type Receiving
 $(document).ready(function() {

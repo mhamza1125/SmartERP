@@ -1,6 +1,6 @@
 @extends('print.layout-voucher')
 
-@section('title', 'Expense_Voucher_' . ($expense['transaction_id'] ?? 'N/A') . '_' . ($expense['transaction_date'] ?? date('d-m-Y')))
+@section('title', 'Expense_Voucher_' . ($expense['transaction_id'] ?? 'N/A') . '_' . formatDate($expense['transaction_date'] ?? now()))
 
 @section('content')
 

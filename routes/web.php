@@ -311,6 +311,8 @@ Route::post('/ptc/{id}/receive', [StockController::class, 'ptcReceiveStore'])->n
 // PTC Stage Advancement (manual)
 Route::post('/ptc/{id}/next-stage', [StockController::class, 'ptcNextStage'])->name('ptc.next.stage');
 Route::post('/ptc/{id}/close', [StockController::class, 'ptcClose'])->name('ptc.close');
+// PTC virtual stock: release to general stock
+Route::post('/ptc/{id}/release', [StockController::class, 'ptcRelease'])->name('ptc.release');
 // Legacy move stage route (kept for backward compatibility)
 Route::get('/ptc/{id}/move', [StockController::class, 'ptcMoveStageForm'])->name('ptc.move.form');
 Route::post('/ptc/{id}/move', [StockController::class, 'ptcMoveStage'])->name('ptc.move');

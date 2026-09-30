@@ -29,7 +29,7 @@
                     @foreach($igroup as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->igroup_date}}</td>
+                      <td>{{ formatDate($item->igroup_date) }}</td>
                       <td>{{$item->igroup_no}}</td>
                       <td>
                         @if($item->igroup_status)

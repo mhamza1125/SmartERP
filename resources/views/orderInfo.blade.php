@@ -70,7 +70,7 @@
                     <tr><td><b>Delivery Date:</b> {{\Carbon\Carbon::parse($order['due_date'])->format('d-m-Y')}}</td></tr>
                     @endif
                     {{-- @if($order['expected_delivery_date'])
-                    <tr><td><b>Expected Delivery:</b> {{$order['expected_delivery_date']}}</td></tr>
+                    <tr><td><b>Expected Delivery:</b> {{ formatDate($order['expected_delivery_date']) }}</td></tr>
                     @endif --}}
                     
                   </tbody>

@@ -2212,24 +2212,29 @@ $(document).ready(function () {
             }
 
             var minAvailableStock = Infinity;
+            var source = currentPStockSource();
 
             selectedStageIds.forEach(function (stageId) {
                 var totalQuantityInTable = 0;
                 $('#items-table tbody tr').each(function () {
                     var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
                     var rowStageId = $(this).find('input[name="stage_id[]"]').val();
-                    if (rowProductId == ptcProductTypeId && rowStageId == stageId) {
+                    var rowSource = $(this).find('input[name="source[]"]').val() || 'general';
+                    if (rowProductId == ptcProductTypeId && rowStageId == stageId && rowSource == source) {
                         totalQuantityInTable += parseInt($(this).find('input[name="quantity[]"]').val()) || 0;
                     }
                 });
 
-                var stockItem = pstockData.find(item => item.product_type_id == ptcProductTypeId && item.stage_id == stageId);
-                if (stockItem) {
-                    var availableStock = parseInt(stockItem.stockIn || 0) - parseInt(stockItem.stockOut || 0) - totalQuantityInTable;
-                    minAvailableStock = Math.min(minAvailableStock, availableStock);
+                var availableStock = 0;
+                if (source === 'ptc') {
+                    // This PTC's own stock (received here, not yet transferred or released)
+                    var ptcItem = ptcVirtualStock.find(item => item.product_type_id == ptcProductTypeId && item.stage_id == stageId);
+                    availableStock = (ptcItem ? parseFloat(ptcItem.available) : 0) - totalQuantityInTable;
                 } else {
-                    minAvailableStock = Math.min(minAvailableStock, 0);
+                    var stockItem = pstockData.find(item => item.product_type_id == ptcProductTypeId && item.stage_id == stageId);
+                    availableStock = stockItem ? parseInt(stockItem.stockIn || 0) - parseInt(stockItem.stockOut || 0) - totalQuantityInTable : 0;
                 }
+                minAvailableStock = Math.min(minAvailableStock, availableStock);
             });
 
             $('#available_pstock').val(isFinite(minAvailableStock) ? minAvailableStock : 0);
@@ -2296,10 +2301,24 @@ $(document).ready(function () {
             }
         });
 
-        // Update available product stock when stage_id changes
-        $('#stage_id').on('change', function () {
+        // Product source on the PTC issuance page: general stock or this PTC's own stock
+        function currentPStockSource() {
+            return ($('#pstock_source').length && $('#pstock_source').val() === 'ptc') ? 'ptc' : 'general';
+        }
+
+        // Update available product stock when stage_id or source changes
+        $('#stage_id, #pstock_source').on('change', function () {
             updateAvailablePStock();
         });
+
+        // "Transfer to Stage" link from the PTC page preselects PTC stock and its stage
+        if (typeof ptcPreselectSource !== 'undefined' && ptcPreselectSource === 'ptc') {
+            $('#pstock_source').val('ptc');
+            if (ptcPreselectStage && ptcPreselectStage !== '0') {
+                $('#stage_id').val([ptcPreselectStage]).trigger('change');
+            }
+            updateAvailablePStock();
+        }
 
         // Function to update serial numbers
         function updateSerialNumbers() {
@@ -2346,7 +2365,8 @@ $(document).ready(function () {
             var srNo = $('#items-table tbody tr').length + 1;
             var newRow = '<tr>' +
                 '<td>' + srNo + '</td>' +
-                '<td>Material<input type="hidden" name="product_type_id[]" value="0"><input type="hidden" name="stage_id[]" value="0"></td>' +
+                '<td>Material<input type="hidden" name="product_type_id[]" value="0"><input type="hidden" name="stage_id[]" value="0">' +
+                '<input type="hidden" name="component_id[]" value=""><input type="hidden" name="source[]" value="general"></td>' +
                 '<td>' + materialName + '<input type="hidden" name="material_id[]" value="' + materialId + '"></td>' +
                 '<td>' + quantity + ' ' + materialUnit + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                 '<td><button type="button" class="btn btn-danger deleteRow">X</button></td>' +
@@ -2378,6 +2398,7 @@ $(document).ready(function () {
             }
 
             // Check for duplicates and add rows
+            var source = currentPStockSource();
             for (var i = 0; i < stageIds.length; i++) {
                 var stageId = stageIds[i];
                 var stageName = $('#stage_id option[value="' + stageId + '"]').text();
@@ -2386,7 +2407,8 @@ $(document).ready(function () {
                 $('#items-table tbody tr').each(function () {
                     var existingProductId = $(this).find('input[name="product_type_id[]"]').val();
                     var existingStageId = $(this).find('input[name="stage_id[]"]').val();
-                    if (existingProductId == ptcProductTypeId && existingStageId == stageId) {
+                    var existingSource = $(this).find('input[name="source[]"]').val() || 'general';
+                    if (existingProductId == ptcProductTypeId && existingStageId == stageId && existingSource == source) {
                         isDuplicate = true;
                         return false;
                     }
@@ -2400,8 +2422,10 @@ $(document).ready(function () {
                 var srNo = $('#items-table tbody tr').length + 1;
                 var newRow = '<tr>' +
                     '<td>' + srNo + '</td>' +
-                    '<td>' + ptcProductName + '<input type="hidden" name="product_type_id[]" value="' + ptcProductTypeId + '"><input type="hidden" name="material_id[]" value="0"></td>' +
-                    '<td>' + stageName + '<input type="hidden" name="stage_id[]" value="' + stageId + '"></td>' +
+                    '<td>' + ptcProductName + '<input type="hidden" name="product_type_id[]" value="' + ptcProductTypeId + '"><input type="hidden" name="material_id[]" value="0">' +
+                    '<input type="hidden" name="component_id[]" value=""><input type="hidden" name="source[]" value="' + source + '"></td>' +
+                    '<td>' + stageName + (source === 'ptc' ? ' <span class="badge badge-info">PTC stock</span>' : '') +
+                    '<input type="hidden" name="stage_id[]" value="' + stageId + '"></td>' +
                     '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button type="button" class="btn btn-danger deletepRow">X</button></td>' +
                     '</tr>';
@@ -2557,7 +2581,8 @@ $(document).ready(function () {
             var srNo = $('#receive-table tbody tr').length + 1;
             var markup = '<tr>' +
                 '<td>' + srNo + '</td>' +
-                '<td>' + productName + '<input type="hidden" name="r_material_id[]" value="' + materialId + '"><input type="hidden" name="r_product_type_id[]" value="' + productId + '"></td>' +
+                '<td>' + productName + '<input type="hidden" name="r_material_id[]" value="' + materialId + '"><input type="hidden" name="r_product_type_id[]" value="' + productId + '">' +
+                '<input type="hidden" name="r_component_product_type_id[]" value=""></td>' +
                 '<td>' + materialName + '<input type="hidden" name="r_stage_id[]" value="0"></td>' +
                 '<td>None<input type="hidden" name="r_work_logs[]" value="0"></td>' +
                 '<td>' + quantity + '<input type="hidden" name="r_quantity[]" value="' + quantity + '"></td>' +
@@ -2589,10 +2614,27 @@ $(document).ready(function () {
                 return;
             }
 
+            // PTC receiving: product issued on this issuance can only be received up to what is outstanding
+            if (typeof productOutstanding !== 'undefined' && productOutstanding[productId] !== undefined) {
+                var inTable = 0;
+                $('#receive-table tbody tr').each(function () {
+                    if ($(this).find('input[name="r_product_type_id[]"]').val() == productId &&
+                        $(this).find('input[name="r_material_id[]"]').val() == '0' &&
+                        !$(this).find('input[name="r_component_product_type_id[]"]').val()) {
+                        inTable += parseFloat($(this).find('input[name="r_quantity[]"]').val()) || 0;
+                    }
+                });
+                if (inTable + quantity > productOutstanding[productId]) {
+                    alert("Quantity cannot exceed the outstanding quantity on this issuance (" + (productOutstanding[productId] - inTable) + " left).");
+                    return;
+                }
+            }
+
             var srNo = $('#receive-table tbody tr').length + 1;
             var markup = '<tr>' +
                 '<td>' + srNo + '</td>' +
-                '<td>' + productName + '<input type="hidden" name="r_product_type_id[]" value="' + productId + '"><input type="hidden" name="r_material_id[]" value="0"></td>' +
+                '<td>' + productName + '<input type="hidden" name="r_product_type_id[]" value="' + productId + '"><input type="hidden" name="r_material_id[]" value="0">' +
+                '<input type="hidden" name="r_component_product_type_id[]" value=""></td>' +
                 '<td>' + stageName + '<input type="hidden" name="r_stage_id[]" value="' + stageId + '"></td>' +
                 '<td>' + selectedOptionsString + '<input type="hidden" name="r_work_logs[]" value="' + idsString + '"></td>' +
                 '<td>' + quantity + '<input type="hidden" name="r_quantity[]" value="' + quantity + '"></td>' +

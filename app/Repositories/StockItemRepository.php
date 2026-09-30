@@ -453,6 +453,7 @@ class StockItemRepository implements GlobalInterface
             ->where('order_items.order_id', $id)
             ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
             ->where('stock_items.material_id', '=', 0)
+            ->where('stock_items.ptc_virtual', 0)
             ->groupBy(
                 'stock_items.product_type_id',
                 'stock_items.stage_id',
@@ -481,6 +482,7 @@ class StockItemRepository implements GlobalInterface
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->where('stock_items.material_id', '=', 0)
             ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
+            ->where('stock_items.ptc_virtual', 0) // PTC virtual stock is not general stock
             ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
 
         // Subquery 1b: Component product stock (when products are used as components)
@@ -495,6 +497,7 @@ class StockItemRepository implements GlobalInterface
             )
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->whereNotNull('stock_items.component_product_type_id')
+            ->where('stock_items.ptc_virtual', 0)
             ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
 
         // Subquery 2: Purchase-based received/returned quantities (for products only)
@@ -663,7 +666,8 @@ class StockItemRepository implements GlobalInterface
             ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->leftJoin('stock_items', function ($join) {
                 $join->on('stock_items.product_type_id', '=', 'product_types.product_type_id')
-                    ->where('stock_items.material_id', '=', 0);
+                    ->where('stock_items.material_id', '=', 0)
+                    ->where('stock_items.ptc_virtual', '=', 0);
             })
             ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
@@ -782,6 +786,7 @@ class StockItemRepository implements GlobalInterface
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->where('stock_items.material_id', '=', 0)
             ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
+            ->where('stock_items.ptc_virtual', 0) // PTC virtual stock is not general stock
             ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
 
         // Subquery 1b: Component product stock (when products are used as components)
@@ -795,6 +800,7 @@ class StockItemRepository implements GlobalInterface
             )
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->whereNotNull('stock_items.component_product_type_id')
+            ->where('stock_items.ptc_virtual', 0)
             ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
 
         // Subquery 2: Purchase-based received/returned quantities (for products only)
@@ -935,6 +941,7 @@ class StockItemRepository implements GlobalInterface
             ->where('order_items.order_id', $id)
             ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
             ->where('stock_items.material_id', 0)
+            ->where('stock_items.ptc_virtual', 0)
             ->groupBy(
                 'stock_items.product_type_id',
                 'stock_items.stage_id',
@@ -968,6 +975,7 @@ class StockItemRepository implements GlobalInterface
             ->where('order_items.order_id', $id)
             ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
             ->where('stock_items.material_id', '=', 0)
+            ->where('stock_items.ptc_virtual', 0)
             ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
             ->get();
     }
@@ -989,6 +997,7 @@ class StockItemRepository implements GlobalInterface
             ->where('stock_items.material_id', '=', 0)
             ->where('stock_items.product_type_id', '=', $id)
             ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
+            ->where('stock_items.ptc_virtual', 0) // PTC virtual stock is not general stock
             ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
 
         // Subquery 1b: Component product stock (when this product is used as a component)
@@ -1004,6 +1013,7 @@ class StockItemRepository implements GlobalInterface
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->where('stock_items.component_product_type_id', '=', $id)
             ->whereNotNull('stock_items.component_product_type_id')
+            ->where('stock_items.ptc_virtual', 0)
             ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
 
         // Subquery 2: Purchase-based received/returned quantities (for products only)

@@ -19,13 +19,22 @@ class Stock extends Model
     const STATUS_MACHINE_MATERIAL = 4;
     const STATUS_MATERIAL_PROCESSING = 5;
     const STATUS_PTC_IN_PROGRESS = 6;
-    const STATUS_PTC_COMPLETED = 7;
+    const STATUS_PTC_COMPLETED = 7; // PTC finished: its end stage was fully received
+    const STATUS_PTC_RELEASED = 8;  // PTC virtual stock released to general stock
+    const STATUS_PTC_CLOSED = 9;    // PTC stopped before its end stage (closed early)
+
+    // table_name of a PTC release record (stock_type = 1, ptc_id = PTC master)
+    const TABLE_PTC_RELEASE = 'ptc_release';
+
+    // Stage head used for rejected pieces on receive forms
+    const STAGE_REJECTED = 105;
 
     protected $fillable = [
         'issue_id',
         'ptc_id',
         'current_stage_id',
         'next_stage_id',
+        'end_stage_id',
         'is_ptc_master',
         'stock_no',
         'issue_for',

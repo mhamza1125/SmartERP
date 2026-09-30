@@ -50,8 +50,10 @@
                       <td>
                         @if($item->stock_status == 6)
                           <span class="badge badge-warning">In Progress</span>
-                        @elseif($item->stock_status == 7)
+                        @elseif($item->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED)
                           <span class="badge badge-success">Completed</span>
+                        @elseif($item->stock_status == \App\Models\Stock::STATUS_PTC_CLOSED)
+                          <span class="badge badge-dark">Closed Early</span>
                         @else
                           <span class="badge badge-secondary">Unknown</span>
                         @endif

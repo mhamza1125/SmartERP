@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'PTC_' . ($ptc->stock_no ?? 'N/A') . '_' . ($ptc->stock_date ?? date('d-m-Y')))
+@section('title', 'PTC_' . ($ptc->stock_no ?? 'N/A') . '_' . formatDate($ptc->stock_date ?? now()))
 
 @push('styles')
 <style>
@@ -41,8 +41,10 @@
             <span class="info-value">
                 @if($ptc->stock_status == 6)
                     In Progress
-                @elseif($ptc->stock_status == 7)
+                @elseif($ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED)
                     Completed
+                @elseif($ptc->stock_status == \App\Models\Stock::STATUS_PTC_CLOSED)
+                    Closed Early
                 @else
                     Unknown
                 @endif
@@ -60,8 +62,8 @@
             <span class="info-value">{{ $ptc->description ?? 'N/A' }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Current Stage:</span>
-            <span class="info-value">{{ $ptc->current_stage_name ?? 'Completed' }}</span>
+            <span class="info-label">{{ $ptc->stock_status == 6 ? 'Current Stage:' : ($ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED ? 'Completed At Stage:' : 'Closed At Stage:') }}</span>
+            <span class="info-value">{{ $ptc->current_stage_name ?? 'N/A' }}</span>
         </div>
     </div>
 </div>
@@ -84,10 +86,8 @@
         </thead>
         <tbody>
             @php
-                $issuanceSeqMap = [];
-                foreach($issuances as $idx => $iss) {
-                    $issuanceSeqMap[$iss->stock_id] = str_pad($idx + 1, 3, '0', STR_PAD_LEFT);
-                }
+                // Issuance numbers by creation order (initial issuance = I001)
+                $issuanceSeqMap = $issuanceSeq->all();
             @endphp
             @foreach($movements as $index => $movement)
                 @php
@@ -150,6 +150,8 @@
                     <td>
                         @if($movement->is_ptc_master == 1)
                             Initial Issue
+                        @elseif($movement->stock_status == \App\Models\Stock::STATUS_PTC_RELEASED)
+                            Released to Stock
                         @elseif($movement->stock_type == 1)
                             Receive
                         @else
@@ -184,11 +186,16 @@
         </div>
         <div class="summary-row">
             <span class="summary-label">Issuances:</span>
-            <span class="summary-value">{{ $movements->where('stock_type', 2)->count() + ($movements->where('is_ptc_master', 1)->count() > 0 ? 1 : 0) }}</span>
+            {{-- The initial (master) issuance is itself stock_type 2 --}}
+            <span class="summary-value">{{ $movements->where('stock_type', 2)->count() }}</span>
         </div>
         <div class="summary-row">
             <span class="summary-label">Receivings:</span>
-            <span class="summary-value">{{ $movements->where('stock_type', 1)->count() }}</span>
+            <span class="summary-value">{{ $movements->where('stock_type', 1)->where('stock_status', '!=', \App\Models\Stock::STATUS_PTC_RELEASED)->count() }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Releases to Stock:</span>
+            <span class="summary-value">{{ $movements->where('stock_status', \App\Models\Stock::STATUS_PTC_RELEASED)->count() }}</span>
         </div>
     </div>
 </div>

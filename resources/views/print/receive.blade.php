@@ -21,7 +21,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Required Date:</span>
-            <span class="info-value">{{ $receive['require_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ formatDate($receive['require_date'] ?? null, 'N/A') }}</span>
         </div>
     </div>
     

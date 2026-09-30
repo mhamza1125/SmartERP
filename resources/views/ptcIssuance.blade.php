@@ -179,7 +179,16 @@
 
               {{-- Product Issue Section --}}
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>Source</label>
+                    <select class="form-control" name="pstock_source" id="pstock_source">
+                      <option value="general">General Stock</option>
+                      <option value="ptc" {{ $virtualStock->isEmpty() ? 'disabled' : '' }}>This PTC's Stock</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Product Stage</label>
                     <select class="form-control select2" name="stage_id" id="stage_id" multiple>
@@ -294,6 +303,11 @@ var ptcProductTypeId = '{{ $product ? $product->product_type_id : 0 }}';
 var ptcProductName = '{{ $product ? $product->name . " - " . $product->size_name : "N/A" }}';
 var orderId = '{{ $ptc->order_id ?? 0 }}';
 
+// This PTC's own (virtual) stock, used when Source = This PTC's Stock
+var ptcVirtualStock = @json($virtualStock);
+var ptcPreselectSource = @json(request('source') === 'ptc' ? 'ptc' : 'general');
+var ptcPreselectStage = @json((string) (int) request('stage'));
+
 // AJAX URLs for material quantity tracking
 var ajaxMQtyUrl = "{{ route('ajaxMQty') }}";
 var ajaxAMQtyUrl = "{{ route('ajaxAMQty') }}";
@@ -369,7 +383,7 @@ $(document).ready(function() {
 
         var markup = `<tr>
             <td>${srNo}</td>
-            <td>${ptcProductName}<input type="hidden" name="product_type_id[]" value="${ptcProductTypeId}"><input type="hidden" name="stage_id[]" value="0"><input type="hidden" name="component_id[]" value="${componentId}"></td>
+            <td>${ptcProductName}<input type="hidden" name="product_type_id[]" value="${ptcProductTypeId}"><input type="hidden" name="stage_id[]" value="0"><input type="hidden" name="component_id[]" value="${componentId}"><input type="hidden" name="source[]" value="general"></td>
             <td><span class="badge badge-warning">Component:</span> ${componentInfo.article_no} - ${componentInfo.name} (${componentInfo.size_name})<input type="hidden" name="material_id[]" value="0"></td>
             <td>${quantity}<input type="hidden" name="quantity[]" value="${quantity}"></td>
             <td><button type="button" class="btn btn-danger deleteComponentRow">X</button></td>

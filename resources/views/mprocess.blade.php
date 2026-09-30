@@ -30,7 +30,7 @@
                     @foreach($purchase as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->purchase_date}}</td>               
+                      <td>{{ formatDate($item->purchase_date) }}</td>               
                       <td>{{$item->purchase_no}}</td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>
                       <td>{{$item->vendor_no}} - {{$item->fname}}</td>

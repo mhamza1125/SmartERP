@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Material_Detail_Report_' . ($dfrom ?? date('d-m-Y')) . '_to_' . ($dto ?? date('d-m-Y')))
+@section('title', 'Material_Detail_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
 
 @section('content')
 <div class="document-title">Material Detail Report</div>

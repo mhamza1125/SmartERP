@@ -31,8 +31,8 @@
                     @foreach($work as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->date_from}}</td>
-                      <td>{{$item->date_to}}</td>
+                      <td>{{ formatDate($item->date_from) }}</td>
+                      <td>{{ formatDate($item->date_to) }}</td>
                       <td>{{date('h:i A', strtotime($item['time_from']))}}</td>
                       <td>{{date('h:i A', strtotime($item['time_to']))}}</td>
                       <td>{{$item->grace_time}} Mins</td>

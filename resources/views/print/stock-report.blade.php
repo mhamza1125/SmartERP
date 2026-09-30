@@ -6,7 +6,7 @@
 <div class="document-title">Stock Report</div>
 
 <div style="text-align: center; margin-bottom: 20px; font-size: 11px;">
-    <p><strong>Generated on:</strong> {{ \Carbon\Carbon::now()->format('d M Y H:i:s') }}</p>
+    <p><strong>Generated on:</strong> {{ \Carbon\Carbon::now()->format('d-m-Y H:i:s') }}</p>
 </div>
 
 @if($type === 'material' && isset($stock) && $stock->count())

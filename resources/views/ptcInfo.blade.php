@@ -14,13 +14,6 @@
                     <i class="fas fa-tasks"></i> Actions
                   </button>
                   <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="{{ route('ptc.issue.form', $ptc->stock_id) }}">
-                      <i class="fas fa-arrow-circle-right text-primary"></i> Issue for Stage
-                    </a>
-                    <a class="dropdown-item" href="{{ route('ptc.receive.form', $ptc->stock_id) }}">
-                      <i class="fas fa-arrow-circle-down text-success"></i> Receive from Stage
-                    </a>
-                    <div class="dropdown-divider"></div>
                     @if(!$isFinalStage)
                       <form action="{{ route('ptc.next.stage', $ptc->stock_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Move PTC to next stage?');">
                         @csrf
@@ -28,13 +21,40 @@
                           <i class="fas fa-step-forward text-warning"></i> Move to Next Stage
                         </button>
                       </form>
+                      <div class="dropdown-divider"></div>
                     @endif
-                    <form action="{{ route('ptc.close', $ptc->stock_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to close/complete this PTC?');">
+                    @php
+                      // Complete when the end stage is fully received, otherwise close early
+                      $canComplete = $stageSummary['can_complete'];
+                      $endStageName = $stageSummary['end_stage']->name ?? 'the end stage';
+                      $finishBlocked = $finishBlockers['outstanding']->isNotEmpty() || $finishBlockers['virtual']->isNotEmpty();
+                    @endphp
+                    <form action="{{ route('ptc.close', $ptc->stock_id) }}" method="POST" class="d-inline"
+                      onsubmit="return confirm(@js($canComplete
+                        ? 'Complete this PTC? ' . $endStageName . ' is fully received. Nothing is moved in stock.'
+                        : 'Close this PTC early? Production has not finished ' . $endStageName . '. Stages keep their actual status; nothing is moved in stock.'));">
                       @csrf
-                      <button type="submit" class="dropdown-item">
-                        <i class="fas fa-check-circle text-danger"></i> Close PTC
+                      <button type="submit" class="dropdown-item" {{ $finishBlocked ? 'disabled' : '' }}>
+                        @if($canComplete)
+                          <i class="fas fa-check-circle text-success"></i> Complete PTC
+                        @else
+                          <i class="fas fa-stop-circle text-danger"></i> Close PTC (stop early)
+                        @endif
                       </button>
                     </form>
+                    @if($finishBlocked)
+                      <span class="dropdown-item-text small text-muted" style="max-width: 280px; white-space: normal;">
+                        @if($finishBlockers['outstanding']->isNotEmpty())
+                          Receive the outstanding product first.
+                        @else
+                          Transfer or release the remaining PTC stock first.
+                        @endif
+                      </span>
+                    @elseif(!$canComplete)
+                      <span class="dropdown-item-text small text-muted" style="max-width: 280px; white-space: normal;">
+                        Complete PTC becomes available once {{ $endStageName }} is fully received.
+                      </span>
+                    @endif
                   </div>
                 </div>
               @endif
@@ -67,8 +87,10 @@
                 <strong>Status:</strong>
                 @if($ptc->stock_status == 6)
                   <span class="badge badge-warning">In Progress</span>
-                @elseif($ptc->stock_status == 7)
+                @elseif($ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED)
                   <span class="badge badge-success">Completed</span>
+                @elseif($ptc->stock_status == \App\Models\Stock::STATUS_PTC_CLOSED)
+                  <span class="badge badge-dark">Closed Early</span>
                 @endif
               </div>
             </div>
@@ -91,43 +113,143 @@
                 <strong>PTC Qty:</strong> {{ $ptcQty }}
               </div>
               <div class="col-md-3">
-                <strong>Current Stage:</strong>
-                <span class="badge {{ $ptc->stock_status == 7 ? 'badge-success' : 'badge-primary' }}">
-                  {{ $ptc->current_stage_name ?? 'Completed' }}
-                </span>
+                @if($ptc->stock_status != 6)
+                  <strong>{{ $ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED ? 'Completed At Stage:' : 'Closed At Stage:' }}</strong>
+                  <span class="badge badge-dark">{{ $ptc->current_stage_name ?? 'N/A' }}</span>
+                @else
+                  <strong>Current Stage:</strong>
+                  <span class="badge badge-primary">{{ $ptc->current_stage_name ?? 'N/A' }}</span>
+                @endif
               </div>
             </div>
 
-            <!-- Stage Progress Bar -->
+            <!-- Stage Progress: actual status of each stage from its issuances and receipts -->
+            @php
+              $stageStatusLabels = [
+                'completed' => ['badge-success', 'fa-check', 'Completed'],
+                'partial' => ['badge-warning', 'fa-adjust', 'Partially received'],
+                'in_progress' => ['badge-info', 'fa-hourglass-half', 'Issued, not received'],
+                'not_started' => ['badge-secondary', 'fa-minus', $ptc->stock_status != 6 ? 'Not processed' : 'Not started'],
+                'outside' => ['badge-light', 'fa-minus', 'Not in this PTC'],
+              ];
+            @endphp
             <div class="row mb-4">
               <div class="col-md-12">
                 <label><strong>Stage Progress</strong></label>
-                <div class="d-flex flex-wrap align-items-center">
-                  @foreach($stages as $index => $stage)
-                    @php
-                      $isCompleted = false;
-                      $isCurrent = false;
-                      if ($ptc->stock_status == 7) {
-                        $isCompleted = true;
-                      } elseif ($ptc->current_stage_id == $stage->head_id) {
-                        $isCurrent = true;
-                      } else {
-                        // Check if this stage comes before current stage
-                        $currentIndex = collect($stages)->search(fn($s) => $s->head_id == $ptc->current_stage_id);
-                        $isCompleted = $index < $currentIndex;
-                      }
-                    @endphp
-                    <div class="badge {{ $isCompleted ? 'badge-success' : ($isCurrent ? 'badge-primary' : 'badge-secondary') }} mr-2 mb-2 p-2">
-                      @if($isCompleted) <i class="fas fa-check"></i> @endif
-                      {{ $index + 1 }}. {{ $stage->name }}
+                <span class="ml-3 text-muted">
+                  Production ended at:
+                  <strong>{{ $stageSummary['ended_at']->name ?? 'No output received yet' }}</strong>
+                </span>
+                <div class="d-flex flex-wrap align-items-start mt-2">
+                  @foreach($stageSummary['stages'] as $index => $stageRow)
+                    @php [$badgeClass, $icon, $label] = $stageStatusLabels[$stageRow->status]; @endphp
+                    <div class="mr-2 mb-2 text-center">
+                      <div class="badge {{ $badgeClass }} p-2 {{ $stageRow->is_current ? 'border border-primary' : '' }}" title="{{ $label }}">
+                        <i class="fas {{ $icon }}"></i> {{ $index + 1 }}. {{ $stageRow->name }}
+                        @if($stageRow->is_current) <span class="badge badge-primary ml-1">Current</span> @endif
+                        @if($stageRow->is_end) <span class="badge badge-light ml-1">End</span> @endif
+                      </div>
+                      <div class="small text-muted">
+                        {{ $label }}
+                        @if($stageRow->issuance_count)
+                          <br>Received {{ $stageRow->received + 0 }}@if($stageRow->issued) / Issued {{ $stageRow->issued + 0 }}@endif
+                          @if($stageRow->outstanding > 0)<br><span class="text-danger">Outstanding {{ $stageRow->outstanding + 0 }}</span>@endif
+                        @endif
+                      </div>
                     </div>
-                    @if($index < count($stages) - 1)
-                      <div class="mr-2 mb-2"><i class="fas fa-arrow-right text-muted"></i></div>
+                    @if(!$loop->last)
+                      <div class="mr-2 mb-2 pt-1"><i class="fas fa-arrow-right text-muted"></i></div>
                     @endif
                   @endforeach
                 </div>
               </div>
             </div>
+
+            <!-- PTC Stock (virtual): product received on this PTC, not part of general stock -->
+            <hr>
+            <h5><i class="fas fa-boxes text-info"></i> PTC Stock
+              <small class="text-muted">- held in this PTC only; not available in general stock until released</small>
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered table-sm">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Stage</th>
+                    <th class="text-right">Received</th>
+                    <th class="text-right">Transferred to Stage</th>
+                    <th class="text-right">Released to Stock</th>
+                    <th class="text-right">Available</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @forelse($virtualStock as $vs)
+                    <tr>
+                      <td>{{ $vs->article_no }} - {{ $vs->product_name }} ({{ $vs->size_name }})</td>
+                      <td>{{ $vs->stage_name ?? 'N/A' }}</td>
+                      <td class="text-right">{{ $vs->received + 0 }}</td>
+                      <td class="text-right">{{ $vs->transferred + 0 }}</td>
+                      <td class="text-right">{{ $vs->released + 0 }}</td>
+                      <td class="text-right"><strong>{{ $vs->available + 0 }}</strong></td>
+                      <td>
+                        @if($vs->available > 0)
+                          @if($ptc->stock_status == 6)
+                            <a href="{{ route('ptc.issue.form', ['id' => $ptc->stock_id, 'source' => 'ptc', 'stage' => $vs->stage_id]) }}" class="btn btn-sm btn-primary">
+                              <i class="fas fa-arrow-right"></i> Transfer to Stage
+                            </a>
+                          @endif
+                          <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#releaseModal{{ $vs->product_type_id }}_{{ $vs->stage_id }}">
+                            <i class="fas fa-warehouse"></i> Release to Stock
+                          </button>
+                        @endif
+                      </td>
+                    </tr>
+                  @empty
+                    <tr>
+                      <td colspan="7" class="text-center">No product has been received into this PTC yet.</td>
+                    </tr>
+                  @endforelse
+                </tbody>
+              </table>
+            </div>
+
+            @if($consumption['materials']->isNotEmpty() || $consumption['components']->isNotEmpty())
+              <h6 class="mt-3">Material & Component Consumption</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-bordered table-sm">
+                  <thead class="thead-light">
+                    <tr>
+                      <th>Type</th>
+                      <th>Item</th>
+                      <th class="text-right">Issued</th>
+                      <th class="text-right">Returned</th>
+                      <th class="text-right">Consumed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($consumption['materials'] as $row)
+                      <tr>
+                        <td><span class="badge badge-info">Material</span></td>
+                        <td>{{ $row->name }}</td>
+                        <td class="text-right">{{ $row->issued + 0 }} {{ $row->unit }}</td>
+                        <td class="text-right">{{ $row->returned + 0 }} {{ $row->unit }}</td>
+                        <td class="text-right">{{ $row->consumed + 0 }} {{ $row->unit }}</td>
+                      </tr>
+                    @endforeach
+                    @foreach($consumption['components'] as $row)
+                      <tr>
+                        <td><span class="badge badge-warning">Component</span></td>
+                        <td>{{ $row->article_no }} - {{ $row->name }} ({{ $row->size_name }})</td>
+                        <td class="text-right">{{ $row->issued + 0 }}</td>
+                        <td class="text-right">{{ $row->returned + 0 }}</td>
+                        <td class="text-right">{{ $row->consumed + 0 }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            @endif
 
             @php
               // Remove [QTY:X] from description for display
@@ -158,6 +280,9 @@
                     <th>For Stage</th>
                     <th>Date</th>
                     <th>Issued To</th>
+                    <th class="text-right">Product Issued</th>
+                    <th class="text-right">Received</th>
+                    <th class="text-right">Outstanding</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -167,8 +292,9 @@
                     @php
                       $relatedReceivings = $receivingsByIssueId[$issuance->stock_id] ?? collect();
                       $isReceived = $relatedReceivings->count() > 0;
-                      // Format issuance number: I + padded sequence
-                      $issuanceSeqNo = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
+                      // Issuance number by creation order (initial issuance = I001)
+                      $issuanceSeqNo = $issuanceSeq[$issuance->stock_id] ?? str_pad($index + 1, 3, '0', STR_PAD_LEFT);
+                      $balance = $balances[$issuance->stock_id] ?? null;
                     @endphp
                     <tr>
                       <td>{{ $index + 1 }}</td>
@@ -181,11 +307,16 @@
                       <td><span class="badge badge-primary">{{ $issuance->stage_name ?? 'N/A' }}</span></td>
                       <td>{{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }}</td>
                       <td>{{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}</td>
+                      <td class="text-right">{{ $balance ? collect($balance['products'])->sum('issued') + 0 : '-' }}</td>
+                      <td class="text-right">{{ $balance ? $balance['produced'] + 0 : '-' }}</td>
+                      <td class="text-right {{ $balance && $balance['outstanding'] > 0 ? 'text-danger font-weight-bold' : '' }}">{{ $balance ? $balance['outstanding'] + 0 : '-' }}</td>
                       <td>
-                        @if($isReceived)
+                        @if(($balance['status'] ?? null) === 'received')
                           <span class="badge badge-success"><i class="fas fa-check"></i> Received ({{ $relatedReceivings->count() }})</span>
+                        @elseif(($balance['status'] ?? null) === 'partial')
+                          <span class="badge badge-warning"><i class="fas fa-adjust"></i> Partially Received ({{ $relatedReceivings->count() }})</span>
                         @else
-                          <span class="badge badge-warning"><i class="fas fa-clock"></i> Not Received</span>
+                          <span class="badge badge-secondary"><i class="fas fa-clock"></i> Not Received</span>
                         @endif
                       </td>
                       <td>
@@ -197,7 +328,7 @@
                             <i class="fas fa-arrow-circle-down"></i> View Receiving ({{ $relatedReceivings->count() }})
                           </button>
                         @endif
-                        @if($ptc->stock_status == 6)
+                        @if($ptc->stock_status == 6 && ($balance['can_receive'] ?? false))
                           <a href="{{ route('ptc.receive.issuance', [$ptc->stock_id, $issuance->stock_id]) }}" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus"></i> Add Receiving
                           </a>
@@ -218,7 +349,7 @@
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="7" class="text-center">No issuance records yet.</td>
+                      <td colspan="10" class="text-center">No issuance records yet.</td>
                     </tr>
                   @endforelse
                 </tbody>
@@ -244,11 +375,8 @@
                   </thead>
                   <tbody>
                     @php
-                      // Build a map of issuance stock_ids to their sequence numbers
-                      $issuanceSeqMap = [];
-                      foreach($issuances as $idx => $iss) {
-                        $issuanceSeqMap[$iss->stock_id] = str_pad($idx + 1, 3, '0', STR_PAD_LEFT);
-                      }
+                      // Map of issuance stock_ids to their sequence numbers (creation order)
+                      $issuanceSeqMap = $issuanceSeq->all();
                     @endphp
                     @foreach($movements as $index => $movement)
                       @php
@@ -270,6 +398,8 @@
                         <td>
                           @if($movement->is_ptc_master == 1)
                             <span class="badge badge-warning">Initial Issue</span>
+                          @elseif($movement->stock_status == \App\Models\Stock::STATUS_PTC_RELEASED)
+                            <span class="badge badge-dark">Released to Stock</span>
                           @elseif($movement->stock_type == 1)
                             <span class="badge badge-success">Receive</span>
                           @else
@@ -307,11 +437,8 @@
 <!-- Movement Detail Modals -->
 @if($movements && $movements->count() > 0)
   @php
-    // Build maps for modal display
-    $modalIssuanceSeqMap = [];
-    foreach($issuances as $idx => $iss) {
-      $modalIssuanceSeqMap[$iss->stock_id] = str_pad($idx + 1, 3, '0', STR_PAD_LEFT);
-    }
+    // Map of issuance stock_ids to their sequence numbers (creation order)
+    $modalIssuanceSeqMap = $issuanceSeq->all();
   @endphp
   @foreach($movements as $movement)
     @php
@@ -331,7 +458,9 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
-              @if($movement->stock_type == 1)
+              @if($movement->stock_status == \App\Models\Stock::STATUS_PTC_RELEASED)
+                <span class="badge badge-dark">Released to Stock</span>
+              @elseif($movement->stock_type == 1)
                 <span class="badge badge-success">Receive</span>
               @else
                 <span class="badge badge-primary">Issue</span>
@@ -371,7 +500,9 @@
                         <td><span class="badge badge-info">Material</span></td>
                         <td>{{ $item->material_name ?? 'N/A' }}</td>
                       @else
-                        <td><span class="badge badge-success">Product</span></td>
+                        <td><span class="badge badge-success">Product</span>
+                          @if($item->ptc_virtual)<span class="badge badge-light">PTC stock</span>@endif
+                        </td>
                         <td>{{ $item->product_name ?? 'N/A' }} - {{ $item->size_name ?? 'N/A' }} ({{ $item->stage_name ?? 'N/A' }})</td>
                       @endif
                       <td>{{ $item->quantity }}</td>
@@ -461,7 +592,7 @@
 @foreach($issuances as $issIdx => $issuance)
   @php
     $relatedReceivings = $receivingsByIssueId[$issuance->stock_id] ?? collect();
-    $issuanceSeqNoForModal = str_pad($issIdx + 1, 3, '0', STR_PAD_LEFT);
+    $issuanceSeqNoForModal = $issuanceSeq[$issuance->stock_id] ?? str_pad($issIdx + 1, 3, '0', STR_PAD_LEFT);
   @endphp
   @if($relatedReceivings->count() > 0)
     <div class="modal fade" id="receivingModal{{ $issuance->stock_id }}" tabindex="-1" role="dialog">
@@ -543,6 +674,49 @@
       </div>
     </div>
   @endif
+@endforeach
+
+<!-- Release PTC stock to general stock -->
+@foreach($virtualStock->where('available', '>', 0) as $vs)
+  <div class="modal fade" id="releaseModal{{ $vs->product_type_id }}_{{ $vs->stage_id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="{{ route('ptc.release', $ptc->stock_id) }}" method="POST" onsubmit="return confirm('Release this quantity to general stock? It will no longer be held in this PTC.');">
+          @csrf
+          <input type="hidden" name="product_type_id" value="{{ $vs->product_type_id }}">
+          <input type="hidden" name="stage_id" value="{{ $vs->stage_id }}">
+          <div class="modal-header">
+            <h5 class="modal-title">Release to General Stock</h5>
+            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-3">
+              <strong>{{ $vs->article_no }} - {{ $vs->product_name }} ({{ $vs->size_name }})</strong>
+              at <span class="badge badge-primary">{{ $vs->stage_name ?? 'N/A' }}</span><br>
+              Available in this PTC: <strong>{{ $vs->available + 0 }}</strong>
+            </p>
+            <div class="form-group">
+              <label>Quantity to Release <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="quantity" min="0.0001" max="{{ $vs->available }}" step="any" required>
+              <small class="form-text text-muted">Only the released quantity becomes available in general stock (and to other PTCs). The rest stays in this PTC.</small>
+            </div>
+            <div class="form-group">
+              <label>Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="stock_date" value="{{ now()->toDateString() }}" required>
+            </div>
+            <div class="form-group mb-0">
+              <label>Notes</label>
+              <textarea class="form-control" name="description" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success"><i class="fas fa-warehouse"></i> Release</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 @endforeach
 @endsection
 

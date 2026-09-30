@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', (isset($process) ? 'Material_Process_' : 'Purchase_Order_') . ($purchase['purchase_no'] ?? 'N/A') . '_' . ($purchase['purchase_date'] ?? date('d-m-Y')))
+@section('title', (isset($process) ? 'Material_Process_' : 'Purchase_Order_') . ($purchase['purchase_no'] ?? 'N/A') . '_' . formatDate($purchase['purchase_date'] ?? now()))
 
 @section('content')
 
@@ -17,11 +17,11 @@
     </div>
     <div class="meta-field">
         <span class="meta-label">Date</span>
-        <span class="meta-value mono">{{ $purchase['purchase_date'] ?? 'N/A' }}</span>
+        <span class="meta-value mono">{{ formatDate($purchase['purchase_date'] ?? null, 'N/A') }}</span>
     </div>
     <div class="meta-field">
         <span class="meta-label">Required By</span>
-        <span class="meta-value mono">{{ $purchase['require_date'] ?? 'N/A' }}</span>
+        <span class="meta-value mono">{{ formatDate($purchase['require_date'] ?? null, 'N/A') }}</span>
     </div>
     <div class="meta-field">
         <span class="meta-label">Job No</span>
@@ -219,7 +219,7 @@
             @php $totalPaid += ($payment['amount'] ?? 0); @endphp
             <tr>
                 <td class="text-center">{{ $loop->iteration }}</td>
-                <td class="mono">{{ $payment['payment_date'] ?? 'N/A' }}</td>
+                <td class="mono">{{ formatDate($payment['payment_date'] ?? null, 'N/A') }}</td>
                 <td class="num">{{ number_format($payment['amount'] ?? 0, 2) }}</td>
                 <td>{{ $payment['payment_method'] ?? 'N/A' }}</td>
                 <td class="mono">{{ $payment['reference'] ?? 'N/A' }}</td>

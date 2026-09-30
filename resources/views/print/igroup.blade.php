@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Item_Group_' . ($igroup['igroup_no'] ?? 'N/A') . '_' . ($igroup['igroup_date'] ?? date('d-m-Y')))
+@section('title', 'Item_Group_' . ($igroup['igroup_no'] ?? 'N/A') . '_' . formatDate($igroup['igroup_date'] ?? now()))
 
 @section('content')
 <div class="document-title">Item Group Information</div>
@@ -14,7 +14,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Date:</span>
-            <span class="info-value">{{ $igroup['igroup_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ formatDate($igroup['igroup_date'] ?? null, 'N/A') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Job No:</span>

@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Delivery_Details_' . ($delivery['delivery_no'] ?? 'N/A') . '_' . ($delivery['delivery_date'] ?? date('d-m-Y')))
+@section('title', 'Delivery_Details_' . ($delivery['delivery_no'] ?? 'N/A') . '_' . formatDate($delivery['delivery_date'] ?? now()))
 
 @section('content')
 

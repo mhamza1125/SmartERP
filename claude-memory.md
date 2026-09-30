@@ -130,8 +130,20 @@ Additional domain-specific methods are added per repository beyond these five.
 
 ### PTC (Process Travel Card) Flow
 - Manufacturing tracking system; stock records carry `ptc_id`, `current_stage_id`, `next_stage_id`, `is_ptc_master`
-- Stages defined via `MProcess`; advance through `mprocess` records
-- PTC-linked stocks use `Stock::STATUS_PTC_IN_PROGRESS` / `STATUS_PTC_COMPLETED`
+- The PTC master row is itself the initial issuance (I001); later issuances have `ptc_id` = master, `stock_type` 2; receipts have `ptc_id` + `issue_id` = the issuance they are received against (always required)
+- PTC master status: 6 In Progress, 7 Completed, 9 Closed Early. "Finished" checks must use `!= STATUS_PTC_IN_PROGRESS`
+- `stocks.end_stage_id` = planned last stage (NULL on old PTCs -> product's last stage). One finish action (`ptc.close` -> `PtcStockRepository::finish()`) stores Completed if the end stage is fully received, else Closed Early
+- All PTC stock logic lives in `PtcStockRepository` (locks the master row, validates, throws `PtcStockException`)
+
+### PTC Virtual Stock (exists only inside /ptc)
+- `stock_items.ptc_virtual = 1` marks movements internal to a PTC; **every general product-stock query in `StockItemRepository` filters `ptc_virtual = 0`**
+- Product received on a PTC receipt -> `ptc_virtual = 1` (PTC stock, not general stock). Materials/components returned -> `ptc_virtual = 0` (back to general stock)
+- Transfer to another stage = PTC issuance line with `ptc_virtual = 1` (source "This PTC's Stock")
+- Release to general stock = `stocks` row `stock_type` 1, `stock_status` 8 (`STATUS_PTC_RELEASED`), `table_name` `ptc_release`, `ptc_id` = master; its items are ordinary `ptc_virtual = 0` stock-in
+- available(product, stage) = received - transferred - released
+- Products on an issuance must be received back in full (outstanding = issued - received, any stage incl. Rejected 105); materials may vary; components capped at issued
+- Close is blocked while product is outstanding or PTC stock remains; closing changes only the status (stages keep their actual status, no stock movement)
+- "No component" must be stored as NULL, never 0 (general stock uses `component_product_type_id IS NULL` for product lines)
 
 ### Stock Status Constants (on `Stock` model)
 ```
@@ -142,7 +154,9 @@ STATUS_DELIVERY            = 3
 STATUS_MACHINE_MATERIAL    = 4
 STATUS_MATERIAL_PROCESSING = 5
 STATUS_PTC_IN_PROGRESS     = 6
-STATUS_PTC_COMPLETED       = 7
+STATUS_PTC_COMPLETED       = 7   (PTC completed: end stage fully received)
+STATUS_PTC_RELEASED        = 8   (PTC stock released to general stock)
+STATUS_PTC_CLOSED          = 9   (PTC closed early, before its end stage)
 ```
 
 ### Purchase → Stock Flow
@@ -175,6 +189,10 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - **`PrintComposer`** — shares `$company` (first `Company` model record) to all print views automatically. Print templates do not need to pass company data manually.
 
 ---
+
+## Date Display
+- Display dates as DD-MM-YYYY with `formatDate($date, $default = '-')` / `formatDateTime()` (`app/helpers.php`); null/empty/0000-00-00 safe
+- Never format form values, date inputs, date pickers or stored dates — those stay `Y-m-d`
 
 ## Print System
 - 28 dedicated print routes; all return Blade views (no PDF generation)

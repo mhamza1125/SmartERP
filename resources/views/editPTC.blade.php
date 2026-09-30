@@ -196,7 +196,7 @@
                             <td>{{ $product ? $product->name . ' - ' . $product->size_name : 'N/A' }}<input type="hidden" name="product_type_id[]" value="{{ $item->product_type_id }}"><input type="hidden" name="material_id[]" value="0"></td>
                             <td>{{ $item->stage ?? 'N/A' }}<input type="hidden" name="stage_id[]" value="{{ $item->stage_id }}"></td>
                           @endif
-                          <td>{{ $item->quantity }}<input type="hidden" name="quantity[]" value="{{ $item->quantity }}"></td>
+                          <td>{{ $item->quantity }}<input type="hidden" name="quantity[]" value="{{ $item->quantity }}"><input type="hidden" name="component_id[]" value="{{ $item->component_product_type_id }}"></td>
                           <td><button type="button" class="{{ $item->material_id > 0 ? 'deleteRow' : 'deletepRow' }} btn btn-danger btn-sm">X</button></td>
                         </tr>
                       @endforeach

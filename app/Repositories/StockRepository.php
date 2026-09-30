@@ -103,7 +103,7 @@ class StockRepository implements GlobalInterface
             ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
-            ->whereNotIn('stocks.table_name', ['delivery', 'delivery_returns'])
+            ->whereNotIn('stocks.table_name', ['delivery', 'delivery_returns', Stock::TABLE_PTC_RELEASE])
             ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
                 DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
             )
@@ -534,26 +534,6 @@ class StockRepository implements GlobalInterface
 
             return $this->store($data);
         });
-    }
-
-    /**
-     * Get Issuance sequence number from PTC for a specific issuance
-     * Used for display purposes to show R1-I001 format
-     */
-    public function getIssuanceSeqNo($ptcId, $issuanceId)
-    {
-        // Get all issuances for this PTC ordered by creation date
-        $issuances = Stock::where(function($query) use ($ptcId) {
-                $query->where('ptc_id', $ptcId)
-                      ->orWhere('stock_id', $ptcId);
-            })
-            ->where('stock_type', 2)
-            ->orderBy('created_at')
-            ->pluck('stock_id')
-            ->toArray();
-
-        $position = array_search($issuanceId, $issuances);
-        return $position !== false ? str_pad($position + 1, 3, '0', STR_PAD_LEFT) : '001';
     }
 
     public function receivingIssue($id, $empId)

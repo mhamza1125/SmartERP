@@ -1,6 +1,6 @@
 @extends('print.layout')
 
-@section('title', 'Delivery_Return_' . ($return['return_no'] ?? 'N/A') . '_' . ($return['return_date'] ?? date('d-m-Y')))
+@section('title', 'Delivery_Return_' . ($return['return_no'] ?? 'N/A') . '_' . formatDate($return['return_date'] ?? now()))
 
 @push('styles')
 <style>

@@ -28,8 +28,8 @@
                     @foreach($work as $item)
                     <tr>
                       <td>{{$loop->index + 1}}</td>
-                      <td>{{$item->date_from}}</td>
-                      <td>{{$item->date_to}}</td>
+                      <td>{{ formatDate($item->date_from) }}</td>
+                      <td>{{ formatDate($item->date_to) }}</td>
                       <td style="max-width:200px">{{$item->description}}</td>
                       <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->work_holiday_id}}">Edit</button></td>
                     </tr>

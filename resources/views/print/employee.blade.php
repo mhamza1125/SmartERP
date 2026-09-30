@@ -57,7 +57,7 @@
     <div class="info-section">
         <div class="info-row">
             <span class="info-label">Joining Date:</span>
-            <span class="info-value">{{ $employee['joining_date'] ?? 'N/A' }}</span>
+            <span class="info-value">{{ formatDate($employee['joining_date'] ?? null, 'N/A') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Salary:</span>

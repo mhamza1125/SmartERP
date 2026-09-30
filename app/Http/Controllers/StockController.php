@@ -21,9 +21,14 @@ use App\Repositories\StockItemRepository;
 use App\Repositories\IGroupItemRepository;
 use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductMaterialRepository;
+use App\Repositories\PtcStockRepository;
+use App\Exceptions\PtcStockException;
+use App\Http\Requests\PtcReleaseRequest;
 
 class StockController extends Controller
 {
+    protected $ptcStockRepository;
+
     protected $headRepository;
 
     protected $imageRepository;
@@ -67,7 +72,9 @@ class StockController extends Controller
         StockItemRepository $stockItemRepository,
         ProductCostRepository $productCostRepository,
         ProductMaterialRepository $productMaterialRepository,
+        PtcStockRepository $ptcStockRepository,
     ) {
+        $this->ptcStockRepository = $ptcStockRepository;
         // All endpoints require authentication; the 'all' (role) check is lifted for
         // AJAX endpoints so they work in read-only contexts for populating forms.
         $this->middleware(['auth'])->only([
@@ -1228,12 +1235,11 @@ class StockController extends Controller
             'is_ptc_master' => 1,
             'current_stage_id' => $startStageId,
             'next_stage_id' => $nextStageId,
+            'end_stage_id' => $endStageId,
             'issue_for' => $startStageId,
             'description' => $description,
             'created_by' => auth()->id(),
         ];
-
-        $ptcId = $this->stockRepository->store($ptcData);
 
         // Store stock items (materials/products issued)
         $quantities = $request->input('quantity', []);
@@ -1242,30 +1248,37 @@ class StockController extends Controller
         $stageIdsInput = $request->input('stage_id', []);
         $componentIds = $request->input('component_id', []);
 
-        foreach ($quantities as $key => $quantity) {
-            if ($quantity > 0) {
-                // Determine if this is a material or product issuance
-                $itemProductTypeId = $productTypeIds[$key] ?? 0;
-                $itemMaterialId = $materialIds[$key] ?? 0;
-                $itemStageId = $stageIdsInput[$key] ?? 0;
-                $componentProductTypeId = $componentIds[$key] ?? 0;
+        $ptcId = DB::transaction(function () use ($ptcData, $quantities, $materialIds, $productTypeIds, $stageIdsInput, $componentIds, $productTypeId, $startStageId) {
+            $ptcId = $this->stockRepository->store($ptcData);
 
-                // For material issuance, use the PTC's product_type_id
-                // For product issuance, use the item's product_type_id
-                $stockItem = [
-                    'stock_id' => $ptcId,
-                    'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                    'material_id' => $itemMaterialId,
-                    'quantity' => $quantity,
-                    'stage_id' => ($itemStageId > 0) ? $itemStageId : $startStageId,
-                    'work_logs' => '0',
-                    'work_wages' => '0',
-                    'component_product_type_id' => $componentProductTypeId,
-                    'created_by' => auth()->id(),
-                ];
-                $this->stockItemRepository->store($stockItem);
+            foreach ($quantities as $key => $quantity) {
+                if ($quantity > 0) {
+                    // Determine if this is a material or product issuance
+                    $itemProductTypeId = $productTypeIds[$key] ?? 0;
+                    $itemMaterialId = $materialIds[$key] ?? 0;
+                    $itemStageId = $stageIdsInput[$key] ?? 0;
+                    // NULL, not 0: general stock treats component_product_type_id IS NULL as a product line
+                    $componentProductTypeId = ($componentIds[$key] ?? null) ?: null;
+
+                    // For material issuance, use the PTC's product_type_id
+                    // For product issuance, use the item's product_type_id
+                    $stockItem = [
+                        'stock_id' => $ptcId,
+                        'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
+                        'material_id' => $itemMaterialId,
+                        'quantity' => $quantity,
+                        'stage_id' => ($itemStageId > 0) ? $itemStageId : $startStageId,
+                        'work_logs' => '0',
+                        'work_wages' => '0',
+                        'component_product_type_id' => $componentProductTypeId,
+                        'created_by' => auth()->id(),
+                    ];
+                    $this->stockItemRepository->store($stockItem);
+                }
             }
-        }
+
+            return $ptcId;
+        });
 
         return redirect()->route('ptc.show', $ptcId)->with('success', 'PTC Created Successfully');
     }
@@ -1473,10 +1486,23 @@ class StockController extends Controller
         $canEdit = $movements->where('stock_type', 1)->isEmpty();
 
         // Check if at final stage
-        $isFinalStage = $ptc->stock_status == Stock::STATUS_PTC_COMPLETED ||
-            ($stages->isNotEmpty() && $currentStageIndex >= $stages->count() - 1);
+        $isFinalStage = $ptc->stock_status != Stock::STATUS_PTC_IN_PROGRESS ||
+            $ptc->current_stage_id == $this->ptcStockRepository->endStageId($ptc, $stages);
+
+        // PTC virtual stock, issuance balances and actual stage status
+        $issuanceSeq = $this->ptcStockRepository->issuances($id)->pluck('seq_no', 'stock_id');
+        $balances = $this->ptcStockRepository->issuanceBalances($id);
+        $stageSummary = $this->ptcStockRepository->stageSummary($ptc, $stages, $balances);
+        $virtualStock = $this->ptcStockRepository->virtualStock($id);
+        $consumption = $this->ptcStockRepository->consumption($id);
 
         return view('ptcInfo', [
+            'finishBlockers' => $this->ptcStockRepository->closeBlockers($id),
+            'issuanceSeq' => $issuanceSeq,
+            'balances' => $balances,
+            'stageSummary' => $stageSummary,
+            'virtualStock' => $virtualStock,
+            'consumption' => $consumption,
             'ptc' => $ptc,
             'ptcItems' => $ptcItems,
             'product' => $product,
@@ -1578,6 +1604,7 @@ class StockController extends Controller
         }
 
         return view('print.ptc', [
+            'issuanceSeq' => $this->ptcStockRepository->issuances($id)->pluck('seq_no', 'stock_id'),
             'ptc' => $ptc,
             'product' => $product,
             'movements' => $movements,
@@ -1691,16 +1718,31 @@ class StockController extends Controller
             return redirect()->route('ptc.show', $id)->with('fails', 'Cannot edit PTC after stage movement');
         }
 
-        // Update PTC record
-        $ptc->update([
-            'stock_date' => $request->input('stock_date', $ptc->stock_date),
-            'table_name' => $request->input('table_name', $ptc->table_name),
-            'employee_id' => $request->input('employee_id', $ptc->employee_id),
-            'description' => $request->input('description'),
-        ]);
+        // Normalize item rows the same way ptcStore() stored them (material rows post
+        // product_type_id/stage_id = 0, "no component" must be NULL), otherwise
+        // unchanged items fail to match and are deleted and re-created with wrong keys.
+        $ptcProductTypeId = DB::table('stock_items')->where('stock_id', $id)->where('product_type_id', '>', 0)->value('product_type_id');
+        $items = $request->input();
+        $items['quantity'] = $items['quantity'] ?? [];
+        foreach ($items['quantity'] as $key => $quantity) {
+            $items['product_type_id'][$key] = ($items['product_type_id'][$key] ?? 0) ?: $ptcProductTypeId;
+            $items['stage_id'][$key] = ($items['stage_id'][$key] ?? 0) ?: $ptc->issue_for;
+            $items['material_id'][$key] = $items['material_id'][$key] ?? 0;
+            $items['component_id'][$key] = ($items['component_id'][$key] ?? null) ?: null;
+        }
 
-        // Update stock items
-        $this->stockItemRepository->update($id, $request->input());
+        DB::transaction(function () use ($ptc, $request, $id, $items) {
+            // Update PTC record
+            $ptc->update([
+                'stock_date' => $request->input('stock_date', $ptc->stock_date),
+                'table_name' => $request->input('table_name', $ptc->table_name),
+                'employee_id' => $request->input('employee_id', $ptc->employee_id),
+                'description' => $request->input('description'),
+            ]);
+
+            // Update stock items
+            $this->stockItemRepository->update($id, $items);
+        });
 
         return redirect()->route('ptc.show', $id)->with('success', 'PTC Updated Successfully');
     }
@@ -1714,7 +1756,7 @@ class StockController extends Controller
 
         $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
 
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
+        if (!$ptc || $ptc->stock_status != Stock::STATUS_PTC_IN_PROGRESS) {
             return redirect()->route('ptc.show', $id)->with('fails', 'Cannot issue - PTC not found or already completed');
         }
 
@@ -1824,6 +1866,7 @@ class StockController extends Controller
             ->get();
 
         return view('ptcIssuance', [
+            'virtualStock' => $this->ptcStockRepository->virtualStock($id)->filter(fn ($row) => $row->available > 0)->values(),
             'ptc' => $ptcWithData,
             'ptcItems' => $ptcItems,
             'product' => $product,
@@ -1847,65 +1890,24 @@ class StockController extends Controller
 
         $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
 
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
+        if (!$ptc || $ptc->stock_status != Stock::STATUS_PTC_IN_PROGRESS) {
             return redirect()->route('ptc.show', $id)->with('fails', 'Cannot issue - PTC completed');
         }
 
-        // Get product type ID from PTC items
-        $ptcItems = $this->stockItemRepository->get($id);
-        $productTypeId = $ptcItems->first()->product_type_id ?? null;
-
-        // Get quantities
-        $quantities = $request->input('quantity', []);
-        $hasItems = !empty(array_filter($quantities, fn($q) => $q > 0));
-
-        if (!$hasItems) {
-            return redirect()->back()->with('fails', 'No items to issue');
-        }
-
-        // Create issue record; stock_no ({ptcNo}-{seq}) is generated inside a lock
-        $issueData = [
-            'ptc_id' => $id,
-            'order_id' => $ptc->order_id,
+        // Product lines with source 'ptc' are transferred out of this PTC's own stock;
+        // everything else is issued from general stock (validated + stored under a lock)
+        $header = [
             'table_name' => $request->input('table_name', 'employee'),
             'employee_id' => $request->input('employee_id', 0),
-            'stock_type' => 2, // Issue
-            'stock_date' => $request->input('stock_date', date('Y-m-d')),
-            'stock_status' => Stock::STATUS_PTC_IN_PROGRESS,
-            'current_stage_id' => $ptc->current_stage_id,
+            'stock_date' => $request->input('stock_date', now()->toDateString()),
             'issue_for' => $request->input('issue_for', $ptc->current_stage_id),
             'description' => $request->input('description'),
-            'created_by' => auth()->id(),
         ];
 
-        $issueId = $this->stockRepository->storePtcIssuance($issueData);
-
-        // Store issue items
-        $materialIds = $request->input('material_id', []);
-        $productTypeIds = $request->input('product_type_id', []);
-        $stageIds = $request->input('stage_id', []);
-        $componentIds = $request->input('component_id', []);
-
-        foreach ($quantities as $key => $quantity) {
-            if ($quantity > 0) {
-                $itemProductTypeId = $productTypeIds[$key] ?? 0;
-                $itemMaterialId = $materialIds[$key] ?? 0;
-                $itemStageId = $stageIds[$key] ?? 0;
-                $itemComponentId = $componentIds[$key] ?? null;
-
-                $stockItem = [
-                    'stock_id' => $issueId,
-                    'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                    'material_id' => $itemMaterialId,
-                    'quantity' => $quantity,
-                    'stage_id' => ($itemStageId > 0) ? $itemStageId : $ptc->current_stage_id,
-                    'component_product_type_id' => $itemComponentId ?: null,
-                    'work_logs' => '0',
-                    'work_wages' => '0',
-                    'created_by' => auth()->id(),
-                ];
-                $this->stockItemRepository->store($stockItem);
-            }
+        try {
+            $this->ptcStockRepository->issue($id, $header, $this->ptcItemLines($request, ''));
+        } catch (PtcStockException $e) {
+            return redirect()->back()->withInput()->with('fails', $e->getMessage());
         }
 
         return redirect()->route('ptc.show', $id)->with('success', 'Issuance created successfully');
@@ -1990,39 +1992,34 @@ class StockController extends Controller
             return redirect()->route('ptc.show', $id)->with('fails', 'PTC or Issuance not found');
         }
 
-        // Check if issuance has any receivings (cannot edit if received)
-        $hasReceivings = Stock::where('issue_id', $issuanceId)->where('stock_type', 1)->exists();
-        if ($hasReceivings) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'Cannot edit issuance after receiving has occurred');
-        }
-
-        // Update issuance record
-        $issuance->update([
+        $header = [
             'stock_date' => $request->input('stock_date', $issuance->stock_date),
             'table_name' => $request->input('table_name', $issuance->table_name),
             'employee_id' => $request->input('employee_id', $issuance->employee_id),
             'issue_for' => $request->input('issue_for', $issuance->issue_for),
             'description' => $request->input('description', $issuance->description),
-        ]);
+        ];
 
-        // Update item quantities
+        // stock_item_id => quantity (items of other records are ignored by the repository)
         $quantities = $request->input('quantity', []);
-        $stockItemIds = $request->input('stock_item_id', []);
+        $itemQuantities = [];
+        foreach ($request->input('stock_item_id', []) as $key => $stockItemId) {
+            $itemQuantities[$stockItemId] = (float) ($quantities[$key] ?? 0);
+        }
 
-        foreach ($stockItemIds as $key => $stockItemId) {
-            $quantity = $quantities[$key] ?? 0;
-            if ($quantity > 0) {
-                \DB::table('stock_items')
-                    ->where('stock_item_id', $stockItemId)
-                    ->update(['quantity' => $quantity]);
-            }
+        try {
+            $this->ptcStockRepository->updateIssuance($id, $issuanceId, $header, $itemQuantities);
+        } catch (PtcStockException $e) {
+            return redirect()->route('ptc.show', $id)->with('fails', $e->getMessage());
         }
 
         return redirect()->route('ptc.show', $id)->with('success', 'Issuance updated successfully');
     }
 
     /**
-     * Show PTC Receiving Form (separate page for receiving materials/products)
+     * Receiving is always recorded against a specific issuance (so it can be matched
+     * to what is outstanding). Open the only receivable issuance directly, otherwise
+     * send the user to the issuance list to pick one.
      */
     public function ptcReceiveForm($id)
     {
@@ -2030,194 +2027,19 @@ class StockController extends Controller
 
         $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
 
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
+        if (!$ptc || $ptc->stock_status != Stock::STATUS_PTC_IN_PROGRESS) {
             return redirect()->route('ptc.show', $id)->with('fails', 'Cannot receive - PTC not found or already completed');
         }
 
-        // Get PTC items
-        $ptcItems = $this->stockItemRepository->get($id);
+        $receivable = $this->ptcStockRepository->issuanceBalances($id)->filter(fn ($balance) => $balance['can_receive']);
 
-        // Get employees and vendors
-        $employees = $this->employeeRepository->wages();
-        $vendors = $this->vendorRepository->worker();
-
-        // Get product details
-        $productTypeId = $ptcItems->first()->product_type_id ?? null;
-        $product = null;
-        $stages = collect();
-
-        if ($productTypeId) {
-            $product = \DB::table('product_types')
-                ->join('products', 'products.product_id', '=', 'product_types.product_id')
-                ->join('heads as size_head', 'size_head.head_id', '=', 'product_types.size_id')
-                ->where('product_type_id', $productTypeId)
-                ->select('product_types.*', 'products.*', 'size_head.name as size_name')
-                ->first();
-
-            if ($product && $product->stage_ids) {
-                $stageIds = explode('|', $product->stage_ids);
-                $stages = $this->headRepository->getByIds($stageIds);
-            }
+        if ($receivable->count() === 1) {
+            return redirect()->route('ptc.receive.issuance', [$id, $receivable->keys()->first()]);
         }
 
-        // Get PTC with joined data
-        $ptcWithData = Stock::where('stocks.stock_id', $id)
-            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-            ->select('stocks.*', 'orders.job_no')
-            ->first();
-
-        // Get current stage
-        $currentStageId = $ptc->current_stage_id;
-
-        // Get all issued items for this PTC (initial + all issuances)
-        $issueRecordIds = Stock::where('ptc_id', $id)
-            ->where('stock_type', 2)
-            ->pluck('stock_id')
-            ->toArray();
-        $issueRecordIds[] = $id; // Include initial PTC
-
-        $issueItem = \DB::table('stock_items')
-            ->whereIn('stock_items.stock_id', $issueRecordIds)
-            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->leftJoin('product_materials', function ($join) {
-                $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
-                    ->on('product_materials.material_id', '=', 'stock_items.material_id');
-            })
-            ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
-            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
-            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
-            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
-            ->select('stock_items.*', 'products.product_id', 'products.name as pname', 'products.article_no',
-                'materials.material_id', 'materials.name', 'uhead.name as uname', 'shead.name as sname',
-                'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty',
-                'cp.article_no as component_article_no', 'cp.name as component_name', 'cshead.name as component_size')
-            ->orderBy('products.product_id')
-            ->get();
-
-        // Get already received items
-        $rstock = \DB::table('stock_items')
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stocks.ptc_id', $id)
-            ->where('stocks.stock_type', 1)
-            ->select(
-                'stock_items.product_type_id',
-                'stock_items.material_id',
-                \DB::raw('SUM(stock_items.quantity) AS rqty')
-            )
-            ->groupBy('stock_items.product_type_id', 'stock_items.material_id')
-            ->get();
-
-        // Get receive totals summary
-        $issueSum = \DB::table('stock_items')
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stocks.ptc_id', $id)
-            ->where('stocks.stock_type', 1)
-            ->leftJoin('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
-            ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
-            ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
-            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
-            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
-            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
-            ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id', 'stock_items.component_product_type_id')
-            ->selectRaw('stock_items.product_type_id, stock_items.material_id, stock_items.stage_id, stock_items.component_product_type_id,
-                SUM(stock_items.quantity) as total_quantity, products.article_no, products.name as pname,
-                materials.name, shead.name as sname, sthead.name as stage, uhead.name as uname, puhead.name as puname,
-                cp.article_no as component_article_no, cp.name as component_name, cshead.name as component_size')
-            ->get();
-
-        // Calculate average for materials
-        $average = [];
-        foreach ($issueItem as $item) {
-            if ($item->material_id) {
-                $key = $item->product_type_id;
-                $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
-                $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
-            }
-        }
-
-        // Get all receiving records for this PTC
-        $receivings = Stock::where('ptc_id', $id)
-            ->where('stock_type', 1)
-            ->leftJoin('employees', function ($join) {
-                $join->on('employees.employee_id', '=', 'stocks.employee_id')
-                    ->where('stocks.table_name', 'employee');
-            })
-            ->leftJoin('vendors', function ($join) {
-                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
-                    ->where('stocks.table_name', 'vendor');
-            })
-            ->leftJoin('heads as stage_head', 'stage_head.head_id', '=', 'stocks.current_stage_id')
-            ->select('stocks.*', 'employees.name as employee_name', 'vendors.fname as vendor_name', 'stage_head.name as stage_name')
-            ->orderBy('stocks.stock_date', 'desc')
-            ->get();
-
-        // Get product components that were issued (for receiving back unused components)
-        $issuedComponents = collect();
-        if ($productTypeId) {
-            // Get all issued component items for this PTC
-            $issuedComponents = \DB::table('stock_items')
-                ->whereIn('stock_items.stock_id', $issueRecordIds)
-                ->where('stock_items.component_product_type_id', '>', 0)
-                ->join('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
-                ->join('products as cp', 'cp.product_id', '=', 'cpt.product_id')
-                ->join('heads as csize', 'csize.head_id', '=', 'cpt.size_id')
-                ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'cp.unit_id')
-                ->select(
-                    'stock_items.component_product_type_id',
-                    'cp.article_no as component_article_no',
-                    'cp.name as component_name',
-                    'csize.name as component_size',
-                    'puhead.name as component_unit',
-                    \DB::raw('SUM(stock_items.quantity) as issued_quantity')
-                )
-                ->groupBy('stock_items.component_product_type_id', 'cp.article_no', 'cp.name', 'csize.name', 'puhead.name')
-                ->get();
-
-            // Get already received back components
-            $receivedComponents = \DB::table('stock_items')
-                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-                ->where('stocks.ptc_id', $id)
-                ->where('stocks.stock_type', 1)
-                ->where('stock_items.component_product_type_id', '>', 0)
-                ->select(
-                    'stock_items.component_product_type_id',
-                    \DB::raw('SUM(stock_items.quantity) as received_quantity')
-                )
-                ->groupBy('stock_items.component_product_type_id')
-                ->pluck('received_quantity', 'component_product_type_id');
-
-            // Calculate receivable quantity for each component
-            foreach ($issuedComponents as $component) {
-                $received = $receivedComponents[$component->component_product_type_id] ?? 0;
-                $component->receivable_quantity = $component->issued_quantity - $received;
-            }
-        }
-
-        return view('ptcReceiving', [
-            'ptc' => $ptcWithData,
-            'ptcItems' => $ptcItems,
-            'product' => $product,
-            'stages' => $stages,
-            'employees' => $employees,
-            'vendors' => $vendors,
-            'issueItem' => $issueItem,
-            'rstock' => $rstock,
-            'issueSum' => $issueSum,
-            'average' => $average,
-            'receivings' => $receivings,
-            'issuedComponents' => $issuedComponents,
-            'issuance' => null,
-            'issuanceSeqNo' => null,
-        ]);
+        return redirect()->route('ptc.show', $id)->with('fails', $receivable->isEmpty()
+            ? 'Nothing is waiting to be received on this PTC.'
+            : 'Select the issuance to receive against (Issuance Records > Add Receiving).');
     }
 
     /**
@@ -2229,7 +2051,7 @@ class StockController extends Controller
 
         $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
 
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
+        if (!$ptc || $ptc->stock_status != Stock::STATUS_PTC_IN_PROGRESS) {
             return redirect()->route('ptc.show', $id)->with('fails', 'Cannot receive - PTC not found or already completed');
         }
 
@@ -2258,6 +2080,12 @@ class StockController extends Controller
 
         if (!$issuance) {
             return redirect()->route('ptc.show', $id)->with('fails', 'Issuance record not found');
+        }
+
+        // Issued / received / outstanding for this issuance
+        $balance = $this->ptcStockRepository->issuanceBalances($id)->get($issuanceId);
+        if (!$balance['can_receive']) {
+            return redirect()->route('ptc.show', $id)->with('fails', 'Everything issued on this issuance has already been received.');
         }
 
         // Get items from this specific issuance
@@ -2378,9 +2206,6 @@ class StockController extends Controller
             ->orderBy('stocks.stock_date', 'desc')
             ->get();
 
-        // Get issuance sequence number for display
-        $issuanceSeqNo = $this->stockRepository->getIssuanceSeqNo($id, $issuanceId);
-
         // Get product components that were issued (for receiving back unused components)
         $issuedComponents = collect();
         if ($productTypeId) {
@@ -2437,99 +2262,92 @@ class StockController extends Controller
             'receivings' => $receivings,
             'issuedComponents' => $issuedComponents,
             'issuance' => $issuance,
-            'issuanceSeqNo' => $issuanceSeqNo,
+            'issuanceSeqNo' => $balance['seq_no'],
+            'balance' => $balance,
+            // Receipts are recorded at the stage this issuance was made for
+            'receiveStageId' => $issuance->issue_for ?: $ptc->current_stage_id,
         ]);
     }
 
     /**
-     * Store PTC Receiving
+     * Store PTC Receiving against one issuance. Product received goes into this PTC's
+     * virtual stock (not general stock) and is capped at what is still outstanding.
      */
     public function ptcReceiveStore(Request $request, $id)
     {
         $this->authorize('edit', Stock::class);
 
-        $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
-
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'Cannot receive - PTC completed');
+        $issuanceId = $request->input('issue_id');
+        if (!$issuanceId) {
+            return redirect()->route('ptc.show', $id)->with('fails', 'Select the issuance to receive against.');
         }
 
-        // Get product type ID from PTC items
-        $ptcItems = $this->stockItemRepository->get($id);
-        $productTypeId = $ptcItems->first()->product_type_id ?? null;
-
-        // Get receive quantities
-        $rQuantities = $request->input('r_quantity', []);
-        $hasItems = !empty(array_filter($rQuantities, fn($q) => $q > 0));
-
-        if (!$hasItems) {
-            return redirect()->back()->with('fails', 'No items to receive');
-        }
-
-        // Create receive record with new format: sequential number per issuance
-        // issue_id links to specific issuance if receiving against it, otherwise to PTC master
-        $issuanceId = $request->input('issue_id', $id);
-        $receiveData = [
-            'issue_id' => $issuanceId,
-            'ptc_id' => $id,
-            'order_id' => $ptc->order_id,
+        $header = [
             'table_name' => $request->input('table_name', 'employee'),
             'employee_id' => $request->input('employee_id', 0),
-            'stock_type' => 1, // Receive
-            'stock_date' => $request->input('stock_date', date('Y-m-d')),
-            'stock_status' => 1,
-            'current_stage_id' => $request->input('receive_stage_id', $ptc->current_stage_id),
+            'stock_date' => $request->input('stock_date', now()->toDateString()),
             'description' => $request->input('description'),
-            'created_by' => auth()->id(),
         ];
 
-        $receiveId = $this->stockRepository->storePtcReceiving($receiveData);
-
-        // Store receive items
-        $rMaterialIds = $request->input('r_material_id', []);
-        $rProductTypeIds = $request->input('r_product_type_id', []);
-        $rStageIds = $request->input('r_stage_id', []);
-        $rWorkLogs = $request->input('r_work_logs', []);
-        $rComponentProductTypeIds = $request->input('r_component_product_type_id', []);
-
-        // Get employee/vendor info for wages calculation
-        $employeeId = $request->input('employee_id', 0);
-        $tableName = $request->input('table_name', 'employee');
-
-        foreach ($rQuantities as $key => $quantity) {
-            if ($quantity > 0) {
-                $itemProductTypeId = $rProductTypeIds[$key] ?? 0;
-                $itemMaterialId = $rMaterialIds[$key] ?? 0;
-                $itemStageId = $rStageIds[$key] ?? 0;
-                $workLog = $rWorkLogs[$key] ?? '0';
-                $componentProductTypeId = $rComponentProductTypeIds[$key] ?? 0;
-
-                // Calculate wages from work_logs using the same logic as regular receiving
-                $wages = '0';
-                if ($workLog && $workLog != '0') {
-                    $ptId = ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId;
-                    $wages = $this->productCostRepository->wages($ptId, $workLog, $employeeId, $tableName);
-                    if (empty($wages)) {
-                        $wages = '0';
-                    }
-                }
-
-                $stockItem = [
-                    'stock_id' => $receiveId,
-                    'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                    'material_id' => $itemMaterialId,
-                    'quantity' => $quantity,
-                    'stage_id' => ($itemStageId > 0) ? $itemStageId : $ptc->current_stage_id,
-                    'work_logs' => $workLog,
-                    'work_wages' => $wages,
-                    'component_product_type_id' => $componentProductTypeId,
-                    'created_by' => auth()->id(),
-                ];
-                $this->stockItemRepository->store($stockItem);
-            }
+        try {
+            $this->ptcStockRepository->receive($id, $issuanceId, $header, $this->ptcItemLines($request, 'r_'));
+        } catch (PtcStockException $e) {
+            return redirect()->back()->withInput()->with('fails', $e->getMessage());
         }
 
         return redirect()->route('ptc.show', $id)->with('success', 'Receiving recorded successfully');
+    }
+
+    /**
+     * Release part of this PTC's virtual stock to general stock.
+     */
+    public function ptcRelease(PtcReleaseRequest $request, $id)
+    {
+        $this->authorize('edit', Stock::class);
+
+        $data = $request->validated();
+
+        try {
+            $this->ptcStockRepository->release($id, [[
+                'product_type_id' => $data['product_type_id'],
+                'stage_id' => $data['stage_id'],
+                'quantity' => $data['quantity'],
+            ]], $data['stock_date'], $data['description'] ?? null);
+        } catch (PtcStockException $e) {
+            return redirect()->route('ptc.show', $id)->with('fails', $e->getMessage());
+        }
+
+        return redirect()->route('ptc.show', $id)->with('success', 'Released ' . $data['quantity'] . ' to general stock');
+    }
+
+    /**
+     * Zip the parallel item arrays posted by the PTC issue/receive forms into lines.
+     * Issue form: quantity[], product_type_id[], material_id[], stage_id[], component_id[], source[]
+     * Receive form: r_quantity[], ..., r_work_logs[], r_component_product_type_id[]
+     */
+    private function ptcItemLines(Request $request, string $prefix): array
+    {
+        $componentField = $prefix === 'r_' ? 'r_component_product_type_id' : 'component_id';
+        $fields = [
+            'product_type_id' => $prefix . 'product_type_id',
+            'material_id' => $prefix . 'material_id',
+            'stage_id' => $prefix . 'stage_id',
+            'work_logs' => $prefix . 'work_logs',
+            'component_id' => $componentField,
+            'source' => $prefix . 'source',
+        ];
+        $values = array_map(fn ($field) => (array) $request->input($field, []), $fields);
+
+        $lines = [];
+        foreach ((array) $request->input($prefix . 'quantity', []) as $key => $quantity) {
+            $line = ['quantity' => $quantity];
+            foreach ($values as $name => $column) {
+                $line[$name] = $column[$key] ?? null;
+            }
+            $lines[] = $line;
+        }
+
+        return $lines;
     }
 
     /**
@@ -2541,7 +2359,7 @@ class StockController extends Controller
 
         $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
 
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
+        if (!$ptc || $ptc->stock_status != Stock::STATUS_PTC_IN_PROGRESS) {
             return redirect()->route('ptc.show', $id)->with('fails', 'Cannot advance - PTC not found or already completed');
         }
 
@@ -2564,27 +2382,20 @@ class StockController extends Controller
 
         $stageIds = explode('|', $product->stage_ids);
         $currentStageIndex = array_search($ptc->current_stage_id, $stageIds);
+        $endStageIndex = array_search($ptc->end_stage_id, $stageIds);
+        $endStageIndex = $endStageIndex === false ? count($stageIds) - 1 : $endStageIndex;
 
-        if ($currentStageIndex === false || $currentStageIndex >= count($stageIds) - 1) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'Already at final stage - use Close PTC instead');
+        if ($currentStageIndex === false || $currentStageIndex >= $endStageIndex) {
+            return redirect()->route('ptc.show', $id)->with('fails', 'Already at the final stage of this PTC - use Complete PTC instead');
         }
 
         // Guard: this action advances current_stage_id directly with no receive/issue
         // records of its own, so it must not be used while product quantity issued for
         // the current stage is still outstanding (unreceived) - otherwise the PTC's
         // stage pointer would race ahead of the actual physical stock movement history.
-        $currentStageId = $ptc->current_stage_id;
-        $issueRecordIds = Stock::where('ptc_id', $id)
-            ->where('stock_type', 2)
-            ->where('issue_for', $currentStageId)
-            ->pluck('stock_id')
-            ->toArray();
-        if ($currentStageIndex == 0) {
-            $issueRecordIds[] = $id; // initial PTC master issuance
-        }
-        $outstanding = $this->ptcOutstandingProductQty($id, $currentStageId, $issueRecordIds);
-        if ($outstanding->isNotEmpty()) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'Cannot advance - product quantity issued for the current stage has not been fully received back yet. Please receive the outstanding items first.');
+        $outstanding = $this->ptcStockRepository->outstandingForStage($id, $ptc->current_stage_id);
+        if ($outstanding > 0) {
+            return redirect()->route('ptc.show', $id)->with('fails', "Cannot advance - {$outstanding} pieces issued for the current stage have not been received back yet. Please receive the outstanding items first.");
         }
 
         // Move to next stage
@@ -2603,420 +2414,43 @@ class StockController extends Controller
     }
 
     /**
-     * Close/Complete PTC manually
+     * Finish PTC: Completed when its end stage is fully received, otherwise Closed
+     * early. Only the PTC status changes: the current stage is kept, stages keep
+     * their actual status and no stock movement is created. Blocked while product
+     * is still outstanding with workers or PTC stock has not been transferred/released.
      */
     public function ptcClose(Request $request, $id)
     {
         $this->authorize('edit', Stock::class);
 
-        $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
-
-        if (!$ptc) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'PTC not found');
+        try {
+            $status = $this->ptcStockRepository->finish($id);
+        } catch (PtcStockException $e) {
+            return redirect()->route('ptc.show', $id)->with('fails', $e->getMessage());
         }
 
-        if ($ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'PTC is already completed');
-        }
-
-        // Mark PTC as completed
-        $ptc->update([
-            'stock_status' => Stock::STATUS_PTC_COMPLETED,
-            'next_stage_id' => null,
-        ]);
-
-        return redirect()->route('ptc.show', $id)->with('success', 'PTC has been closed/completed successfully');
+        return redirect()->route('ptc.show', $id)->with('success', $status == Stock::STATUS_PTC_COMPLETED
+            ? 'PTC completed'
+            : 'PTC closed early - production stopped before its end stage');
     }
 
     /**
-     * Show move to next stage form
+     * The combined "Move Stage" page recorded receipts without linking them to the
+     * issuance they belong to and issued the next stage from general stock, which
+     * breaks issuance balances and PTC stock. Its link was already disabled in the
+     * PTC list; stage work is done from the PTC page (Issue / Add Receiving /
+     * Transfer / Release / Move to Next Stage).
      */
     public function ptcMoveStageForm($id)
     {
         $this->authorize('edit', Stock::class);
 
-        $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
-
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'Cannot move stage - PTC not found or already completed');
-        }
-
-        // Get PTC items
-        $ptcItems = $this->stockItemRepository->get($id);
-
-        // Get employees and vendors
-        $employees = $this->employeeRepository->wages();
-        $vendors = $this->vendorRepository->worker();
-
-        // Get material stock for issue section
-        $stock = $this->stockItemRepository->stock();
-        $pstock = $this->stockItemRepository->pStock();
-
-        // Get product details and stages
-        $productTypeId = $ptcItems->first()->product_type_id ?? null;
-        $product = null;
-        $stages = collect();
-        $currentStageIndex = 0;
-
-        if ($productTypeId) {
-            $product = \DB::table('product_types')
-                ->join('products', 'products.product_id', '=', 'product_types.product_id')
-                ->join('heads as size_head', 'size_head.head_id', '=', 'product_types.size_id')
-                ->where('product_type_id', $productTypeId)
-                ->select('product_types.*', 'products.*', 'size_head.name as size_name')
-                ->first();
-
-            if ($product && $product->stage_ids) {
-                $stageIds = explode('|', $product->stage_ids);
-                $stages = $this->headRepository->getByIds($stageIds);
-
-                foreach ($stages as $index => $stage) {
-                    if ($stage->head_id == $ptc->current_stage_id) {
-                        $currentStageIndex = $index;
-                        break;
-                    }
-                }
-            }
-        }
-
-        $currentStage = $stages[$currentStageIndex] ?? null;
-        $nextStage = $stages[$currentStageIndex + 1] ?? null;
-        $isFinalStage = $currentStageIndex >= $stages->count() - 1;
-
-        // Get materials
-        $materials = $this->materialRepository->all();
-
-        // Get PTC with joined data
-        $ptcWithData = Stock::where('stocks.stock_id', $id)
-            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
-            ->select('stocks.*', 'orders.job_no')
-            ->first();
-
-        // === RECEIVE SECTION DATA ===
-        // Get ALL issued items for the current stage (from initial PTC and subsequent stage movements)
-        // For PTC, issued items for current stage come from:
-        // 1. Initial PTC master (if current stage is first stage)
-        // 2. Issue records from previous stage movements where issue_for = current_stage_id
-        $currentStageId = $ptc->current_stage_id;
-
-        // Get all issue records for this PTC that target the current stage
-        $issueRecordIds = Stock::where('ptc_id', $id)
-            ->where('stock_type', 2) // Issue type
-            ->where('issue_for', $currentStageId)
-            ->pluck('stock_id')
-            ->toArray();
-
-        // For first stage, include the initial PTC master record
-        if ($currentStageIndex == 0) {
-            $issueRecordIds[] = $id;
-        }
-
-        // Get issued items from all relevant issue records
-        $issueItem = \DB::table('stock_items')
-            ->whereIn('stock_items.stock_id', $issueRecordIds)
-            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->leftJoin('product_materials', function ($join) {
-                $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
-                    ->on('product_materials.material_id', '=', 'stock_items.material_id');
-            })
-            ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
-            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->select('stock_items.*', 'products.product_id', 'products.name as pname', 'products.article_no', 'materials.material_id', 'materials.name',
-                'uhead.name as uname', 'shead.name as sname', 'sthead.name as stage', 'puhead.name as puname', 'product_materials.quantity as pqty')
-            ->orderBy('products.product_id')
-            ->get();
-
-        // Get already received items for the current stage
-        // These are receive records (stock_type=1) with ptc_id = this PTC and current_stage_id = current stage
-        $rstock = \DB::table('stock_items')
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stocks.ptc_id', $id)
-            ->where('stocks.stock_type', 1) // Receive type
-            ->where('stocks.current_stage_id', $currentStageId)
-            ->leftJoin('product_materials', function ($join) {
-                $join->on('product_materials.product_type_id', '=', 'stock_items.product_type_id')
-                    ->whereColumn('product_materials.material_id', 'stock_items.material_id');
-            })
-            ->select(
-                'stock_items.product_type_id',
-                'stock_items.material_id',
-                \DB::raw('SUM(stock_items.quantity) AS rqty')
-            )
-            ->groupBy('stock_items.product_type_id', 'stock_items.material_id')
-            ->get();
-
-        // Get receive totals for display (with all required fields)
-        $issueSum = \DB::table('stock_items')
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stocks.ptc_id', $id)
-            ->where('stocks.stock_type', 1) // Receive type
-            ->where('stocks.current_stage_id', $currentStageId)
-            ->leftJoin('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
-            ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
-            ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->leftJoin('heads as puhead', 'puhead.head_id', '=', 'products.unit_id')
-            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
-            ->groupBy('stock_items.product_type_id', 'stock_items.material_id', 'stock_items.stage_id')
-            ->selectRaw('stock_items.product_type_id, stock_items.material_id, stock_items.stage_id,
-                SUM(stock_items.quantity) as total_quantity, products.article_no, products.name as pname,
-                materials.name, shead.name as sname, sthead.name as stage, uhead.name as uname, puhead.name as puname')
-            ->get();
-
-        // Calculate average for materials
-        $average = [];
-        foreach ($issueItem as $item) {
-            if ($item->material_id) {
-                $key = $item->product_type_id;
-                $currentAvg = $item->pqty != 0 ? bcdiv($item->quantity, $item->pqty, 1) : '0';
-                $average[$key]['min_avg'] = isset($average[$key]) ? min($average[$key]['min_avg'], $currentAvg) : $currentAvg;
-            }
-        }
-
-        return view('ptcMoveStage', [
-            'ptc' => $ptcWithData,
-            'ptcItems' => $ptcItems,
-            'product' => $product,
-            'stages' => $stages,
-            'currentStage' => $currentStage,
-            'nextStage' => $nextStage,
-            'currentStageIndex' => $currentStageIndex,
-            'isFinalStage' => $isFinalStage,
-            'employees' => $employees,
-            'vendors' => $vendors,
-            'materials' => $materials,
-            'stock' => $stock,
-            'pstock' => $pstock,
-            // Receive section data
-            'issueItem' => $issueItem,
-            'issueItemUnique' => $issueItem,
-            'rstock' => $rstock,
-            'issueSum' => $issueSum,
-            'average' => $average,
-        ]);
+        return redirect()->route('ptc.show', $id)->with('fails', 'Use the Issue, Add Receiving and Move to Next Stage actions on this page to move production between stages.');
     }
 
-    /**
-     * Process stage movement
-     */
     public function ptcMoveStage(Request $request, $id)
     {
-        $this->authorize('edit', Stock::class);
-
-        $ptc = Stock::where('stock_id', $id)->where('is_ptc_master', 1)->first();
-
-        if (!$ptc || $ptc->stock_status == Stock::STATUS_PTC_COMPLETED) {
-            return redirect()->route('ptc.show', $id)->with('fails', 'Cannot move stage');
-        }
-
-        // Get product stages
-        $ptcItems = $this->stockItemRepository->get($id);
-        $productTypeId = $ptcItems->first()->product_type_id ?? null;
-
-        $product = \DB::table('product_types')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->where('product_type_id', $productTypeId)
-            ->first();
-
-        $stageIds = $product ? explode('|', $product->stage_ids) : [];
-        $currentIndex = array_search($ptc->current_stage_id, $stageIds);
-        $isFinalStage = $currentIndex !== false && $currentIndex >= count($stageIds) - 1;
-        $nextIndex = $currentIndex + 1;
-        $nextStageId = $stageIds[$nextIndex] ?? null;
-
-        // Guard: don't advance the stage (or issue to the next one) while product
-        // quantity issued for the current stage remains outstanding, counting the
-        // receive quantities submitted in this same request. Checked before any
-        // writes so a blocked request leaves no partial records behind.
-        $currentStageId = $ptc->current_stage_id;
-        $issueRecordIds = Stock::where('ptc_id', $id)
-            ->where('stock_type', 2)
-            ->where('issue_for', $currentStageId)
-            ->pluck('stock_id')
-            ->toArray();
-        if ($currentIndex === 0) {
-            $issueRecordIds[] = $id; // initial PTC master issuance
-        }
-        $outstanding = $this->ptcOutstandingProductQty($id, $currentStageId, $issueRecordIds);
-        if ($outstanding->isNotEmpty()) {
-            $rQuantitiesCheck = $request->input('r_quantity', []);
-            $rMaterialIdsCheck = $request->input('r_material_id', []);
-            $rProductTypeIdsCheck = $request->input('r_product_type_id', []);
-            foreach ($rQuantitiesCheck as $key => $qty) {
-                if ($qty > 0 && (int) ($rMaterialIdsCheck[$key] ?? 0) === 0) {
-                    $pt = $rProductTypeIdsCheck[$key] ?? $productTypeId;
-                    if (isset($outstanding[$pt])) {
-                        $outstanding[$pt] -= $qty;
-                    }
-                }
-            }
-            if ($outstanding->filter(fn ($qty) => $qty > 0)->isNotEmpty()) {
-                return redirect()->route('ptc.move.form', $id)->with('fails', 'Cannot move to next stage - please receive all outstanding product quantity for the current stage first.');
-            }
-        }
-
-        // === SECTION 1: Create receive record for current stage ===
-        $rQuantities = $request->input('r_quantity', []);
-        $hasReceiveItems = !empty(array_filter($rQuantities, fn($q) => $q > 0));
-
-        if ($hasReceiveItems) {
-            $receiveData = [
-                'issue_id' => $id,
-                'ptc_id' => $id,
-                'order_id' => $ptc->order_id,
-                'table_name' => $request->input('table_name', 'employee'),
-                'employee_id' => $request->input('employee_id', 0),
-                'stock_type' => 1, // Receive
-                'stock_date' => $request->input('stock_date', date('Y-m-d')),
-                'stock_status' => 1,
-                'current_stage_id' => $ptc->current_stage_id,
-                'description' => $request->input('description'),
-                'created_by' => auth()->id(),
-            ];
-
-            $receiveId = $this->stockRepository->storePtcReceiving($receiveData);
-
-            // Store receive items
-            $rMaterialIds = $request->input('r_material_id', []);
-            $rProductTypeIds = $request->input('r_product_type_id', []);
-            $rStageIds = $request->input('r_stage_id', []);
-            $rWorkLogs = $request->input('r_work_logs', []);
-
-            foreach ($rQuantities as $key => $quantity) {
-                if ($quantity > 0) {
-                    $itemProductTypeId = $rProductTypeIds[$key] ?? 0;
-                    $itemMaterialId = $rMaterialIds[$key] ?? 0;
-                    $itemStageId = $rStageIds[$key] ?? 0;
-
-                    $stockItem = [
-                        'stock_id' => $receiveId,
-                        'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                        'material_id' => $itemMaterialId,
-                        'quantity' => $quantity,
-                        'stage_id' => ($itemStageId > 0) ? $itemStageId : $ptc->current_stage_id,
-                        'work_logs' => $rWorkLogs[$key] ?? '0',
-                        'work_wages' => '0',
-                        'created_by' => auth()->id(),
-                    ];
-                    $this->stockItemRepository->store($stockItem);
-                }
-            }
-        }
-
-        // === SECTION 2: Create issue record for next stage ===
-        $iQuantities = $request->input('quantity', []);
-        $hasIssueItems = !empty(array_filter($iQuantities, fn($q) => $q > 0));
-
-        if ($hasIssueItems && $nextStageId) {
-            $issueData = [
-                'ptc_id' => $id,
-                'order_id' => $ptc->order_id,
-                'table_name' => $request->input('table_name', 'employee'),
-                'employee_id' => $request->input('employee_id', 0),
-                'stock_type' => 2, // Issue
-                'stock_date' => $request->input('stock_date', date('Y-m-d')),
-                'stock_status' => Stock::STATUS_PTC_IN_PROGRESS,
-                'current_stage_id' => $nextStageId,
-                'issue_for' => $nextStageId,
-                'description' => $request->input('description'),
-                'created_by' => auth()->id(),
-            ];
-
-            $issueId = $this->stockRepository->storePtcIssuance($issueData);
-
-            // Store issue items
-            $iMaterialIds = $request->input('material_id', []);
-            $iProductTypeIds = $request->input('product_type_id', []);
-            $iStageIds = $request->input('stage_id', []);
-
-            foreach ($iQuantities as $key => $quantity) {
-                if ($quantity > 0) {
-                    $itemProductTypeId = $iProductTypeIds[$key] ?? 0;
-                    $itemMaterialId = $iMaterialIds[$key] ?? 0;
-                    $itemStageId = $iStageIds[$key] ?? 0;
-
-                    $stockItem = [
-                        'stock_id' => $issueId,
-                        'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                        'material_id' => $itemMaterialId,
-                        'quantity' => $quantity,
-                        'stage_id' => ($itemStageId > 0) ? $itemStageId : $nextStageId,
-                        'work_logs' => '0',
-                        'work_wages' => '0',
-                        'created_by' => auth()->id(),
-                    ];
-                    $this->stockItemRepository->store($stockItem);
-                }
-            }
-        }
-
-        // Update PTC master record
-        if ($isFinalStage) {
-            $ptc->update([
-                'stock_status' => Stock::STATUS_PTC_COMPLETED,
-                'current_stage_id' => null,
-                'next_stage_id' => null,
-            ]);
-            return redirect()->route('ptc.show', $id)->with('success', 'PTC Completed Successfully');
-        } else {
-            $followingStageId = $stageIds[$nextIndex + 1] ?? null;
-
-            $ptc->update([
-                'current_stage_id' => $nextStageId,
-                'next_stage_id' => $followingStageId,
-                'issue_for' => $nextStageId,
-            ]);
-
-            return redirect()->route('ptc.show', $id)->with('success', 'Moved to next stage successfully');
-        }
-    }
-
-    /**
-     * Calculate, per finished/semi-finished product_type_id, how much of the quantity
-     * issued to the current PTC stage has not yet been received back at that stage.
-     * Only product items (material_id = 0) are checked - material items are excluded
-     * because partial material variance (e.g. cutting waste) is an expected and
-     * already-tolerated part of the workflow (see ptcReceiveStore).
-     *
-     * @return \Illuminate\Support\Collection keyed by product_type_id => outstanding qty (only entries > 0)
-     */
-    private function ptcOutstandingProductQty($ptcId, $currentStageId, array $issueRecordIds)
-    {
-        $issued = DB::table('stock_items')
-            ->whereIn('stock_id', $issueRecordIds)
-            ->where('material_id', 0)
-            ->select('product_type_id', DB::raw('SUM(quantity) as qty'))
-            ->groupBy('product_type_id')
-            ->pluck('qty', 'product_type_id');
-
-        if ($issued->isEmpty()) {
-            return collect();
-        }
-
-        $received = DB::table('stock_items')
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stocks.ptc_id', $ptcId)
-            ->where('stocks.stock_type', 1)
-            ->where('stocks.current_stage_id', $currentStageId)
-            ->where('stock_items.material_id', 0)
-            ->select('stock_items.product_type_id', DB::raw('SUM(stock_items.quantity) as qty'))
-            ->groupBy('stock_items.product_type_id')
-            ->pluck('qty', 'product_type_id');
-
-        $outstanding = collect();
-        foreach ($issued as $productTypeId => $issuedQty) {
-            $remaining = $issuedQty - ($received[$productTypeId] ?? 0);
-            if ($remaining > 0) {
-                $outstanding[$productTypeId] = $remaining;
-            }
-        }
-
-        return $outstanding;
+        return $this->ptcMoveStageForm($id);
     }
 
     /**
