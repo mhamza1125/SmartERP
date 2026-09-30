@@ -257,11 +257,11 @@
                           $displayRef = 'PTC-' . $ptc->stock_no . ' / I001';
                         } elseif ($movement->stock_type == 2) {
                           // Issuance - find sequence from map
-                          $issSeq = $issuanceSeqMap[$movement->stock_id] ?? $movement->stock_no;
+                          $issSeq = $issuanceSeqMap[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
                           $displayRef = 'PTC-' . $ptc->stock_no . ' / I' . $issSeq;
                         } else {
                           // Receiving - use stored format directly (R{n}-I{seq})
-                          $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . $movement->stock_no;
+                          $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
                         }
                       @endphp
                       <tr>
@@ -319,11 +319,11 @@
       if ($movement->is_ptc_master == 1) {
         $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / I001';
       } elseif ($movement->stock_type == 2) {
-        $issSeq = $modalIssuanceSeqMap[$movement->stock_id] ?? $movement->stock_no;
+        $issSeq = $modalIssuanceSeqMap[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
         $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / I' . $issSeq;
       } else {
         // Receiving - use stored format directly (R{n}-I{seq})
-        $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / ' . $movement->stock_no;
+        $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / ' . \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
       }
     @endphp
     <div class="modal fade" id="movementModal{{ $movement->stock_id }}" tabindex="-1" role="dialog">
@@ -484,7 +484,7 @@
             @foreach($relatedReceivings as $recIdx => $receiving)
               <div class="card mb-3 {{ $loop->last ? '' : 'border-bottom' }}">
                 <div class="card-header bg-light py-2">
-                  <strong>PTC-{{ $ptc->stock_no }} / {{ $receiving->stock_no }}</strong>
+                  <strong>PTC-{{ $ptc->stock_no }} / {{ \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</strong>
                   <span class="float-right">
                     <span class="badge badge-success">{{ $receiving->stage_name ?? 'N/A' }}</span>
                     {{ \carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') }}

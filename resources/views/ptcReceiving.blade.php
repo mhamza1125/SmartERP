@@ -35,7 +35,7 @@
               @if($issuance ?? false)
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> <strong>Receiving against Issuance:</strong>
-                PTC-{{ $ptc->stock_no }} / I{{ $issuanceSeqNo ?? str_pad($issuance->stock_no, 3, '0', STR_PAD_LEFT) }} | {{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}
+                PTC-{{ $ptc->stock_no }} / I{{ $issuanceSeqNo ?? str_pad(\App\Models\Stock::ptcDisplayNo($issuance->stock_no, $ptc->stock_no), 3, '0', STR_PAD_LEFT) }} | {{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}
                 <input type="hidden" name="issue_id" value="{{ $issuance->stock_id }}">
               </div>
               @endif
@@ -364,7 +364,7 @@
                   <tbody>
                     @foreach($receivings as $receiving)
                       <tr>
-                        <td>PTC-{{ $ptc->stock_no }} / {{ $receiving->stock_no }}</td>
+                        <td>PTC-{{ $ptc->stock_no }} / {{ \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</td>
                         <td>{{ $receiving->stage_name ?? 'N/A' }}</td>
                         <td>{{ $receiving->stock_date ? \Carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') : 'N/A' }}</td>
                         <td>{{ $receiving->employee_name ?? $receiving->vendor_name ?? '-' }}</td>

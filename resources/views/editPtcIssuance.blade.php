@@ -28,7 +28,7 @@
                   <strong>Order:</strong> {{ $ptc->job_no ?? 'Default PTC' }}
                 </div>
                 <div class="col-md-3">
-                  <strong>Issuance No:</strong> I{{ str_pad($issuance->stock_no, 3, '0', STR_PAD_LEFT) }}
+                  <strong>Issuance No:</strong> I{{ str_pad(\App\Models\Stock::ptcDisplayNo($issuance->stock_no, $ptc->stock_no), 3, '0', STR_PAD_LEFT) }}
                 </div>
               </div>
 

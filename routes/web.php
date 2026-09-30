@@ -259,7 +259,9 @@ Route::get('/editIGroup/{id}', [IGroupController::class, 'edit'])->name('igroup.
 Route::post('/igroup/{id}', [IGroupController::class, 'update'])->name('igroup.update');
 
 // Stock / Issuance
-Route::get('/stock', [StockController::class, 'index'])->name('stock');
+Route::get('/stock', [StockController::class, 'index'])->defaults('type', 'product')->name('stock');
+Route::get('/stock/material', [StockController::class, 'index'])->defaults('type', 'material')->name('stock.material');
+Route::get('/stock/machine', [StockController::class, 'index'])->defaults('type', 'machine')->name('stock.machine');
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
 Route::get('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.daily');
 Route::post('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.filter');

@@ -456,37 +456,84 @@ class StockRepository implements GlobalInterface
     }
 
     /**
-     * Generate Issuance Number relative to PTC (e.g., 001, 002, 003)
-     * Stores only the sequential number - display adds 'I' prefix
+     * Generate Issuance Number relative to PTC
+     * Format: {ptcNo}-{seq} (e.g., 2609004-001, 2609004-002)
+     * stocks.stock_no is unique table-wide, so the per-PTC sequence is prefixed
+     * with the (unique) PTC number. Display strips the prefix and adds 'I'.
      */
     public function issueRefNo($ptcId)
     {
-        // Count existing issuances for this PTC (excluding the initial master issuance)
-        $count = Stock::where('ptc_id', $ptcId)
-            ->where('stock_type', 2)
-            ->count();
+        $ptcNo = Stock::where('stock_id', $ptcId)->value('stock_no');
 
-        return str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        // Count existing issuances for this PTC (excluding the initial master issuance)
+        $seq = Stock::where('ptc_id', $ptcId)
+            ->where('stock_type', 2)
+            ->count() + 1;
+
+        do {
+            $issueNo = $ptcNo . '-' . str_pad($seq++, 3, '0', STR_PAD_LEFT);
+        } while (Stock::where('stock_no', $issueNo)->exists());
+
+        return $issueNo;
     }
 
     /**
      * Generate Receiving Number relative to Issuance
-     * Format: R{seq}-I{issuanceStockNo} (e.g., R1-I001, R2-I001)
-     * This ensures uniqueness across all receivings
+     * Format: R{seq}-I{ptcNo} for the PTC master issuance (e.g., R1-I2609004)
+     *         {ptcNo}-R{seq}-I{issuanceSeq} for other issuances (e.g., 2609004-R1-I002)
+     * Display strips the '{ptcNo}-' prefix.
      */
     public function receiveRefNo($issueId)
     {
-        // Get the issuance's stock_no for uniqueness
         $issuance = Stock::find($issueId);
-        $issuanceNo = $issuance ? $issuance->stock_no : $issueId;
+
+        if (! $issuance || $issuance->is_ptc_master || ! $issuance->ptc_id) {
+            $prefix = '';
+            $issuanceNo = $issuance ? $issuance->stock_no : $issueId;
+        } else {
+            $ptcNo = Stock::where('stock_id', $issuance->ptc_id)->value('stock_no');
+            $prefix = $ptcNo . '-';
+            $issuanceNo = Stock::ptcDisplayNo($issuance->stock_no, $ptcNo);
+        }
 
         // Count existing receivings for this issuance
-        $count = Stock::where('issue_id', $issueId)
+        $seq = Stock::where('issue_id', $issueId)
             ->where('stock_type', 1)
-            ->count();
+            ->count() + 1;
 
-        // Return unique format: R{seq}-I{issuanceNo}
-        return 'R' . ($count + 1) . '-I' . $issuanceNo;
+        do {
+            $receiveNo = $prefix . 'R' . $seq++ . '-I' . $issuanceNo;
+        } while (Stock::where('stock_no', $receiveNo)->exists());
+
+        return $receiveNo;
+    }
+
+    /**
+     * Store a PTC issuance with a generated issuance number.
+     * The PTC master row is locked so concurrent requests for the same PTC
+     * cannot generate the same number.
+     */
+    public function storePtcIssuance(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            Stock::where('stock_id', $data['ptc_id'])->lockForUpdate()->first();
+            $data['stock_no'] = $this->issueRefNo($data['ptc_id']);
+
+            return $this->store($data);
+        });
+    }
+
+    /**
+     * Store a PTC receiving with a generated receiving number (see storePtcIssuance).
+     */
+    public function storePtcReceiving(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            Stock::where('stock_id', $data['ptc_id'])->lockForUpdate()->first();
+            $data['stock_no'] = $this->receiveRefNo($data['issue_id']);
+
+            return $this->store($data);
+        });
     }
 
     /**

@@ -94,17 +94,20 @@ class StockController extends Controller
         $this->productMaterialRepository = $productMaterialRepository;
     }
 
-    public function index()
+    /**
+     * Available Stock - one page per category: 'material', 'product' or 'machine'
+     * (category comes from the route defaults in routes/web.php)
+     */
+    public function index(string $type = 'product')
     {
         $this->authorize('stocks_access', Stock::class);
 
-        // Available Stock
-        $stock = $this->stockItemRepository->stock();
-        $pstock = $this->stockItemRepository->pStock();
+        $isProduct = $type === 'product';
 
         return view('stock', [
-            'stock' => $stock,
-            'pstock' => $pstock,
+            'type' => $type,
+            'stock' => $isProduct ? collect() : $this->stockItemRepository->stockByCategory($type),
+            'pstock' => $isProduct ? $this->stockItemRepository->pStock() : collect(),
         ]);
     }
 
@@ -1860,11 +1863,9 @@ class StockController extends Controller
             return redirect()->back()->with('fails', 'No items to issue');
         }
 
-        // Create issue record with new format: sequential number per PTC
-        $issueNo = $this->stockRepository->issueRefNo($id);
+        // Create issue record; stock_no ({ptcNo}-{seq}) is generated inside a lock
         $issueData = [
             'ptc_id' => $id,
-            'stock_no' => $issueNo, // Store only sequence number, display adds prefix
             'order_id' => $ptc->order_id,
             'table_name' => $request->input('table_name', 'employee'),
             'employee_id' => $request->input('employee_id', 0),
@@ -1877,7 +1878,7 @@ class StockController extends Controller
             'created_by' => auth()->id(),
         ];
 
-        $issueId = $this->stockRepository->store($issueData);
+        $issueId = $this->stockRepository->storePtcIssuance($issueData);
 
         // Store issue items
         $materialIds = $request->input('material_id', []);
@@ -2468,11 +2469,9 @@ class StockController extends Controller
         // Create receive record with new format: sequential number per issuance
         // issue_id links to specific issuance if receiving against it, otherwise to PTC master
         $issuanceId = $request->input('issue_id', $id);
-        $receiveNo = $this->stockRepository->receiveRefNo($issuanceId);
         $receiveData = [
             'issue_id' => $issuanceId,
             'ptc_id' => $id,
-            'stock_no' => $receiveNo, // Store only sequence number, display adds prefix
             'order_id' => $ptc->order_id,
             'table_name' => $request->input('table_name', 'employee'),
             'employee_id' => $request->input('employee_id', 0),
@@ -2484,7 +2483,7 @@ class StockController extends Controller
             'created_by' => auth()->id(),
         ];
 
-        $receiveId = $this->stockRepository->store($receiveData);
+        $receiveId = $this->stockRepository->storePtcReceiving($receiveData);
 
         // Store receive items
         $rMaterialIds = $request->input('r_material_id', []);
@@ -2866,11 +2865,9 @@ class StockController extends Controller
         $hasReceiveItems = !empty(array_filter($rQuantities, fn($q) => $q > 0));
 
         if ($hasReceiveItems) {
-            $receiveNo = $this->stockRepository->receiveRefNo($id);
             $receiveData = [
                 'issue_id' => $id,
                 'ptc_id' => $id,
-                'stock_no' => $receiveNo, // Store only sequence number
                 'order_id' => $ptc->order_id,
                 'table_name' => $request->input('table_name', 'employee'),
                 'employee_id' => $request->input('employee_id', 0),
@@ -2882,7 +2879,7 @@ class StockController extends Controller
                 'created_by' => auth()->id(),
             ];
 
-            $receiveId = $this->stockRepository->store($receiveData);
+            $receiveId = $this->stockRepository->storePtcReceiving($receiveData);
 
             // Store receive items
             $rMaterialIds = $request->input('r_material_id', []);
@@ -2916,10 +2913,8 @@ class StockController extends Controller
         $hasIssueItems = !empty(array_filter($iQuantities, fn($q) => $q > 0));
 
         if ($hasIssueItems && $nextStageId) {
-            $issueNo = $this->stockRepository->issueRefNo($id);
             $issueData = [
                 'ptc_id' => $id,
-                'stock_no' => $issueNo, // Store only sequence number
                 'order_id' => $ptc->order_id,
                 'table_name' => $request->input('table_name', 'employee'),
                 'employee_id' => $request->input('employee_id', 0),
@@ -2932,7 +2927,7 @@ class StockController extends Controller
                 'created_by' => auth()->id(),
             ];
 
-            $issueId = $this->stockRepository->store($issueData);
+            $issueId = $this->stockRepository->storePtcIssuance($issueData);
 
             // Store issue items
             $iMaterialIds = $request->input('material_id', []);

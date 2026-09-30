@@ -365,6 +365,19 @@ class StockItemRepository implements GlobalInterface
             ->get();
     }
 
+    /**
+     * Available material stock split by category:
+     * 'machine' => machine materials (material_type_id 101), anything else => regular materials
+     */
+    public function stockByCategory(string $category)
+    {
+        $stock = $this->stock();
+
+        return $category === 'machine'
+            ? $stock->filter(fn ($item) => $item->material_type_id == 101)->values()
+            : $stock->reject(fn ($item) => $item->material_type_id == 101)->values();
+    }
+
     public function freeStock()
     {
         // Free Material Stock Based on Default Purchases

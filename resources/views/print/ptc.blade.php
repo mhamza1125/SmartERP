@@ -94,10 +94,10 @@
                     if ($movement->is_ptc_master == 1) {
                         $displayRef = 'PTC-' . $ptc->stock_no . ' / I001';
                     } elseif ($movement->stock_type == 2) {
-                        $issSeq = $issuanceSeqMap[$movement->stock_id] ?? $movement->stock_no;
+                        $issSeq = $issuanceSeqMap[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
                         $displayRef = 'PTC-' . $ptc->stock_no . ' / I' . $issSeq;
                     } else {
-                        $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . $movement->stock_no;
+                        $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
                     }
 
                     // Calculate average quantity for issuances and receivings

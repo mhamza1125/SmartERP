@@ -41,4 +41,18 @@ class Stock extends Model
         'created_by',
         'updated_at',
     ];
+
+    /**
+     * PTC issuance/receiving numbers are stored as '{ptcNo}-...' to keep
+     * stock_no unique table-wide. Strip that prefix for display.
+     * Legacy numbers without the prefix are returned unchanged.
+     */
+    public static function ptcDisplayNo(?string $stockNo, ?string $ptcNo): string
+    {
+        $prefix = $ptcNo . '-';
+
+        return ($ptcNo !== null && $ptcNo !== '' && str_starts_with((string) $stockNo, $prefix))
+            ? substr($stockNo, strlen($prefix))
+            : (string) $stockNo;
+    }
 }

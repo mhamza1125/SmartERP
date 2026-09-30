@@ -20,6 +20,7 @@
                     <th>Category</th>
                     <th>Article No</th>
                     <th>Product Name</th>
+                    <th>Sizes</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -32,6 +33,7 @@
                       <td>{{$item->cname}}</td>
                       <td>{{$item->article_no}}</td>
                       <td>{{$item->name}}</td>
+                      <td>{{$item->sizes ?: '-'}}</td>
                       <td>
                         @if($item->product_status)
                           <span class="badge badge-success">Active</span>
@@ -54,6 +56,7 @@
                     <th>Category</th>
                     <th>Article No</th>
                     <th>Product Name</th>
+                    <th>Sizes</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>

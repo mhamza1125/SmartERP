@@ -9,8 +9,16 @@ class ProductRepository implements GlobalInterface
 {
     public function all()
     {
+        // Active sizes per product as a comma-separated list (single query, no N+1)
+        $sizes = DB::table('product_types')
+            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
+            ->whereColumn('product_types.product_id', 'products.product_id')
+            ->where('product_types.product_type_status', '1')
+            ->selectRaw("GROUP_CONCAT(heads.name ORDER BY product_types.product_type_id SEPARATOR ', ')");
+
         return Product::join('categories', 'categories.category_id', '=', 'products.category_id')
             ->select('products.*', 'categories.name as cname')
+            ->selectSub($sizes, 'sizes')
             ->orderBy('products.created_at', 'desc')->get();
     }
 

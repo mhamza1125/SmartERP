@@ -1,204 +1,138 @@
 @extends('index')
 @section('content')
+@php
+  $stockPages = [
+    'product' => ['route' => 'stock', 'title' => 'Product Stock'],
+    'material' => ['route' => 'stock.material', 'title' => 'Material Stock'],
+    'machine' => ['route' => 'stock.machine', 'title' => 'Machine Material Stock'],
+  ];
+@endphp
 <section class="section">
   <div class="section-body">
     <div class="row">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Available Stock Table</h4>
+            <h4>{{ $stockPages[$type]['title'] }}</h4>
             <div class="card-header-action">
-              <div class="dropdown">
-                <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">
-                  <i class="fas fa-print"></i> Print
-                </button>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item" href="{{ route('stock.print') }}?type=material" target="_blank">
-                    <i class="fas fa-file-alt"></i> Material Stock
-                  </a>
-                  <a class="dropdown-item" href="{{ route('stock.print') }}?type=product" target="_blank">
-                    <i class="fas fa-file-alt"></i> Product Stock
-                  </a>
-                  <a class="dropdown-item" href="{{ route('stock.print') }}?type=machine" target="_blank">
-                    <i class="fas fa-file-alt"></i> Machine Material Stock
-                  </a>
-                </div>
-              </div>
+              <a href="{{ route('stock.print', ['type' => $type]) }}" class="btn btn-info" target="_blank">
+                <i class="fas fa-print"></i> Print
+              </a>
             </div>
           </div>
           <div class="card-body">
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="true">Material Stock</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="receive-tab" data-toggle="tab" href="#receive" role="tab" aria-controls="receive" aria-selected="false">Product Stock</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="machine-tab" data-toggle="tab" href="#machine" role="tab" aria-controls="machine" aria-selected="false">Machine Material</a>
-              </li>
-            </ul> 
-            
-            <div class="tab-content" id="myTabContent">
-              {{-- Material Stock --}}
-              <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">      
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped" style="width:100%;">                    
-                    <thead>
-                      <tr>
-                        <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material Name</th>
-                        <th>Quantity</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @if($stock->count())
-                        @php $loopIndex = 1; @endphp
-                        @foreach($stock as $item)
-                          @unless($item->material_type_id == 101)
-                          <tr>
-                            <td>{{$loopIndex++}}</td>
-                            <td>{{$item->material_no}}</td>
-                            <td>
-                              {{$item->name}}
-                              @if($item->location)
-                                <sub style="color: #6c757d;">{{$item->location}}</sub>
-                              @endif
-                            </td>
-                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>
-                          </tr>
-                          @endunless
-                        @endforeach
-                      @endif
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material Name</th>
-                        <th>Quantity</th>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
+            <ul class="nav nav-tabs mb-3">
+              @foreach($stockPages as $pageType => $page)
+                <li class="nav-item">
+                  <a class="nav-link {{ $type === $pageType ? 'active' : '' }}" href="{{ route($page['route']) }}">{{ $page['title'] }}</a>
+                </li>
+              @endforeach
+            </ul>
+
+            @if($type === 'product')
               {{-- Product Stock (Grouped by Product/Size with Stage Modal) --}}
-              <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab">
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped" style="width:100%;">
-                    <thead>
-                      <tr>
-                        <th>Sr.</th>
-                        <th>Article No</th>
-                        <th>Item / Product</th>
-                        <th>Size</th>
-                        <th>Total Stock</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @if($pstock->count())
+              <div class="table-responsive">
+                <table class="table table-sm table-striped" id="tableExport" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Article No</th>
+                      <th>Item / Product</th>
+                      <th>Size</th>
+                      <th>Total Stock</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @if($pstock->count())
+                      @php
+                        // Group stock by product_type_id to show one row per product/size
+                        $groupedPstock = $pstock->groupBy('product_type_id');
+                        $rowIndex = 1;
+                      @endphp
+                      @foreach($groupedPstock as $productTypeId => $stageItems)
                         @php
-                          // Group stock by product_type_id to show one row per product/size
-                          $groupedPstock = $pstock->groupBy('product_type_id');
-                          $rowIndex = 1;
-                          $prevProductId = 0;
+                          $firstItem = $stageItems->first();
+                          // Calculate total stock across all stages, excluding rejection stock (head_id = 105)
+                          $totalStock = $stageItems->sum(function($item) {
+                            // Exclude rejection stock from total count
+                            if(($item->sthead_id ?? $item->stage_id) == 105) return 0;
+                            return $item->stockIn - $item->stockOut;
+                          });
+                          // Show all products including zero stock
                         @endphp
-                        @foreach($groupedPstock as $productTypeId => $stageItems)
-                          @php
-                            $firstItem = $stageItems->first();
-                            // Calculate total stock across all stages, excluding rejection stock (head_id = 105)
-                            $totalStock = $stageItems->sum(function($item) {
-                              // Exclude rejection stock from total count
-                              if(($item->sthead_id ?? $item->stage_id) == 105) return 0;
-                              return $item->stockIn - $item->stockOut;
-                            });
-                            // Show all products including zero stock
-                          @endphp
-                          <tr>
-                            <td>{{ $rowIndex++ }}</td>
-                            @if($firstItem->product_id == $prevProductId)
-                              <td colspan="2"></td>
+                        <tr>
+                          <td>{{ $rowIndex++ }}</td>
+                          {{-- Article/Name repeated on every row so sorting, searching and export stay correct --}}
+                          <td>{{ $firstItem->article_no }}</td>
+                          <td>{{ $firstItem->name }}</td>
+                          <td>{{ $firstItem->sname }}</td>
+                          <td>
+                            @if($totalStock > 0)
+                              <span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span>
                             @else
-                              <td>{{ $firstItem->article_no }}</td>
-                              <td>{{ $firstItem->name }}</td>
+                              <span class="badge badge-secondary">0 {{ $firstItem->uname }}</span>
                             @endif
-                            <td>{{ $firstItem->sname }}</td>
-                            <td>
-                              @if($totalStock > 0)
-                                <span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span>
-                              @else
-                                <span class="badge badge-secondary">0 {{ $firstItem->uname }}</span>
-                              @endif
-                            </td>
-                            <td>
-                              <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#stageModal{{ $productTypeId }}">
-                                <i class="fas fa-layer-group"></i> View Stages ({{ $stageItems->count() }})
-                              </button>
-                            </td>
-                          </tr>
-                          @php $prevProductId = $firstItem->product_id; @endphp
-                        @endforeach
-                      @endif
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <th>Sr.</th>
-                        <th>Article No</th>
-                        <th>Item / Product</th>
-                        <th>Size</th>
-                        <th>Total Stock</th>
-                        <th>Actions</th>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                          </td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#stageModal{{ $productTypeId }}">
+                              <i class="fas fa-layer-group"></i> View Stages ({{ $stageItems->count() }})
+                            </button>
+                          </td>
+                        </tr>
+                      @endforeach
+                    @endif
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Article No</th>
+                      <th>Item / Product</th>
+                      <th>Size</th>
+                      <th>Total Stock</th>
+                      <th>Actions</th>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
-              {{-- Material Stock --}}
-              <div class="tab-pane fade" id="machine" role="tabpanel" aria-labelledby="machine-tab">      
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped" style="width:100%;">                    
-                    <thead>
+            @else
+              {{-- Material / Machine Material Stock ($stock is already filtered by category) --}}
+              <div class="table-responsive">
+                <table class="table table-sm table-striped" id="tableExport" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Code</th>
+                      <th>Material Name</th>
+                      <th>Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($stock as $item)
                       <tr>
-                        <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material Name</th>
-                        <th>Quantity</th>
+                        <td>{{$loop->iteration}}</td>
+                        <td>{{$item->material_no}}</td>
+                        <td>
+                          {{$item->name}}
+                          @if($item->location)
+                            <sub style="color: #6c757d;">{{$item->location}}</sub>
+                          @endif
+                        </td>
+                        <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      @if($stock->count())
-                        @php $loopIndex = 1; @endphp
-                        @foreach($stock as $item)
-                          @unless($item->material_type_id != 101)
-                          <tr>
-                            <td>{{$loopIndex++}}</td>
-                            <td>{{$item->material_no}}</td>
-                            <td>
-                              {{$item->name}}
-                              @if($item->location)
-                                <sub style="color: #6c757d;">{{$item->location}}</sub>
-                              @endif
-                            </td>
-                            <td>{{number_format($item->total_received + $item->stockIn - $item->stockOut - $item->total_returned)}} {{$item->uname}}</td>
-                          </tr>
-                          @endunless
-                        @endforeach
-                      @endif
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <th>Sr.</th>
-                        <th>Code</th>
-                        <th>Material Name</th>
-                        <th>Quantity</th>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                    @endforeach
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Code</th>
+                      <th>Material Name</th>
+                      <th>Quantity</th>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
-            </div>
+            @endif
           </div>
         </div>
       </div>
