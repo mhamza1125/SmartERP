@@ -23,6 +23,8 @@ use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductMaterialRepository;
 use App\Repositories\PtcStockRepository;
 use App\Exceptions\PtcStockException;
+use App\Http\Requests\PtcIssueRequest;
+use App\Http\Requests\PtcReceiveRequest;
 use App\Http\Requests\PtcReleaseRequest;
 
 class StockController extends Controller
@@ -1884,7 +1886,7 @@ class StockController extends Controller
     /**
      * Store PTC Issuance
      */
-    public function ptcIssueStore(Request $request, $id)
+    public function ptcIssueStore(PtcIssueRequest $request, $id)
     {
         $this->authorize('edit', Stock::class);
 
@@ -1981,7 +1983,7 @@ class StockController extends Controller
     /**
      * Update PTC Issuance
      */
-    public function ptcIssueUpdate(Request $request, $id, $issuanceId)
+    public function ptcIssueUpdate(PtcIssueRequest $request, $id, $issuanceId)
     {
         $this->authorize('edit', Stock::class);
 
@@ -2273,7 +2275,7 @@ class StockController extends Controller
      * Store PTC Receiving against one issuance. Product received goes into this PTC's
      * virtual stock (not general stock) and is capped at what is still outstanding.
      */
-    public function ptcReceiveStore(Request $request, $id)
+    public function ptcReceiveStore(PtcReceiveRequest $request, $id)
     {
         $this->authorize('edit', Stock::class);
 

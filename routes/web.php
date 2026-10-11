@@ -173,7 +173,7 @@ Route::get('/orderEst/{id}', [OrderController::class, 'estimate'])->name('order.
 Route::get('/orderStatus/{id}', [OrderController::class, 'status'])->name('order.status');
 Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
 Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
-Route::get('/orderStatus/{id}/{status}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
+Route::post('/orderStatus/{id}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
 Route::post('/generateJobNumber', [OrderController::class, 'generateJobNumberAjax'])->name('generateJobNumber');
 
 // Delivery
@@ -226,6 +226,7 @@ Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchas
 Route::get('/editPurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
 Route::get('/ajaxPMQty', [PurchaseController::class, 'ajaxPMQty'])->name('ajaxPMQty'); //Material Qty
+Route::get('/ajaxOrderPurchaseItems', [PurchaseController::class, 'ajaxOrderPurchaseItems'])->name('ajaxOrderPurchaseItems'); //Items allowed for an order purchase
 Route::get('/addProductPurchase', [PurchaseController::class, 'create2'])->name('productPurchase.add');
 Route::get('/editProductPurchase/{id}', [PurchaseController::class, 'edit2'])->name('productPurchase.edit');
 Route::get('/pLedger', [PurchaseController::class, 'purchaseLedger'])->name('purchase.ledger');

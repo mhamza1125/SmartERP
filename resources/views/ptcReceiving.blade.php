@@ -63,6 +63,9 @@
                     <label>Receiving Date <span class="text-danger">*</span></label>
                     <input type="date" class="form-control" name="stock_date" required value="{{ date('Y-m-d') }}"
                       @if($issuance ?? false) min="{{ $issuance->stock_date }}" @endif>
+                    <div class="invalid-feedback">
+                      Select the receiving date{{ ($issuance ?? false) ? ' (on or after the issuance date ' . formatDate($issuance->stock_date) . ')' : '' }}
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-3">
@@ -100,6 +103,7 @@
                         @endif
                       </select>
                       <input type="hidden" id="table_name" name="table_name">
+                      <div class="invalid-feedback">Select the employee / contractor received from</div>
                     @endif
                   </div>
                 </div>

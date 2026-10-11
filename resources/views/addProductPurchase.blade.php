@@ -170,5 +170,6 @@
 <script>
   var isProductPurchasePage = false; 
   var ajaxPSUrl = "{{ route('ajaxPS') }}";
+  var ajaxOrderPurchaseItemsUrl = "{{ route('ajaxOrderPurchaseItems') }}";
 </script>
 @endsection

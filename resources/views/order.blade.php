@@ -43,31 +43,29 @@
                         @endif
                       </td> --}}
                       <td>
+                        @php
+                          $statusLabel = \App\Models\Order::STATUS_LABELS[$item->order_status] ?? 'Unknown';
+                          $statusClass = [1 => 'btn-secondary', 2 => 'btn-success', 3 => 'btn-info', 4 => 'btn-primary', 5 => 'btn-danger'][$item->order_status] ?? 'btn-danger';
+                        @endphp
                         <div class="btn-group">
-                            <button class="btn <?php
-                                if($item->order_status == 1){ echo 'btn-secondary'; $status = 'Draft'; }
-                                elseif($item->order_status == 2){ echo 'btn-success'; $status = 'Confirmed'; }
-                                elseif($item->order_status == 3){ echo 'btn-info'; $status = 'Dispatched'; }
-                                elseif($item->order_status == 4){ echo 'btn-primary'; $status = 'Delivered'; }
-                                elseif($item->order_status == 5){ echo 'btn-danger'; $status = 'Cancelled'; }
-                                else{ echo 'btn-danger'; $status = 'Unknown'; }
-                               ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" {{ in_array($item->order_status, [3, 4, 5]) ? 'disabled' : '' }}>
-                              {{$status}}
+                            <button class="btn {{ $statusClass }} btn-sm dropdown-toggle" type="button" data-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" title="Change status">
+                              {{ $statusLabel }}
                             </button>
-                            @if(!in_array($item->order_status, [3, 4, 5]))
-                            <div class="dropdown-menu">
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '1']) }}">Draft</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '2']) }}">Confirmed</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '3']) }}">Dispatched</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '4']) }}">Delivered</a>
-                              <a class="dropdown-item" href="{{ route('order.updateStatus', ['id' => $item->order_id, 'status' => '5']) }}">Cancelled</a>
-                            </div>
-                            @endif
+                            {{-- Status can always be changed; Dispatched / Delivered / Cancelled lock order editing --}}
+                            <form class="dropdown-menu" method="POST" action="{{ route('order.updateStatus', $item->order_id) }}"
+                              onsubmit="return confirm('Change the status of order {{ $item->job_no }}?');">
+                              @csrf
+                              @foreach(\App\Models\Order::STATUS_LABELS as $value => $label)
+                                <button type="submit" name="order_status" value="{{ $value }}"
+                                  class="dropdown-item {{ $item->order_status == $value ? 'active' : '' }}"
+                                  {{ $item->order_status == $value ? 'disabled' : '' }}>{{ $label }}</button>
+                              @endforeach
+                            </form>
                           </div>
                       </td>
                       <td>
                         <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
-                        @if(!in_array($item->order_status, [3, 4, 5]))
+                        @if(\App\Models\Order::isEditableStatus($item->order_status))
                           <a href="{{ route('order.edit', $item->order_id) }}" class="btn btn-primary btn-sm">Edit</a>
                         @else
                           <button class="btn btn-secondary btn-sm" disabled title="Cannot edit Dispatched, Delivered, or Cancelled orders">Edit</button>

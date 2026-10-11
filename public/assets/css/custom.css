@@ -114,3 +114,13 @@
 /* =========================================================================================
 ======================================== Custom CSS ========================================
 ========================================================================================= */
+/* Select2 validation: the native <select> is hidden, so mirror Bootstrap's invalid state
+   on the visible Select2 box (the .invalid-feedback sibling is shown by Bootstrap itself) */
+.was-validated select.form-control:invalid + .select2-container .select2-selection,
+select.form-control.is-invalid + .select2-container .select2-selection {
+    border-color: #dc3545 !important;
+}
+.was-validated select.form-control:invalid + .select2-container--focus .select2-selection,
+.was-validated select.form-control:invalid + .select2-container--open .select2-selection {
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}

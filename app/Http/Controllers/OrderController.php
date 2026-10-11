@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
+use App\Http\Requests\OrderStatusRequest;
 use App\Repositories\BankRepository;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
@@ -416,7 +417,7 @@ class OrderController extends Controller
         $this->authorize('edit', Order::class);
 
         // Prevent editing Dispatched (3), Delivered (4), or Cancelled (5) orders
-        if (in_array($id->order_status, [3, 4, 5])) {
+        if (! Order::isEditableStatus($id->order_status)) {
             return redirect()->route('order.show', $id->order_id)
                 ->with('fails', 'Cannot edit orders with status: Dispatched, Delivered, or Cancelled');
         }
@@ -446,7 +447,7 @@ class OrderController extends Controller
         $currentOrder = Order::findOrFail($id);
 
         // Prevent updating Dispatched (3), Delivered (4), or Cancelled (5) orders
-        if (in_array($currentOrder->order_status, [3, 4, 5])) {
+        if (! Order::isEditableStatus($currentOrder->order_status)) {
             return redirect()->route('order.show', $id)
                 ->with('fails', 'Cannot update orders with status: Dispatched, Delivered, or Cancelled');
         }
@@ -476,22 +477,33 @@ class OrderController extends Controller
         }
     }
 
-    public function updateStatus($id, $status)
+    public function updateStatus(OrderStatusRequest $request, $id)
     {
         $this->authorize('edit', Order::class);
-        // Get current order
-        $currentOrder = Order::findOrFail($id);
-
-        // Prevent status changes for Dispatched (3), Delivered (4), or Cancelled (5) orders
-        if (in_array($currentOrder->order_status, [3, 4, 5])) {
-            return redirect()->route('order')
-                ->with('fails', 'Cannot change status of Dispatched, Delivered, or Cancelled orders');
+        $currentOrder = $this->orderRepository->get($id);
+        if (! $currentOrder) {
+            return redirect()->route('order')->with('fails', 'Order not found');
         }
 
-        $orderStatus = ['order_status' => $status];
-        $this->orderRepository->update($id, $orderStatus);
+        $status = (int) $request->validated()['order_status'];
+        $label = Order::STATUS_LABELS[$status];
+        if ((int) $currentOrder->order_status === $status) {
+            return redirect()->route('order')->with('success', "Order {$currentOrder->job_no} is already {$label}");
+        }
 
-        return redirect()->route('order')->with('success', 'Status Updated Successfully');
+        try {
+            $this->orderRepository->update($id, ['order_status' => $status]);
+        } catch (\Exception $e) {
+            \Log::error('Order status update failed: '.$e->getMessage(), ['order_id' => $id]);
+
+            return redirect()->route('order')->with('fails', 'Could not update the order status. Please try again.');
+        }
+
+        // Dispatched / Delivered / Cancelled orders are locked for editing
+        $message = "Order {$currentOrder->job_no} status changed to {$label}";
+        $message .= Order::isEditableStatus($status) ? '' : ' (order editing is now locked)';
+
+        return redirect()->route('order')->with('success', $message);
     }
 
     public function destroy(Purchase $purchase)

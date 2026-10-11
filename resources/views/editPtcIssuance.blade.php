@@ -39,6 +39,7 @@
                   <div class="form-group">
                     <label>Issuance Date <span class="text-danger">*</span></label>
                     <input type="date" class="form-control" name="stock_date" required value="{{ $issuance->stock_date }}">
+                    <div class="invalid-feedback">Select the issuance date</div>
                   </div>
                 </div>
                 <div class="col-md-3">
@@ -49,6 +50,7 @@
                         <option value="{{ $stage->head_id }}" {{ $issuance->issue_for == $stage->head_id ? 'selected' : '' }}>{{ $stage->name }}</option>
                       @endforeach
                     </select>
+                    <div class="invalid-feedback">Select the stage to issue for</div>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -72,6 +74,7 @@
                       @endif
                     </select>
                     <input type="hidden" id="table_name" name="table_name" value="{{ $issuance->table_name }}">
+                    <div class="invalid-feedback">Select the employee / contractor to issue to</div>
                   </div>
                 </div>
               </div>

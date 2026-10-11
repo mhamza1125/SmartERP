@@ -20,8 +20,8 @@
             --row-alt:   #fafbfc;
             --sans:      "Arial", "Helvetica Neue", Helvetica, sans-serif;
             --mono:      "Courier New", Courier, monospace;
-            --header-h:  22mm;
-            --footer-h:  12mm;
+            --header-h:  20mm;
+            --footer-h:  15mm;
         }
 
         /* ── 1. Reset & color accuracy ─────────────────────────────────── */
@@ -53,7 +53,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 4mm 14mm 3mm;
+            padding: 3mm 14mm 2.5mm;
         }
 
         .doc-header__logo {
@@ -71,28 +71,47 @@
         .doc-footer {
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            height: var(--footer-h);
+            width: 100%;
             background: var(--accent);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0 14mm;
+            padding: 2mm 14mm;
             z-index: 1000;
         }
 
-        .doc-footer__line {
+        .doc-footer__address {
             font-size: 9px;
-            color: #fff;
             font-weight: 700;
+            color: #fff;
             text-align: center;
             line-height: 1.6;
         }
 
+        .doc-footer__contacts {
+            display: flex;
+            margin-top: 1mm;
+            padding-top: 1mm;
+            border-top: 1px solid rgba(255, 255, 255, 0.35);
+            font-size: 9px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .doc-footer__contacts span             { flex: 1; text-align: center; white-space: nowrap; }
+        .doc-footer__contacts span:first-child { text-align: left; }
+        .doc-footer__contacts span:last-child  { text-align: right; }
+        .doc-footer__contacts span:only-child  { text-align: center; }
+
         /* ── 6. Content area ─────────────────────────────────────────────── */
         .doc-body {
-            padding: 14mm 14mm 10mm;
+            padding: 5mm 14mm 8mm;
         }
+
+        /* Page frame: thead/tfoot spacers repeat on every printed page so
+           content never runs under the fixed header/footer on page 2+. */
+        .page-frame                { width: 100%; border-collapse: collapse; }
+        .page-frame > * > tr > td  { padding: 0; }
+        .page-frame__header-space  { height: calc(var(--header-h) + 3mm); }
+        .page-frame__footer-space  { height: var(--footer-h); }
 
         /* ── 7. Meta band ────────────────────────────────────────────────── */
         .meta-band {
@@ -564,9 +583,7 @@
         /* ── 20. @media print ───────────────────────────────────────────── */
         @media print {
             body {
-                padding-top:    var(--header-h)  !important;
                 padding-right:  14mm             !important;
-                padding-bottom: var(--footer-h)  !important;
                 padding-left:   14mm             !important;
                 background: #fff !important;
                 -webkit-print-color-adjust: exact;
@@ -597,6 +614,9 @@
             .doc-header,
             .doc-footer { position: relative; }
 
+            .page-frame__header-space,
+            .page-frame__footer-space { display: none; }
+
             .doc-body {
                 max-width: 210mm;
                 margin: 0 auto;
@@ -615,23 +635,31 @@
         @include('print.header')
     </header>
 
-    <main class="doc-body">
-        @yield('content')
-    </main>
+    <table class="page-frame">
+        <thead><tr><td><div class="page-frame__header-space"></div></td></tr></thead>
+        <tbody><tr><td>
+            <main class="doc-body">
+                @yield('content')
+            </main>
+        </td></tr></tbody>
+        <tfoot><tr><td><div class="page-frame__footer-space"></div></td></tr></tfoot>
+    </table>
 
     <footer class="doc-footer">
         @include('print.footer')
     </footer>
 
     <script>
-        function applyHeaderHeight() {
+        function applyChromeHeights() {
+            var root = document.documentElement.style;
             var h = document.querySelector('.doc-header');
-            if (h) {
-                document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
-            }
+            var f = document.querySelector('.doc-footer');
+            if (h) root.setProperty('--header-h', h.offsetHeight + 'px');
+            if (f) root.setProperty('--footer-h', f.offsetHeight + 'px');
         }
-        window.addEventListener('load', applyHeaderHeight);
-        setTimeout(applyHeaderHeight, 600);
+        window.addEventListener('load', applyChromeHeights);
+        window.addEventListener('beforeprint', applyChromeHeights);
+        setTimeout(applyChromeHeights, 600);
     </script>
 
     @stack('scripts')

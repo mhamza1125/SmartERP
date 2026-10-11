@@ -11,6 +11,32 @@ class Order extends Model
 
     protected $primaryKey = 'order_id';
 
+    const STATUS_DRAFT = 1;
+    const STATUS_CONFIRMED = 2;
+    const STATUS_DISPATCHED = 3;
+    const STATUS_DELIVERED = 4;
+    const STATUS_CANCELLED = 5;
+
+    const STATUS_LABELS = [
+        self::STATUS_DRAFT => 'Draft',
+        self::STATUS_CONFIRMED => 'Confirmed',
+        self::STATUS_DISPATCHED => 'Dispatched',
+        self::STATUS_DELIVERED => 'Delivered',
+        self::STATUS_CANCELLED => 'Cancelled',
+    ];
+
+    // Orders in these statuses cannot be edited (the status itself can still be changed)
+    const LOCKED_STATUSES = [
+        self::STATUS_DISPATCHED,
+        self::STATUS_DELIVERED,
+        self::STATUS_CANCELLED,
+    ];
+
+    public static function isEditableStatus($status): bool
+    {
+        return ! in_array((int) $status, self::LOCKED_STATUSES, true);
+    }
+
     protected $fillable = [
         'order_no',
         'job_no',

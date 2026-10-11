@@ -26,9 +26,42 @@ $(document).ready(function () {
 
 // Start - Confirm Form Submission
 function submits() {
+    // An invalid .needs-validation form will not submit: skip the confirm and let the
+    // validation handler show the errors instead
+    var target = window.event ? window.event.target : null;
+    var form = target && target.closest ? target.closest('form') : null;
+    if (form && form.classList.contains('needs-validation') && !form.checkValidity()) {
+        return true;
+    }
     return confirm('Are you sure you want to submit?');
 }
 // End - Confirm Form Submission
+
+// Start - Validation Focus
+// Bring the first invalid field into view. Select2 hides the native <select>,
+// so the browser cannot focus it; focus the visible Select2 box instead.
+$(document).ready(function () {
+    $('.needs-validation').on('submit', function () {
+        if (this.checkValidity()) return;
+
+        var $field = $(this).find('input, select, textarea').filter(function () {
+            return !this.validity.valid;
+        }).first();
+        if (!$field.length) return;
+
+        var $select2 = $field.hasClass('select2-hidden-accessible') ? $field.next('.select2-container') : $();
+        var $visible = $select2.length ? $select2 : $field;
+        if ($visible[0] && $visible[0].scrollIntoView) {
+            $visible[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if ($select2.length) {
+            $select2.find('.select2-selection').trigger('focus');
+        } else {
+            $field.trigger('focus');
+        }
+    });
+});
+// End - Validation Focus
 
 // Start - Shortcut Keys
 $(document).ready(function () {
@@ -411,6 +444,97 @@ $(document).ready(function () {
 });
 
 
+// Start - Order Purchase Item Filter
+// A purchase against an order may only use that order's products / materials.
+// "Default Purchase" (order 0) keeps the full list. Quantities are never limited here.
+function initOrderPurchaseFilter(settings) {
+    if (typeof ajaxOrderPurchaseItemsUrl === 'undefined') return;
+
+    var $order = $('#order_id');
+    var $item = $(settings.itemSelect);
+    var allOptions = $item.find('option').clone();
+    var requestNo = 0;
+
+    // allowed = null restores the full list
+    function rebuildOptions(allowed) {
+        $item.empty();
+        allOptions.each(function () {
+            var value = $(this).val();
+            if (!value || allowed === null || allowed.indexOf(value) !== -1) {
+                $item.append($(this).clone());
+            }
+        });
+        if (allowed !== null && allowed.length === 0) {
+            $item.find('option[value=""]').text(settings.emptyText);
+        }
+        $item.val('').trigger('change.select2');
+        settings.onReset();
+    }
+
+    // Rows added for a previous order that the new order does not allow
+    function removeDisallowedRows(allowed) {
+        var removed = [];
+        $('#items-table tbody tr').each(function () {
+            var id = $(this).find('input[name="' + settings.rowInput + '"]').val();
+            if (id !== undefined && allowed.indexOf(String(id)) === -1) {
+                removed.push($(this).find('td:eq(1)').text().trim());
+                $(this).remove();
+            }
+        });
+        if (removed.length) {
+            settings.onRowsRemoved();
+            iziToast.warning({
+                title: 'Removed',
+                message: 'Not part of the selected order: ' + removed.join(', '),
+                position: 'topRight'
+            });
+        }
+    }
+
+    function applyOrder(removeRows) {
+        var orderId = $order.val();
+        var current = ++requestNo;
+
+        if (!orderId || orderId === '0') {
+            $item.prop('disabled', false);
+            rebuildOptions(null);
+            return;
+        }
+
+        $item.prop('disabled', true);
+        $.ajax({
+            url: ajaxOrderPurchaseItemsUrl,
+            type: 'GET',
+            data: { orderId: orderId, type: settings.type },
+            dataType: 'json',
+            success: function (response) {
+                if (current !== requestNo) return;
+                var allowed = (response.data || []).map(String);
+                rebuildOptions(allowed);
+                if (removeRows) removeDisallowedRows(allowed);
+            },
+            error: function () {
+                if (current !== requestNo) return;
+                iziToast.error({
+                    title: 'Error!',
+                    message: 'Could not load the items of the selected order.',
+                    position: 'topRight'
+                });
+            },
+            complete: function () {
+                if (current === requestNo) $item.prop('disabled', false);
+            }
+        });
+    }
+
+    $order.on('change', function () {
+        applyOrder(true);
+    });
+    // Order pre-selected (e.g. old input after a failed submit)
+    if ($order.val() && $order.val() !== '0') applyOrder(false);
+}
+// End - Order Purchase Item Filter
+
 // Start - Purchase Script
 $(document).ready(function () {
     if (typeof isPurchasePage !== 'undefined') {
@@ -442,6 +566,21 @@ $(document).ready(function () {
 
         $('#material_id').on('change', fetchMaterialQty);
         $('#order_id').on('change', fetchMaterialQty);
+
+        initOrderPurchaseFilter({
+            type: 'material',
+            itemSelect: '#material_id',
+            rowInput: 'material_id[]',
+            emptyText: 'No materials linked to this order',
+            onReset: function () {
+                $('#materialQty').val('0');
+                $('#addBtn').prop('disabled', true);
+            },
+            onRowsRemoved: function () {
+                updateSrNumbers();
+                updateGrandTotal();
+            }
+        });
 
         // Function to check if all three fields have data
         function checkFields() {
@@ -722,6 +861,21 @@ $(document).ready(function () {
                     initializeSelect2();
                 },
             });
+        });
+
+        initOrderPurchaseFilter({
+            type: 'product',
+            itemSelect: '#product_type_id',
+            rowInput: 'product_type_id[]',
+            emptyText: 'No products in this order',
+            onReset: function () {
+                $('#stage_id').empty().append('<option value="" disabled>Select Product Stage</option>').trigger('change.select2');
+                $('#addBtn').prop('disabled', true);
+            },
+            onRowsRemoved: function () {
+                updateSrNumbers();
+                updateGrandTotal();
+            }
         });
 
         // Function to check if all three fields have data

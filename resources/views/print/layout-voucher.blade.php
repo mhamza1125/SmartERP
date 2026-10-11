@@ -20,8 +20,8 @@
             --row-alt:   #fafbfc;
             --sans:      "Arial", "Helvetica Neue", Helvetica, sans-serif;
             --mono:      "Courier New", Courier, monospace;
-            --header-h:  26mm;
-            --footer-h:  10mm;
+            --header-h:  18mm;
+            --footer-h:  14mm;
         }
 
         /* ── 1. Reset ───────────────────────────────────────────────────── */
@@ -68,28 +68,47 @@
         .doc-footer {
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            height: var(--footer-h);
+            width: 100%;
             background: var(--accent);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0 12mm;
+            padding: 1.5mm 12mm;
             z-index: 1000;
         }
 
-        .doc-footer__line {
+        .doc-footer__address {
             font-size: 8.5px;
-            color: #fff;
             font-weight: 700;
+            color: #fff;
             text-align: center;
             line-height: 1.5;
         }
 
+        .doc-footer__contacts {
+            display: flex;
+            margin-top: 1mm;
+            padding-top: 1mm;
+            border-top: 1px solid rgba(255, 255, 255, 0.35);
+            font-size: 8.5px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .doc-footer__contacts span             { flex: 1; text-align: center; white-space: nowrap; }
+        .doc-footer__contacts span:first-child { text-align: left; }
+        .doc-footer__contacts span:last-child  { text-align: right; }
+        .doc-footer__contacts span:only-child  { text-align: center; }
+
         /* ── 6. Voucher container ────────────────────────────────────────── */
         .doc-body {
-            padding: 8mm 12mm 8mm;
+            padding: 4mm 12mm 6mm;
         }
+
+        /* Page frame: thead/tfoot spacers repeat on every printed page so
+           content never runs under the fixed header/footer on page 2+. */
+        .page-frame                { width: 100%; border-collapse: collapse; }
+        .page-frame > * > tr > td  { padding: 0; }
+        .page-frame__header-space  { height: calc(var(--header-h) + 3mm); }
+        .page-frame__footer-space  { height: var(--footer-h); }
 
         .voucher-container {
             border: 1.5px solid var(--ink);
@@ -342,9 +361,7 @@
         /* ── 16. @media print ────────────────────────────────────────────── */
         @media print {
             body {
-                padding-top:    var(--header-h)  !important;
                 padding-right:  12mm             !important;
-                padding-bottom: var(--footer-h)  !important;
                 padding-left:   12mm             !important;
                 background: #fff !important;
                 -webkit-print-color-adjust: exact;
@@ -370,6 +387,9 @@
             .doc-header,
             .doc-footer { position: relative; }
 
+            .page-frame__header-space,
+            .page-frame__footer-space { display: none; }
+
             .doc-body {
                 max-width: 210mm;
                 margin: 0 auto;
@@ -388,25 +408,33 @@
         @include('print.header')
     </header>
 
-    <main class="doc-body">
-        <div class="voucher-container">
-            @yield('content')
-        </div>
-    </main>
+    <table class="page-frame">
+        <thead><tr><td><div class="page-frame__header-space"></div></td></tr></thead>
+        <tbody><tr><td>
+            <main class="doc-body">
+                <div class="voucher-container">
+                    @yield('content')
+                </div>
+            </main>
+        </td></tr></tbody>
+        <tfoot><tr><td><div class="page-frame__footer-space"></div></td></tr></tfoot>
+    </table>
 
     <footer class="doc-footer">
         @include('print.footer')
     </footer>
 
     <script>
-        function applyHeaderHeight() {
+        function applyChromeHeights() {
+            var root = document.documentElement.style;
             var h = document.querySelector('.doc-header');
-            if (h) {
-                document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
-            }
+            var f = document.querySelector('.doc-footer');
+            if (h) root.setProperty('--header-h', h.offsetHeight + 'px');
+            if (f) root.setProperty('--footer-h', f.offsetHeight + 'px');
         }
-        window.addEventListener('load', applyHeaderHeight);
-        setTimeout(applyHeaderHeight, 600);
+        window.addEventListener('load', applyChromeHeights);
+        window.addEventListener('beforeprint', applyChromeHeights);
+        setTimeout(applyChromeHeights, 600);
     </script>
 
     @stack('scripts')

@@ -162,5 +162,6 @@
 <script>
   var isPurchasePage = false;
   var ajaxPMQtyUrl = "{{ route('ajaxPMQty') }}";
+  var ajaxOrderPurchaseItemsUrl = "{{ route('ajaxOrderPurchaseItems') }}";
 </script>
 @endsection

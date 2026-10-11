@@ -6,6 +6,7 @@ use App\Models\Purchase;
 use Illuminate\Http\Request;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\OrderItemRepository;
 use App\Http\Requests\PurchaseRequest;
 use App\Repositories\VendorRepository;
 use App\Repositories\ProductRepository;
@@ -38,6 +39,8 @@ class PurchaseController extends Controller
 
     protected $receiveMaterialRepository;
 
+    protected $orderItemRepository;
+
     public function __construct(
         ProductRepository $productRepository,
         OrderRepository $orderRepository,
@@ -49,6 +52,7 @@ class PurchaseController extends Controller
         PurchaseItemRepository $purchaseItemRepository,
         ReturnMaterialRepository $returnMaterialRepository,
         ReceiveMaterialRepository $receiveMaterialRepository,
+        OrderItemRepository $orderItemRepository,
     ) {
         $this->middleware(['auth', 'all']);
         $this->productRepository = $productRepository;
@@ -61,6 +65,7 @@ class PurchaseController extends Controller
         $this->purchaseItemRepository = $purchaseItemRepository;
         $this->returnMaterialRepository = $returnMaterialRepository;
         $this->receiveMaterialRepository = $receiveMaterialRepository;
+        $this->orderItemRepository = $orderItemRepository;
     }
 
     public function index()
@@ -81,6 +86,18 @@ class PurchaseController extends Controller
         $estimate = $this->purchaseItemRepository->estimateMaterial($orderId, $materialId);
 
         return response()->json(['data' => $estimate]);
+    }
+
+    public function ajaxOrderPurchaseItems(Request $request)
+    {
+        // Ajax: material / product ids that may be purchased against an order
+        $this->authorize('create', Purchase::class);
+        $orderId = (int) $request->input('orderId');
+        $ids = $request->input('type') === 'product'
+            ? $this->orderItemRepository->purchasableProductTypeIds($orderId)
+            : $this->orderItemRepository->purchasableMaterialIds($orderId);
+
+        return response()->json(['success' => true, 'message' => '', 'data' => $ids]);
     }
 
     // This is for Material Purchase

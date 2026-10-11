@@ -201,6 +201,36 @@ class OrderItemRepository implements GlobalInterface
         return $return;
     }
 
+    public function purchasableProductTypeIds($orderId)
+    {
+        // Product purchase against an order: the order's products plus their component products
+        $orderProductTypeIds = OrderItem::where('order_id', $orderId)->pluck('product_type_id');
+
+        $componentProductTypeIds = DB::table('product_materials')
+            ->whereIn('product_type_id', $orderProductTypeIds)
+            ->where('component_type', 'product')
+            ->whereNotNull('component_product_type_id')
+            ->pluck('component_product_type_id');
+
+        return $orderProductTypeIds->merge($componentProductTypeIds)
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+    }
+
+    public function purchasableMaterialIds($orderId)
+    {
+        // Material purchase against an order: materials used by the order's products (each once)
+        return OrderItem::where('order_items.order_id', $orderId)
+            ->join('product_materials', 'product_materials.product_type_id', '=', 'order_items.product_type_id')
+            ->where('product_materials.component_type', 'material')
+            ->whereNotNull('product_materials.material_id')
+            ->distinct()
+            ->pluck('product_materials.material_id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+    }
+
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();
