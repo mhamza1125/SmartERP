@@ -90,7 +90,7 @@
                     @foreach($stages as $index => $stage)
                       <div class="badge {{ $index == 0 ? 'badge-primary' : 'badge-secondary' }} mr-2 mb-2 p-2">
                         {{ $index + 1 }}. {{ $stage->name }}
-                        @if($index == 0) <small>(Start)</small> @endif
+                        @if($index == 0) <small>(Start stock)</small> @endif
                         @if($index == count($stages) - 1) <small>(End)</small> @endif
                       </div>
                       @if($index < count($stages) - 1)
@@ -102,7 +102,14 @@
               </div>
 
               <hr>
-              <h5>Issue Items for First Stage: {{ $startStage->name }}</h5>
+              {{-- The start stage is the stock the PTC starts from; the first issuance is for the stage after it --}}
+              @php $firstWorkStage = $stages->get(1) ?? $startStage; @endphp
+              <h5>
+                Initial Issuance:
+                <span class="badge badge-primary">{{ $startStage->name }}</span> stock
+                <i class="fas fa-long-arrow-alt-right text-muted mx-1"></i>
+                issued for <span class="badge badge-success">{{ $firstWorkStage->name }}</span>
+              </h5>
 
               <div class="row">
                 <div class="col-md-5">
@@ -227,7 +234,7 @@
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">
-                    <label>Product Stage</label>
+                    <label>Product Stage <small class="text-muted">(issued from, normally {{ $startStage->name }})</small></label>
                     <select class="form-control select2" name="stage_id" id="stage_id" multiple>
                       <option value="" disabled>Select Stage</option>
                       @foreach($stagesAll as $stage)

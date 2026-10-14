@@ -78,27 +78,17 @@
                 <th style="width: 4%">Sr.</th>
                 <th style="width: 18%">Reference</th>
                 <th style="width: 12%">Type</th>
-                <th style="width: 18%">Stage</th>
+                <th style="width: 18%">Stage (From &rarr; To)</th>
                 <th style="width: 12%">Avg Qty</th>
                 <th style="width: 12%">Date</th>
-                <th style="width: 24%">By</th>
+                <th style="width: 24%">Issued To / Received From</th>
             </tr>
         </thead>
         <tbody>
-            @php
-                // Issuance numbers by creation order (initial issuance = I001)
-                $issuanceSeqMap = $issuanceSeq->all();
-            @endphp
             @foreach($movements as $index => $movement)
                 @php
-                    if ($movement->is_ptc_master == 1) {
-                        $displayRef = 'PTC-' . $ptc->stock_no . ' / I001';
-                    } elseif ($movement->stock_type == 2) {
-                        $issSeq = $issuanceSeqMap[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
-                        $displayRef = 'PTC-' . $ptc->stock_no . ' / I' . $issSeq;
-                    } else {
-                        $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
-                    }
+                    // I{seq} / R{n}-I{seq} / REL{n}, numbered the same way as the PTC page
+                    $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . ($ptcRefs[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no));
 
                     // Calculate average quantity for issuances and receivings
                     $avgQty = '-';
@@ -159,13 +149,11 @@
                         @endif
                     </td>
                     <td>
-                        @if($movement->stock_type == 1)
-                            {{-- For receives: show the stage from which materials were received --}}
-                            {{ $movement->stage_name ?? 'N/A' }}
-                        @else
-                            {{-- For issues (including initial issuance): show the stage for which materials were issued --}}
-                            {{ $movement->issue_stage_name ?? 'N/A' }}
-                        @endif
+                        {{-- From -> To, same as the PTC page's Stage Movement column --}}
+                        @php $move = $stageMoves[$movement->stock_id] ?? ['from' => [], 'to' => []]; @endphp
+                        {{ collect($move['from'])->pluck('label')->unique()->implode(', ') ?: 'N/A' }}
+                        &rarr;
+                        {{ collect($move['to'])->pluck('label')->unique()->implode(', ') ?: 'N/A' }}
                     </td>
                     <td class="text-center">{{ $avgQty }}</td>
                     <td class="text-center">{{ $movement->stock_date ? \Carbon\Carbon::parse($movement->stock_date)->format('d-m-Y') : 'N/A' }}</td>

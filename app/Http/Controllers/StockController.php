@@ -1215,11 +1215,12 @@ class StockController extends Controller
         $startIndex = array_search($startStageId, $stageIds);
         $endIndex = array_search($endStageId, $stageIds);
 
-        // Determine next stage
-        $nextStageId = null;
-        if ($startIndex !== false && $startIndex < $endIndex) {
-            $nextStageId = $stageIds[$startIndex + 1] ?? null;
-        }
+        // The start stage is the stock the PTC starts from, not a work stage: the initial
+        // issuance is for the stage after it (Stage 1 stock -> issued for Stage 2), which
+        // becomes the current stage. A single-stage PTC (start = end) works at that stage.
+        $firstWorkIndex = ($startIndex !== false && $startIndex < $endIndex) ? $startIndex + 1 : $startIndex;
+        $firstWorkStageId = $firstWorkIndex !== false ? ($stageIds[$firstWorkIndex] ?? $startStageId) : $startStageId;
+        $nextStageId = ($firstWorkIndex !== false && $firstWorkIndex < $endIndex) ? ($stageIds[$firstWorkIndex + 1] ?? null) : null;
 
         // Create PTC master record
         // Store product_quantity in description with format [QTY:X]
@@ -1235,10 +1236,11 @@ class StockController extends Controller
             'stock_date' => $request->input('stock_date'),
             'stock_status' => Stock::STATUS_PTC_IN_PROGRESS,
             'is_ptc_master' => 1,
-            'current_stage_id' => $startStageId,
+            'current_stage_id' => $firstWorkStageId,
+            'start_stage_id' => $startStageId,
             'next_stage_id' => $nextStageId,
             'end_stage_id' => $endStageId,
-            'issue_for' => $startStageId,
+            'issue_for' => $firstWorkStageId,
             'description' => $description,
             'created_by' => auth()->id(),
         ];
@@ -1501,6 +1503,8 @@ class StockController extends Controller
         return view('ptcInfo', [
             'finishBlockers' => $this->ptcStockRepository->closeBlockers($id),
             'issuanceSeq' => $issuanceSeq,
+            'ptcRefs' => $this->ptcStockRepository->references($id),
+            'stageMoves' => $this->ptcStockRepository->movementStages($id),
             'balances' => $balances,
             'stageSummary' => $stageSummary,
             'virtualStock' => $virtualStock,
@@ -1607,6 +1611,8 @@ class StockController extends Controller
 
         return view('print.ptc', [
             'issuanceSeq' => $this->ptcStockRepository->issuances($id)->pluck('seq_no', 'stock_id'),
+            'ptcRefs' => $this->ptcStockRepository->references($id),
+            'stageMoves' => $this->ptcStockRepository->movementStages($id),
             'ptc' => $ptc,
             'product' => $product,
             'movements' => $movements,
@@ -1728,7 +1734,8 @@ class StockController extends Controller
         $items['quantity'] = $items['quantity'] ?? [];
         foreach ($items['quantity'] as $key => $quantity) {
             $items['product_type_id'][$key] = ($items['product_type_id'][$key] ?? 0) ?: $ptcProductTypeId;
-            $items['stage_id'][$key] = ($items['stage_id'][$key] ?? 0) ?: $ptc->issue_for;
+            // Lines without a stage were stored at the start stage (see ptcStore)
+            $items['stage_id'][$key] = ($items['stage_id'][$key] ?? 0) ?: ($ptc->start_stage_id ?: $ptc->issue_for);
             $items['material_id'][$key] = $items['material_id'][$key] ?? 0;
             $items['component_id'][$key] = ($items['component_id'][$key] ?? null) ?: null;
         }
@@ -1867,7 +1874,17 @@ class StockController extends Controller
             ->orderBy('stocks.stock_date', 'desc')
             ->get();
 
+        // Issuing from a stage of this PTC's stock ("Transfer to Stage") or from the current
+        // stage; Issue For defaults to the next stage in the product's sequence
+        $fromStageId = request('source') === 'ptc' && (int) request('stage') ? (int) request('stage') : $ptc->current_stage_id;
+
         return view('ptcIssuance', [
+            'fromStageId' => $fromStageId,
+            'defaultIssueFor' => $this->ptcStockRepository->nextStageId($ptc, $stages, $fromStageId),
+            'endStageId' => $this->ptcStockRepository->endStageId($ptc, $stages),
+            'issueStages' => $this->ptcStockRepository->issueStages($ptc, $stages),
+            'issuanceSeq' => $this->ptcStockRepository->issuances($id)->pluck('seq_no', 'stock_id'),
+            'stageMoves' => $this->ptcStockRepository->movementStages($id),
             'virtualStock' => $this->ptcStockRepository->virtualStock($id)->filter(fn ($row) => $row->available > 0)->values(),
             'ptc' => $ptcWithData,
             'ptcItems' => $ptcItems,
@@ -1972,9 +1989,11 @@ class StockController extends Controller
         return view('editPtcIssuance', [
             'ptc' => $ptcWithData,
             'issuance' => $issuance,
+            'issuanceRef' => $this->ptcStockRepository->references($id)[$issuanceId] ?? null,
             'issuanceItems' => $issuanceItems,
             'product' => $product,
-            'stages' => $stages,
+            // Only this PTC's own stages (start..end) can be issued for
+            'stages' => $this->ptcStockRepository->issueStages($ptc, $stages),
             'employees' => $employees,
             'vendors' => $vendors,
         ]);
@@ -2265,8 +2284,10 @@ class StockController extends Controller
             'issuedComponents' => $issuedComponents,
             'issuance' => $issuance,
             'issuanceSeqNo' => $balance['seq_no'],
+            'ptcRefs' => $this->ptcStockRepository->references($id),
+            'stageMoves' => $this->ptcStockRepository->movementStages($id),
             'balance' => $balance,
-            // Receipts are recorded at the stage this issuance was made for
+            // Product issued for Stage N is received into Stage N
             'receiveStageId' => $issuance->issue_for ?: $ptc->current_stage_id,
         ]);
     }

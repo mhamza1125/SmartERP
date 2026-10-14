@@ -2668,6 +2668,35 @@ $(document).ready(function () {
             }
         }
 
+        // Fill the receive stage list. PTC receiving lists only the expected stage (the one
+        // after the stage issued for) and Rejected, unless "Show all" is ticked.
+        var receiveStages = [];
+        function fillReceiveStages(keepStageId) {
+            var allowedStages = typeof ptcReceiveAllowedStages !== 'undefined' && !$('#r_show_all_stages').is(':checked')
+                ? ptcReceiveAllowedStages : null;
+            $('#r_stage_id').empty().append('<option disabled selected>Select Stage</option>');
+            receiveStages.forEach(function (item) {
+                if (!allowedStages || allowedStages.indexOf(String(item.head_id)) !== -1) {
+                    $('#r_stage_id').append(new Option(item.name, item.head_id));
+                }
+            });
+            // Add Rejected option for product receiving (head_id=105)
+            $('#r_stage_id').append('<option value="105">Rejected</option>');
+            // Keep the current choice if still listed, else the PTC receiving default
+            var preselectStage = keepStageId || (typeof ptcReceiveStageId !== 'undefined' ? ptcReceiveStageId : '');
+            if (preselectStage && $('#r_stage_id option[value="' + preselectStage + '"]').length) {
+                $('#r_stage_id').val(preselectStage);
+            } else if (typeof ptcReceiveStageId !== 'undefined' && $('#r_stage_id option[value="' + ptcReceiveStageId + '"]').length) {
+                $('#r_stage_id').val(ptcReceiveStageId);
+            }
+            initializeSelect2();
+            $('#r_stage_id').trigger('change');
+        }
+
+        $('#r_show_all_stages').on('change', function () {
+            fillReceiveStages($('#r_stage_id').val());
+        });
+
         // Product type change - load stages and costs
         $('#r_product_type_id').on('change select2:select', function () {
             var productId = $(this).val();
@@ -2678,13 +2707,8 @@ $(document).ready(function () {
                 data: { productId: productId },
                 dataType: "json",
                 success: function (response) {
-                    $('#r_stage_id').empty().append('<option disabled selected>Select Stage</option>');
-                    response.data.forEach(function (item) {
-                        $('#r_stage_id').append(new Option(item.name, item.head_id));
-                    });
-                    // Add Rejected option for product receiving (head_id=105)
-                    $('#r_stage_id').append('<option value="105">Rejected</option>');
-                    initializeSelect2();
+                    receiveStages = response.data;
+                    fillReceiveStages();
                 },
             });
             // Load costs
@@ -2811,6 +2835,12 @@ $(document).ready(function () {
             $('#receive-table tbody tr').each(function (index) {
                 $(this).find('td:first').text(index + 1);
             });
+        }
+
+        // PTC receiving: preselect the first product still to be received (loads its stages and work logs)
+        if (typeof ptcReceivePreselectProduct !== 'undefined' && ptcReceivePreselectProduct
+            && $('#r_product_type_id option[value="' + ptcReceivePreselectProduct + '"]').length) {
+            $('#r_product_type_id').val(ptcReceivePreselectProduct).trigger('change');
         }
     }
 });

@@ -129,6 +129,7 @@
                 'completed' => ['badge-success', 'fa-check', 'Completed'],
                 'partial' => ['badge-warning', 'fa-adjust', 'Partially received'],
                 'in_progress' => ['badge-info', 'fa-hourglass-half', 'Issued, not received'],
+                'start' => ['badge-light border', 'fa-box', 'Starting stock'],
                 'not_started' => ['badge-secondary', 'fa-minus', $ptc->stock_status != 6 ? 'Not processed' : 'Not started'],
                 'outside' => ['badge-light', 'fa-minus', 'Not in this PTC'],
               ];
@@ -193,8 +194,14 @@
                       <td class="text-right">{{ $vs->released + 0 }}</td>
                       <td class="text-right"><strong>{{ $vs->available + 0 }}</strong></td>
                       <td>
+                        @php
+                          // Stock at the PTC's end stage (or later) has no stage left to be transferred to
+                          $stockStageIndex = $stages->values()->search(fn ($stage) => $stage->head_id == $vs->stage_id);
+                          $endStageIndex = $stages->values()->search(fn ($stage) => $stage->head_id == optional($stageSummary['end_stage'])->head_id);
+                          $canTransfer = $stockStageIndex === false || $endStageIndex === false || $stockStageIndex < $endStageIndex;
+                        @endphp
                         @if($vs->available > 0)
-                          @if($ptc->stock_status == 6)
+                          @if($ptc->stock_status == 6 && $canTransfer)
                             <a href="{{ route('ptc.issue.form', ['id' => $ptc->stock_id, 'source' => 'ptc', 'stage' => $vs->stage_id]) }}" class="btn btn-sm btn-primary">
                               <i class="fas fa-arrow-right"></i> Transfer to Stage
                             </a>
@@ -276,12 +283,12 @@
                 <thead class="thead-light">
                   <tr>
                     <th>Sr.</th>
-                    <th>Issuance Reference</th>
-                    <th>For Stage</th>
+                    <th>Issuance No.</th>
+                    <th>Stage Movement <small class="text-muted d-block">Issued From &rarr; Issued For</small></th>
                     <th>Date</th>
                     <th>Issued To</th>
-                    <th class="text-right">Product Issued</th>
-                    <th class="text-right">Received</th>
+                    <th class="text-right">Product Qty Issued</th>
+                    <th class="text-right">Product Qty Received</th>
                     <th class="text-right">Outstanding</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -304,7 +311,7 @@
                           <span class="badge badge-info">Initial</span>
                         @endif
                       </td>
-                      <td><span class="badge badge-primary">{{ $issuance->stage_name ?? 'N/A' }}</span></td>
+                      <td>@include('ptcStageMove', ['move' => $stageMoves[$issuance->stock_id] ?? null])</td>
                       <td>{{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }}</td>
                       <td>{{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}</td>
                       <td class="text-right">{{ $balance ? collect($balance['products'])->sum('issued') + 0 : '-' }}</td>
@@ -367,30 +374,17 @@
                       <th>Sr.</th>
                       <th>Reference</th>
                       <th>Type</th>
-                      <th>Stage</th>
+                      <th>Stage Movement <small class="text-muted d-block">From &rarr; To</small></th>
                       <th>Date</th>
-                      <th>By</th>
+                      <th>Issued To / Received From</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @php
-                      // Map of issuance stock_ids to their sequence numbers (creation order)
-                      $issuanceSeqMap = $issuanceSeq->all();
-                    @endphp
                     @foreach($movements as $index => $movement)
                       @php
-                        // Format display reference based on type
-                        if ($movement->is_ptc_master == 1) {
-                          $displayRef = 'PTC-' . $ptc->stock_no . ' / I001';
-                        } elseif ($movement->stock_type == 2) {
-                          // Issuance - find sequence from map
-                          $issSeq = $issuanceSeqMap[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
-                          $displayRef = 'PTC-' . $ptc->stock_no . ' / I' . $issSeq;
-                        } else {
-                          // Receiving - use stored format directly (R{n}-I{seq})
-                          $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
-                        }
+                        // I{seq} / R{n}-I{seq} / REL{n}, numbered the same way as the Issuance Records
+                        $displayRef = 'PTC-' . $ptc->stock_no . ' / ' . ($ptcRefs[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no));
                       @endphp
                       <tr>
                         <td>{{ $index + 1 }}</td>
@@ -406,13 +400,7 @@
                             <span class="badge badge-primary">Issue</span>
                           @endif
                         </td>
-                        <td>
-                          @if($movement->stock_type == 1)
-                            {{ $movement->stage_name ?? 'N/A' }}
-                          @else
-                            {{ $movement->issue_stage_name ?? $movement->stage_name ?? 'N/A' }}
-                          @endif
-                        </td>
+                        <td>@include('ptcStageMove', ['move' => $stageMoves[$movement->stock_id] ?? null])</td>
                         <td>{{ \carbon\Carbon::parse($movement->stock_date)->format('d-m-Y') }}</td>
                         <td>{{ $movement->employee_name ?? $movement->vendor_name ?? '-' }}</td>
                         <td>
@@ -436,43 +424,36 @@
 
 <!-- Movement Detail Modals -->
 @if($movements && $movements->count() > 0)
-  @php
-    // Map of issuance stock_ids to their sequence numbers (creation order)
-    $modalIssuanceSeqMap = $issuanceSeq->all();
-  @endphp
   @foreach($movements as $movement)
     @php
-      // Format display reference for modal
-      if ($movement->is_ptc_master == 1) {
-        $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / I001';
-      } elseif ($movement->stock_type == 2) {
-        $issSeq = $modalIssuanceSeqMap[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
-        $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / I' . $issSeq;
-      } else {
-        // Receiving - use stored format directly (R{n}-I{seq})
-        $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / ' . \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no);
-      }
+      $modalDisplayRef = 'PTC-' . $ptc->stock_no . ' / ' . ($ptcRefs[$movement->stock_id] ?? \App\Models\Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no));
     @endphp
     <div class="modal fade" id="movementModal{{ $movement->stock_id }}" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
-              @if($movement->stock_status == \App\Models\Stock::STATUS_PTC_RELEASED)
+              @if($movement->is_ptc_master == 1)
+                <span class="badge badge-warning">Initial Issue</span>
+              @elseif($movement->stock_status == \App\Models\Stock::STATUS_PTC_RELEASED)
                 <span class="badge badge-dark">Released to Stock</span>
               @elseif($movement->stock_type == 1)
                 <span class="badge badge-success">Receive</span>
               @else
                 <span class="badge badge-primary">Issue</span>
               @endif
-              {{ $modalDisplayRef }} - {{ $movement->stage_name ?? $movement->issue_stage_name ?? 'N/A' }}
+              {{ $modalDisplayRef }}
             </h5>
             <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
           </div>
           <div class="modal-body">
+            <div class="mb-3">
+              <strong>Stage Movement:</strong>
+              <div class="mt-1">@include('ptcStageMove', ['move' => $stageMoves[$movement->stock_id] ?? null])</div>
+            </div>
             <div class="row mb-3">
               <div class="col-md-4"><strong>Date:</strong> {{ $movement->stock_date ? \Carbon\Carbon::parse($movement->stock_date)->format('d-m-Y') : 'N/A' }}</div>
-              <div class="col-md-4"><strong>By:</strong> {{ $movement->employee_name ?? $movement->vendor_name ?? '-' }}</div>
+              <div class="col-md-4"><strong>{{ $movement->stock_type == 1 ? 'Received From' : 'Issued To' }}:</strong> {{ $movement->employee_name ?? $movement->vendor_name ?? '-' }}</div>
               <div class="col-md-4"><strong>Notes:</strong> {{ $movement->description ?? '-' }}</div>
             </div>
             <div class="table-responsive">
@@ -528,66 +509,6 @@
   @endforeach
 @endif
 
-<!-- Modal for Initial PTC Record -->
-<div class="modal fade" id="movementModal{{ $ptc->stock_id }}" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">
-          <span class="badge badge-info">Initial Issue</span>
-          {{ $ptc->stock_no }} - {{ $stages->first()->name ?? 'N/A' }}
-        </h5>
-        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <div class="row mb-3">
-          <div class="col-md-4"><strong>Date:</strong> {{ $ptc->stock_date ? \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') : 'N/A' }}</div>
-          <div class="col-md-4"><strong>By:</strong> {{ $ptc->employee_name ?? $ptc->vendor_name ?? '-' }}</div>
-          <div class="col-md-4"><strong>Notes:</strong> {{ $ptc->description ?? '-' }}</div>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-striped table-sm">
-            <thead>
-              <tr>
-                <th>Sr.</th>
-                <th>Type</th>
-                <th>Item</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              @php $modalRowIndex = 1; @endphp
-              @forelse($movementItems[$ptc->stock_id] ?? [] as $item)
-                <tr>
-                  <td>{{ $modalRowIndex++ }}</td>
-                  @if($item->component_product_type_id)
-                    <td><span class="badge badge-warning">Component</span></td>
-                    <td>{{ $item->component_article_no ?? '' }} - {{ $item->component_name ?? 'N/A' }} ({{ $item->component_size ?? '' }})</td>
-                  @elseif($item->material_id > 0)
-                    <td><span class="badge badge-info">Material</span></td>
-                    <td>{{ $item->material_name ?? 'N/A' }}</td>
-                  @else
-                    <td><span class="badge badge-success">Product</span></td>
-                    <td>{{ $item->product_name ?? 'N/A' }} - {{ $item->size_name ?? 'N/A' }} ({{ $item->stage_name ?? 'N/A' }})</td>
-                  @endif
-                  <td>{{ $item->quantity }}</td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="4" class="text-center">No items.</td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Receiving Modals for each Issuance (shows all related receiving records) -->
 @foreach($issuances as $issIdx => $issuance)
   @php
@@ -607,21 +528,27 @@
           <div class="modal-body">
             <div class="alert alert-info mb-3">
               <strong>Issuance:</strong> PTC-{{ $ptc->stock_no }} / I{{ $issuanceSeqNoForModal }} |
-              <strong>Stage:</strong> {{ $issuance->stage_name ?? 'N/A' }} |
               <strong>Date:</strong> {{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }} |
               <strong>Total Receivings:</strong> {{ $relatedReceivings->count() }}
+              <div class="mt-2 d-flex align-items-center">
+                <strong class="mr-2">Issued:</strong>
+                @include('ptcStageMove', ['move' => $stageMoves[$issuance->stock_id] ?? null])
+              </div>
             </div>
 
             @foreach($relatedReceivings as $recIdx => $receiving)
               <div class="card mb-3 {{ $loop->last ? '' : 'border-bottom' }}">
                 <div class="card-header bg-light py-2">
-                  <strong>PTC-{{ $ptc->stock_no }} / {{ \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</strong>
+                  <strong>PTC-{{ $ptc->stock_no }} / {{ $ptcRefs[$receiving->stock_id] ?? \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</strong>
                   <span class="float-right">
-                    <span class="badge badge-success">{{ $receiving->stage_name ?? 'N/A' }}</span>
                     {{ \carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') }}
                   </span>
                 </div>
                 <div class="card-body py-2">
+                  <div class="mb-2 d-flex align-items-center">
+                    <strong class="mr-2">Received:</strong>
+                    @include('ptcStageMove', ['move' => $stageMoves[$receiving->stock_id] ?? null])
+                  </div>
                   <div class="row mb-2">
                     <div class="col-md-6"><strong>Received From:</strong> {{ $receiving->employee_name ?? $receiving->vendor_name ?? '-' }}</div>
                     <div class="col-md-6"><strong>Notes:</strong> {{ $receiving->description ?? '-' }}</div>

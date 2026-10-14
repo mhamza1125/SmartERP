@@ -93,6 +93,35 @@ class PtcStockRepository implements GlobalInterface
     }
 
     /**
+     * Display reference of every record of a PTC (without the "PTC-{no} / " prefix),
+     * keyed by stock_id: issuances I001, I002, ... (the master is I001), receipts
+     * R{n}-I{issuance seq}, releases REL{n}.
+     *
+     * Stored stock_no values number issuances without the master (2609005-001 is I002)
+     * and receipts after that stored number, so they are not used for display.
+     */
+    public function references($ptcId): Collection
+    {
+        $seq = $this->issuances($ptcId)->pluck('seq_no', 'stock_id');
+        $ptcNo = Stock::where('stock_id', $ptcId)->value('stock_no');
+        $refs = $seq->map(fn ($no) => 'I'.$no);
+
+        $receiptCount = [];
+        $records = Stock::where('ptc_id', $ptcId)->where('stock_type', 1)->orderBy('stock_id')
+            ->get(['stock_id', 'stock_no', 'stock_status', 'issue_id']);
+        foreach ($records as $record) {
+            if ($record->stock_status != Stock::STATUS_PTC_RELEASED && isset($seq[$record->issue_id])) {
+                $receiptCount[$record->issue_id] = ($receiptCount[$record->issue_id] ?? 0) + 1;
+                $refs[$record->stock_id] = 'R'.$receiptCount[$record->issue_id].'-I'.$seq[$record->issue_id];
+            } else {
+                $refs[$record->stock_id] = Stock::ptcDisplayNo($record->stock_no, $ptcNo);
+            }
+        }
+
+        return $refs;
+    }
+
+    /**
      * Issued vs received quantities for every issuance of a PTC.
      *
      * Product lines (finished/semi-finished goods) must be received back in full
@@ -354,20 +383,48 @@ class PtcStockRepository implements GlobalInterface
     }
 
     /**
+     * Stage of the stock the PTC starts from (e.g. Stage 1 = the unfinished product
+     * brought in). It is not a work stage: the first issuance is for the stage after it.
+     * PTCs created before start_stage_id was stored issued their master for the start
+     * stage itself, so their master issue_for is the start.
+     */
+    public function startStageId(Stock $ptc)
+    {
+        return $ptc->start_stage_id ?: $ptc->issue_for;
+    }
+
+    /**
+     * Stages an issuance of this PTC can be made for: the work stages after its start
+     * stage through its end stage, in product order (a single-stage PTC: that stage).
+     */
+    public function issueStages(Stock $ptc, Collection $stages): Collection
+    {
+        $stages = $stages->values();
+        $startIndex = $stages->search(fn ($stage) => $stage->head_id == $this->startStageId($ptc));
+        $endIndex = $stages->search(fn ($stage) => $stage->head_id == $this->endStageId($ptc, $stages));
+        $startIndex = $startIndex === false ? 0 : $startIndex;
+        $endIndex = $endIndex === false ? $stages->count() - 1 : $endIndex;
+        $firstWorkIndex = $startIndex < $endIndex ? $startIndex + 1 : $startIndex;
+
+        return $stages->slice($firstWorkIndex, $endIndex - $firstWorkIndex + 1)->values();
+    }
+
+    /**
      * Actual production status of each product stage, derived from the
      * issuances made for that stage and what was received back against them.
      * Closing a PTC does not change any of this.
      *
-     * Status: outside (before the PTC's start stage or after its end stage),
-     * not_started, in_progress (issued, nothing received), partial (some product
-     * still outstanding), completed (everything issued for the stage received back).
+     * Status: outside (before the PTC's start stage or after its end stage), start
+     * (the starting stock, no work issued for it), not_started, in_progress (issued,
+     * nothing received), partial (some product still outstanding), completed
+     * (everything issued for the stage received back).
      */
     public function stageSummary(Stock $ptc, Collection $stages, ?Collection $balances = null): array
     {
         $balances = $balances ?? $this->issuanceBalances($ptc->stock_id);
         $stages = $stages->values();
 
-        $startIndex = $stages->search(fn ($stage) => $stage->head_id == $ptc->issue_for);
+        $startIndex = $stages->search(fn ($stage) => $stage->head_id == $this->startStageId($ptc));
         $startIndex = $startIndex === false ? 0 : $startIndex;
         $endStageId = $this->endStageId($ptc, $stages);
         $endIndex = $stages->search(fn ($stage) => $stage->head_id == $endStageId);
@@ -384,7 +441,8 @@ class PtcStockRepository implements GlobalInterface
             $receivedAny = $stageBalances->contains(fn ($balance) => $balance['received_any']);
 
             if ($stageBalances->isEmpty()) {
-                $status = ($index < $startIndex || $index > $endIndex) ? 'outside' : 'not_started';
+                $status = ($index < $startIndex || $index > $endIndex) ? 'outside'
+                    : ($index == $startIndex && $startIndex < $endIndex ? 'start' : 'not_started');
             } elseif (! $receivedAny) {
                 $status = 'in_progress';
             } elseif ($outstanding > 0) {
@@ -443,6 +501,96 @@ class PtcStockRepository implements GlobalInterface
         ];
     }
 
+    /**
+     * The stage after the given one (the PTC's current stage when none is given),
+     * never beyond the PTC's end stage - at the end stage it stays there.
+     *
+     * Used for the default "Issue For" of a new issuance, and for the default stage
+     * product is received into: work issued for Stage N comes back as Stage N+1.
+     */
+    public function nextStageId(Stock $ptc, Collection $stages, $fromStageId = null)
+    {
+        $stages = $stages->values();
+        $fromStageId = $fromStageId ?: $ptc->current_stage_id;
+
+        $fromIndex = $stages->search(fn ($stage) => $stage->head_id == $fromStageId);
+        if ($fromIndex === false) {
+            return $ptc->current_stage_id;
+        }
+        $endIndex = $stages->search(fn ($stage) => $stage->head_id == $this->endStageId($ptc, $stages));
+        $endIndex = $endIndex === false ? $stages->count() - 1 : $endIndex;
+
+        return $fromIndex < $endIndex ? $stages[$fromIndex + 1]->head_id : $stages[$fromIndex]->head_id;
+    }
+
+    /**
+     * Where the product moved from and to on every record of a PTC (display only),
+     * keyed by stock_id: ['from' => [...], 'to' => [...]], each endpoint being
+     * ['label', 'kind' (stage|rejected|general|none), 'note'].
+     *
+     *   Issuance: product stage(s) issued (PTC or general stock) -> stage issued for
+     *   Receiving: where its issuance took the product from -> stage(s) received into
+     *              PTC stock (materials/components returned -> general stock)
+     *   Release:   PTC stock stage -> general stock
+     */
+    public function movementStages($ptcId): Collection
+    {
+        $records = Stock::where(function ($query) use ($ptcId) {
+            $query->where(function ($q) use ($ptcId) {
+                $q->where('stocks.stock_id', $ptcId)->where('stocks.is_ptc_master', 1);
+            })->orWhere('stocks.ptc_id', $ptcId);
+        })
+            ->leftJoin('heads as for_stage', 'for_stage.head_id', '=', 'stocks.issue_for')
+            ->leftJoin('heads as cur_stage', 'cur_stage.head_id', '=', 'stocks.current_stage_id')
+            ->orderBy('stocks.stock_id')
+            ->get(['stocks.stock_id', 'stocks.stock_type', 'stocks.stock_status', 'stocks.is_ptc_master', 'stocks.issue_id',
+                'stocks.issue_for', 'for_stage.name as issue_for_name', 'cur_stage.name as current_stage_name']);
+
+        $items = DB::table('stock_items')
+            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->whereIn('stock_items.stock_id', $records->pluck('stock_id'))
+            ->orderBy('stock_items.stock_item_id')
+            ->get(['stock_items.stock_id', 'stock_items.stage_id', 'stock_items.material_id',
+                'stock_items.component_product_type_id', 'stock_items.ptc_virtual', 'sthead.name as stage_name'])
+            ->groupBy('stock_id');
+
+        $endpoint = fn ($label, $kind, $note = null) => ['label' => $label ?? 'N/A', 'kind' => $kind, 'note' => $note];
+        $stageEndpoint = fn ($line, $note) => $line->stage_id == Stock::STAGE_REJECTED
+            ? $endpoint($line->stage_name ?? 'Rejected', 'rejected', $note)
+            : $endpoint($line->stage_name, 'stage', $note);
+
+        $moves = [];
+        // Issuances first: receipts show where their issuance took the product from
+        foreach ($records->sortBy(fn ($record) => $record->stock_type == 2 || $record->is_ptc_master ? 0 : 1) as $record) {
+            $lines = $items->get($record->stock_id, collect());
+            $productLines = $lines->filter(fn ($line) => $line->material_id == 0 && ! $line->component_product_type_id);
+            $otherLines = $lines->count() > $productLines->count();
+
+            if ($record->stock_status == Stock::STATUS_PTC_RELEASED) {
+                $from = $productLines->unique('stage_id')->map(fn ($line) => $stageEndpoint($line, 'PTC stock'))->values()->all();
+                $to = [$endpoint('General Stock', 'general', 'Released')];
+            } elseif ($record->stock_type == 2 || $record->is_ptc_master) {
+                $from = $productLines->unique(fn ($line) => $line->stage_id.'_'.$line->ptc_virtual)
+                    ->map(fn ($line) => $stageEndpoint($line, $line->ptc_virtual ? 'PTC stock' : 'General stock'))
+                    ->values()->all() ?: [$endpoint('Materials only', 'none', 'No product issued')];
+                $to = [$endpoint($record->issue_for_name ?? $record->current_stage_name, 'stage', 'Issued for')];
+            } else {
+                $issuedFrom = $moves[$record->issue_id]['from'] ?? [$endpoint($record->current_stage_name, 'stage')];
+                $from = array_map(fn ($point) => array_merge($point, ['note' => 'Issued from']), $issuedFrom);
+                $to = $productLines->unique('stage_id')
+                    ->map(fn ($line) => $stageEndpoint($line, $line->stage_id == Stock::STAGE_REJECTED ? 'Rejected' : 'Received into PTC stock'))
+                    ->values()->all();
+                if ($otherLines) {
+                    $to[] = $endpoint('General Stock', 'general', 'Materials / components returned');
+                }
+            }
+
+            $moves[$record->stock_id] = ['from' => $from, 'to' => $to ?: [$endpoint('N/A', 'none')]];
+        }
+
+        return collect($moves);
+    }
+
     // ==================================================
     // ================ Movements =======================
     // ==================================================
@@ -465,6 +613,8 @@ class PtcStockRepository implements GlobalInterface
             }
 
             $this->assertVirtualAvailable($ptcId, collect($lines)->where('ptc_virtual', 1));
+            $issueFor = $header['issue_for'] ?? $ptc->current_stage_id;
+            $this->assertIssueStage($ptc, $issueFor);
 
             $issueId = $this->stockRepository->storePtcIssuance(array_merge($header, [
                 'ptc_id' => $ptcId,
@@ -472,7 +622,7 @@ class PtcStockRepository implements GlobalInterface
                 'stock_type' => 2,
                 'stock_status' => Stock::STATUS_PTC_IN_PROGRESS,
                 'current_stage_id' => $ptc->current_stage_id,
-                'issue_for' => $header['issue_for'] ?? $ptc->current_stage_id,
+                'issue_for' => $issueFor,
             ]));
 
             foreach ($lines as $line) {
@@ -489,6 +639,8 @@ class PtcStockRepository implements GlobalInterface
                 ]);
             }
 
+            $this->advanceCurrentStage($ptc, $issueFor);
+
             return $issueId;
         });
     }
@@ -502,7 +654,7 @@ class PtcStockRepository implements GlobalInterface
     public function updateIssuance($ptcId, $issuanceId, array $header, array $quantities)
     {
         DB::transaction(function () use ($ptcId, $issuanceId, $header, $quantities) {
-            $this->lockOpenPtc($ptcId);
+            $ptc = $this->lockOpenPtc($ptcId);
 
             $issuance = Stock::where('stock_id', $issuanceId)->where('ptc_id', $ptcId)->where('stock_type', 2)->first();
             if (! $issuance) {
@@ -531,12 +683,18 @@ class PtcStockRepository implements GlobalInterface
                 }
             }
 
+            if (isset($header['issue_for'])) {
+                $this->assertIssueStage($ptc, $header['issue_for']);
+            }
+
             $issuance->update($header);
             foreach ($quantities as $stockItemId => $quantity) {
                 if ($quantity > 0 && $items->has($stockItemId)) {
                     $items->get($stockItemId)->update(['quantity' => $quantity]);
                 }
             }
+
+            $this->advanceCurrentStage($ptc, $issuance->issue_for);
         });
     }
 
@@ -568,6 +726,7 @@ class PtcStockRepository implements GlobalInterface
             }
 
             $this->assertReceivable($balance, $lines);
+            $this->assertReceiveStage($ptcId, $lines);
 
             // Components go back to the stage they were issued at, so general
             // component stock nets out on the same row.
@@ -780,6 +939,56 @@ class PtcStockRepository implements GlobalInterface
             if ($quantity > $have + self::EPSILON) {
                 $stageName = DB::table('heads')->where('head_id', explode('_', $key)[1])->value('name') ?? 'N/A';
                 throw new PtcStockException("Only {$this->round($have)} available in this PTC's stock at {$stageName}; {$this->round($quantity)} requested.");
+            }
+        }
+    }
+
+    /**
+     * An issuance may only be made for one of the PTC's own stages (start..end).
+     */
+    private function assertIssueStage(Stock $ptc, $issueFor): void
+    {
+        $issueStages = $this->issueStages($ptc, $this->productStages($ptc->stock_id));
+        if ($issueStages->isNotEmpty() && ! $issueStages->contains(fn ($stage) => $stage->head_id == $issueFor)) {
+            throw new PtcStockException("Issue For must be one of this PTC's stages ({$issueStages->first()->name} to {$issueStages->last()->name}).");
+        }
+    }
+
+    /**
+     * Move the PTC's current stage forward to a later stage an issuance was made
+     * for. Never moves backwards (re-work at an earlier stage keeps the pointer).
+     */
+    private function advanceCurrentStage(Stock $ptc, $issueFor): void
+    {
+        $stages = $this->productStages($ptc->stock_id);
+        $stageIds = $stages->pluck('head_id')->map(fn ($id) => (int) $id)->values();
+        $currentIndex = $stageIds->search((int) $ptc->current_stage_id);
+        $targetIndex = $stageIds->search((int) $issueFor);
+        if ($targetIndex === false || ($currentIndex !== false && $targetIndex <= $currentIndex)) {
+            return;
+        }
+
+        $endIndex = $stageIds->search((int) $this->endStageId($ptc, $stages));
+        $endIndex = $endIndex === false ? $stageIds->count() - 1 : $endIndex;
+
+        $ptc->update([
+            'current_stage_id' => $stageIds[$targetIndex],
+            'next_stage_id' => $targetIndex < $endIndex ? $stageIds[$targetIndex + 1] : null,
+        ]);
+    }
+
+    /**
+     * Product is received into one of the product's own stages or Rejected. The form
+     * defaults to the stage after the one issued for; any product stage is allowed
+     * for manual flows.
+     */
+    private function assertReceiveStage($ptcId, array $lines): void
+    {
+        $allowed = $this->productStages($ptcId)->pluck('head_id')->map(fn ($id) => (int) $id)->push(Stock::STAGE_REJECTED);
+        foreach ($lines as $line) {
+            $isProduct = $line['material_id'] == 0 && ! $line['component_id'];
+            if ($isProduct && $allowed->count() > 1 && ! $allowed->contains((int) $line['stage_id'])) {
+                throw new PtcStockException("Product can only be received into one of this product's stages or Rejected.");
             }
         }
     }

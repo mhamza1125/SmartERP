@@ -70,10 +70,28 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Receive From Stage</label>
-                    {{-- Fixed to the stage this issuance was made for --}}
-                    <input type="text" class="form-control" readonly
-                      value="{{ optional($stages->firstWhere('head_id', $receiveStageId ?? $ptc->current_stage_id))->name ?? 'N/A' }}">
+                    <label>Stage Movement</label>
+                    {{-- From: the stage the issuance took the product from; To: the stage it was issued
+                         for, which is where it is received (Receive Into Stage below) --}}
+                    @php
+                      $issuedFrom = $stageMoves[$issuance->stock_id]['from'] ?? [];
+                      $issuedForName = optional($stages->firstWhere('head_id', $receiveStageId ?? $ptc->current_stage_id))->name ?? 'N/A';
+                      $receiveIntoName = $issuedForName;
+                    @endphp
+                    <div class="d-flex align-items-center">
+                      <div class="text-center">
+                        @foreach($issuedFrom as $point)
+                          <span class="badge {{ $point['kind'] === 'none' ? 'badge-light border' : 'badge-primary' }}">{{ $point['label'] }}</span>
+                        @endforeach
+                        <div class="small text-muted">Issued from</div>
+                      </div>
+                      <i class="fas fa-long-arrow-alt-right text-muted mx-2"></i>
+                      <div class="text-center">
+                        <span class="badge badge-success" id="move_to_label">{{ $receiveIntoName }}</span>
+                        <div class="small text-muted">Receiving into</div>
+                      </div>
+                    </div>
+                    <small class="form-text text-muted">I{{ $issuanceSeqNo }} was issued for {{ $issuedForName }}, so product is received into {{ $issuedForName }}.</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -183,7 +201,13 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Product Stage</label>
+                    <label class="d-flex justify-content-between">
+                      <span>Receive Into Stage</span>
+                      <span class="custom-control custom-checkbox font-weight-normal">
+                        <input type="checkbox" class="custom-control-input" id="r_show_all_stages">
+                        <label class="custom-control-label small" for="r_show_all_stages">Show all</label>
+                      </span>
+                    </label>
                     <select class="form-control select2" name="r_stage_id" id="r_stage_id">
                       <option value="" disabled selected>Select Stage</option>
                     </select>
@@ -373,7 +397,7 @@
                   <thead>
                     <tr>
                       <th>Reference</th>
-                      <th>Stage</th>
+                      <th>Stage Movement <small class="text-muted">(Issued From &rarr; Received Into)</small></th>
                       <th>Date</th>
                       <th>Received From</th>
                     </tr>
@@ -381,8 +405,8 @@
                   <tbody>
                     @foreach($receivings as $receiving)
                       <tr>
-                        <td>PTC-{{ $ptc->stock_no }} / {{ \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</td>
-                        <td>{{ $receiving->stage_name ?? 'N/A' }}</td>
+                        <td>PTC-{{ $ptc->stock_no }} / {{ $ptcRefs[$receiving->stock_id] ?? \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</td>
+                        <td>@include('ptcStageMove', ['move' => $stageMoves[$receiving->stock_id] ?? null])</td>
                         <td>{{ $receiving->stock_date ? \Carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') : 'N/A' }}</td>
                         <td>{{ $receiving->employee_name ?? $receiving->vendor_name ?? '-' }}</td>
                       </tr>
@@ -431,6 +455,30 @@ var ptcProductTypeId = '{{ $product ? $product->product_type_id : 0 }}';
 var ptcProductName = '{{ $product ? $product->name . " - " . $product->size_name : "N/A" }}';
 // product_type_id => quantity still outstanding on this issuance (products issued here only)
 var productOutstanding = @json(collect($balance['products'] ?? [])->filter(fn ($line) => $line['issued'] > 0)->map(fn ($line) => $line['outstanding']));
+// Preselection (custom.js): first product still outstanding (any product on a material-only
+// issuance), and the stage this issuance was made for once that product's stages load
+@php
+  $receiveProductIds = $issueItem->pluck('product_type_id')->unique()->values();
+  $preselectProductId = ($balance['has_products'] ?? false)
+    ? $receiveProductIds->first(fn ($productTypeId) => ($balance['products'][$productTypeId]['outstanding'] ?? 0) > 0)
+    : $receiveProductIds->first();
+@endphp
+var ptcReceivePreselectProduct = @json($preselectProductId ? (string) $preselectProductId : null);
+// Product issued for Stage N is received into Stage N: preselected, and with Rejected the only
+// stages listed unless "Show all" is ticked (other product stages, for manual flows)
+var ptcReceiveStageId = @json((string) ($receiveStageId ?? ''));
+var ptcReceiveAllowedStages = @json(array_map('strval', array_filter([$receiveStageId ?? null, \App\Models\Stock::STAGE_REJECTED])));
+
+$(document).ready(function() {
+  // Stage movement panel follows the selected Receive Into Stage
+  $('#r_stage_id').on('change', function() {
+    var stageName = $(this).find('option:selected').val() ? $(this).find('option:selected').text() : '';
+    if (stageName) {
+      var rejected = $(this).val() == '{{ \App\Models\Stock::STAGE_REJECTED }}';
+      $('#move_to_label').text(stageName).toggleClass('badge-danger', rejected).toggleClass('badge-success', !rejected);
+    }
+  });
+});
 
 // Component Product Type Receiving
 $(document).ready(function() {

@@ -32,6 +32,25 @@
                 </div>
               </div>
 
+              {{-- Stage movement of this issuance; "From" follows the product lines added below --}}
+              @php
+                $fromInSequence = $stages->contains('head_id', $fromStageId);
+                $fromStageName = optional($stages->firstWhere('head_id', $fromStageId))->name
+                  ?? ($fromStageId == \App\Models\Stock::STAGE_REJECTED ? 'Rejected' : ($ptc->current_stage_name ?? 'N/A'));
+                $fromStageNote = request('source') === 'ptc' ? "This PTC's stock" : 'Current stage';
+              @endphp
+              <div class="alert alert-light border d-flex align-items-center flex-wrap mb-0">
+                <strong class="mr-3"><i class="fas fa-route text-primary"></i> Stage Movement:</strong>
+                <div class="text-center">
+                  <span class="badge badge-primary" id="move_from_label">{{ $fromStageName }}</span>
+                  <div class="small text-muted" id="move_from_note">{{ $fromStageNote }}</div>
+                </div>
+                <i class="fas fa-long-arrow-alt-right text-muted mx-3"></i>
+                <div class="text-center">
+                  <span class="badge badge-success" id="move_to_label">{{ optional($stages->firstWhere('head_id', old('issue_for', $defaultIssueFor)))->name ?? 'N/A' }}</span>
+                  <div class="small text-muted">Issued for</div>
+                </div>              </div>
+
               <hr>
 
               <div class="row">
@@ -46,10 +65,23 @@
                   <div class="form-group">
                     <label>Issue For Stage <span class="text-danger">*</span></label>
                     <select class="form-control select2" name="issue_for" id="issue_for" required>
-                      @foreach($stages as $stage)
-                        <option value="{{ $stage->head_id }}" {{ $ptc->current_stage_id == $stage->head_id ? 'selected' : '' }}>{{ $stage->name }}</option>
+                      {{-- Only this PTC's own stages (start..end) --}}
+                      @foreach($issueStages as $stage)
+                        <option value="{{ $stage->head_id }}" data-name="{{ $stage->name }}" {{ old('issue_for', $defaultIssueFor) == $stage->head_id ? 'selected' : '' }}>
+                          {{ $stages->values()->search(fn ($s) => $s->head_id == $stage->head_id) + 1 }}. {{ $stage->name }}{{ $ptc->current_stage_id == $stage->head_id ? ' (current)' : '' }}{{ $endStageId == $stage->head_id ? ' (end)' : '' }}
+                        </option>
                       @endforeach
                     </select>
+                    <small class="form-text text-muted">
+                      @if(!$fromInSequence)
+                        Defaults to the PTC's current stage.
+                      @elseif($defaultIssueFor == $fromStageId)
+                        {{ $fromStageName }} is the PTC's end stage, so it stays selected.
+                      @else
+                        Defaults to the stage after {{ $fromStageName }}.
+                      @endif
+                      Issuing for a later stage moves the PTC's Current Stage there.
+                    </small>
                     <div class="invalid-feedback">Select the stage to issue for</div>
                   </div>
                 </div>
@@ -184,7 +216,7 @@
               <div class="row">
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Source</label>
+                    <label>Issue From</label>
                     <select class="form-control" name="pstock_source" id="pstock_source">
                       <option value="general">General Stock</option>
                       <option value="ptc" {{ $virtualStock->isEmpty() ? 'disabled' : '' }}>This PTC's Stock</option>
@@ -193,7 +225,7 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Product Stage</label>
+                    <label>Product Stage <small class="text-muted">(issued from)</small></label>
                     <select class="form-control select2" name="stage_id" id="stage_id" multiple>
                       <option value="" disabled>Select Stage</option>
                       @foreach($stages as $stage)
@@ -249,8 +281,8 @@
                 <table class="table table-sm table-striped">
                   <thead>
                     <tr>
-                      <th>Reference</th>
-                      <th>Stage</th>
+                      <th>Issuance No.</th>
+                      <th>Stage Movement <small class="text-muted">(Issued From &rarr; Issued For)</small></th>
                       <th>Date</th>
                       <th>Issued To</th>
                     </tr>
@@ -258,8 +290,8 @@
                   <tbody>
                     @foreach($issuances as $idx => $issuance)
                       <tr>
-                        <td>PTC-{{ $ptc->stock_no }} / I{{ str_pad($idx + 1, 3, '0', STR_PAD_LEFT) }}</td>
-                        <td>{{ $issuance->stage_name ?? 'N/A' }}</td>
+                        <td>PTC-{{ $ptc->stock_no }} / I{{ $issuanceSeq[$issuance->stock_id] ?? str_pad($idx + 1, 3, '0', STR_PAD_LEFT) }}</td>
+                        <td>@include('ptcStageMove', ['move' => $stageMoves[$issuance->stock_id] ?? null])</td>
                         <td>{{ \carbon\Carbon::parse($issuance->stock_date)->format('d-m-Y') }}</td>
                         <td>{{ $issuance->employee_name ?? $issuance->vendor_name ?? '-' }}</td>
                       </tr>
@@ -331,6 +363,28 @@ componentStockInfo['{{ $component['component_product_type_id'] }}'] = {
 @endif
 
 $(document).ready(function() {
+    // Stage movement panel: "To" follows Issue For; "From" follows the product lines
+    // added to the items table (falls back to the stage shown on page load)
+    var defaultMoveFrom = { label: $('#move_from_label').text(), note: $('#move_from_note').text() };
+    function refreshStageMovement() {
+        $('#move_to_label').text($('#issue_for option:selected').data('name') || 'N/A');
+
+        var fromStages = [], fromNotes = [];
+        $('#items-table tbody tr').each(function () {
+            var stageId = $(this).find('input[name="stage_id[]"]').val();
+            if (!stageId || stageId === '0' || $(this).find('input[name="component_id[]"]').val()) return;
+            var name = $('#stage_id option[value="' + stageId + '"]').text();
+            var note = $(this).find('input[name="source[]"]').val() === 'ptc' ? "This PTC's stock" : 'General stock';
+            if (fromStages.indexOf(name) === -1) fromStages.push(name);
+            if (fromNotes.indexOf(note) === -1) fromNotes.push(note);
+        });
+        $('#move_from_label').text(fromStages.length ? fromStages.join(', ') : defaultMoveFrom.label);
+        $('#move_from_note').text(fromStages.length ? fromNotes.join(' / ') : defaultMoveFrom.note);
+    }
+    refreshStageMovement();
+    $('#issue_for').on('change', refreshStageMovement);
+    new MutationObserver(refreshStageMovement).observe($('#items-table tbody')[0], { childList: true });
+
     // Function to update serial numbers (local version)
     function updateComponentSerialNumbers() {
         $('#items-table tbody tr').each(function(index) {

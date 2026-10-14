@@ -134,6 +134,14 @@ Additional domain-specific methods are added per repository beyond these five.
 - PTC master status: 6 In Progress, 7 Completed, 9 Closed Early. "Finished" checks must use `!= STATUS_PTC_IN_PROGRESS`
 - `stocks.end_stage_id` = planned last stage (NULL on old PTCs -> product's last stage). One finish action (`ptc.close` -> `PtcStockRepository::finish()`) stores Completed if the end stage is fully received, else Closed Early
 - All PTC stock logic lives in `PtcStockRepository` (locks the master row, validates, throws `PtcStockException`)
+- **Stage workflow (user-confirmed 2026-10-12): the PTC start stage is the stock it starts from (e.g. Stage 1 = unfinished product bought in), NOT a work stage. Each issuance moves product from stage X to its Issue For stage Y, and it is received into Y.** Stage 1 -> 2, receive in 2; issue 2 -> 3, receive in 3; PTC 1..3 complete
+- `stocks.start_stage_id` (master) stores the start stage; the master's `issue_for` = the stage after it (= `current_stage_id` at creation). Legacy masters (start_stage_id NULL) stored the start stage as `issue_for`; `startStageId()` falls back to that. `php artisan ptc:backfill-start-stage [--dry-run]` corrects them (stage labels only, no stock change) - user had NOT run it as of 2026-10-12
+- Stage Progress: start stage shows status `start` ("Starting stock") when no work was issued for it
+- Stage display: `stocks.current_stage_id` on issuances/receipts/releases is NOT the movement stage. Show movements via `PtcStockRepository::movementStages()` + `ptcStageMove` partial: issuance = product line stage(s) -> `issue_for`; receipt = its issuance's from-stage(s) -> received item stage(s); release = item stage -> General Stock
+- `nextStageId()` (stage after a given stage, capped at the end stage) is the default Issue For of a new issuance (after the current stage, or after the PTC-stock stage being transferred)
+- Issue For must be one of the PTC's work stages (`issueStages()`: stage after start .. end). Issuing for a later stage advances the master's `current_stage_id`/`next_stage_id` (never backwards)
+- Receive Into defaults to the issuance's `issue_for` and lists it + Rejected; a "Show all" checkbox lists every product stage for manual flows. Server accepts any of the product's stages or Rejected
+- Display references come from `PtcStockRepository::references()` (I001 = master, R{n}-I{seq}, REL{n}); stored `stock_no` numbers skip the master, so never display them directly
 
 ### PTC Virtual Stock (exists only inside /ptc)
 - `stock_items.ptc_virtual = 1` marks movements internal to a PTC; **every general product-stock query in `StockItemRepository` filters `ptc_virtual = 0`**

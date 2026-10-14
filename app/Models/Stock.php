@@ -33,6 +33,7 @@ class Stock extends Model
         'issue_id',
         'ptc_id',
         'current_stage_id',
+        'start_stage_id',
         'next_stage_id',
         'end_stage_id',
         'is_ptc_master',
