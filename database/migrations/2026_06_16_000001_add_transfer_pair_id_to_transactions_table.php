@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Bank transfers already use this column; some databases got it before this migration ran
+        if (Schema::hasColumn('transactions', 'transfer_pair_id')) {
+            return;
+        }
+
         Schema::table('transactions', function (Blueprint $table) {
             $table->unsignedBigInteger('transfer_pair_id')->nullable()->after('transaction_id');
         });
@@ -15,6 +20,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasColumn('transactions', 'transfer_pair_id')) {
+            return;
+        }
+
         Schema::table('transactions', function (Blueprint $table) {
             $table->dropColumn('transfer_pair_id');
         });

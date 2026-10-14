@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('stocks', 'source_id')) {
+            return;
+        }
+
         Schema::table('stocks', function (Blueprint $table) {
             // Stores the originating record ID (e.g., delivery_return_id when table_name='delivery_returns')
             $table->unsignedBigInteger('source_id')->nullable()->after('order_id');
@@ -16,6 +20,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasColumn('stocks', 'source_id')) {
+            return;
+        }
+
         Schema::table('stocks', function (Blueprint $table) {
             $table->dropColumn('source_id');
         });
