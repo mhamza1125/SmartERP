@@ -31,6 +31,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\DeliveryReturnController;
 use App\Http\Controllers\PackingListController;
+use App\Http\Controllers\StockBatchController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------------------
@@ -263,6 +264,13 @@ Route::post('/igroup/{id}', [IGroupController::class, 'update'])->name('igroup.u
 Route::get('/stock', [StockController::class, 'index'])->defaults('type', 'product')->name('stock');
 Route::get('/stock/material', [StockController::class, 'index'])->defaults('type', 'material')->name('stock.material');
 Route::get('/stock/machine', [StockController::class, 'index'])->defaults('type', 'machine')->name('stock.machine');
+// Stock batches (lots, order reservations)
+Route::prefix('stock/batches')->group(function () {
+    Route::get('/', [StockBatchController::class, 'index'])->name('batch.index');
+    Route::get('/{id}', [StockBatchController::class, 'show'])->name('batch.show');
+    Route::post('/{id}/reserve', [StockBatchController::class, 'reserve'])->name('batch.reserve');
+    Route::post('/{id}/split', [StockBatchController::class, 'split'])->name('batch.split');
+});
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
 Route::get('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.daily');
 Route::post('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.filter');

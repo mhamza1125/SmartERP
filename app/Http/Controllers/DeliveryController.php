@@ -15,6 +15,8 @@ use App\Repositories\CompanyRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DeliveryRepository;
 use App\Repositories\StockItemRepository;
+use App\Repositories\StockBatchRepository;
+use App\Exceptions\StockBatchException;
 use App\Repositories\DeliveryBoxRepository;
 use App\Repositories\TransactionRepository;
 
@@ -40,6 +42,8 @@ class DeliveryController extends Controller
 
     protected $companyRepository;
 
+    protected $stockBatchRepository;
+
     public function __construct(
         HeadRepository $headRepository,
         BankRepository $bankRepository,
@@ -51,6 +55,7 @@ class DeliveryController extends Controller
         DeliveryBoxRepository $deliveryBoxRepository,
         TransactionRepository $transactionRepository,
         CompanyRepository $companyRepository,
+        StockBatchRepository $stockBatchRepository,
     ) {
         $this->middleware(['auth', 'all'])->except(['getCustomerOrders', 'getCustomerAddress']);
         $this->middleware('auth')->only(['getCustomerOrders', 'getCustomerAddress']);
@@ -64,6 +69,7 @@ class DeliveryController extends Controller
         $this->deliveryBoxRepository = $deliveryBoxRepository;
         $this->transactionRepository = $transactionRepository;
         $this->companyRepository = $companyRepository;
+        $this->stockBatchRepository = $stockBatchRepository;
     }
 
     public function index()
@@ -167,7 +173,7 @@ class DeliveryController extends Controller
             $order = $this->orderRepository->get($orderId);
             if ($order) {
                 $orders[] = $order;
-                $orderItems = $this->stockItemRepository->orderDelivery($orderId);
+                $orderItems = $this->stockItemRepository->orderDelivery($orderId, $editDeliveryId ? $this->deliveryRepository->get($editDeliveryId)->stock_id : null, $orderIds);
                 // Convert Collection to array before merging
                 $allOrderItems = array_merge($allOrderItems, $orderItems->toArray());
             }
@@ -250,51 +256,66 @@ class DeliveryController extends Controller
         $quantities = $request->input('quantity');
         $mid = $request->input('material_id');
         $stages = $request->input('stage_id');
-        $getId = $this->stockRepository->store($validatedData);
-        $validatedData['stock_id'] = $getId;
-        // Transaction / Expense
-        $heads = $request->input('payee_id');
-        $banks = $request->input('bank_id');
-        $debits = $request->input('debit');
-        $remarks = $request->input('remarks');
-        // Delivery Boxes / Vehicles
-        $vehicles = $request->input('vehicle_no');
-        $rowQtys = $request->input('rowQty');
-        $totalQtys = $request->input('totalQty');
-        // Order Status
-        $orderStatus = ['order_status' => $request->input('order_status')];
-        // Insertion to DB
-        $get = $this->deliveryRepository->store($validatedData);
-        $validatedData['delivery_id'] = $get;
 
-        // Update stock_no with delivery_id for single-order deliveries
-        if (!$orderIds && empty($selectedOrders)) {
-            $this->stockRepository->update($getId, ['stock_no' => (string) $get]);
-        }
+        // Product stock is taken from batches; nothing is saved when the allowed batches fall short
+        DB::beginTransaction();
+        try {
+            $getId = $this->stockRepository->store($validatedData);
+            $validatedData['stock_id'] = $getId;
+            // Transaction / Expense
+            $heads = $request->input('payee_id');
+            $banks = $request->input('bank_id');
+            $debits = $request->input('debit');
+            $remarks = $request->input('remarks');
+            // Delivery Boxes / Vehicles
+            $vehicles = $request->input('vehicle_no');
+            $rowQtys = $request->input('rowQty');
+            $totalQtys = $request->input('totalQty');
+            // Order Status
+            $orderStatus = ['order_status' => $request->input('order_status')];
+            // Insertion to DB
+            $get = $this->deliveryRepository->store($validatedData);
+            $validatedData['delivery_id'] = $get;
 
-        // Handle both single and multi-order deliveries
-        $orderIds = $request->input('order_ids');
-        $selectedOrders = $request->input('selected_orders', []);
-
-        if ($orderIds) {
-            // Multi-order delivery
-            $orderIdArray = explode(',', $orderIds);
-            foreach ($orderIdArray as $orderId) {
-                $this->orderRepository->update($orderId, $orderStatus);
+            // Update stock_no with delivery_id for single-order deliveries
+            if (!$orderIds && empty($selectedOrders)) {
+                $this->stockRepository->update($getId, ['stock_no' => (string) $get]);
             }
-        } elseif (!empty($selectedOrders)) {
-            // Multiple orders selected via checkboxes
-            foreach ($selectedOrders as $orderId) {
-                $this->orderRepository->update($orderId, $orderStatus);
-            }
-        } else {
-            // Single order delivery (backward compatibility)
-            $this->orderRepository->update($request->input('order_id'), $orderStatus);
-        }
 
-        $this->storeSI($getId, $ptid, $mid, $quantities, $stages); // Delivery Items
-        $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
-        $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
+            // Handle both single and multi-order deliveries
+            $orderIds = $request->input('order_ids');
+            $selectedOrders = $request->input('selected_orders', []);
+
+            if ($orderIds) {
+                // Multi-order delivery
+                $orderIdArray = explode(',', $orderIds);
+                foreach ($orderIdArray as $orderId) {
+                    $this->orderRepository->update($orderId, $orderStatus);
+                }
+            } elseif (!empty($selectedOrders)) {
+                // Multiple orders selected via checkboxes
+                foreach ($selectedOrders as $orderId) {
+                    $this->orderRepository->update($orderId, $orderStatus);
+                }
+            } else {
+                // Single order delivery (backward compatibility)
+                $this->orderRepository->update($request->input('order_id'), $orderStatus);
+            }
+
+            $this->storeSI($getId, $ptid, $mid, $quantities, $stages); // Delivery Items
+            $this->allocateBatches($getId, $request);
+            $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
+            $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
+
+            DB::commit();
+        } catch (StockBatchException $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         return redirect()->route('delivery.show', $get)->with('success', 'Record Inserted Successfully');
     }
@@ -542,7 +563,7 @@ class DeliveryController extends Controller
     {
         $this->authorize('edit', Delivery::class);
         $order = $this->deliveryRepository->get($id); // Delivery
-        $stock = $this->stockItemRepository->orderDelivery($order['order_id']);
+        $stock = $this->stockItemRepository->orderDelivery($order['order_id'], $order['stock_id'], $this->isMultiOrderDelivery($order) ? array_map(fn ($related) => ((array) $related)['order_id'], $this->getRelatedOrdersForDelivery($order)) : null);
         $vehicle = $this->stockItemRepository->stockVehicle($order['order_id']);
         $bank = $this->bankRepository->self();
         $expense = $this->headRepository->get('7');
@@ -585,48 +606,90 @@ class DeliveryController extends Controller
         $delivery = $this->deliveryRepository->get($id);
         $isMultiOrder = $this->isMultiOrderDelivery($delivery);
 
-        $this->transactionRepository->updateDE($id, $request->input());
+        // Product stock is re-taken from batches; nothing is saved when the allowed batches fall short
+        DB::beginTransaction();
+        try {
+            $this->transactionRepository->updateDE($id, $request->input());
 
-        // Update stock but exclude stock_no (will be set separately)
-        $stockData = $request->input();
-        unset($stockData['stock_no']);
-        $this->stockRepository->update($request->input('stock_id'), $stockData);
+            // Update stock but exclude stock_no (will be set separately)
+            $stockData = $request->input();
+            unset($stockData['stock_no']);
+            $this->stockRepository->update($request->input('stock_id'), $stockData);
 
-        $this->deliveryRepository->update($id, $request->input());
+            $this->deliveryRepository->update($id, $request->input());
 
-        // Update stock_no with delivery_id only for single deliveries
-        $orderIds = $request->input('order_ids');
-        if ($orderIds) {
-            $this->stockRepository->update($request->input('stock_id'), ['stock_no' => str_replace(',', '|', $orderIds)]);
-        } elseif (!$isMultiOrder) {
-            $this->stockRepository->update($request->input('stock_id'), ['stock_no' => (string) $id]);
-        }
-
-        $orderStatus = ['order_status' => $request->input('order_status')];
-
-        // Handle both single and multi-order deliveries
-        $orderIds = $request->input('order_ids');
-        if ($orderIds) {
-            // Multi-order delivery - update all related orders
-            $orderIdArray = explode(',', $orderIds);
-            foreach ($orderIdArray as $orderId) {
-                $this->orderRepository->update($orderId, $orderStatus);
+            // Update stock_no with delivery_id only for single deliveries
+            $orderIds = $request->input('order_ids');
+            if ($orderIds) {
+                $this->stockRepository->update($request->input('stock_id'), ['stock_no' => str_replace(',', '|', $orderIds)]);
+            } elseif (!$isMultiOrder) {
+                $this->stockRepository->update($request->input('stock_id'), ['stock_no' => (string) $id]);
             }
-        } else {
-            // Single order delivery
-            $this->orderRepository->update($request->input('order_id'), $orderStatus);
-        }
 
-        $this->deliveryBoxRepository->delete($id);
-        $this->storeDB(
-            $id,
-            $request->input('vehicle_no'),
-            $request->input('rowQty'),
-            $request->input('totalQty')
-        );
-        $this->stockItemRepository->update($request->input('stock_id'), $request->input());
+            $orderStatus = ['order_status' => $request->input('order_status')];
+
+            // Handle both single and multi-order deliveries
+            $orderIds = $request->input('order_ids');
+            if ($orderIds) {
+                // Multi-order delivery - update all related orders
+                $orderIdArray = explode(',', $orderIds);
+                foreach ($orderIdArray as $orderId) {
+                    $this->orderRepository->update($orderId, $orderStatus);
+                }
+            } else {
+                // Single order delivery
+                $this->orderRepository->update($request->input('order_id'), $orderStatus);
+            }
+
+            $this->deliveryBoxRepository->delete($id);
+            $this->storeDB(
+                $id,
+                $request->input('vehicle_no'),
+                $request->input('rowQty'),
+                $request->input('totalQty')
+            );
+            $this->stockItemRepository->update($request->input('stock_id'), $request->input());
+            $relatedOrderIds = $isMultiOrder && ! $request->input('order_ids')
+                ? array_map(fn ($order) => ((array) $order)['order_id'], $this->getRelatedOrdersForDelivery($delivery))
+                : null;
+            $this->allocateBatches($request->input('stock_id'), $request, $relatedOrderIds ?: null);
+
+            DB::commit();
+        } catch (StockBatchException $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         return redirect()->route('delivery.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    /**
+     * Orders a delivery request is for: several for a multi-order delivery.
+     */
+    private function deliveryOrderIds(Request $request): array
+    {
+        if ($request->input('order_ids')) {
+            return explode(',', $request->input('order_ids'));
+        }
+
+        return $request->input('selected_orders') ?: [$request->input('order_id')];
+    }
+
+    /**
+     * Take the delivered products from the orders' own batches first, then free stock
+     * (or from the batch picked on the form), and record which order each line was for.
+     *
+     * @throws StockBatchException
+     */
+    private function allocateBatches($stockId, Request $request, ?array $orderIds = null): void
+    {
+        $orderIds = $orderIds ?? $this->deliveryOrderIds($request);
+        $this->stockBatchRepository->allocateStockOut($stockId, $orderIds, array_filter((array) $request->input('batch_pin', [])));
+        $this->stockBatchRepository->markLineOrders($stockId, $orderIds);
     }
 
     public function updateStatus($id, $status)

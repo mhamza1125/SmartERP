@@ -9,6 +9,7 @@ use App\Models\Head;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Stock;
+use App\Models\StockBatch;
 use App\Models\Vendor;
 use App\Models\Machine;
 use App\Models\Product;
@@ -33,6 +34,7 @@ use App\Policies\PackingListPolicy;
 use App\Policies\ReceivePolicy;
 use App\Policies\ReturnPolicy;
 use App\Policies\StockPolicy;
+use App\Policies\StockBatchPolicy;
 use App\Policies\VendorPolicy;
 use App\Policies\MachinePolicy;
 use App\Policies\ProductPolicy;
@@ -67,6 +69,7 @@ class AuthServiceProvider extends ServiceProvider
         Machine::class     => MachinePolicy::class,
         Order::class       => OrderPolicy::class,
         Stock::class       => StockPolicy::class,
+        StockBatch::class  => StockBatchPolicy::class,
         Purchase::class    => PurchasePolicy::class,
         Transaction::class => TransactionPolicy::class,
         Attendance::class  => AttendancePolicy::class,

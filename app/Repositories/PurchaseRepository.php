@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseRepository implements GlobalInterface
 {
+    public function __construct(protected StockBatchRepository $stockBatchRepository) {}
+
     public function all()
     {
         return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
@@ -115,11 +117,13 @@ class PurchaseRepository implements GlobalInterface
     {
         $update = Purchase::findOrFail($id);
         $update->update($data);
+        // Received stock stays reserved for the purchase's (new) order
+        if ($update->wasChanged('order_id')) {
+            $this->stockBatchRepository->syncPurchaseOrder($id, $update->order_id);
+        }
 
         return $update->purchase_id;
     }
 
-    public function delete($id)
-    {
-    }
+    public function delete($id) {}
 }

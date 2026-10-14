@@ -51,9 +51,9 @@
                   <tr>
                     <th style="width: 20%">Product</th>
                     <th style="width: 12%">Current Stock</th>
-                    <th style="width: 12%">Unclosed PTC</th>
-                    <th style="width: 12%">Confirmed Orders</th>
-                    <th style="width: 12%">Total Needed</th>
+                    <th style="width: 12%" title="Pieces in open PTCs (issued, not yet released)">In Production (PTC)</th>
+                    <th style="width: 12%" title="Still to deliver on confirmed orders">Confirmed Orders (to deliver)</th>
+                    <th style="width: 12%" title="Each order's shortfall after its own reserved stock and PTCs, minus free stock">Total Needed</th>
                     <th style="width: 22%">Materials</th>
                   </tr>
                 </thead>
@@ -83,6 +83,7 @@
                       </td>
                       <td>
                         <span class="badge badge-info">{{ $item['current_stock'] }}</span>
+                        <br><small class="text-muted">Free {{ $item['free_stock'] ?? 0 }} &middot; Reserved {{ $item['reserved_stock'] ?? 0 }}</small>
                       </td>
                       <td>
                         <span class="badge badge-warning">{{ $item['unclosed_ptc'] }}</span>

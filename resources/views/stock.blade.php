@@ -5,6 +5,7 @@
     'product' => ['route' => 'stock', 'title' => 'Product Stock'],
     'material' => ['route' => 'stock.material', 'title' => 'Material Stock'],
     'machine' => ['route' => 'stock.machine', 'title' => 'Machine Material Stock'],
+    'batches' => ['route' => 'batch.index', 'title' => 'Batches'],
   ];
 @endphp
 <section class="section">
@@ -40,6 +41,8 @@
                       <th>Item / Product</th>
                       <th>Size</th>
                       <th>Total Stock</th>
+                      <th>Free</th>
+                      <th>Reserved</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -60,6 +63,10 @@
                             return $item->stockIn - $item->stockOut;
                           });
                           // Show all products including zero stock
+                          // Batch split of the same usable stock: free vs reserved for orders
+                          $usableBatches = ($batches[$productTypeId] ?? collect())->reject(fn ($batch) => $batch->stage_id == 105);
+                          $freeStock = $usableBatches->whereNull('order_id')->sum('balance');
+                          $reservedStock = $usableBatches->whereNotNull('order_id')->sum('balance');
                         @endphp
                         <tr>
                           <td>{{ $rowIndex++ }}</td>
@@ -72,6 +79,14 @@
                               <span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span>
                             @else
                               <span class="badge badge-secondary">0 {{ $firstItem->uname }}</span>
+                            @endif
+                          </td>
+                          <td>{{ number_format($freeStock) }}</td>
+                          <td>
+                            @if($reservedStock != 0)
+                              <span class="badge badge-warning" title="{{ $usableBatches->whereNotNull('order_id')->groupBy('job_no')->map(fn ($rows, $jobNo) => $jobNo . ': ' . number_format($rows->sum('balance')))->implode(', ') }}">{{ number_format($reservedStock) }}</span>
+                            @else
+                              0
                             @endif
                           </td>
                           <td>
@@ -90,6 +105,8 @@
                       <th>Item / Product</th>
                       <th>Size</th>
                       <th>Total Stock</th>
+                      <th>Free</th>
+                      <th>Reserved</th>
                       <th>Actions</th>
                     </tr>
                   </tfoot>
@@ -177,6 +194,11 @@
                 | <strong class="text-warning">Rejection:</strong> {{ number_format($rejectionStock) }} {{ $firstItem->uname }}
               @endif
             </div>
+            @php
+              $productBatches = $batches[$productTypeId] ?? collect();
+              $stageNames = $stageItems->pluck('stname', 'stage_id');
+              $sourceLabels = ['ptc' => 'PTC', 'purchase' => 'Purchase', 'issuance' => 'Issuance', 'opening' => 'Opening', 'split' => 'Split', 'legacy' => 'Legacy'];
+            @endphp
             <div class="table-responsive">
               <table class="table table-striped table-bordered">
                 <thead class="thead-light">
@@ -186,11 +208,16 @@
                     <th>Stock In</th>
                     <th>Stock Out</th>
                     <th>Available</th>
+                    <th>Free</th>
+                    <th>Reserved</th>
                   </tr>
                 </thead>
                 <tbody>
                   @foreach($stageItems as $stageIdx => $stageItem)
-                    @php $stageStock = $stageItem->stockIn - $stageItem->stockOut; @endphp
+                    @php
+                      $stageStock = $stageItem->stockIn - $stageItem->stockOut;
+                      $stageBatches = $productBatches->where('stage_id', $stageItem->stage_id);
+                    @endphp
                     <tr>
                       <td>{{ $loop->iteration }}</td>
                       <td><span class="badge badge-primary">{{ $stageItem->stname ?? 'N/A' }}</span></td>
@@ -205,23 +232,62 @@
                           <span class="badge badge-secondary">0 {{ $stageItem->uname }}</span>
                         @endif
                       </td>
+                      <td>{{ number_format($stageBatches->whereNull('order_id')->sum('balance')) }}</td>
+                      <td>{{ number_format($stageBatches->whereNotNull('order_id')->sum('balance')) }}</td>
                     </tr>
                   @endforeach
                 </tbody>
                 <tfoot>
                   <tr class="table-info">
                     <th colspan="4" class="text-right">Usable Stock:</th>
-                    <th><span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span></th>
+                    <th colspan="3"><span class="badge badge-success">{{ number_format($totalStock) }} {{ $firstItem->uname }}</span></th>
                   </tr>
                   @if($rejectionStock != 0)
                   <tr class="table-warning">
                     <th colspan="4" class="text-right">Rejection Stock (Excluded):</th>
-                    <th><span class="badge badge-warning">{{ number_format($rejectionStock) }} {{ $firstItem->uname }}</span></th>
+                    <th colspan="3"><span class="badge badge-warning">{{ number_format($rejectionStock) }} {{ $firstItem->uname }}</span></th>
                   </tr>
                   @endif
                 </tfoot>
               </table>
             </div>
+
+            {{-- Which batch the stock belongs to and whether it is reserved for an order --}}
+            <h6 class="mt-3"><i class="fas fa-boxes"></i> Batches</h6>
+            @if($productBatches->isEmpty())
+              <p class="text-muted mb-0">No stock in any batch.</p>
+            @else
+              <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered mb-0">
+                  <thead class="thead-light">
+                    <tr>
+                      <th>Batch</th>
+                      <th>Source</th>
+                      <th>Reserved For</th>
+                      <th>Stage</th>
+                      <th>Available</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($productBatches as $batch)
+                      <tr>
+                        <td><a href="{{ route('batch.show', $batch->batch_id) }}">{{ $batch->batch_no }}</a></td>
+                        <td>{{ $sourceLabels[$batch->source_type] ?? $batch->source_type }}</td>
+                        <td>
+                          @if($batch->order_id)
+                            <span class="badge badge-warning">{{ $batch->job_no ?? 'Order ' . $batch->order_id }}</span>
+                          @else
+                            <span class="badge badge-success">Free</span>
+                          @endif
+                        </td>
+                        <td>{{ $stageNames[$batch->stage_id] ?? ($batch->stage_id ? 'Stage ' . $batch->stage_id : 'N/A') }}</td>
+                        <td class="{{ $batch->balance < 0 ? 'text-danger' : '' }}">{{ number_format($batch->balance) }} {{ $firstItem->uname }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            @endif
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

@@ -368,7 +368,9 @@
                                 <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
                                 <td>{{number_format($remainingQty)}}</td>
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
-                                <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes</td>
+                                <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes
+                                  @include('batchPicker', ['item' => $item])
+                                </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$existingDeliveredQty}}" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                                 </td>
@@ -435,7 +437,9 @@
                                 <td>{{number_format($item->quantity)}} / {{number_format($item->stockOutDelivered)}}</td>
                                 <td>{{number_format($remainingQty)}}</td>
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
-                                <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes</td>
+                                <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes
+                                  @include('batchPicker', ['item' => $item])
+                                </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$existingDeliveredQty}}" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                                 </td>

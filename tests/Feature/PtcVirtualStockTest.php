@@ -53,6 +53,16 @@ class PtcVirtualStockTest extends TestCase
         $this->materialId = $material;
         $this->employeeId = $employee;
         $this->componentPt = DB::table('product_types')->where('product_type_id', '!=', $this->pt)->value('product_type_id');
+
+        // Issuing product from general stock now needs stock in a (free) batch: seed opening stock
+        foreach ([$this->pt, $this->componentPt] as $productTypeId) {
+            foreach (array_merge([0], $this->stages) as $stageId) {
+                StockItem::create([
+                    'stock_id' => 1, 'product_type_id' => $productTypeId, 'material_id' => 0, 'quantity' => 100000,
+                    'stage_id' => $stageId, 'work_logs' => '0', 'work_wages' => '0', 'created_by' => $admin->id,
+                ]);
+            }
+        }
     }
 
     public function test_full_ptc_flow_keeps_stock_accurate(): void

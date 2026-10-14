@@ -78,6 +78,9 @@
                         <th>Returned Qty</th>
                         <!-- <th>Net Delivered</th> -->
                         <th>Remaining Qty</th>
+                        <th title="Stock reserved for this order at the ordered stage">Ready (Reserved)</th>
+                        <th title="Reserved for this order at other stages, or inside this order's open PTCs">In Production</th>
+                        <th title="Remaining - ready - in production">To Make</th>
                         <!-- <th>Status</th> -->
                         <th>Actions</th>
                       </tr>
@@ -130,6 +133,20 @@
                           <span class="badge badge-success">0 {{$item->unit_name}}</span>
                           @endif
                         </td>
+                        <td>
+                          {{ number_format($item->reserved_ready) }}
+                          @if($item->free_ready > 0)
+                            <br><small class="text-muted" title="Free stock at this stage, usable by any order">+{{ number_format($item->free_ready) }} free</small>
+                          @endif
+                        </td>
+                        <td>{{ number_format($item->reserved_other + $item->in_production) }}</td>
+                        <td>
+                          @if($item->to_make > 0)
+                          <span class="badge badge-danger">{{ number_format($item->to_make) }} {{$item->unit_name}}</span>
+                          @else
+                          <span class="badge badge-success">0</span>
+                          @endif
+                        </td>
                         <!-- <td>
                           @if($item->remaining_quantity <= 0)
                             <span class="badge badge-success">Completed</span>
@@ -169,6 +186,9 @@
                         <th>Returned Qty</th>
                         <!-- <th>Net Delivered</th> -->
                         <th>Remaining Qty</th>
+                        <th title="Stock reserved for this order at the ordered stage">Ready (Reserved)</th>
+                        <th title="Reserved for this order at other stages, or inside this order's open PTCs">In Production</th>
+                        <th title="Remaining - ready - in production">To Make</th>
                         <!-- <th>Status</th> -->
                         <th>Actions</th>
                       </tr>

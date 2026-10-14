@@ -15,6 +15,8 @@ use App\Repositories\OrderItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\PurchaseItemRepository;
 use App\Repositories\CompanyRepository;
+use App\Repositories\StockBatchRepository;
+use App\Repositories\PtcStockRepository;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
@@ -37,6 +39,10 @@ class OrderController extends Controller
 
     protected $companyRepository;
 
+    protected $stockBatchRepository;
+
+    protected $ptcStockRepository;
+
     public function __construct(
         HeadRepository $headRepository,
         BankRepository $bankRepository,
@@ -47,6 +53,8 @@ class OrderController extends Controller
         StockItemRepository $stockItemRepository,
         PurchaseItemRepository $purchaseItemRepository,
         CompanyRepository $companyRepository,
+        StockBatchRepository $stockBatchRepository,
+        PtcStockRepository $ptcStockRepository,
     ) {
         $this->middleware(['auth', 'all']);
         $this->headRepository = $headRepository;
@@ -58,6 +66,8 @@ class OrderController extends Controller
         $this->stockItemRepository = $stockItemRepository;
         $this->purchaseItemRepository = $purchaseItemRepository;
         $this->companyRepository = $companyRepository;
+        $this->stockBatchRepository = $stockBatchRepository;
+        $this->ptcStockRepository = $ptcStockRepository;
     }
 
     public function index()
@@ -403,7 +413,12 @@ class OrderController extends Controller
         $this->authorize('show', Order::class);
         $order = $this->orderRepository->get($id);
         $stock = $this->stockItemRepository->orderStatus($id);
-        $remainingItems = $this->stockItemRepository->orderRemainingItems($id);
+        // Remaining per line, plus what is reserved for the order, in production and still to make
+        $remainingItems = $this->stockBatchRepository->orderProgress(
+            $id,
+            $this->stockItemRepository->orderRemainingItems($id),
+            $this->ptcStockRepository->orderWorkInProgress($id)
+        );
 
         return view('orderStatus', [
             'order' => $order,

@@ -9,9 +9,12 @@ class StockItemRepository implements GlobalInterface
 {
     protected $productCostRepository;
 
-    public function __construct(ProductCostRepository $productCostRepository)
+    protected $stockBatchRepository;
+
+    public function __construct(ProductCostRepository $productCostRepository, StockBatchRepository $stockBatchRepository)
     {
         $this->productCostRepository = $productCostRepository;
+        $this->stockBatchRepository = $stockBatchRepository;
     }
 
     public function all()
@@ -874,84 +877,77 @@ class StockItemRepository implements GlobalInterface
             ->get();
     }
 
-    public function orderDelivery($id)
+    /**
+     * Products of an order that can be delivered, per product and stage of the order lines.
+     *
+     *   quantity          ordered
+     *   stockOutDelivered already delivered for this order
+     *   stockIn           available = general stock in batches reserved for the delivery's
+     *                     order(s) plus free batches (stockOut is 0, kept for the views)
+     *   batches           those batches (batch_id, batch_no, order_id, balance) for the batch picker
+     *
+     * @param  int|null  $excludeStockId  delivery being edited: its own lines are left out
+     * @param  array|null  $orderIds  all orders of a multi-order delivery (their reserved stock is allowed)
+     */
+    public function orderDelivery($id, $excludeStockId = null, ?array $orderIds = null)
     {
-        // Subquery for Purchase Received/Returned (for products)
-        $purchaseSub = DB::table('purchase_items')
-            ->select(
-                'purchase_items.product_type_id',
-                'purchase_items.product_stage_id',
-                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
-                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-            )
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->where('purchase_items.material_id', 0)
-            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
+        $orderIds = array_map('intval', $orderIds ?: [$id]);
 
-        // Subquery for Box Materials (only box materials, not all component products)
         $boxMaterialsSub = DB::table('product_materials')
-            ->select(
-                'product_materials.product_type_id',
-                DB::raw('MAX(product_materials.quantity) as bqty')
-            )
+            ->select('product_materials.product_type_id', DB::raw('MAX(product_materials.quantity) as bqty'))
             ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
             ->where('materials.material_type_id', 61) // Box only
             ->groupBy('product_materials.product_type_id');
 
-        // Main Query
-        return StockItem::select(
-            'stock_items.product_type_id',
-            'products.name',
-            'products.article_no',
-            'shead.name as sname',
-            'sthead.name as stname',
-            'stock_items.stage_id', // Just stage_id from stock_items
-            'uhead.name as uname',
-            DB::raw('COALESCE(box_materials.bqty, 0) as bqty')
-        )
-            ->selectRaw('MAX(order_items.quantity) as quantity')
-            ->selectRaw('
-                (
-                    SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END)
-                    + IFNULL(purchase_sub.total_received, 0)
-                    - IFNULL(purchase_sub.total_returned, 0)
-                ) as stockIn
-            ')
-            ->selectRaw('
-                SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut
-            ')
-            ->selectRaw('
-                SUM(CASE WHEN stocks.stock_type = 2 AND stocks.stock_status = 3 AND stocks.order_id = ? THEN stock_items.quantity ELSE 0 END) as stockOutDelivered
-            ', [$id])
+        // Delivered for this order: lines marked for it, or unmarked lines of a delivery made for it
+        $delivered = DB::table('stock_items')
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->join('order_items', 'order_items.product_type_id', '=', 'product_types.product_type_id')
+            ->where('stocks.stock_type', 2)
+            ->where('stocks.stock_status', 3)
+            ->where('stock_items.material_id', 0)
+            ->where(fn ($query) => $query->where('stock_items.order_id', $id)
+                ->orWhere(fn ($query) => $query->whereNull('stock_items.order_id')->where('stocks.order_id', $id)))
+            ->when($excludeStockId, fn ($query) => $query->where('stocks.stock_id', '!=', $excludeStockId))
+            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+            ->select('stock_items.product_type_id', 'stock_items.stage_id', DB::raw('SUM(stock_items.quantity) as quantity'))
+            ->get()
+            ->keyBy(fn ($row) => $row->product_type_id.'_'.$row->stage_id);
+
+        $batches = $this->stockBatchRepository->balances(['exclude_stock_id' => $excludeStockId])
+            ->filter(fn ($row) => $row->balance > 0.0001 && ($row->order_id === null || in_array((int) $row->order_id, $orderIds, true)))
+            ->sortBy(fn ($row) => [$row->order_id === null ? 1 : 0, $row->batch_id])
+            ->groupBy(fn ($row) => $row->product_type_id.'_'.$row->stage_id);
+
+        return DB::table('order_items')
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
             ->join('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->join('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id') // Only on stock_items.stage_id
-            ->leftJoinSub($boxMaterialsSub, 'box_materials', function ($join) {
-                $join->on('box_materials.product_type_id', '=', 'product_types.product_type_id');
-            })
-            ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
-                $join->on('purchase_sub.product_type_id', '=', 'product_types.product_type_id')
-                    ->whereColumn('purchase_sub.product_stage_id', '=', 'stock_items.stage_id');
-            })
+            ->join('heads as sthead', 'sthead.head_id', '=', 'order_items.product_stage_id')
+            ->leftJoinSub($boxMaterialsSub, 'box_materials', 'box_materials.product_type_id', '=', 'product_types.product_type_id')
             ->where('order_items.order_id', $id)
-            ->whereColumn('order_items.product_stage_id', 'stock_items.stage_id')
-            ->where('stock_items.material_id', 0)
-            ->where('stock_items.ptc_virtual', 0)
-            ->groupBy(
-                'stock_items.product_type_id',
-                'stock_items.stage_id',
+            ->groupBy('order_items.product_type_id', 'order_items.product_stage_id', 'products.name', 'products.article_no', 'shead.name', 'sthead.name', 'uhead.name', 'box_materials.bqty')
+            ->select(
+                'order_items.product_type_id',
                 'products.name',
                 'products.article_no',
-                'shead.name',
-                'sthead.name',
-                'uhead.name'
+                'shead.name as sname',
+                'sthead.name as stname',
+                'order_items.product_stage_id as stage_id',
+                'uhead.name as uname',
+                DB::raw('COALESCE(box_materials.bqty, 0) as bqty'),
+                DB::raw('SUM(order_items.quantity) as quantity')
             )
-            ->get();
+            ->get()
+            ->map(function ($row) use ($delivered, $batches) {
+                $key = $row->product_type_id.'_'.$row->stage_id;
+                $row->batches = ($batches[$key] ?? collect())->values();
+                $row->stockIn = round((float) $row->batches->sum('balance'), 4);
+                $row->stockOut = 0;
+                $row->stockOutDelivered = (float) ($delivered[$key]->quantity ?? 0);
+
+                return $row;
+            });
     }
 
     public function orderDeliveryOld($id)
@@ -1226,6 +1222,9 @@ class StockItemRepository implements GlobalInterface
 
     public function orderRemainingItems($id)
     {
+        // Delivered / returned per line: a multi-order delivery line carries the order it was for
+        $id = (int) $id;
+
         // Subquery for regular product delivered quantities
         $deliveredSub = DB::raw('(
             SELECT
@@ -1234,7 +1233,7 @@ class StockItemRepository implements GlobalInterface
                 SUM(si.quantity) as delivered_quantity
             FROM stock_items si
             JOIN stocks s ON s.stock_id = si.stock_id
-            WHERE s.order_id = ' . $id . '
+            WHERE (si.order_id = ' . $id . ' OR (si.order_id IS NULL AND s.order_id = ' . $id . '))
             AND s.stock_status = 3
             AND s.stock_type = 2
             AND si.component_product_type_id IS NULL
@@ -1249,7 +1248,7 @@ class StockItemRepository implements GlobalInterface
                 SUM(si.quantity) as delivered_quantity
             FROM stock_items si
             JOIN stocks s ON s.stock_id = si.stock_id
-            WHERE s.order_id = ' . $id . '
+            WHERE (si.order_id = ' . $id . ' OR (si.order_id IS NULL AND s.order_id = ' . $id . '))
             AND s.stock_status = 3
             AND s.stock_type = 2
             AND si.component_product_type_id IS NOT NULL
@@ -1265,7 +1264,7 @@ class StockItemRepository implements GlobalInterface
             FROM delivery_return_items dri
             JOIN stock_items si ON si.stock_item_id = dri.stock_item_id
             JOIN stocks s ON s.stock_id = si.stock_id
-            WHERE s.order_id = ' . $id . '
+            WHERE (si.order_id = ' . $id . ' OR (si.order_id IS NULL AND s.order_id = ' . $id . '))
             AND si.component_product_type_id IS NULL
             GROUP BY si.product_type_id, si.stage_id
         ) as returned');
@@ -1279,7 +1278,7 @@ class StockItemRepository implements GlobalInterface
             FROM delivery_return_items dri
             JOIN stock_items si ON si.stock_item_id = dri.stock_item_id
             JOIN stocks s ON s.stock_id = si.stock_id
-            WHERE s.order_id = ' . $id . '
+            WHERE (si.order_id = ' . $id . ' OR (si.order_id IS NULL AND s.order_id = ' . $id . '))
             AND si.component_product_type_id IS NOT NULL
             GROUP BY si.component_product_type_id
         ) as component_returned');

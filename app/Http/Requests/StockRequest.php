@@ -22,6 +22,9 @@ class StockRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Batch picked per product/stage ("{product_type_id}_{stage_id}"), empty = auto
+            'batch_pin' => 'nullable|array',
+            'batch_pin.*' => 'nullable|integer|exists:stock_batches,batch_id',
             'issue_id' => '',
             'stock_no' => 'required',
             'issue_for' => '',

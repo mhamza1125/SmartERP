@@ -203,12 +203,22 @@
                             $deliveryMap[$key] = $di['quantity'];
                         } @endphp
                       @if(count($stock))
-                      @php $index = 1; @endphp
+                      @php $index = 1; $shownKeys = []; @endphp
                         @foreach($stock as $key => $item)
-                          @php $item = (object) $item; @endphp
-                          @unless(($item->stockIn - $item->stockOut) <= 0)
-                            @php  $key = $item->product_type_id . '-' . $item->stage_id;
-                              $qty = $deliveryMap[$key] ?? 0; @endphp
+                          @php
+                            $item = (object) $item;
+                            $key = $item->product_type_id . '-' . $item->stage_id;
+                            $qty = $deliveryMap[$key] ?? 0;
+                            // stockIn = available without this delivery's own lines (its quantity is included);
+                            // stockOutDelivered = delivered to the order by other deliveries
+                            $availableQty = $item->stockIn - $item->stockOut;
+                            $deliveredOther = $item->stockOutDelivered ?? 0;
+                            $remainingQty = $item->quantity - $deliveredOther;
+                            // A multi-order delivery lists each product/stage once
+                            $duplicate = isset($shownKeys[$key]);
+                            $shownKeys[$key] = true;
+                          @endphp
+                          @unless($duplicate || ($availableQty <= 0 && $qty <= 0))
                             <tr>
                               <td>{{$index++}}</td>
                               <td>{{$item->article_no}} - Size {{$item->sname}}
@@ -218,12 +228,14 @@
                               <td>{{$item->stname}}
                                 <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
                               </td>
-                              <td>{{number_format($item->quantity)}} / {{number_format($item->stockOut - $qty)}}</td>
-                              <td>{{number_format($item->quantity - $item->stockOut + $qty)}}</td>
+                              <td>{{number_format($item->quantity)}} / {{number_format($deliveredOther)}}</td>
+                              <td>{{number_format($remainingQty)}}</td>
                               <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
-                              <td>{{number_format($item->stockIn - $item->stockOut + $qty)}} {{$item->uname}} / {{number_format(($item->stockIn - $item->stockOut + $qty)*$item->bqty, 2)}} boxes</td>
+                              <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes
+                                @include('batchPicker', ['item' => $item])
+                              </td>
                               <td class="form-group">
-                                <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$item->stockIn - $item->stockOut + $qty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$item->quantity - $item->stockOut + $qty}}" style="width:100px">
+                                <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$availableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
                               </td>
                               <td class="form-group">
                                 <input type="number" class="form-control bqty-input" value="{{number_format($qty * $item->bqty, 2)}}" style="width:100px" readonly>

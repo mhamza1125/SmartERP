@@ -301,6 +301,7 @@ class DeliveryReturnController extends Controller
                         'material_id' => $originalStockItem->material_id,
                         'quantity' => $quantity,
                         'stage_id' => $originalStockItem->stage_id,
+                        'component_product_type_id' => $originalStockItem->component_product_type_id,
                         'work_logs' => '0',
                         'work_wages' => '0',
                     ];

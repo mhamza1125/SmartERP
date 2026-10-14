@@ -22,6 +22,8 @@ use App\Repositories\IGroupItemRepository;
 use App\Repositories\ProductCostRepository;
 use App\Repositories\ProductMaterialRepository;
 use App\Repositories\PtcStockRepository;
+use App\Repositories\StockBatchRepository;
+use App\Exceptions\StockBatchException;
 use App\Exceptions\PtcStockException;
 use App\Http\Requests\PtcIssueRequest;
 use App\Http\Requests\PtcReceiveRequest;
@@ -30,6 +32,8 @@ use App\Http\Requests\PtcReleaseRequest;
 class StockController extends Controller
 {
     protected $ptcStockRepository;
+
+    protected $stockBatchRepository;
 
     protected $headRepository;
 
@@ -75,8 +79,10 @@ class StockController extends Controller
         ProductCostRepository $productCostRepository,
         ProductMaterialRepository $productMaterialRepository,
         PtcStockRepository $ptcStockRepository,
+        StockBatchRepository $stockBatchRepository,
     ) {
         $this->ptcStockRepository = $ptcStockRepository;
+        $this->stockBatchRepository = $stockBatchRepository;
         // All endpoints require authentication; the 'all' (role) check is lifted for
         // AJAX endpoints so they work in read-only contexts for populating forms.
         $this->middleware(['auth'])->only([
@@ -117,6 +123,8 @@ class StockController extends Controller
             'type' => $type,
             'stock' => $isProduct ? collect() : $this->stockItemRepository->stockByCategory($type),
             'pstock' => $isProduct ? $this->stockItemRepository->pStock() : collect(),
+            // Product stock per batch (free / reserved for an order), keyed by product type
+            'batches' => $isProduct ? $this->stockBatchRepository->stockByProduct() : collect(),
         ]);
     }
 
@@ -468,11 +476,21 @@ class StockController extends Controller
         $stages = $request->input('stage_id');
         $works = $request->input('work_logs');
         $componentIds = $request->input('component_id', []);
-        if ($request->has('issue_id')) { // Add Receive Issuance
-            $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+        try {
+            // An issuance takes its products from the order's batches, then free stock
+            $getId = DB::transaction(function () use ($request, $validatedData, $ptid, $mid, $quantities, $stages, $works, $componentIds) {
+                if ($request->has('issue_id')) { // Add Receive Issuance
+                    $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+                }
+                $getId = $this->stockRepository->store($validatedData);
+                $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $componentIds, $request->input());
+                $this->stockBatchRepository->allocateRecord($getId, (array) $request->input('batch_pin', []));
+
+                return $getId;
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
         }
-        $getId = $this->stockRepository->store($validatedData);
-        $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $componentIds, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'issuance', 'stocks', $getId);
@@ -494,10 +512,19 @@ class StockController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $getId = $this->stockRepository->store($validatedData);
         $igroups = $request->input('igroup_id');
         $quantities = $request->input('quantity');
-        $this->storeIGroup($getId, $igroups, $quantities);
+        try {
+            $getId = DB::transaction(function () use ($validatedData, $igroups, $quantities) {
+                $getId = $this->stockRepository->store($validatedData);
+                $this->storeIGroup($getId, $igroups, $quantities);
+                $this->stockBatchRepository->allocateRecord($getId);
+
+                return $getId;
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('stock.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -732,17 +759,24 @@ class StockController extends Controller
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $this->stockRepository->update($id, $request->input());
-        $issueId = $request->input('issue_id');
-        if ($request->has('issue_id')) {
-            $this->stockRepository->update($issueId, ['stock_status' => $request->input('stock_status')]);
+        try {
+            DB::transaction(function () use ($request, $id) {
+                $this->stockRepository->update($id, $request->input());
+                if ($request->has('issue_id')) {
+                    $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+                }
+                $this->stockItemRepository->update($id, $request->input());
+                // An issuance re-takes its products from the order's batches, then free stock
+                $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_pin', []));
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
         }
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'issuance', 'stocks', $id);
             }
         }
-        $this->stockItemRepository->update($id, $request->input());
         if ($request->has('machine_id')) {
             return redirect()->route('mstock.show', $id)->with('success', 'Record Updated Successfully');
         } elseif (! $request->has('issue_id')) {
@@ -1042,7 +1076,8 @@ class StockController extends Controller
         $stock = $this->stockItemRepository->stock();
 
         // Get product stock (products in stages)
-        $pstock = $this->stockItemRepository->pStock();
+        // Product stock this PTC may issue: its order's batches + free stock
+        $pstock = $this->stockBatchRepository->allowedStock($orderId);
 
         // Calculate already issued PTC quantity for this product in this order
         $alreadyIssuedQty = 0;
@@ -1181,6 +1216,7 @@ class StockController extends Controller
             'productComponents' => $productComponents,
             'stock' => $stock,
             'pstock' => $pstock,
+            'batchChoices' => $this->stockBatchRepository->batchChoices($productTypeId, $orderId),
         ]);
     }
 
@@ -1252,37 +1288,44 @@ class StockController extends Controller
         $stageIdsInput = $request->input('stage_id', []);
         $componentIds = $request->input('component_id', []);
 
-        $ptcId = DB::transaction(function () use ($ptcData, $quantities, $materialIds, $productTypeIds, $stageIdsInput, $componentIds, $productTypeId, $startStageId) {
-            $ptcId = $this->stockRepository->store($ptcData);
+        try {
+            $ptcId = DB::transaction(function () use ($ptcData, $quantities, $materialIds, $productTypeIds, $stageIdsInput, $componentIds, $productTypeId, $startStageId) {
+                $ptcId = $this->stockRepository->store($ptcData);
 
-            foreach ($quantities as $key => $quantity) {
-                if ($quantity > 0) {
-                    // Determine if this is a material or product issuance
-                    $itemProductTypeId = $productTypeIds[$key] ?? 0;
-                    $itemMaterialId = $materialIds[$key] ?? 0;
-                    $itemStageId = $stageIdsInput[$key] ?? 0;
-                    // NULL, not 0: general stock treats component_product_type_id IS NULL as a product line
-                    $componentProductTypeId = ($componentIds[$key] ?? null) ?: null;
+                foreach ($quantities as $key => $quantity) {
+                    if ($quantity > 0) {
+                        // Determine if this is a material or product issuance
+                        $itemProductTypeId = $productTypeIds[$key] ?? 0;
+                        $itemMaterialId = $materialIds[$key] ?? 0;
+                        $itemStageId = $stageIdsInput[$key] ?? 0;
+                        // NULL, not 0: general stock treats component_product_type_id IS NULL as a product line
+                        $componentProductTypeId = ($componentIds[$key] ?? null) ?: null;
 
-                    // For material issuance, use the PTC's product_type_id
-                    // For product issuance, use the item's product_type_id
-                    $stockItem = [
-                        'stock_id' => $ptcId,
-                        'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                        'material_id' => $itemMaterialId,
-                        'quantity' => $quantity,
-                        'stage_id' => ($itemStageId > 0) ? $itemStageId : $startStageId,
-                        'work_logs' => '0',
-                        'work_wages' => '0',
-                        'component_product_type_id' => $componentProductTypeId,
-                        'created_by' => auth()->id(),
-                    ];
-                    $this->stockItemRepository->store($stockItem);
+                        // For material issuance, use the PTC's product_type_id
+                        // For product issuance, use the item's product_type_id
+                        $stockItem = [
+                            'stock_id' => $ptcId,
+                            'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
+                            'material_id' => $itemMaterialId,
+                            'quantity' => $quantity,
+                            'stage_id' => ($itemStageId > 0) ? $itemStageId : $startStageId,
+                            'work_logs' => '0',
+                            'work_wages' => '0',
+                            'component_product_type_id' => $componentProductTypeId,
+                            'created_by' => auth()->id(),
+                        ];
+                        $this->stockItemRepository->store($stockItem);
+                    }
                 }
-            }
 
-            return $ptcId;
-        });
+                // Products issued from general stock come from the order's batches, then free stock
+                $this->stockBatchRepository->allocateRecord($ptcId, (array) request()->input('batch_pin', []));
+
+                return $ptcId;
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('ptc.show', $ptcId)->with('success', 'PTC Created Successfully');
     }
@@ -1650,7 +1693,8 @@ class StockController extends Controller
 
         // Get material stock
         $stock = $this->stockItemRepository->stock();
-        $pstock = $this->stockItemRepository->pStock();
+        // Product stock this PTC may issue: its order's batches + free stock (its own lines count as out)
+        $pstock = $this->stockBatchRepository->allowedStock($ptc->order_id);
 
         // Get product details
         $productTypeId = $ptcItems->first()->product_type_id ?? null;
@@ -1740,18 +1784,23 @@ class StockController extends Controller
             $items['component_id'][$key] = ($items['component_id'][$key] ?? null) ?: null;
         }
 
-        DB::transaction(function () use ($ptc, $request, $id, $items) {
-            // Update PTC record
-            $ptc->update([
-                'stock_date' => $request->input('stock_date', $ptc->stock_date),
-                'table_name' => $request->input('table_name', $ptc->table_name),
-                'employee_id' => $request->input('employee_id', $ptc->employee_id),
-                'description' => $request->input('description'),
-            ]);
+        try {
+            DB::transaction(function () use ($ptc, $request, $id, $items) {
+                // Update PTC record
+                $ptc->update([
+                    'stock_date' => $request->input('stock_date', $ptc->stock_date),
+                    'table_name' => $request->input('table_name', $ptc->table_name),
+                    'employee_id' => $request->input('employee_id', $ptc->employee_id),
+                    'description' => $request->input('description'),
+                ]);
 
-            // Update stock items
-            $this->stockItemRepository->update($id, $items);
-        });
+                // Update stock items
+                $this->stockItemRepository->update($id, $items);
+                $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_pin', []));
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('ptc.show', $id)->with('success', 'PTC Updated Successfully');
     }
@@ -1778,7 +1827,8 @@ class StockController extends Controller
 
         // Get material stock for issuance
         $stock = $this->stockItemRepository->stock();
-        $pstock = $this->stockItemRepository->pStock();
+        // Product stock this PTC may issue: its order's batches + free stock
+        $pstock = $this->stockBatchRepository->allowedStock($ptc->order_id);
 
         // Get product details
         $productTypeId = $ptcItems->first()->product_type_id ?? null;
@@ -1897,6 +1947,7 @@ class StockController extends Controller
             'stock' => $stock,
             'pstock' => $pstock,
             'issuances' => $issuances,
+            'batchChoices' => $this->stockBatchRepository->batchChoices($product->product_type_id ?? null, $ptc->order_id),
         ]);
     }
 
@@ -1924,7 +1975,7 @@ class StockController extends Controller
         ];
 
         try {
-            $this->ptcStockRepository->issue($id, $header, $this->ptcItemLines($request, ''));
+            $this->ptcStockRepository->issue($id, $header, $this->ptcItemLines($request, ''), (array) $request->input('batch_pin', []));
         } catch (PtcStockException $e) {
             return redirect()->back()->withInput()->with('fails', $e->getMessage());
         }

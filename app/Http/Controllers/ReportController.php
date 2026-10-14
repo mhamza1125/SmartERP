@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Repositories\StockItemRepository;
+use App\Repositories\StockRequirementRepository;
 use App\Repositories\ProductMaterialRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,14 +13,17 @@ class ReportController extends Controller
 {
     protected $stockItemRepository;
     protected $productMaterialRepository;
+    protected $stockRequirementRepository;
 
     public function __construct(
         StockItemRepository $stockItemRepository,
-        ProductMaterialRepository $productMaterialRepository
+        ProductMaterialRepository $productMaterialRepository,
+        StockRequirementRepository $stockRequirementRepository
     ) {
         $this->middleware(['auth', 'all']);
         $this->stockItemRepository = $stockItemRepository;
         $this->productMaterialRepository = $productMaterialRepository;
+        $this->stockRequirementRepository = $stockRequirementRepository;
     }
 
     /**
@@ -46,62 +50,19 @@ class ReportController extends Controller
             ->orderBy('products.article_no')
             ->get();
 
-        // Get current stock using the same method as /stock page
-        // The /stock page sums all stages for each product_type_id, excluding rejection stock (head_id = 105)
-        $currentStock = $this->stockItemRepository->pStock();
-
-        // Get unclosed PTCs (In Progress only - status 6)
-        // PTCs are stored in stocks table, but product_type_id is in stock_items table
-        // Use DISTINCT to avoid counting the same PTC multiple times (one PTC can have multiple stock_items)
-        // Status 7 (Completed) should not be included as those are closed PTCs
-        $unclosedPtcs = DB::table('stocks')
-            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->where('stocks.is_ptc_master', 1)
-            ->where('stocks.stock_status', 6) // In Progress only
-            ->select('stock_items.product_type_id', 'stocks.stock_id', 'stocks.description', 'stocks.stock_status')
-            ->distinct('stocks.stock_id')
-            ->get();
-
-        // Get confirmed orders (order_status = 2)
-        $confirmedOrders = DB::table('order_items')
-            ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
-            ->where('orders.order_status', 2) // Confirmed
-            ->select('order_items.product_type_id', DB::raw('SUM(order_items.quantity) as total_qty'))
-            ->groupBy('order_items.product_type_id')
-            ->get();
+        // Batch-tracked figures: each confirmed order is covered by its own reserved stock and
+        // PTCs first; only the rest draws on free stock (see StockRequirementRepository)
+        $requirements = $this->stockRequirementRepository->requirements();
 
         // Build the report data
         $reportData = [];
 
         foreach ($productTypes as $pt) {
-            // Calculate current stock using the same method as /stock page
-            // Sum all stages for this product_type_id, excluding rejection stock (head_id = 105)
-            $stageItems = $currentStock->where('product_type_id', $pt->product_type_id);
-            $currentStockQty = 0;
-            foreach ($stageItems as $item) {
-                // Exclude rejection stock from total count
-                if(($item->sthead_id ?? $item->stage_id) != 105) {
-                    $currentStockQty += $item->stockIn - $item->stockOut;
-                }
-            }
-
-            // Calculate unclosed PTC quantity
-            $unclosedPtcQty = 0;
-            foreach ($unclosedPtcs as $ptc) {
-                if ($ptc->product_type_id == $pt->product_type_id) {
-                    // Extract quantity from description field
-                    if (preg_match('/\[QTY:(\d+)\]/i', $ptc->description, $matches)) {
-                        $unclosedPtcQty += (int)$matches[1];
-                    }
-                }
-            }
-
-            // Get confirmed order quantity
-            $confirmedOrder = $confirmedOrders->where('product_type_id', $pt->product_type_id)->first();
-            $confirmedOrderQty = $confirmedOrder ? $confirmedOrder->total_qty : 0;
-
-            // Calculate total needed
-            $totalNeeded = $confirmedOrderQty - ($currentStockQty + $unclosedPtcQty);
+            $requirement = $requirements[$pt->product_type_id] ?? [];
+            $currentStockQty = $requirement['current_stock'] ?? 0;
+            $unclosedPtcQty = $requirement['in_production'] ?? 0;
+            $confirmedOrderQty = $requirement['open_orders'] ?? 0;
+            $totalNeeded = $requirement['total_needed'] ?? 0;
 
             // Get materials for this product type
             $materials = DB::table('product_materials')
@@ -122,6 +83,8 @@ class ReportController extends Controller
                 'unclosed_ptc' => $unclosedPtcQty,
                 'confirmed_orders' => $confirmedOrderQty,
                 'total_needed' => $totalNeeded,
+                'reserved_stock' => $requirement['reserved_stock'] ?? 0,
+                'free_stock' => $requirement['free_stock'] ?? 0,
                 'materials' => $materials,
             ];
         }
@@ -207,13 +170,10 @@ class ReportController extends Controller
                 ->orderBy('stocks.stock_date')
                 ->get();
 
-            // Add PTCs to ledger
-            // PTCs represent production/manufacturing that will add to stock (Stock In)
+            // Add PTCs to ledger: pieces still in production (issued, not yet released to stock).
+            // Released pieces are already in the current stock above.
             foreach ($unclosedPtcs as $ptc) {
-                $ptcQty = 0;
-                if (preg_match('/\[QTY:(\d+)\]/i', $ptc->description, $matches)) {
-                    $ptcQty = (int)$matches[1];
-                }
+                $ptcQty = $this->stockRequirementRepository->ptcWorkInProgress($ptc->stock_id, $productTypeId);
 
                 if ($ptcQty > 0) {
                     $ledgerData[] = [
@@ -227,21 +187,8 @@ class ReportController extends Controller
                 }
             }
 
-            // Get confirmed orders (order_status = 2)
-            $confirmedOrders = DB::table('order_items')
-                ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
-                ->leftJoin('customers', 'customers.customer_id', '=', 'orders.customer_id')
-                ->where('orders.order_status', 2) // Confirmed
-                ->where('order_items.product_type_id', $productTypeId)
-                ->select(
-                    'orders.order_id',
-                    'orders.order_date',
-                    'order_items.quantity',
-                    'customers.fname',
-                    'customers.lname'
-                )
-                ->orderBy('orders.order_date')
-                ->get();
+            // Get confirmed orders (order_status = 2) with what is still to be delivered
+            $confirmedOrders = $this->stockRequirementRepository->openOrderQuantities($productTypeId);
 
             // Add orders to ledger
             foreach ($confirmedOrders as $order) {

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Exceptions\PtcStockException;
+use App\Exceptions\StockBatchException;
 use App\Models\Stock;
 use App\Models\StockItem;
 use Illuminate\Support\Collection;
@@ -36,16 +37,20 @@ class PtcStockRepository implements GlobalInterface
 
     protected $headRepository;
 
+    protected $stockBatchRepository;
+
     public function __construct(
         StockRepository $stockRepository,
         StockItemRepository $stockItemRepository,
         ProductCostRepository $productCostRepository,
-        HeadRepository $headRepository
+        HeadRepository $headRepository,
+        StockBatchRepository $stockBatchRepository
     ) {
         $this->stockRepository = $stockRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->productCostRepository = $productCostRepository;
         $this->headRepository = $headRepository;
+        $this->stockBatchRepository = $stockBatchRepository;
     }
 
     public function all()
@@ -276,6 +281,52 @@ class PtcStockRepository implements GlobalInterface
 
             return $row;
         });
+    }
+
+    /**
+     * Product still in production for an order, per product type: across the order's open PTCs,
+     * pieces issued and not yet received back plus pieces in PTC stock (rejected excluded).
+     *
+     * @return array<int, float> product_type_id => quantity
+     */
+    public function orderWorkInProgress($orderId): array
+    {
+        $workInProgress = [];
+        $ptcIds = Stock::where('is_ptc_master', 1)
+            ->where('order_id', $orderId)
+            ->where('stock_status', Stock::STATUS_PTC_IN_PROGRESS)
+            ->pluck('stock_id');
+
+        foreach ($ptcIds as $ptcId) {
+            foreach ($this->workInProgress($ptcId) as $productTypeId => $quantity) {
+                $workInProgress[$productTypeId] = ($workInProgress[$productTypeId] ?? 0) + $quantity;
+            }
+        }
+
+        return array_map(fn ($quantity) => $this->round($quantity), $workInProgress);
+    }
+
+    /**
+     * Product still in production in one PTC, per product type: issued and not yet received back,
+     * plus received and not yet released (PTC stock, rejected excluded).
+     *
+     * @return array<int, float> product_type_id => quantity
+     */
+    public function workInProgress($ptcId): array
+    {
+        $workInProgress = [];
+        foreach ($this->virtualStock($ptcId) as $row) {
+            if ((int) $row->stage_id !== Stock::STAGE_REJECTED && $row->available > 0) {
+                $workInProgress[$row->product_type_id] = ($workInProgress[$row->product_type_id] ?? 0) + $row->available;
+            }
+        }
+        foreach ($this->issuanceBalances($ptcId) as $balance) {
+            foreach ($balance['products'] as $productTypeId => $line) {
+                $workInProgress[$productTypeId] = ($workInProgress[$productTypeId] ?? 0) + $line['outstanding'];
+            }
+        }
+
+        return array_map(fn ($quantity) => $this->round($quantity), $workInProgress);
     }
 
     /**
@@ -601,9 +652,9 @@ class PtcStockRepository implements GlobalInterface
      *
      * @param  array  $lines  [product_type_id, material_id, component_id, stage_id, quantity, source]
      */
-    public function issue($ptcId, array $header, array $lines)
+    public function issue($ptcId, array $header, array $lines, array $pins = [])
     {
-        return DB::transaction(function () use ($ptcId, $header, $lines) {
+        return DB::transaction(function () use ($ptcId, $header, $lines, $pins) {
             $ptc = $this->lockOpenPtc($ptcId);
             $ptcProductTypeId = $this->ptcProductTypeId($ptcId);
             $lines = $this->normalizeLines($lines, $ptcProductTypeId, $ptc->current_stage_id);
@@ -638,6 +689,8 @@ class PtcStockRepository implements GlobalInterface
                     'work_wages' => '0',
                 ]);
             }
+
+            $this->allocateGeneralStock($issueId, $pins);
 
             $this->advanceCurrentStage($ptc, $issueFor);
 
@@ -693,6 +746,7 @@ class PtcStockRepository implements GlobalInterface
                     $items->get($stockItemId)->update(['quantity' => $quantity]);
                 }
             }
+            $this->allocateGeneralStock($issuanceId);
 
             $this->advanceCurrentStage($ptc, $issuance->issue_for);
         });
@@ -922,6 +976,20 @@ class PtcStockRepository implements GlobalInterface
         }
 
         return $normalized;
+    }
+
+    /**
+     * Products issued from general stock are taken from the PTC order's batches, then free stock.
+     *
+     * @param  array  $pins  "{product_type_id}_{stage_id}" => batch_id chosen on the form
+     */
+    private function allocateGeneralStock($stockId, array $pins = []): void
+    {
+        try {
+            $this->stockBatchRepository->allocateRecord($stockId, $pins);
+        } catch (StockBatchException $e) {
+            throw new PtcStockException($e->getMessage());
+        }
     }
 
     private function assertVirtualAvailable($ptcId, Collection $lines): void

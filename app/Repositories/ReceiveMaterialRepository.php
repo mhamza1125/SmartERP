@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class ReceiveMaterialRepository implements GlobalInterface
 {
+    public function __construct(protected StockBatchRepository $stockBatchRepository) {}
+
     public function all()
     {
         return ReceiveMaterial::all();
@@ -147,7 +149,7 @@ class ReceiveMaterialRepository implements GlobalInterface
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, products.name, products.article_no, heads.name as hname, shead.name as sname, orders.job_no, COALESCE(received.total_received, 0) as rqty, COALESCE(returned.total_returned, 0) as rqty2')
             ->get();
-        }
+    }
 
     public function rAll($id)
     {
@@ -172,7 +174,7 @@ class ReceiveMaterialRepository implements GlobalInterface
             ->join('product_types', 'product_types.product_type_id', '=', 'purchase_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id') 
+            ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
             ->select('receive_materials.*', 'purchase_items.quantity', 'receive_materials.quantity as rqty', 'receive_materials.created_at', 'receive_material_id', 'receives.receive_no', 'purchase_items.purchase_item_id', 'products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname', 'receive_materials.*')
             ->get();
     }
@@ -189,6 +191,7 @@ class ReceiveMaterialRepository implements GlobalInterface
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();
+        $data['batch_id'] = $this->stockBatchRepository->purchaseReceiptBatchId($data['purchase_item_id']);
         $store = ReceiveMaterial::create($data);
 
         return $store->receive_material_id;
@@ -213,6 +216,7 @@ class ReceiveMaterialRepository implements GlobalInterface
             $receiveMaterial = [
                 'receive_id' => $id,
                 'purchase_item_id' => $pid,
+                'batch_id' => $this->stockBatchRepository->purchaseReceiptBatchId($pid),
                 'quantity' => $quantity,
                 'pending_qty' => $pqty,
                 'approved_qty' => $aqty,
@@ -231,7 +235,5 @@ class ReceiveMaterialRepository implements GlobalInterface
         }
     }
 
-    public function delete($id)
-    {
-    }
+    public function delete($id) {}
 }

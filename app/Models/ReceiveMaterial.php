@@ -14,6 +14,7 @@ class ReceiveMaterial extends Model
     protected $fillable = [
         'receive_id',
         'purchase_item_id',
+        'batch_id',
         'quantity',
         'pending_qty',
         'approved_qty',

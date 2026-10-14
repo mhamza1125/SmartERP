@@ -153,6 +153,56 @@ Additional domain-specific methods are added per repository beyond these five.
 - Close is blocked while product is outstanding or PTC stock remains; closing changes only the status (stages keep their actual status, no stock movement)
 - "No component" must be stored as NULL, never 0 (general stock uses `component_product_type_id IS NULL` for product lines)
 
+### Batch-Tracked Product Stock (2026-10-14)
+- `stock_batches`: one lot of one product type. `source_type` is one of ptc | purchase | issuance | opening | split | legacy, with `source_id`. `order_id` = reserved for that order; NULL = free.
+- Batch numbers:
+  - PTC → `PTC-{no}`
+  - purchase → `{purchase_no}` (one batch per purchase item)
+  - issuance → the issuance `stock_no`
+  - opening → `OPEN-{product_type_id}`
+  - a `-2`, `-3` suffix is added when a document makes several batches
+- `stock_item_batches` (stock_item_id, batch_id, quantity) records which batches a product line moved. A stock-out may draw from several batches; `SUM` per line = `stock_items.quantity`. Lines are never split, so every product line stays one row.
+- Purchase receipts: `receive_materials.batch_id` is set in `ReceiveMaterialRepository`; returns reduce the batch through `receive_material_id`.
+- A product line is `material_id = 0 OR component_product_type_id IS NOT NULL`, the same definition `pStock()` uses (`StockBatchRepository::whereProductLine`). Components count under the component product type.
+- **Stock-ins get their batch automatically** through `StockItemObserver` → `StockBatchRepository::syncLine()` / `stockInAllocation()`:
+  - PTC receipt or release → the PTC batch
+  - normal issuance receipt → the issuance batch
+  - opening stock (stock_id 1) → OPEN
+  - delivery return → the batches the delivered line came from
+  - anything else → its own batch
+
+  PTC stage transfers (`ptc_virtual = 1`) → the PTC batch.
+- Batch order follows its source: `StockObserver` handles issuance and PTC order edits; `PurchaseRepository::update` handles the purchase order.
+- **General stock-outs** are allocated after their lines are written with `StockBatchRepository::allocateStockOut($stockId, $orderIds, $pins)`, or `allocateRecord($stockId, $pins)` for records with a single order:
+  - the order's own batches first, then free stock, FIFO; never another order's batch
+  - the record's own lines are excluded, so create and edit behave the same
+  - a shortfall throws `StockBatchException` and the whole save is rolled back. The PTC repository rethrows it as `PtcStockException`.
+  - Callers: DeliveryController store/update, StockController store/gstore/update/ptcStore/ptcUpdate, PtcStockRepository issue/updateIssuance.
+- Batch pins: `batch_pin["{pt}_{stage}"] = batch_id` (partial `batchPicker.blade.php`, currently on the delivery add/edit forms). Empty = auto.
+- Deliveries:
+  - `stock_items.order_id` records the order each line was delivered for (`markLineOrders`; for multi-order deliveries, the order whose reserved batch the line took)
+  - `orderDelivery($orderId, $excludeStockId, $orderIds)`: stockIn = allowed batch stock, stockOut = 0, plus `batches` for the picker
+- /stock shows Free / Reserved per product and stage, plus a Batches table in the stage modal (`StockBatchRepository::stockByProduct()`).
+- **Batches screen** (`StockBatchController`, routes `batch.index` / `batch.show` / `batch.reserve` / `batch.split` under /stock/batches, views `batches`, `batchInfo`):
+  - list of batches; detail page with stage balances, "Made From" (batches the source PTC/issuance consumed), splits and full movement history
+  - permissions: `StockBatchPolicy` reuses stocks_access/show for viewing, and stocks_edit for changing
+- **Changing ownership:** reserve/reassign/free updates `stock_batches.order_id`. A split creates a child batch `{batch}-S{n}` (`source_type` split, `parent_batch_id`) plus a `stock_batch_transfers` row (from, to, stage, qty).
+  - Transfers move ownership only; they never create stock rows, so pooled totals and issuance listings are untouched.
+  - `balanceQuery()` unions them in. Both models log activity.
+  - `stock:backfill-batches --fresh` must not be used after manual reservations or splits.
+- **Order status "To Make"** = remaining − reserved at the line's stage − reserved at other stages − in the order's open PTCs (`StockBatchRepository::orderProgress`, `PtcStockRepository::orderWorkInProgress` / `workInProgress` = outstanding issued + PTC stock).
+- `orderRemainingItems` counts delivered/returned per line order (`stock_items.order_id`, falling back to the header order).
+- **Requirements report** (`StockRequirementRepository`):
+  - each confirmed order's shortfall after its own reserved stock and PTCs, minus free stock and PTCs without an order
+  - PTCs count their actual pieces in production, not the planned `[QTY:n]`
+  - orders count what is still to deliver
+  - the ledger report uses the same figures
+- **PTC create / issue forms:**
+  - `pstock` is `allowedStock(order)` (own + free)
+  - the forms include `batchChoices` (one optional batch picker per stage)
+  - normal issuance forms stay on Auto
+- Balances: `StockBatchRepository::balanceQuery()`. The sum over batches equals the pooled `pStock()` figures. `php artisan stock:backfill-batches --check` reports missing or stale allocations and any total mismatch.
+
 ### Stock Status Constants (on `Stock` model)
 ```
 STATUS_NOT_RECEIVED       = 0
