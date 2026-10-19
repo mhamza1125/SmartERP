@@ -24,9 +24,10 @@ class DeliveryRequest extends FormRequest
         return [
             // Stock Table
             // Note: stock_no is auto-generated server-side, not provided by user
-            // Batch picked per product/stage ("{product_type_id}_{stage_id}"), empty = auto
-            'batch_pin' => 'nullable|array',
-            'batch_pin.*' => 'nullable|integer|exists:stock_batches,batch_id',
+            // Quantity per batch per product/stage: batch_qty["{product_type_id}_{stage_id}"][batch_id]; empty = auto
+            'batch_qty' => 'nullable|array',
+            'batch_qty.*' => 'nullable|array',
+            'batch_qty.*.*' => 'nullable|numeric|min:0',
             'stock_date' => 'required', // Delivery Date
             'order_id' => 'required_without:order_ids', // Required for single order delivery
             'order_ids' => 'required_without:order_id|string', // Required for multi-order delivery (comma-separated)

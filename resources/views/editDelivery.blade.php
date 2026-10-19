@@ -232,7 +232,7 @@
                               <td>{{number_format($remainingQty)}}</td>
                               <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                               <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes
-                                @include('batchPicker', ['item' => $item])
+                                @include('batchPicker', ['item' => $item, 'picks' => $batchPicks ?? []])
                               </td>
                               <td class="form-group">
                                 <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$availableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">

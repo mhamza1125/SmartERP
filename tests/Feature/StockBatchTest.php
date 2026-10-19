@@ -369,6 +369,123 @@ class StockBatchTest extends TestCase
         $this->assertEqualsWithDelta(max(0, $before->to_make - 7), $after->to_make, 0.0001);
     }
 
+    public function test_one_stock_out_can_take_different_quantities_from_different_batches(): void
+    {
+        $stage = $this->stages[2];
+        $key = "{$this->pt}_{$stage}";
+        $batchA = $this->receiptIntoNewBatch($this->orderX, 40, $stage);
+        $batchE = $this->receiptIntoNewBatch(null, 40, $stage);
+
+        $issuance = $this->stock(['stock_type' => 2, 'order_id' => $this->orderX, 'stock_status' => 0]);
+        $line = $this->line($issuance->stock_id, 50, $stage);
+        $this->batches->allocateStockOut($issuance->stock_id, $this->orderX, [$key => [$batchA => 30, $batchE => 20]]);
+
+        $this->assertAllocated($line->stock_item_id, [$batchA => 30, $batchE => 20]);
+        $this->assertSame([$key => [$batchA => 30.0, $batchE => 20.0]], $this->batches->recordPicks($issuance->stock_id));
+    }
+
+    public function test_picked_quantities_come_first_and_the_rest_is_automatic(): void
+    {
+        $stage = $this->stages[2];
+        $key = "{$this->pt}_{$stage}";
+        $batchE = $this->receiptIntoNewBatch(null, 40, $stage);
+
+        $issuance = $this->stock(['stock_type' => 2, 'order_id' => $this->orderX, 'stock_status' => 0]);
+        $line = $this->line($issuance->stock_id, 25, $stage);
+        $this->batches->allocateStockOut($issuance->stock_id, $this->orderX, [$key => [$batchE => 10]]);
+
+        $allocation = DB::table('stock_item_batches')->where('stock_item_id', $line->stock_item_id)->pluck('quantity', 'batch_id');
+        $this->assertGreaterThanOrEqual(10.0, (float) $allocation[$batchE], 'the picked 10 come from E');
+        $this->assertEqualsWithDelta(25, $allocation->sum(), 0.0001, 'the other 15 are taken automatically');
+    }
+
+    public function test_batch_quantities_cannot_exceed_what_is_issued_or_name_another_stage(): void
+    {
+        [, $s2, $s3] = $this->stages;
+        $batchA = $this->receiptIntoNewBatch($this->orderX, 40, $s3);
+        $issuance = $this->stock(['stock_type' => 2, 'order_id' => $this->orderX, 'stock_status' => 0]);
+        $this->line($issuance->stock_id, 20, $s3);
+
+        try {
+            $this->batches->allocateStockOut($issuance->stock_id, $this->orderX, ["{$this->pt}_{$s3}" => [$batchA => 25]]);
+            $this->fail('25 picked for a line of 20 must be refused.');
+        } catch (StockBatchException $e) {
+            $this->assertStringContainsString('5 more than the quantity issued', $e->getMessage());
+        }
+
+        $this->expectException(StockBatchException::class);
+        $this->batches->allocateStockOut($issuance->stock_id, $this->orderX, ["{$this->pt}_{$s2}" => [$batchA => 5]]);
+    }
+
+    public function test_ptc_issue_form_takes_the_entered_quantities_per_batch(): void
+    {
+        [$s1, $s2, $s3] = $this->stages;
+        $this->seedOpening($this->pt, $s1, 100);
+        $ptcId = $this->createPtc($s1, $this->orderX);
+        $batchA = $this->receiptIntoNewBatch($this->orderX, 40, $s1);
+        $batchE = $this->receiptIntoNewBatch(null, 40, $s1);
+
+        $this->post(route('ptc.issue.store', $ptcId), [
+            'stock_date' => now()->toDateString(),
+            'issue_for' => $s3,
+            'table_name' => 'employee',
+            'employee_id' => $this->employeeId,
+            'quantity' => [50], 'product_type_id' => [$this->pt], 'material_id' => [0],
+            'stage_id' => [$s1], 'component_id' => [''], 'source' => ['general'],
+            'batch_qty' => ["{$this->pt}_{$s1}" => [$batchA => 30, $batchE => 20]],
+        ])->assertSessionHas('success');
+
+        $line = StockItem::where('stock_id', $this->latestIssuance($ptcId))->where('ptc_virtual', 0)->firstOrFail();
+        $this->assertAllocated($line->stock_item_id, [$batchA => 30, $batchE => 20]);
+    }
+
+    public function test_delivery_edit_form_shows_the_batch_quantities_it_currently_takes(): void
+    {
+        $deliveryId = DB::table('deliveries')
+            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
+            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+            ->join('stock_item_batches', 'stock_item_batches.stock_item_id', '=', 'stock_items.stock_item_id')
+            ->value('deliveries.delivery_id');
+        if (! $deliveryId) {
+            $this->markTestSkipped('Needs a delivery with batch allocations.');
+        }
+
+        $this->get(route('delivery.edit', $deliveryId))->assertOk()->assertSee('batch_qty[', false);
+    }
+
+    public function test_ptc_edit_counts_its_own_pieces_as_available_and_keeps_batch_quantities(): void
+    {
+        [$s1] = $this->stages;
+        $key = "{$this->pt}_{$s1}";
+        $batchA = $this->receiptIntoNewBatch($this->orderX, 40, $s1);
+        $batchE = $this->receiptIntoNewBatch(null, 40, $s1);
+        $this->seedOpening($this->pt, $s1, 10);
+        $ptcId = $this->createPtc($s1, $this->orderX); // issues 10 at stage 1
+        $ptcLineQty = (float) StockItem::where('stock_id', $ptcId)->where('material_id', 0)->sum('quantity');
+
+        // Available on the edit page includes the PTC's own pieces (the form subtracts its rows)
+        $withOwn = $this->batches->allowedStock($this->orderX, $ptcId)->where('product_type_id', $this->pt)->firstWhere('stage_id', $s1)->stockIn;
+        $withoutOwn = $this->batches->allowedStock($this->orderX)->where('product_type_id', $this->pt)->firstWhere('stage_id', $s1)->stockIn;
+        $this->assertEqualsWithDelta($withoutOwn + $ptcLineQty, $withOwn, 0.0001);
+
+        $page = $this->get(route('ptc.edit', $ptcId))->assertOk()->assertSee('Take Product From Batches');
+        foreach (array_keys($this->batches->recordPicks($ptcId)[$key]) as $batchId) {
+            $page->assertSee("batch_qty[{$key}][{$batchId}]", false);
+        }
+
+        // Saving the edit with 30 + 20 from two batches
+        $this->put(route('ptc.update', $ptcId), [
+            'stock_date' => now()->toDateString(),
+            'table_name' => 'employee',
+            'employee_id' => $this->employeeId,
+            'quantity' => [50], 'product_type_id' => [$this->pt], 'material_id' => [0], 'stage_id' => [$s1], 'component_id' => [''],
+            'batch_qty' => [$key => [$batchA => 30, $batchE => 20]],
+        ])->assertSessionHas('success');
+
+        $line = StockItem::where('stock_id', $ptcId)->where('material_id', 0)->firstOrFail();
+        $this->assertAllocated($line->stock_item_id, [$batchA => 30, $batchE => 20]);
+    }
+
     // ----------------------------------------------------------------------
 
     private function orderLine(object $orderItem): object

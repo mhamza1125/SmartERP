@@ -981,7 +981,7 @@ class PtcStockRepository implements GlobalInterface
     /**
      * Products issued from general stock are taken from the PTC order's batches, then free stock.
      *
-     * @param  array  $pins  "{product_type_id}_{stage_id}" => batch_id chosen on the form
+     * @param  array  $pins  "{product_type_id}_{stage_id}" => [batch_id => quantity] entered on the form
      */
     private function allocateGeneralStock($stockId, array $pins = []): void
     {

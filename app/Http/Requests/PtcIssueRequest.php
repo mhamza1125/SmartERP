@@ -23,9 +23,10 @@ class PtcIssueRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Batch picked per product/stage ("{product_type_id}_{stage_id}"), empty = auto
-            'batch_pin' => 'nullable|array',
-            'batch_pin.*' => 'nullable|integer|exists:stock_batches,batch_id',
+            // Quantity per batch per product/stage: batch_qty["{product_type_id}_{stage_id}"][batch_id]; empty = auto
+            'batch_qty' => 'nullable|array',
+            'batch_qty.*' => 'nullable|array',
+            'batch_qty.*.*' => 'nullable|numeric|min:0',
             'stock_date' => 'required|date',
             'issue_for' => 'required|integer|min:1',
             'employee_id' => 'required|integer|min:1',

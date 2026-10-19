@@ -178,7 +178,7 @@ Additional domain-specific methods are added per repository beyond these five.
   - the record's own lines are excluded, so create and edit behave the same
   - a shortfall throws `StockBatchException` and the whole save is rolled back. The PTC repository rethrows it as `PtcStockException`.
   - Callers: DeliveryController store/update, StockController store/gstore/update/ptcStore/ptcUpdate, PtcStockRepository issue/updateIssuance.
-- Batch pins: `batch_pin["{pt}_{stage}"] = batch_id` (partial `batchPicker.blade.php`, currently on the delivery add/edit forms). Empty = auto.
+- Batch quantities: `batch_qty["{pt}_{stage}"][batch_id] = qty` (partial `batchPicker.blade.php` on delivery add/edit and, through `batchChoices.blade.php`, on PTC create/issue). Picked quantities are taken first, the rest on Auto; picks beyond the issued quantity or for a stage not issued throw. A plain batch id (old pin) still means "everything from that batch". `recordPicks($stockId)` pre-fills edit forms.
 - Deliveries:
   - `stock_items.order_id` records the order each line was delivered for (`markLineOrders`; for multi-order deliveries, the order whose reserved batch the line took)
   - `orderDelivery($orderId, $excludeStockId, $orderIds)`: stockIn = allowed batch stock, stockOut = 0, plus `batches` for the picker
@@ -199,7 +199,7 @@ Additional domain-specific methods are added per repository beyond these five.
   - the ledger report uses the same figures
 - **PTC create / issue forms:**
   - `pstock` is `allowedStock(order)` (own + free)
-  - the forms include `batchChoices` (one optional batch picker per stage)
+  - the forms include `batchChoices` (batch quantity boxes per stage); the PTC edit form too, with `allowedStock`/`batchChoices` excluding the PTC's own lines and `recordPicks` pre-filling
   - normal issuance forms stay on Auto
 - Balances: `StockBatchRepository::balanceQuery()`. The sum over batches equals the pooled `pStock()` figures. `php artisan stock:backfill-batches --check` reports missing or stale allocations and any total mismatch.
 

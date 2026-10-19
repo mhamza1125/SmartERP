@@ -212,6 +212,7 @@ class DeliveryController extends Controller
                 'transaction' => $transaction,
                 'isMultiOrder' => true,
                 'relatedOrders' => $relatedOrders,
+                'batchPicks' => $this->stockBatchRepository->recordPicks($existingDelivery->stock_id),
             ]);
         }
 
@@ -593,6 +594,8 @@ class DeliveryController extends Controller
             'transaction' => $transaction,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
+            // Batch quantities this delivery currently takes, so saving unchanged keeps the same batches
+            'batchPicks' => $this->stockBatchRepository->recordPicks($order['stock_id']),
         ]);
     }
 
@@ -688,7 +691,7 @@ class DeliveryController extends Controller
     private function allocateBatches($stockId, Request $request, ?array $orderIds = null): void
     {
         $orderIds = $orderIds ?? $this->deliveryOrderIds($request);
-        $this->stockBatchRepository->allocateStockOut($stockId, $orderIds, array_filter((array) $request->input('batch_pin', [])));
+        $this->stockBatchRepository->allocateStockOut($stockId, $orderIds, (array) $request->input('batch_qty', []));
         $this->stockBatchRepository->markLineOrders($stockId, $orderIds);
     }
 

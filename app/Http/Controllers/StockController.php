@@ -484,7 +484,7 @@ class StockController extends Controller
                 }
                 $getId = $this->stockRepository->store($validatedData);
                 $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $componentIds, $request->input());
-                $this->stockBatchRepository->allocateRecord($getId, (array) $request->input('batch_pin', []));
+                $this->stockBatchRepository->allocateRecord($getId, (array) $request->input('batch_qty', []));
 
                 return $getId;
             });
@@ -767,7 +767,7 @@ class StockController extends Controller
                 }
                 $this->stockItemRepository->update($id, $request->input());
                 // An issuance re-takes its products from the order's batches, then free stock
-                $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_pin', []));
+                $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_qty', []));
             });
         } catch (StockBatchException $e) {
             return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
@@ -1319,7 +1319,7 @@ class StockController extends Controller
                 }
 
                 // Products issued from general stock come from the order's batches, then free stock
-                $this->stockBatchRepository->allocateRecord($ptcId, (array) request()->input('batch_pin', []));
+                $this->stockBatchRepository->allocateRecord($ptcId, (array) request()->input('batch_qty', []));
 
                 return $ptcId;
             });
@@ -1693,8 +1693,9 @@ class StockController extends Controller
 
         // Get material stock
         $stock = $this->stockItemRepository->stock();
-        // Product stock this PTC may issue: its order's batches + free stock (its own lines count as out)
-        $pstock = $this->stockBatchRepository->allowedStock($ptc->order_id);
+        // Product stock this PTC may issue: its order's batches + free stock. Its own saved lines are left
+        // out, so they count as available; the form subtracts the rows still on it (remove a row -> it comes back)
+        $pstock = $this->stockBatchRepository->allowedStock($ptc->order_id, $id);
 
         // Get product details
         $productTypeId = $ptcItems->first()->product_type_id ?? null;
@@ -1748,6 +1749,9 @@ class StockController extends Controller
             'materials' => $materials,
             'stock' => $stock,
             'pstock' => $pstock,
+            // Batch quantities per stage (own lines left out) pre-filled with what the PTC takes now
+            'batchChoices' => $this->stockBatchRepository->batchChoices($productTypeId, $ptc->order_id, $id),
+            'picks' => $this->stockBatchRepository->recordPicks($id),
         ]);
     }
 
@@ -1796,7 +1800,7 @@ class StockController extends Controller
 
                 // Update stock items
                 $this->stockItemRepository->update($id, $items);
-                $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_pin', []));
+                $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_qty', []));
             });
         } catch (StockBatchException $e) {
             return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
@@ -1975,7 +1979,7 @@ class StockController extends Controller
         ];
 
         try {
-            $this->ptcStockRepository->issue($id, $header, $this->ptcItemLines($request, ''), (array) $request->input('batch_pin', []));
+            $this->ptcStockRepository->issue($id, $header, $this->ptcItemLines($request, ''), (array) $request->input('batch_qty', []));
         } catch (PtcStockException $e) {
             return redirect()->back()->withInput()->with('fails', $e->getMessage());
         }

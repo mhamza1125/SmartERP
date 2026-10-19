@@ -508,14 +508,15 @@ class StockBatchRepository implements GlobalInterface
     /**
      * Product stock a stock-out for $orderIds may use (its reserved batches + free batches),
      * shaped like pStock() rows for the issue forms: product_type_id, stage_id, stockIn, stockOut (0).
+     * $excludeStockId: a stock-out being edited - its own lines are left out, so they count as available.
      *
      * @param  int|array|null  $orderIds
      */
-    public function allowedStock($orderIds): Collection
+    public function allowedStock($orderIds, $excludeStockId = null): Collection
     {
         $orderIds = $this->orderIds($orderIds);
 
-        return $this->balances()
+        return $this->balances(['exclude_stock_id' => $excludeStockId])
             ->filter(fn ($row) => $this->allowed($row, $orderIds))
             ->groupBy(fn ($row) => $row->product_type_id.'_'.$row->stage_id)
             ->map(fn ($rows) => (object) [
@@ -530,10 +531,11 @@ class StockBatchRepository implements GlobalInterface
     /**
      * Batch choices for one product on an issue form, per stage: stage_id, stage_name and the
      * batches $orderIds may take from (own first, then free) - the shape batchPicker expects.
+     * $excludeStockId: a stock-out being edited - its own lines are left out.
      *
      * @param  int|array|null  $orderIds
      */
-    public function batchChoices($productTypeId, $orderIds): Collection
+    public function batchChoices($productTypeId, $orderIds, $excludeStockId = null): Collection
     {
         if (! $productTypeId) {
             return collect();
@@ -542,7 +544,7 @@ class StockBatchRepository implements GlobalInterface
         $orderIds = $this->orderIds($orderIds);
         $stageNames = DB::table('heads')->pluck('name', 'head_id');
 
-        return $this->balances(['product_type_id' => $productTypeId])
+        return $this->balances(['product_type_id' => $productTypeId, 'exclude_stock_id' => $excludeStockId])
             ->filter(fn ($row) => $row->balance > self::EPSILON && $this->allowed($row, $orderIds))
             ->sortBy(fn ($row) => [$row->order_id === null ? 1 : 0, $row->batch_id])
             ->groupBy('stage_id')
@@ -601,8 +603,9 @@ class StockBatchRepository implements GlobalInterface
     public function allocate($productTypeId, $stageId, float $quantity, $orderIds = null, $batchId = null, $excludeStockId = null): array
     {
         $pool = $this->available($productTypeId, $stageId, $orderIds, $excludeStockId);
+        $picks = $batchId ? [(int) $batchId => $quantity] : [];
 
-        return $this->take($pool, $quantity, $batchId, $this->productLabel($productTypeId, $stageId));
+        return $this->take($pool, $quantity, $picks, $this->productLabel($productTypeId, $stageId));
     }
 
     /**
@@ -610,14 +613,20 @@ class StockBatchRepository implements GlobalInterface
      * PTC issuance) to batches, after its lines were written. The record's own lines are
      * left out of the balances, so this works the same on create and on edit.
      *
-     * @param  int|array|null  $orderIds  orders the stock is for (a multi-order delivery has several)
-     * @param  array  $pins  "{product_type_id}_{stage_id}" => batch_id chosen on the form
+     * Batch quantities picked on the form are taken first; whatever is left is taken
+     * automatically (the orders' own batches, then free stock, oldest first).
      *
-     * @throws StockBatchException when the allowed batches do not hold enough stock
+     * @param  int|array|null  $orderIds  orders the stock is for (a multi-order delivery has several)
+     * @param  array  $picks  "{product_type_id}_{stage_id}" => [batch_id => quantity] picked on the form
+     *                        (a plain batch_id means: everything at that stage from that batch)
+     *
+     * @throws StockBatchException when a picked batch is not allowed or short, the picks add up
+     *                             to more than is issued, or the allowed batches hold too little
      */
-    public function allocateStockOut($stockId, $orderIds = null, array $pins = []): void
+    public function allocateStockOut($stockId, $orderIds = null, array $picks = []): void
     {
         $orderIds = $this->orderIds($orderIds);
+        $picks = $this->cleanPicks($picks);
         $lines = StockItem::where('stock_id', $stockId)
             ->where('ptc_virtual', 0)
             ->where(fn ($query) => self::whereProductLine($query))
@@ -625,18 +634,82 @@ class StockBatchRepository implements GlobalInterface
             ->get();
 
         $pools = [];
+        $wholeBatch = [];
         foreach ($lines as $line) {
             $productTypeId = $line->component_product_type_id ?: $line->product_type_id;
             $key = $productTypeId.'_'.$line->stage_id;
             $pools[$key] ??= $this->available($productTypeId, $line->stage_id, $orderIds, $stockId)->keyBy('batch_id');
 
-            $allocation = $this->take($pools[$key], (float) $line->quantity, $pins[$key] ?? null, $this->productLabel($productTypeId, $line->stage_id));
-            foreach ($allocation as $batchId => $quantity) {
-                $pools[$key][$batchId]->balance -= $quantity;
+            // A plain batch id: every line at this stage comes entirely from that batch
+            if (isset($picks[$key]) && ! is_array($picks[$key])) {
+                $wholeBatch[$key] = $picks[$key];
+            }
+            $linePicks = isset($wholeBatch[$key]) ? [$wholeBatch[$key] => (float) $line->quantity] : ($picks[$key] ?? []);
+
+            $allocation = $this->take($pools[$key], (float) $line->quantity, $linePicks, $this->productLabel($productTypeId, $line->stage_id));
+            if (! isset($wholeBatch[$key])) {
+                $picks[$key] = $linePicks; // what is left of the picks for the next line at this stage
             }
 
             $this->assign($line->stock_item_id, $allocation);
         }
+
+        // Picked quantities that no line used: more picked than issued, or a stage not issued at all
+        foreach ($picks as $key => $left) {
+            $unused = is_array($left) ? array_sum($left) : 0;
+            if ($unused > self::EPSILON) {
+                [$productTypeId, $stageId] = explode('_', $key);
+                throw new StockBatchException("{$this->productLabel($productTypeId, $stageId)}: batch quantities add up to {$this->round($unused)} more than the quantity issued.");
+            }
+        }
+    }
+
+    /**
+     * Form input -> "{pt}_{stage}" => [batch_id => quantity] (positive quantities only),
+     * or => batch_id for a single whole-batch pick.
+     */
+    private function cleanPicks(array $picks): array
+    {
+        $clean = [];
+        foreach ($picks as $key => $pick) {
+            if (is_array($pick)) {
+                $quantities = [];
+                foreach ($pick as $batchId => $quantity) {
+                    if ((float) $quantity > self::EPSILON) {
+                        $quantities[(int) $batchId] = (float) $quantity;
+                    }
+                }
+                if ($quantities) {
+                    $clean[$key] = $quantities;
+                }
+            } elseif ((int) $pick > 0) {
+                $clean[$key] = (int) $pick;
+            }
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Batch quantities a stock-out record currently takes, in the form's shape:
+     * "{product_type_id}_{stage_id}" => [batch_id => quantity]. Used to pre-fill edit forms.
+     */
+    public function recordPicks($stockId): array
+    {
+        $picks = [];
+        $rows = DB::table('stock_item_batches')
+            ->join('stock_items', 'stock_items.stock_item_id', '=', 'stock_item_batches.stock_item_id')
+            ->where('stock_items.stock_id', $stockId)
+            ->where('stock_items.ptc_virtual', 0)
+            ->select('stock_items.product_type_id', 'stock_items.component_product_type_id', 'stock_items.stage_id', 'stock_item_batches.batch_id', 'stock_item_batches.quantity')
+            ->get();
+
+        foreach ($rows as $row) {
+            $key = ($row->component_product_type_id ?: $row->product_type_id).'_'.$row->stage_id;
+            $picks[$key][$row->batch_id] = $this->round(($picks[$key][$row->batch_id] ?? 0) + $row->quantity);
+        }
+
+        return $picks;
     }
 
     /**
@@ -645,11 +718,11 @@ class StockBatchRepository implements GlobalInterface
      *
      * @throws StockBatchException
      */
-    public function allocateRecord($stockId, array $pins = []): void
+    public function allocateRecord($stockId, array $picks = []): void
     {
         $stock = Stock::find($stockId);
         if ($stock && (int) $stock->stock_type === 2) {
-            $this->allocateStockOut($stockId, $stock->order_id, array_filter($pins));
+            $this->allocateStockOut($stockId, $stock->order_id, $picks);
         }
     }
 
@@ -682,40 +755,56 @@ class StockBatchRepository implements GlobalInterface
     }
 
     /**
+     * Take $quantity from a pool of allowed batches: first the quantities picked per batch
+     * ($picks is reduced by what this call used), then the rest automatically in pool order.
+     * Pool balances are reduced too, so several lines can share one pool.
+     *
+     * @param  array<int, float>  $picks  batch_id => quantity picked on the form
      * @return array<int, float> batch_id => quantity
      *
      * @throws StockBatchException
      */
-    private function take(Collection $pool, float $quantity, $batchId, string $label): array
+    private function take(Collection $pool, float $quantity, array &$picks, string $label): array
     {
-        if ($batchId) {
-            $batch = $pool->firstWhere('batch_id', (int) $batchId);
-            if (! $batch) {
-                throw new StockBatchException("{$label}: the selected batch is not available for this order.");
-            }
-            if ($batch->balance + self::EPSILON < $quantity) {
-                throw new StockBatchException("{$label}: batch {$batch->batch_no} has only {$this->round($batch->balance)} left, {$this->round($quantity)} requested.");
-            }
-
-            return [(int) $batch->batch_id => $this->round($quantity)];
-        }
-
         $allocation = [];
         $remaining = $quantity;
+        $use = function (object $batch, float $taken) use (&$allocation, &$remaining) {
+            $allocation[(int) $batch->batch_id] = $this->round(($allocation[(int) $batch->batch_id] ?? 0) + $taken);
+            $batch->balance -= $taken;
+            $remaining -= $taken;
+        };
+
+        foreach ($picks as $batchId => $wanted) {
+            if ($remaining <= self::EPSILON) {
+                break;
+            }
+            if ($wanted <= self::EPSILON) {
+                continue;
+            }
+            $batch = $pool->firstWhere('batch_id', (int) $batchId);
+            if (! $batch) {
+                $batchNo = StockBatch::where('batch_id', $batchId)->value('batch_no') ?? "#{$batchId}";
+                throw new StockBatchException("{$label}: batch {$batchNo} is not available for this order.");
+            }
+            $taken = min($wanted, $remaining);
+            if ($batch->balance + self::EPSILON < $taken) {
+                throw new StockBatchException("{$label}: batch {$batch->batch_no} has only {$this->round(max(0, $batch->balance))} left, {$this->round($taken)} picked.");
+            }
+            $use($batch, $taken);
+            $picks[$batchId] = $wanted - $taken;
+        }
+
         foreach ($pool as $batch) {
             if ($remaining <= self::EPSILON) {
                 break;
             }
-            if ($batch->balance <= self::EPSILON) {
-                continue;
+            if ($batch->balance > self::EPSILON) {
+                $use($batch, min($remaining, (float) $batch->balance));
             }
-            $taken = min($remaining, (float) $batch->balance);
-            $allocation[(int) $batch->batch_id] = $this->round($taken);
-            $remaining -= $taken;
         }
 
         if ($remaining > self::EPSILON) {
-            $total = $this->round($pool->sum(fn ($batch) => max(0, $batch->balance)));
+            $total = $this->round($quantity - $remaining + $pool->sum(fn ($batch) => max(0, $batch->balance)));
             throw new StockBatchException("{$label}: only {$total} available for this order, {$this->round($quantity)} requested.");
         }
 

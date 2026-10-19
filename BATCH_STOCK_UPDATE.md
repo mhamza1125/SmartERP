@@ -33,7 +33,7 @@ Deliveries, issuances, IGroup issuances and PTC issues take stock in this order:
 They **never** take another order's batches.
 
 - **Behaviour change:** issuing or delivering more than is available is now **rejected** and nothing is saved. Before, stock could go negative.
-- **Choosing a batch:** delivery forms and PTC forms have a batch dropdown. **Auto** (the default) applies the rule above.
+- **Choosing batches:** delivery and PTC forms list the available batches with a quantity box each. One issue or delivery can take e.g. **30 from batch A and 20 from batch E**. Quantities you enter are taken first; anything left (or everything, if left empty) is taken on **Auto** by the rule above. The total entered cannot exceed the quantity issued. Editing a delivery or a PTC shows the batches it currently uses; removing a product row puts that stage back on Auto. On the PTC edit page, Available counts the PTC's own pieces, so removing a row gives them back (e.g. 500 -> 530).
 
 ## Where to see it
 
@@ -96,6 +96,6 @@ The backfill can't know which order's stock historical stock-outs used. It match
 
 ## Known limitations
 
-- Normal issuance forms always use Auto; they have no batch dropdown.
-- PTC forms have no batch dropdown for components; components always use Auto.
+- Normal issuance forms always use Auto; they have no batch quantity boxes.
+- PTC forms have no batch quantity boxes for components; components always use Auto.
 - The requirements report ignores PTCs that belong to draft or dispatched orders.
