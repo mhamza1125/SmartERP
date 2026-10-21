@@ -3581,7 +3581,8 @@ $(document).ready(function () {
                     $productSelect.empty().append('<option value="" disabled selected>Select Product</option>');
                     if (response.data && response.data.length > 0) {
                         response.data.forEach(function (item) {
-                            var optionText = item.product_name + ' - ' + item.size_name;
+                            // Article no first so the product can be searched by it too
+                            var optionText = (item.article_no ? item.article_no + ' - ' : '') + item.product_name + ' - ' + item.size_name;
                             $productSelect.append(new Option(optionText, item.product_type_id));
                         });
                     }
