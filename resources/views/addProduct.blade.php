@@ -301,12 +301,16 @@ function createSize() {
             }
         },
         error: function(xhr) {
-            var errors = xhr.responseJSON.errors;
-            if (errors && errors.name) {
+            var res = xhr.responseJSON || {};
+            if (res.errors && res.errors.name) {
                 $('#size_name').addClass('is-invalid');
-                $('#size_name_error').text(errors.name[0]);
+                $('#size_name_error').text(res.errors.name[0]);
+            } else if (xhr.status === 422) {
+                // Duplicate name: controller returns 422 without an errors bag
+                $('#size_name').addClass('is-invalid');
+                $('#size_name_error').text('Size "' + sizeName + '" already exists');
             } else {
-                alert('Error creating size. Please try again.');
+                alert('Error creating size: ' + (res.message || 'Please try again.'));
             }
         }
     });
