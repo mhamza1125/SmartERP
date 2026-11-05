@@ -276,7 +276,7 @@ function createSize() {
     }
 
     $.ajax({
-        url: '{{ route("head.store") }}',
+        url: '{{ route("product.size.store") }}',
         type: 'POST',
         data: {
             _token: '{{ csrf_token() }}',

@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\HeadRepository;
+use App\Http\Requests\HeadRequest;
 use App\Http\Requests\ProductRequest;
 use App\Repositories\ImageRepository;
 use App\Repositories\ProductRepository;
@@ -168,6 +169,25 @@ class ProductController extends Controller
         }
 
         return redirect()->route('product.show', $getId)->with('success', 'Record Inserted Successfully');
+    }
+
+    // Quick-add size from the Add/Edit Product modal. Authorized by product
+    // permissions so users who can create/edit products don't also need heads_create.
+    public function storeSize(HeadRequest $request)
+    {
+        abort_unless(
+            $request->user()->can('create', Product::class) || $request->user()->can('edit', Product::class),
+            403
+        );
+        $validatedData = $request->validated();
+        $validatedData['head_type_id'] = 1; // Sizes only
+
+        if ($this->headRepository->duplicate($validatedData)) {
+            return response()->json(['success' => false, 'message' => 'Size already exists'], 422);
+        }
+        $headId = $this->headRepository->store($validatedData);
+
+        return response()->json(['success' => true, 'head_id' => $headId, 'message' => 'Size created successfully']);
     }
 
     public function show($id)
