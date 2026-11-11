@@ -38,9 +38,10 @@
                 <thead>
                   <tr>
                     <th>Month</th>
-                    <th>Processing Date</th>
-                    <th class="text-right">Employees Paid</th>
-                    <th class="text-right">Total Amount</th>
+                    <th>Payment Date</th>
+                    <th class="text-right">Working Days</th>
+                    <th class="text-right">Employees</th>
+                    <th class="text-right">Total Payable</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -48,29 +49,31 @@
                 <tbody>
                   @forelse($payrollBatches as $batch)
                     <tr>
-                      <td>
-                        <strong>{{ \Carbon\Carbon::createFromFormat('Y-m', $batch->month)->format('F Y') }}</strong>
-                      </td>
-                      <td>{{ \Carbon\Carbon::parse($batch->processing_date)->format('d-m-Y') }}</td>
+                      <td><strong>{{ \Carbon\Carbon::createFromFormat('Y-m', $batch->month)->format('F Y') }}</strong></td>
+                      <td>{{ formatDate($batch->payment_date) }}</td>
+                      <td class="text-right">{{ $batch->total_working_days !== null ? rtrim(rtrim(number_format($batch->total_working_days, 2), '0'), '.') : '-' }}</td>
                       <td class="text-right">{{ $batch->employee_count }}</td>
                       <td class="text-right">{{ number_format($batch->total_amount, 2) }}</td>
                       <td>
-                        <span class="badge badge-success">{{ $batch->status }}</span>
+                        @if($batch->legacy)
+                          <span class="badge badge-light border" title="Processed before salary breakdowns; open Edit and save to add working days, overtime and advances">No breakdown</span>
+                        @else
+                          <span class="badge badge-success">Processed</span>
+                        @endif
                       </td>
                       <td>
                         <div class="btn-group" role="group">
-                          <a href="{{ route('payroll.info', $batch->month) }}" class="btn btn-sm btn-info" title="View Details">
-                            <i class="fas fa-eye"></i>
-                          </a>
-                          <a href="{{ route('payroll.edit', $batch->month) }}" class="btn btn-sm btn-warning" title="Edit">
-                            <i class="fas fa-edit"></i>
-                          </a>
+                          @unless($batch->legacy)
+                            <a href="{{ route('payroll.info', $batch->month) }}" class="btn btn-sm btn-info" title="View details"><i class="fas fa-eye"></i></a>
+                            <a href="{{ route('payroll.print', $batch->month) }}" class="btn btn-sm btn-outline-info" title="Print payroll" target="_blank"><i class="fas fa-print"></i></a>
+                          @endunless
+                          <a href="{{ route('payroll.edit', $batch->month) }}" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>
                         </div>
                       </td>
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="6" class="text-center">No payroll batches found. <a href="{{ route('payroll.create') }}">Create one now</a></td>
+                      <td colspan="7" class="text-center">No payroll processed yet. <a href="{{ route('payroll.create') }}">Create one now</a></td>
                     </tr>
                   @endforelse
                 </tbody>

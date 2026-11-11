@@ -84,6 +84,31 @@
                                                 <div class="text-danger">{{ $message }}</div>
                                             @enderror
                                         </div>
+
+                                    </div>
+                                </div>
+                                <h6 class="mt-3">Payroll Settings</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Overtime Rate <small class="text-muted">(x normal hourly wage)</small></label>
+                                            <input type="number" step="0.05" min="0" max="10" class="form-control" name="overtime_multiplier" value="{{ old('overtime_multiplier', $company->overtime_multiplier ?? 2) }}">
+                                            <small class="form-text text-muted">e.g. 2 = overtime paid at double the hourly wage</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Late Deduction <small class="text-muted">(x normal hourly wage)</small></label>
+                                            <input type="number" step="0.05" min="0" max="10" class="form-control" name="late_multiplier" value="{{ old('late_multiplier', $company->late_multiplier ?? 1) }}">
+                                            <small class="form-text text-muted">Late hours are deducted at this rate</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Working Hours per Day</label>
+                                            <input type="number" step="0.5" min="1" max="24" class="form-control" name="work_hours_per_day" value="{{ old('work_hours_per_day', $company->work_hours_per_day ?? 8) }}">
+                                            <small class="form-text text-muted">Hourly wage = gross salary / working days / these hours</small>
+                                        </div>
                                     </div>
                                 </div>
 

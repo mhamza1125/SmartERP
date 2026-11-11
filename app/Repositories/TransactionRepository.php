@@ -1086,6 +1086,12 @@ class TransactionRepository implements GlobalInterface
         return $rows->map(function ($row) use ($all, $account, $amount, $vendors, $employees, $customers, $heads, $purchases, $orders, $deliveries) {
             [$note, $cheque] = $this->splitCheque($row->description);
             $type = self::TYPE_LABELS[$row->transaction_type] ?? ucfirst((string) $row->transaction_type);
+            // Employee loans carry their kind: a temporary advance against salary or a fixed (instalment) loan
+            if (($row->advance_type ?? null) === Transaction::ADVANCE_TEMPORARY) {
+                $type = $row->transaction_type === 'advance' ? 'Temporary Advance' : 'Temporary Advance Deduction';
+            } elseif (($row->advance_type ?? null) === Transaction::ADVANCE_FIXED) {
+                $type = $row->transaction_type === 'advance' ? 'Fixed Loan Given' : 'Fixed Loan Repayment';
+            }
 
             $party = null;
             if (in_array($row->transaction_to, ['vendor', 'contractor'], true) && ($vendor = $vendors->get($row->payee_id))) {

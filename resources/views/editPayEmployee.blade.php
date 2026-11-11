@@ -73,6 +73,16 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                   </div>
+                <div class="col-md-3 js-advance-type">
+                  <div class="form-group">
+                    <label>Loan Type</label>
+                    @php $advanceType = old('advance_type', $transaction['advance_type'] ?? 'fixed'); @endphp
+                    <select class="form-control" name="advance_type">
+                      <option value="temporary" {{ $advanceType === 'temporary' ? 'selected' : '' }}>Temporary advance (deducted in this month's payroll)</option>
+                      <option value="fixed" {{ $advanceType === 'fixed' ? 'selected' : '' }}>Fixed loan (repaid in monthly instalments)</option>
+                    </select>
+                  </div>
+                </div>
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
@@ -184,6 +194,20 @@
         }
       });
     }
+  });
+</script>
+<script>
+  // Loan Type applies to Give Loan / Receive Loan only
+  document.addEventListener('DOMContentLoaded', function () {
+    var type = document.querySelector('select[name="transaction_type"]');
+    var box = document.querySelector('.js-advance-type');
+    function toggle() {
+      var loan = type.value === 'advance' || type.value === 'receiveAdvance';
+      box.style.display = loan ? '' : 'none';
+      box.querySelector('select').disabled = !loan;
+    }
+    type.addEventListener('change', toggle);
+    toggle();
   });
 </script>
 @endsection

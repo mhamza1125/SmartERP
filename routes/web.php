@@ -121,6 +121,8 @@ Route::get('/payroll/{month}/info', [PayrollController::class, 'info'])->name('p
 Route::get('/payroll/{month}/edit', [PayrollController::class, 'edit'])->name('payroll.edit');
 Route::put('/payroll/{month}', [PayrollController::class, 'update'])->name('payroll.update');
 Route::get('/payroll/bank-balance/{bankId}', [PayrollController::class, 'getBankBalance'])->name('payroll.bankBalance');
+Route::get('/payroll/{month}/print', [PayrollController::class, 'printMonth'])->name('payroll.print');
+Route::get('/payroll/slip/{item}', [PayrollController::class, 'printSlip'])->name('payroll.slip');
 
 // Vendor
 // Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');

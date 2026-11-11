@@ -11,6 +11,10 @@ class Transaction extends Model
 
     protected $primaryKey = 'transaction_id';
 
+    // advance_type of employee Give Loan / Receive Loan entries
+    const ADVANCE_TEMPORARY = 'temporary'; // salary taken early in the month; deducted in that month's payroll
+    const ADVANCE_FIXED = 'fixed';         // long-term loan repaid in monthly instalments
+
     protected $fillable = [
         'transaction_to',
         'transaction_type',
@@ -22,6 +26,7 @@ class Transaction extends Model
         'fb_charges',
         'db_charges',
         'ledger_flag',
+        'advance_type',
         'payee_id',
         'payee_bank_id',
         'bank_id',

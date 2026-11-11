@@ -29,6 +29,9 @@ class Company extends Model
         'logo_path',
         'footer_text',
         'statement_of_origin',
+        'overtime_multiplier',
+        'late_multiplier',
+        'work_hours_per_day',
         'created_by',
         'updated_at',
     ];

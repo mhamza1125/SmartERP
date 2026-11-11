@@ -1,152 +1,186 @@
 @extends('index')
 @section('content')
+@php
+  $monthLabel = \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y');
+  $num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+@endphp
 <section class="section">
   <div class="section-body">
     <div class="row">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Create New Payroll</h4>
+            <h4>{{ $editing ? 'Edit Payroll - ' . $monthLabel : 'Create Payroll' }}</h4>
             <div class="card-header-action">
-              <a href="{{ route('payroll.index') }}" class="btn btn-secondary">
-                Back to Payroll
-              </a>
+              <a href="{{ route('payroll.index') }}" class="btn btn-secondary">Back to Payroll</a>
             </div>
           </div>
-          <div class="card-body">
+          <div class="card-body payroll-sheet">
+            @if(session('warning'))
+              <div class="alert alert-warning">{{ session('warning') }}</div>
+            @endif
             @if ($errors->any())
-              <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Validation Errors:</strong>
+              <div class="alert alert-danger">
+                <strong>Please check:</strong>
                 <ul class="mb-0">
                   @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                   @endforeach
                 </ul>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
               </div>
             @endif
 
-            <!-- Month Selector -->
-            <div class="row mb-4">
-              <div class="col-md-3">
+            <form action="{{ $editing ? route('payroll.update', $selectedMonth) : route('payroll.store') }}" method="POST" id="payrollForm">
+              @csrf
+              @if($editing) @method('PUT') @endif
+              <input type="hidden" name="month" value="{{ $selectedMonth }}">
+
+              {{-- Payroll period: the values every employee's salary is calculated with --}}
+              <div class="payroll-header">
                 <div class="form-group">
-                  <label>Select Month</label>
-                  <select class="form-control" id="monthSelector" onchange="changeMonth(this.value)">
-                    @foreach($monthOptions as $monthValue => $monthLabel)
-                      <option value="{{ $monthValue }}" {{ $monthValue == $selectedMonth ? 'selected' : '' }}>
-                        {{ $monthLabel }}
-                      </option>
+                  <label>Month</label>
+                  @if($editing)
+                    <input type="text" class="form-control" value="{{ $monthLabel }}" readonly>
+                  @else
+                    <select class="form-control" id="monthSelector">
+                      @foreach($monthOptions as $monthValue => $optionLabel)
+                        <option value="{{ $monthValue }}" {{ $monthValue == $selectedMonth ? 'selected' : '' }}>{{ $optionLabel }}</option>
+                      @endforeach
+                    </select>
+                  @endif
+                </div>
+                <div class="form-group">
+                  <label>Total Working Days <span class="text-danger">*</span></label>
+                  <input type="number" step="0.5" min="1" max="31" class="form-control js-period" name="total_working_days" id="total_working_days"
+                         value="{{ old('total_working_days', $num($period['total_working_days'])) }}" required>
+                </div>
+                <div class="form-group">
+                  <label>Hours / Day <span class="text-danger">*</span></label>
+                  <input type="number" step="0.5" min="1" max="24" class="form-control js-period" name="hours_per_day" id="hours_per_day"
+                         value="{{ old('hours_per_day', $num($period['hours_per_day'])) }}" required>
+                </div>
+                <div class="form-group">
+                  <label>Overtime Rate <small class="text-muted">x hourly wage</small></label>
+                  <input type="number" step="0.05" min="0" max="10" class="form-control js-period" name="overtime_multiplier" id="overtime_multiplier"
+                         value="{{ old('overtime_multiplier', $num($period['overtime_multiplier'])) }}" required>
+                </div>
+                <div class="form-group">
+                  <label>Late Deduction <small class="text-muted">x hourly wage</small></label>
+                  <input type="number" step="0.05" min="0" max="10" class="form-control js-period" name="late_multiplier" id="late_multiplier"
+                         value="{{ old('late_multiplier', $num($period['late_multiplier'])) }}" required>
+                </div>
+                <div class="form-group">
+                  <label>Payment Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" name="payment_date"
+                         value="{{ old('payment_date', $payroll?->payment_date ?? date('Y-m-d')) }}" required>
+                </div>
+                <div class="form-group payroll-header__wide">
+                  <label>Pay From (Bank / Cash) <span class="text-danger">*</span></label>
+                  @php $selectedBank = (string) old('bank_id', $payroll?->bank_id ?? ''); @endphp
+                  <select class="form-control select2" name="bank_id" required>
+                    <option value="" disabled {{ $selectedBank === '' ? 'selected' : '' }}>Select Bank / Cash</option>
+                    <option value="0" {{ $selectedBank === '0' ? 'selected' : '' }}>Cash</option>
+                    @foreach($bank as $item)
+                      <option value="{{ $item->bank_id }}" {{ $selectedBank === (string) $item->bank_id ? 'selected' : '' }}>{{ $item->hname }} - {{ $item->account_title }} ({{ $item->account }})</option>
                     @endforeach
                   </select>
                 </div>
               </div>
-            </div>
+              <p class="text-muted small mb-3">
+                Hourly wage = gross salary / total working days / hours per day. Defaults come from
+                <a href="{{ route('company') }}">Settings &gt; Company</a>. Temporary advances and the open fixed loan are filled in
+                from the employee's Give Loan entries; every value can be changed.
+              </p>
 
-            <!-- Payroll Form -->
-            <form action="{{ route('payroll.store') }}" method="POST" id="payrollForm">
-              @csrf
-              <input type="hidden" name="month" value="{{ $selectedMonth }}">
-
-              <!-- Bank and Payment Date Selection -->
-              <div class="row mb-4">
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Bank / Cash Account <span class="text-danger">*</span></label>
-                    <select class="form-control select2" name="bank_id" required>
-                      <option value="" selected disabled>Select Bank / Cash</option>
-                      <option value="0">Cash</option>
-                      @if($bank->count())
-                        @foreach($bank as $item)
-                          <option value="{{ $item->bank_id }}">{{ $item->account_title }} ({{ $item->account }})</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="invalid-feedback">Select Bank / Cash Account</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Payment Date <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control" name="payment_date" value="{{ date('Y-m-d') }}" required>
-                    <div class="invalid-feedback">Payment date is required</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Employees Table with Editable Salary -->
               <div class="table-responsive">
-                <table class="table table-striped table-hover" id="employeeTable" style="width:100%;">
+                <table class="table table-sm table-hover payroll-table" id="employeeTable">
                   <thead>
                     <tr>
-                      <th style="width: 50px;">
-                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
-                      </th>
-                      <th>Sr.</th>
-                      <th>Employee No</th>
-                      <th>Employee Name</th>
-                      <th class="text-right">Monthly Salary</th>
-                      <th class="text-right">Outstanding Balance</th>
-                      <th class="text-right">Deduct Loan</th>
-                      <th class="text-right">Net Payable</th>
-                      <th class="text-right">Actual Salary Paid <span class="text-danger">*</span></th>
+                      <th rowspan="2"><input type="checkbox" id="selectAll" title="Select all"></th>
+                      <th rowspan="2">Employee</th>
+                      <th rowspan="2" class="num">Gross Salary</th>
+                      <th colspan="3" class="group">Attendance (days)</th>
+                      <th rowspan="2" class="num">Salary for Days</th>
+                      <th colspan="3" class="group">Overtime</th>
+                      <th colspan="2" class="group">Late</th>
+                      <th rowspan="2" class="num">Temp. Advance</th>
+                      <th colspan="3" class="group">Fixed Advance (Loan)</th>
+                      <th rowspan="2" class="num">Total Salary</th>
+                    </tr>
+                    <tr>
+                      <th class="num">Total</th>
+                      <th class="num">Worked</th>
+                      <th class="num">Absent</th>
+                      <th class="num">Hours</th>
+                      <th class="num">Rate/Hr</th>
+                      <th class="num">Amount</th>
+                      <th class="num">Minutes</th>
+                      <th class="num">Deduction</th>
+                      <th class="num">Loan</th>
+                      <th class="num">Deduction</th>
+                      <th class="num">Remaining</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @forelse($payrollData as $index => $data)
-                      <tr>
-                        <td>
-                          <input type="checkbox" name="employee_ids[]" value="{{ $data['employee']->employee_id }}" class="employee-checkbox">
+                    @php $oldIds = old('employee_ids'); @endphp
+                    @forelse($rows as $row)
+                      @php
+                        $id = $row->employee->employee_id;
+                        $field = fn ($name, $default) => old("employees.{$id}.{$name}", $default);
+                        $checked = $oldIds !== null ? in_array((string) $id, array_map('strval', $oldIds), true) : $row->included;
+                      @endphp
+                      <tr class="payroll-row" data-gross="{{ (float) $row->employee->salary }}">
+                        <td><input type="checkbox" name="employee_ids[]" value="{{ $id }}" class="employee-checkbox" {{ $checked ? 'checked' : '' }}></td>
+                        <td class="text-nowrap">
+                          <strong>{{ $row->employee->name }}</strong>
+                          <div class="small text-muted">{{ $row->employee->employee_no }}{{ $row->employee->designation ? ' · ' . $row->employee->designation : '' }}</div>
                         </td>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $data['employee']->employee_no }}</td>
-                        <td>{{ $data['employee']->name }}</td>
-                        <td class="text-right">{{ number_format($data['salary'], 2) }}</td>
-                        <td class="text-right">
-                          @if($data['outstanding_balance'] < 0)
-                            <span class="badge badge-danger">{{ number_format(abs($data['outstanding_balance']), 2) }} Rcv.</span>
-                          @elseif($data['outstanding_balance'] > 0)
-                            <span class="badge badge-success">{{ number_format($data['outstanding_balance'], 2) }} Pay.</span>
-                          @else
-                            -
-                          @endif
-                        </td>
-                        <td class="text-right">
-                          <input type="number" step="0.01" min="0" max="{{ max(0, -$data['outstanding_balance']) }}" class="form-control form-control-sm text-right loan-deduction"
-                                 name="loan_deductions[{{ $data['employee']->employee_id }}]"
-                                 value="0"
-                                 placeholder="0.00"
-                                 data-employee-id="{{ $data['employee']->employee_id }}"
-                                 data-loans-pending="{{ max(0, -$data['outstanding_balance']) }}">
-                        </td>
-                        <td class="text-right font-weight-bold">{{ number_format($data['net_salary'], 2) }}</td>
-                        <td class="text-right">
-                          <input type="number" step="0.01" min="0" class="form-control form-control-sm text-right salary-input"
-                                 name="salary_amounts[{{ $data['employee']->employee_id }}]"
-                                 value="{{ $data['net_salary'] }}"
-                                 placeholder="0.00"
-                                 data-employee-id="{{ $data['employee']->employee_id }}"
-                                 data-base-salary="{{ $data['net_salary'] }}">
-                        </td>
+                        <td class="num">{{ number_format((float) $row->employee->salary, 2) }}</td>
+                        <td class="num js-total-days"></td>
+                        <td><input type="number" step="0.5" min="0" class="form-control form-control-sm js-input" data-field="actual" name="employees[{{ $id }}][actual_working_days]" value="{{ $field('actual_working_days', $row->actual_working_days !== null ? $num($row->actual_working_days) : '') }}"></td>
+                        <td class="num js-absent"></td>
+                        <td class="num js-salary-days"></td>
+                        <td><input type="number" step="0.25" min="0" class="form-control form-control-sm js-input" data-field="ot" name="employees[{{ $id }}][overtime_hours]" value="{{ $field('overtime_hours', $num($row->overtime_hours)) }}"></td>
+                        <td class="num js-ot-rate"></td>
+                        <td class="num js-ot-amount"></td>
+                        <td><input type="number" step="1" min="0" class="form-control form-control-sm js-input" data-field="late" name="employees[{{ $id }}][late_minutes]" value="{{ $field('late_minutes', $row->late_minutes) }}" title="Total late minutes this month"></td>
+                        <td class="num js-late-amount"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="temp" name="employees[{{ $id }}][temp_advance]" value="{{ $field('temp_advance', $num($row->temp_advance)) }}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="loan" name="employees[{{ $id }}][fixed_advance]" value="{{ $field('fixed_advance', $num($row->fixed_advance)) }}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="instalment" name="employees[{{ $id }}][fixed_advance_deduction]" value="{{ $field('fixed_advance_deduction', $num($row->fixed_advance_deduction)) }}"></td>
+                        <td class="num js-remaining"></td>
+                        <td class="num js-net font-weight-bold"></td>
                       </tr>
                     @empty
-                      <tr>
-                        <td colspan="9" class="text-center">No salary employees found</td>
-                      </tr>
+                      <tr><td colspan="17" class="text-center text-muted">No salary employees found.</td></tr>
                     @endforelse
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <th colspan="6" class="text-right">Selected employees total</th>
+                      <th class="num" id="sumSalaryDays"></th>
+                      <th></th><th></th>
+                      <th class="num" id="sumOvertime"></th>
+                      <th></th>
+                      <th class="num" id="sumLate"></th>
+                      <th class="num" id="sumTemp"></th>
+                      <th></th>
+                      <th class="num" id="sumInstalment"></th>
+                      <th></th>
+                      <th class="num" id="sumNet"></th>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
 
-              <!-- Action Buttons -->
-              <div class="form-group row mt-4">
-                <div class="col-md-12 text-right">
-                  <button class="btn btn-success" type="submit" id="processBtn">
-                    Process Payroll
-                  </button>
-                  <a href="{{ route('payroll.index') }}" class="btn btn-secondary">Cancel</a>
-                </div>
+              <div class="form-group mt-3">
+                <label>Notes</label>
+                <textarea class="form-control" name="description" rows="2">{{ old('description', $payroll?->description) }}</textarea>
+              </div>
+
+              <div class="text-right">
+                <button class="btn btn-success" type="submit">{{ $editing ? 'Update Payroll' : 'Process Payroll' }}</button>
+                <a href="{{ route('payroll.index') }}" class="btn btn-secondary">Cancel</a>
               </div>
             </form>
           </div>
@@ -156,107 +190,115 @@
   </div>
 </section>
 
+@push('scripts')
 <script>
-  function changeMonth(month) {
-    window.location.href = "{{ route('payroll.create') }}?month=" + month;
-  }
+  (function () {
+    // Same formulas as PayrollRepository::calculate() (the server recalculates on save)
+    var money = function (value) { return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var round2 = function (value) { return Math.round(value * 100) / 100; };
+    var period = function (id) { return parseFloat(document.getElementById(id).value) || 0; };
 
-  function toggleSelectAll(checkbox) {
-    const checkboxes = document.querySelectorAll('.employee-checkbox');
-    checkboxes.forEach(cb => cb.checked = checkbox.checked);
-  }
+    function recalc() {
+      var totalDays = period('total_working_days'), hoursPerDay = period('hours_per_day') || 8;
+      var otMultiplier = period('overtime_multiplier'), lateMultiplier = period('late_multiplier');
+      var sums = { days: 0, ot: 0, late: 0, temp: 0, instalment: 0, net: 0 };
 
-  // Calculate total payroll amount
-  function calculateTotalPayroll() {
-    let total = 0;
-    document.querySelectorAll('.salary-input').forEach(input => {
-      const value = parseFloat(input.value) || 0;
-      total += value;
-    });
-    return total;
-  }
+      document.querySelectorAll('.payroll-row').forEach(function (row) {
+        var input = function (field) { var el = row.querySelector('[data-field="' + field + '"]'); return parseFloat(el.value) || 0; };
+        var actualInput = row.querySelector('[data-field="actual"]');
+        if (actualInput.value === '') actualInput.value = totalDays;
+        var gross = parseFloat(row.dataset.gross) || 0;
+        var actual = input('actual');
+        var hourly = totalDays > 0 ? gross / totalDays / hoursPerDay : 0;
+        var salaryDays = round2(totalDays > 0 ? gross * actual / totalDays : 0);
+        var otRate = hourly * otMultiplier;
+        var otAmount = round2(input('ot') * otRate);
+        var lateAmount = round2(Math.round(input('late')) / 60 * hourly * lateMultiplier);
+        var loan = input('loan');
+        var instalment = Math.min(input('instalment'), loan);
+        var net = round2(salaryDays + otAmount - lateAmount - input('temp') - instalment);
 
-  // Handle form submission
-  document.getElementById('payrollForm').addEventListener('submit', function(e) {
-    const checkboxes = document.querySelectorAll('.employee-checkbox:checked');
-    const bankSelect = document.querySelector('select[name="bank_id"]');
+        row.querySelector('.js-total-days').textContent = totalDays;
+        row.querySelector('.js-absent').textContent = round2(Math.max(0, totalDays - actual));
+        row.querySelector('.js-salary-days').textContent = money(salaryDays);
+        row.querySelector('.js-ot-rate').textContent = money(round2(otRate));
+        row.querySelector('.js-ot-amount').textContent = money(otAmount);
+        row.querySelector('.js-late-amount').textContent = money(lateAmount);
+        row.querySelector('.js-remaining').textContent = money(round2(loan - instalment));
+        var netCell = row.querySelector('.js-net');
+        netCell.textContent = money(net);
+        netCell.classList.toggle('text-danger', net < 0);
 
-    if (checkboxes.length === 0) {
-      e.preventDefault();
-      alert('Please select at least one employee');
-      return false;
-    }
-
-    // Check for empty string specifically (not "0" which is valid for cash)
-    if (bankSelect.value === '') {
-      e.preventDefault();
-      alert('Please select a bank/cash account');
-      return false;
-    }
-
-    // Check bank balance
-    e.preventDefault();
-    const totalPayroll = calculateTotalPayroll();
-    const bankId = bankSelect.value;
-    const bankName = bankSelect.options[bankSelect.selectedIndex].text;
-
-    // Fetch bank balance
-    const baseUrl = "{{ url('/payroll/bank-balance') }}";
-    fetch(baseUrl + "/" + bankId)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+        if (row.querySelector('.employee-checkbox').checked) {
+          sums.days += salaryDays; sums.ot += otAmount; sums.late += lateAmount;
+          sums.temp += input('temp'); sums.instalment += instalment; sums.net += net;
         }
-        return response.json();
-      })
-      .then(data => {
-        const balance = data.balance;
+      });
 
-        if (balance < totalPayroll) {
-          // Insufficient balance - show SweetAlert confirmation
+      document.getElementById('sumSalaryDays').textContent = money(sums.days);
+      document.getElementById('sumOvertime').textContent = money(sums.ot);
+      document.getElementById('sumLate').textContent = money(sums.late);
+      document.getElementById('sumTemp').textContent = money(sums.temp);
+      document.getElementById('sumInstalment').textContent = money(sums.instalment);
+      document.getElementById('sumNet').textContent = money(sums.net);
+      return sums;
+    }
+
+    document.querySelectorAll('.js-input, .js-period').forEach(function (el) { el.addEventListener('input', recalc); });
+    document.querySelectorAll('.employee-checkbox').forEach(function (el) { el.addEventListener('change', recalc); });
+    // Changing the total working days resets attendance to full for rows that had full attendance
+    var lastTotal = period('total_working_days');
+    document.getElementById('total_working_days').addEventListener('change', function () {
+      var total = period('total_working_days');
+      document.querySelectorAll('[data-field="actual"]').forEach(function (el) {
+        if ((parseFloat(el.value) || 0) === lastTotal) el.value = total;
+      });
+      lastTotal = total;
+      recalc();
+    });
+    document.getElementById('selectAll').addEventListener('change', function () {
+      var on = this.checked;
+      document.querySelectorAll('.employee-checkbox').forEach(function (cb) { cb.checked = on; });
+      recalc();
+    });
+    var monthSelector = document.getElementById('monthSelector');
+    if (monthSelector) {
+      monthSelector.addEventListener('change', function () {
+        window.location.href = "{{ route('payroll.create') }}?month=" + this.value;
+      });
+    }
+    recalc();
+
+    // Warn before paying more than the selected account holds
+    var form = document.getElementById('payrollForm');
+    form.addEventListener('submit', function (e) {
+      if (form.dataset.confirmed) return;
+      e.preventDefault();
+      if (!document.querySelectorAll('.employee-checkbox:checked').length) {
+        alert('Please select at least one employee');
+        return;
+      }
+      var bankSelect = form.querySelector('select[name="bank_id"]');
+      if (bankSelect.value === '') {
+        alert('Please select a bank / cash account');
+        return;
+      }
+      var total = recalc().net;
+      var submit = function () { form.dataset.confirmed = '1'; form.submit(); };
+      fetch("{{ url('/payroll/bank-balance') }}/" + bankSelect.value)
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          if (data.balance >= total) return submit();
           swal({
             title: 'Insufficient Balance',
-            text: 'Insufficient balance in ' + bankName + '. Current balance: Rs. ' +
-                  new Intl.NumberFormat('en-PK').format(Math.abs(balance)) + ', Required: Rs. ' +
-                  new Intl.NumberFormat('en-PK').format(totalPayroll) + '. Do you want to proceed anyway?',
-            icon: 'warning',
-            buttons: {
-              cancel: 'No',
-              confirm: 'Yes, Proceed'
-            },
-            dangerMode: true,
-          })
-          .then((willProceed) => {
-            if (willProceed) {
-              // User confirmed - submit the form
-              document.getElementById('payrollForm').submit();
-            }
-          });
-        } else {
-          // Sufficient balance - submit the form
-          document.getElementById('payrollForm').submit();
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching balance:', error);
-        // On error, show alert and allow user to decide
-        swal({
-          title: 'Warning',
-          text: 'Could not verify bank balance. Do you want to proceed anyway?',
-          icon: 'warning',
-          buttons: {
-            cancel: 'No',
-            confirm: 'Yes, Proceed'
-          },
-          dangerMode: true,
+            text: 'Balance in ' + bankSelect.options[bankSelect.selectedIndex].text + ' is Rs. ' + money(data.balance)
+              + ', payroll needs Rs. ' + money(total) + '. Proceed anyway?',
+            icon: 'warning', buttons: { cancel: 'No', confirm: 'Yes, Proceed' }, dangerMode: true
+          }).then(function (ok) { if (ok) submit(); });
         })
-        .then((willProceed) => {
-          if (willProceed) {
-            document.getElementById('payrollForm').submit();
-          }
-        });
-      });
-  });
+        .catch(function () { submit(); });
+    });
+  })();
 </script>
+@endpush
 @endsection
-

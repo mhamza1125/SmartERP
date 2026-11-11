@@ -2,526 +2,184 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
+use App\Http\Requests\PayrollRequest;
 use App\Models\Transaction;
-use App\Models\Bank;
-use App\Repositories\EmployeeRepository;
-use App\Repositories\TransactionRepository;
 use App\Repositories\BankRepository;
-use Illuminate\Http\Request;
+use App\Repositories\PayrollRepository;
+use App\Repositories\TransactionRepository;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
+/**
+ * Monthly payroll: attendance-based salary, overtime, late deduction, temporary advance and
+ * fixed-loan instalment per employee. Calculations and ledger posting live in PayrollRepository.
+ */
 class PayrollController extends Controller
 {
-    protected $employeeRepository;
-    protected $transactionRepository;
-    protected $bankRepository;
-
     public function __construct(
-        EmployeeRepository $employeeRepository,
-        TransactionRepository $transactionRepository,
-        BankRepository $bankRepository
+        protected PayrollRepository $payrollRepository,
+        protected TransactionRepository $transactionRepository,
+        protected BankRepository $bankRepository
     ) {
         $this->middleware(['auth', 'all']);
-        $this->employeeRepository = $employeeRepository;
-        $this->transactionRepository = $transactionRepository;
-        $this->bankRepository = $bankRepository;
     }
 
-    /**
-     * Display list of all processed payroll batches (history)
-     */
+    /** Payroll months, newest first. */
     public function index()
     {
         $this->authorize('access', Transaction::class);
 
-        // Get all salary transactions grouped by month
-        $payrollBatches = Transaction::where('transaction_type', 'salary')
-            ->where('transaction_to', 'employee')
-            ->select(
-                DB::raw("DATE_FORMAT(transaction_date, '%Y-%m') as month"),
-                DB::raw("DATE(MIN(created_at)) as processing_date"),
-                DB::raw("COUNT(DISTINCT payee_id) as employee_count"),
-                DB::raw("SUM(COALESCE(credit, debit)) as total_amount"),
-                DB::raw("'Completed' as status")
-            )
-            ->groupBy(DB::raw("DATE_FORMAT(transaction_date, '%Y-%m')"))
-            ->orderBy('month', 'desc')
-            ->get();
-
         return view('payroll', [
-            'payrollBatches' => $payrollBatches,
+            'payrollBatches' => $this->payrollRepository->all(),
         ]);
     }
 
-    /**
-     * Show form to create new payroll batch
-     */
+    /** New payroll sheet for a month (a month that already has one opens its edit sheet). */
     public function create(Request $request)
     {
         $this->authorize('create', Transaction::class);
 
-        // Get selected month or default to current month
-        $selectedMonth = $request->query('month', Carbon::now()->format('Y-m'));
-        $selectedDate = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
-
-        // Check if payroll for this month already exists
-        $existingPayroll = Transaction::where('transaction_type', 'salary')
-            ->where('transaction_to', 'employee')
-            ->whereYear('transaction_date', $selectedDate->year)
-            ->whereMonth('transaction_date', $selectedDate->month)
-            ->exists();
-
-        // If payroll already exists, redirect to edit page with warning
-        if ($existingPayroll) {
-            return redirect()->route('payroll.edit', $selectedMonth)
-                ->with('warning', "Payroll for {$selectedDate->format('F Y')} has already been processed. You can edit it below.");
+        $month = $this->monthOrNull($request->query('month', Carbon::now()->format('Y-m'))) ?? Carbon::now()->format('Y-m');
+        if ($this->payrollRepository->get($month)) {
+            return redirect()->route('payroll.edit', $month)
+                ->with('warning', 'Payroll for '.$this->monthLabel($month).' has already been processed. You can edit it below.');
         }
 
-        // Get all salary-based employees (employee_type_id = 39)
-        $employees = $this->employeeRepository->salary();
-
-        // Generate month options (24 months back and 6 months forward)
-        $monthOptions = [];
-        for ($i = 24; $i >= -6; $i--) {
-            $date = Carbon::now()->addMonths(-$i);
-            $monthOptions[$date->format('Y-m')] = $date->format('F Y');
-        }
-
-        $payrollData = [];
-
-        foreach ($employees as $employee) {
-            $salary = $employee->salary ?? 0;
-
-            $outstandingBalance = $this->getEmployeeOutstandingBalance($employee->employee_id);
-            $deductableAmount = max(0, -$outstandingBalance);
-
-            $payrollData[] = [
-                'employee' => $employee,
-                'salary' => $salary,
-                'outstanding_balance' => $outstandingBalance,
-                'net_salary' => $salary - $deductableAmount,
-            ];
-        }
-
-        $bank = $this->bankRepository->self();
-
-        return view('addPayroll', [
-            'payrollData' => $payrollData,
-            'selectedMonth' => $selectedMonth,
-            'monthOptions' => $monthOptions,
-            'bank' => $bank,
-        ]);
+        return view('addPayroll', $this->sheetView($month, false));
     }
 
-    /**
-     * Store new payroll batch with editable salary amounts
-     */
-    public function store(Request $request)
+    public function store(PayrollRequest $request)
     {
         $this->authorize('create', Transaction::class);
+        $data = $request->payroll();
+        $this->payrollRepository->store($data);
 
-        $validated = $request->validate([
-            'month' => 'required|date_format:Y-m',
-            'bank_id' => 'required',
-            'payment_date' => 'required|date',
-            'employee_ids' => 'required|array|min:1',
-            'employee_ids.*' => 'exists:employees,employee_id',
-            'salary_amounts' => 'required|array',
-            'salary_amounts.*' => 'numeric|min:0',
-            'loan_deductions' => 'nullable|array',
-            'loan_deductions.*' => 'numeric|min:0',
-        ]);
-
-        // Cast bank_id to integer
-        $bankId = (int) $validated['bank_id'];
-
-        // Validate bank_id: either 0 (cash) or exists in banks table
-        if ($bankId !== 0 && !Bank::where('bank_id', $bankId)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'bank_id' => ['The selected bank/cash account is invalid.'],
-            ]);
-        }
-        $paymentDate = $validated['payment_date'];
-        $month = $validated['month'];
-        $monthLabel = Carbon::createFromFormat('Y-m', $month)->format('F Y');
-
-        $employees = Employee::whereIn('employee_id', $validated['employee_ids'])->get();
-        $transactionCount = 0;
-        $totalAmount = 0;
-
-        DB::transaction(function () use ($employees, $validated, $bankId, $paymentDate, $monthLabel, &$transactionCount, &$totalAmount) {
-            foreach ($employees as $employee) {
-                $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
-                $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
-
-                if ($salaryAmount > 0) {
-                    $transactionData = [
-                        'payee_id' => $employee->employee_id,
-                        'bank_id' => $bankId,
-                        'transaction_to' => 'employee',
-                        'transaction_type' => 'salary',
-                        'transaction_date' => $paymentDate,
-                        'credit' => $salaryAmount,
-                        'debit' => 0,
-                        'payee_bank_id' => 0,
-                        'description' => 'Monthly Salary - ' . $monthLabel,
-                    ];
-
-                    $this->transactionRepository->store($transactionData);
-                    $transactionCount++;
-                    $totalAmount += $salaryAmount;
-                }
-
-                // Process loan deduction
-                if ($loanDeduction > 0) {
-                    $loanDeductionData = [
-                        'payee_id' => $employee->employee_id,
-                        'bank_id' => $bankId,
-                        'transaction_to' => 'employee',
-                        'transaction_type' => 'receiveAdvance',
-                        'transaction_date' => $paymentDate,
-                        'debit' => $loanDeduction,
-                        'credit' => null,
-                        'payee_bank_id' => 0,
-                        'description' => 'Loan Repayment - ' . $monthLabel,
-                    ];
-
-                    $this->transactionRepository->store($loanDeductionData);
-                }
-            }
-        });
-
-        return redirect()->route('payroll.index')
-            ->with('success', "Payroll for {$monthLabel} processed successfully! {$transactionCount} employee(s) paid. Total amount: " . number_format($totalAmount, 2));
+        return redirect()->route('payroll.info', $data['month'])
+            ->with('success', 'Payroll for '.$this->monthLabel($data['month']).' processed: '.count($data['employees']).' employee(s).');
     }
 
-    /**
-     * Show form to edit existing payroll batch
-     */
+    /** Edit sheet of a month's payroll (also opens months processed before breakdowns existed). */
     public function edit($month)
     {
         $this->authorize('edit', Transaction::class);
-
-        // Parse month format
-        try {
-            $selectedDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        } catch (\Exception $e) {
+        if (! $this->monthOrNull($month)) {
             return redirect()->route('payroll.index')->with('error', 'Invalid month format');
         }
 
-        // Get all salary transactions for this month
-        $existingTransactions = Transaction::where('transaction_type', 'salary')
-            ->where('transaction_to', 'employee')
-            ->whereYear('transaction_date', $selectedDate->year)
-            ->whereMonth('transaction_date', $selectedDate->month)
-            ->get()
-            ->keyBy('payee_id');
-
-        // Get all loan deduction transactions for this month
-        $existingLoanDeductions = Transaction::where('transaction_type', 'receiveAdvance')
-            ->where('transaction_to', 'employee')
-            ->where('description', 'like', '%Loan Repayment%')
-            ->whereYear('transaction_date', $selectedDate->year)
-            ->whereMonth('transaction_date', $selectedDate->month)
-            ->get()
-            ->keyBy('payee_id');
-
-        // Get all salary-based employees
-        $employees = $this->employeeRepository->salary();
-
-        // Generate month options (24 months back and 6 months forward)
-        $monthOptions = [];
-        for ($i = 24; $i >= -6; $i--) {
-            $date = Carbon::now()->addMonths(-$i);
-            $monthOptions[$date->format('Y-m')] = $date->format('F Y');
-        }
-
-        $payrollData = [];
-
-        foreach ($employees as $employee) {
-            $salary = $employee->salary ?? 0;
-
-            $outstandingBalance = $this->getEmployeeOutstandingBalance($employee->employee_id);
-
-            // Get existing salary transaction amount if it exists
-            $paidAmount = 0;
-            if (isset($existingTransactions[$employee->employee_id])) {
-                $paidAmount = $existingTransactions[$employee->employee_id]->credit ?? 0;
-            }
-
-            // Get existing loan deduction amount if it exists
-            $loanDeductionAmount = 0;
-            if (isset($existingLoanDeductions[$employee->employee_id])) {
-                $loanDeductionAmount = $existingLoanDeductions[$employee->employee_id]->debit ?? 0;
-            }
-
-            $payrollData[] = [
-                'employee' => $employee,
-                'salary' => $salary,
-                'outstanding_balance' => $outstandingBalance,
-                'paid_amount' => $paidAmount,
-                'is_paid' => $paidAmount > 0,
-                'loan_deduction_amount' => $loanDeductionAmount,
-            ];
-        }
-
-        $bank = $this->bankRepository->self();
-
-        // Get the bank_id from the first transaction of this month
-        $selectedBankId = Transaction::where('transaction_type', 'salary')
-            ->where('transaction_to', 'employee')
-            ->whereYear('transaction_date', $selectedDate->year)
-            ->whereMonth('transaction_date', $selectedDate->month)
-            ->value('bank_id') ?? '';
-
-        return view('editPayroll', [
-            'payrollData' => $payrollData,
-            'selectedMonth' => $month,
-            'monthOptions' => $monthOptions,
-            'bank' => $bank,
-            'selectedBankId' => $selectedBankId,
-        ]);
+        return view('addPayroll', $this->sheetView($month, true));
     }
 
-    /**
-     * Display payroll batch details (read-only)
-     */
+    public function update(PayrollRequest $request, $month)
+    {
+        $this->authorize('edit', Transaction::class);
+        if (! $this->monthOrNull($month)) {
+            return redirect()->route('payroll.index')->with('error', 'Invalid month format');
+        }
+        $data = $request->payroll();
+        $this->payrollRepository->update($month, $data);
+
+        return redirect()->route('payroll.info', $month)
+            ->with('success', 'Payroll for '.$this->monthLabel($month).' updated: '.count($data['employees']).' employee(s).');
+    }
+
+    /** Saved payroll of a month with every employee's breakdown. */
     public function info($month)
     {
         $this->authorize('access', Transaction::class);
-
-        // Parse month format
-        try {
-            $selectedDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        } catch (\Exception $e) {
-            return redirect()->route('payroll.index')->with('error', 'Invalid month format');
-        }
-
-        // Get all salary transactions for this month
-        $transactions = Transaction::where('transaction_type', 'salary')
-            ->where('transaction_to', 'employee')
-            ->whereYear('transaction_date', $selectedDate->year)
-            ->whereMonth('transaction_date', $selectedDate->month)
-            ->get()
-            ->keyBy('payee_id');
-
-        // Get all salary-based employees
-        $employees = $this->employeeRepository->salary();
-
-        $payrollData = [];
-        $totalAmount = 0;
-        $processingDate = null;
-        $bankId = null;
-        $bankName = 'N/A';
-
-        foreach ($employees as $employee) {
-            if (isset($transactions[$employee->employee_id])) {
-                $transaction = $transactions[$employee->employee_id];
-                $paidAmount = $transaction->credit ?? 0;
-
-                if (!$processingDate) {
-                    $processingDate = $transaction->created_at;
-                    $bankId = $transaction->bank_id;
-                }
-
-                $salary = $employee->salary ?? 0;
-
-                // Check for salary advance in selected month
-                $salaryAdvance = Transaction::where('payee_id', $employee->employee_id)
-                    ->where('transaction_to', 'employee')
-                    ->where('transaction_type', 'salaryAdvance')
-                    ->whereYear('transaction_date', $selectedDate->year)
-                    ->whereMonth('transaction_date', $selectedDate->month)
-                    ->sum('debit');
-
-                $outstandingBalance = $this->getEmployeeOutstandingBalance($employee->employee_id);
-
-                $payrollData[] = [
-                    'employee' => $employee,
-                    'salary' => $salary,
-                    'salary_advance' => $salaryAdvance,
-                    'outstanding_balance' => $outstandingBalance,
-                    'net_salary' => $salary - $salaryAdvance - max(0, -$outstandingBalance),
-                    'paid_amount' => $paidAmount,
-                ];
-
-                $totalAmount += $paidAmount;
-            }
-        }
-
-        // Get bank name
-        if ($bankId === 0) {
-            $bankName = 'Cash';
-        } elseif ($bankId) {
-            $bank = Bank::find($bankId);
-            $bankName = $bank ? $bank->account_title . ' (' . $bank->account . ')' : 'N/A';
+        $payroll = $this->monthOrNull($month) ? $this->payrollRepository->get($month) : null;
+        if (! $payroll) {
+            return redirect()->route('payroll.edit', $month)
+                ->with('warning', 'This month has no salary breakdown yet. Save it once to record working days, overtime and advances.');
         }
 
         return view('payrollInfo', [
-            'payrollData' => $payrollData,
-            'selectedMonth' => $month,
-            'processingDate' => $processingDate,
-            'bankName' => $bankName,
-            'totalAmount' => $totalAmount,
+            'payroll' => $payroll,
+            'items' => $this->payrollRepository->items($month),
+            'accountName' => $this->accountName($payroll->bank_id),
         ]);
     }
 
-    /**
-     * Update existing payroll batch
-     */
-    public function update(Request $request, $month)
+    /** Printed payroll sheet of a month. */
+    public function printMonth($month)
     {
-        $this->authorize('edit', Transaction::class);
+        $this->authorize('access', Transaction::class);
+        $payroll = $this->monthOrNull($month) ? $this->payrollRepository->get($month) : null;
+        if (! $payroll) {
+            return redirect()->route('payroll.index')->with('error', 'No payroll breakdown saved for this month.');
+        }
 
-        $validated = $request->validate([
-            'month' => 'required|date_format:Y-m',
-            'bank_id' => 'required',
-            'payment_date' => 'required|date',
-            'employee_ids' => 'required|array|min:1',
-            'employee_ids.*' => 'exists:employees,employee_id',
-            'salary_amounts' => 'required|array',
-            'salary_amounts.*' => 'numeric|min:0',
-            'loan_deductions' => 'nullable|array',
-            'loan_deductions.*' => 'numeric|min:0',
+        return view('print.payroll', [
+            'payroll' => $payroll,
+            'items' => $this->payrollRepository->items($month),
+            'accountName' => $this->accountName($payroll->bank_id),
         ]);
-
-        // Cast bank_id to integer
-        $bankId = (int) $validated['bank_id'];
-
-        // Validate bank_id: either 0 (cash) or exists in banks table
-        if ($bankId !== 0 && !Bank::where('bank_id', $bankId)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'bank_id' => ['The selected bank/cash account is invalid.'],
-            ]);
-        }
-
-        try {
-            $selectedDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        } catch (\Exception $e) {
-            return redirect()->route('payroll.index')->with('error', 'Invalid month format');
-        }
-
-        $paymentDate = $validated['payment_date'];
-        $monthLabel = Carbon::createFromFormat('Y-m', $validated['month'])->format('F Y');
-
-        $employees = Employee::whereIn('employee_id', $validated['employee_ids'])->get();
-        $transactionCount = 0;
-        $totalAmount = 0;
-
-        DB::transaction(function () use ($employees, $validated, $bankId, $paymentDate, $monthLabel, $selectedDate, &$transactionCount, &$totalAmount) {
-            // Delete all salary transactions for this month
-            Transaction::where('transaction_to', 'employee')
-                ->whereYear('transaction_date', $selectedDate->year)
-                ->whereMonth('transaction_date', $selectedDate->month)
-                ->where('transaction_type', 'salary')
-                ->delete();
-
-            // Delete only payroll-created loan repayments (description starts with 'Loan Repayment')
-            // Manual loan repayments made outside payroll are NOT deleted
-            Transaction::where('transaction_to', 'employee')
-                ->whereYear('transaction_date', $selectedDate->year)
-                ->whereMonth('transaction_date', $selectedDate->month)
-                ->where('transaction_type', 'receiveAdvance')
-                ->where('description', 'LIKE', 'Loan Repayment%')
-                ->delete();
-
-            foreach ($employees as $employee) {
-                $salaryAmount = (float) ($validated['salary_amounts'][$employee->employee_id] ?? 0);
-                $loanDeduction = (float) ($validated['loan_deductions'][$employee->employee_id] ?? 0);
-
-                if ($salaryAmount > 0) {
-                    $transactionData = [
-                        'payee_id' => $employee->employee_id,
-                        'bank_id' => $bankId,
-                        'transaction_to' => 'employee',
-                        'transaction_type' => 'salary',
-                        'transaction_date' => $paymentDate,
-                        'credit' => $salaryAmount,
-                        'debit' => 0,
-                        'payee_bank_id' => 0,
-                        'description' => 'Monthly Salary - ' . $monthLabel,
-                    ];
-
-                    $this->transactionRepository->store($transactionData);
-                    $transactionCount++;
-                    $totalAmount += $salaryAmount;
-                }
-
-                // Process loan deduction
-                if ($loanDeduction > 0) {
-                    $loanDeductionData = [
-                        'payee_id' => $employee->employee_id,
-                        'bank_id' => $bankId,
-                        'transaction_to' => 'employee',
-                        'transaction_type' => 'receiveAdvance',
-                        'transaction_date' => $paymentDate,
-                        'debit' => $loanDeduction,
-                        'credit' => null,
-                        'payee_bank_id' => 0,
-                        'description' => 'Loan Repayment - ' . $monthLabel,
-                    ];
-
-                    $this->transactionRepository->store($loanDeductionData);
-                }
-            }
-        });
-
-        return redirect()->route('payroll.index')
-            ->with('success', "Payroll for {$monthLabel} updated successfully! {$transactionCount} employee(s) paid. Total amount: " . number_format($totalAmount, 2));
     }
 
-    /**
-     * Outstanding balance matching the eLedger formula exactly.
-     * Positive = company owes employee (Payable), Negative = employee owes company (Receivable).
-     */
-    private function getEmployeeOutstandingBalance($employeeId)
+    /** Printed salary slip of one employee. */
+    public function printSlip($payrollItemId)
     {
-        $txSums = Transaction::where('payee_id', $employeeId)
-            ->where('transaction_to', 'employee')
-            ->where('transaction_type', '!=', 'salary')
-            ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
-            ->first();
-
-        $txDebit = (float) ($txSums->total_debit ?? 0);
-        $txCredit = (float) ($txSums->total_credit ?? 0);
-
-        // Wages from stock items (same source as eLedger wages display)
-        $wagesData = DB::table('stocks')
-            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stocks.employee_id', $employeeId)
-            ->where('stocks.table_name', 'employee')
-            ->where('stocks.stock_type', '1')
-            ->where('stock_items.work_wages', '!=', '0')
-            ->select('stock_items.quantity', 'stock_items.work_wages')
-            ->get();
-
-        $wagesTotal = 0;
-        foreach ($wagesData as $wage) {
-            foreach (explode('|', $wage->work_wages) as $wageAmount) {
-                $wagesTotal += (int) $wageAmount * $wage->quantity;
-            }
+        $this->authorize('access', Transaction::class);
+        $item = $this->payrollRepository->item((int) $payrollItemId);
+        if (! $item) {
+            return redirect()->route('payroll.index')->with('error', 'Salary record not found.');
         }
 
-        return $txDebit - $txCredit + $wagesTotal;
+        return view('print.payroll-slip', [
+            'item' => $item,
+            'accountName' => $this->accountName($item->bank_id),
+        ]);
     }
 
-    /**
-     * Get bank balance for a specific bank account
-     */
+    /** Balance of a bank (or cash, id 0), for the "insufficient balance" check before saving. */
     public function getBankBalance($bankId)
     {
-        if ($bankId === 0 || $bankId === '0') {
-            // Cash account
+        if ((string) $bankId === '0') {
             $balance = $this->transactionRepository->cashBalance();
         } else {
-            // Bank account
             $bankData = $this->transactionRepository->bankBalance2($bankId);
             $balance = ($bankData->tdebit ?? 0) - ($bankData->tcredit ?? 0);
         }
 
         return response()->json(['balance' => $balance]);
     }
-}
 
+    private function sheetView(string $month, bool $editing): array
+    {
+        $sheet = $this->payrollRepository->sheet($month);
+        $monthOptions = [];
+        for ($i = 24; $i >= -6; $i--) {
+            $date = Carbon::now()->addMonths(-$i);
+            $monthOptions[$date->format('Y-m')] = $date->format('F Y');
+        }
+
+        return [
+            'editing' => $editing,
+            'selectedMonth' => $month,
+            'monthOptions' => $monthOptions,
+            'payroll' => $sheet['payroll'],
+            'period' => $sheet['period'],
+            'rows' => $sheet['rows'],
+            'bank' => $this->bankRepository->self(),
+        ];
+    }
+
+    private function accountName($bankId): string
+    {
+        if ((int) $bankId === 0) {
+            return 'Cash';
+        }
+        $bank = $this->bankRepository->printDetails($bankId);
+
+        return $bank ? trim(($bank['bank_name'] ? $bank['bank_name'].' - ' : '').$bank['account_title'].' ('.$bank['account'].')') : 'N/A';
+    }
+
+    private function monthOrNull($month): ?string
+    {
+        return is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) ? $month : null;
+    }
+
+    private function monthLabel(string $month): string
+    {
+        return Carbon::createFromFormat('Y-m', $month)->format('F Y');
+    }
+}

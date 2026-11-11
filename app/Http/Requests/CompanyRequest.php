@@ -27,6 +27,10 @@ class CompanyRequest extends FormRequest
             'ntn' => 'nullable|string|max:255',
             'rex_no' => 'nullable|string|max:255',
             'fi_no' => 'nullable|string|max:255',
+            // Payroll defaults (Settings > Company)
+            'overtime_multiplier' => 'nullable|numeric|min:0|max:10',
+            'late_multiplier' => 'nullable|numeric|min:0|max:10',
+            'work_hours_per_day' => 'nullable|numeric|min:1|max:24',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',

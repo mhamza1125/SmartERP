@@ -238,8 +238,13 @@ STATUS_PTC_CLOSED          = 9   (PTC closed early, before its end stage)
 ### Vendor Payments
 Only created against purchases — not standalone transactions.
 
-### Payroll
-`Salary` model linked to `Attendance`; bank balance fetched via external API call (guzzle).
+### Payroll (reworked 2026-11-13)
+- `payrolls` (one per month Y-m: total_working_days, hours_per_day, overtime_multiplier, late_multiplier, payment_date, bank_id) + `payroll_items` (per employee: designation, gross, working/actual days, salary_for_days, overtime hours/rate/amount, late_minutes/deduction, temp_advance, fixed_advance, fixed_advance_deduction, remaining_fixed_advance, net_salary, ids of the 3 posted transactions). All logic in `PayrollRepository` (calculate / sheet / store)
+- Formula: hourly = gross / total days / hours per day; salary for days = gross x actual / total; overtime rate = hourly x overtime multiplier; late deduction = late minutes/60 x hourly x late multiplier; net = salary for days + overtime - late - temp advance - fixed instalment (negative net is refused)
+- Defaults in Settings > Company: `overtime_multiplier` (2), `late_multiplier` (1), `work_hours_per_day` (8); default working days = month days minus Sundays
+- Employee Give / Receive Loan entries carry `transactions.advance_type` = `temporary` | `fixed` (NULL on older entries = fixed loan). Sheet pre-fills temp advance = this month's temporary advances, fixed advance = open fixed loan (`openFixedLoan`), instalment = last payroll's
+- Saving posts: salary transaction (net, from the payroll bank) + Receive Loan deductions (temporary / fixed) with `bank_id` 0 and `ledger_flag` 0 (no effect on bank / cash balances). Re-saving deletes the payroll's own transactions and re-posts. Months saved before this (salary transactions only) show as "No breakdown" and are replaced when saved
+- Prints: `payroll.print` (month salary sheet, A4 landscape), `payroll.slip` (one employee, A5). Test: tests/Feature/PayrollTest.php
 
 ### Approved Qty Rule
 When receiving purchase items, the **approved qty** (not ordered/delivered qty) is the quantity added to stock.

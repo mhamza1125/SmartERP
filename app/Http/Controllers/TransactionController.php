@@ -558,6 +558,9 @@ class TransactionController extends Controller
     public function store(TransactionRequest $request)
     {
         $validatedData = $request->validated();
+        // Loan type (temporary advance / fixed loan) only on employee Give / Receive Loan entries
+        $isEmployeeLoan = ($validatedData['transaction_to'] ?? '') === 'employee' && in_array($validatedData['transaction_type'], ['advance', 'receiveAdvance'], true);
+        $validatedData['advance_type'] = $isEmployeeLoan ? ($validatedData['advance_type'] ?? Transaction::ADVANCE_FIXED) : null;
         // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
         if ($validatedData['transaction_type'] == 'receiveAdvance') {
             $validatedData['debit'] = $validatedData['credit'];
@@ -1047,6 +1050,11 @@ class TransactionController extends Controller
     public function update(Request $request, $id)
     {
         $this->authorize('edit', Transaction::class);
+
+        // Loan type (temporary advance / fixed loan) only on employee Give / Receive Loan entries
+        $isEmployeeLoan = $request->input('transaction_to') === 'employee' && in_array($request->input('transaction_type'), ['advance', 'receiveAdvance'], true);
+        $request->merge(['advance_type' => $isEmployeeLoan && in_array($request->input('advance_type'), [Transaction::ADVANCE_TEMPORARY, Transaction::ADVANCE_FIXED], true)
+            ? $request->input('advance_type') : ($isEmployeeLoan ? Transaction::ADVANCE_FIXED : null)]);
 
         // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
         if ($request->input('transaction_type') == 'receiveAdvance') {

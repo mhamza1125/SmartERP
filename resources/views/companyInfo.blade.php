@@ -43,6 +43,10 @@
                                             <td>{{ $company->fi_no ?? 'N/A' }}</td>
                                         </tr>
                                         <tr>
+                                            <td><strong>Payroll:</strong></td>
+                                            <td>Overtime {{ rtrim(rtrim(number_format($company->overtime_multiplier ?? 2, 2), '0'), '.') }}x, late deduction {{ rtrim(rtrim(number_format($company->late_multiplier ?? 1, 2), '0'), '.') }}x hourly wage, {{ rtrim(rtrim(number_format($company->work_hours_per_day ?? 8, 2), '0'), '.') }} hours/day</td>
+                                        </tr>
+                                        <tr>
                                             <td><strong>Phone:</strong></td>
                                             <td>{{ $company->phone }}</td>
                                         </tr>

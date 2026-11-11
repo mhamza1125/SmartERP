@@ -39,6 +39,7 @@ class TransactionRequest extends FormRequest
             'payee_type' => '',
             'voucher_type' => '',
             'description' => '',
+            'advance_type' => 'nullable|in:temporary,fixed',
             'image' => 'nullable|array',
             'image.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
         ];
