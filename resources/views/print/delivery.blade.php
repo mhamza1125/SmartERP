@@ -6,8 +6,8 @@
 
 @section('content')
 
-{{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
-<div class="meta-band">
+{{-- ── Meta band: two rows of four ────────────────────────────────────────── --}}
+<div class="meta-band meta-band--grid meta-band--cols-4">
     <div class="meta-field">
         <span class="meta-label">Delivery No</span>
         <span class="meta-value mono">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
@@ -109,7 +109,7 @@
             <tr>
                 <th style="width:6%" class="text-center">Sr.</th>
                 <th style="width:13%" class="code">Article No</th>
-                <th class="text-left">Product Name</th>
+                <th class="text-left">Product</th>
                 <th style="width:13%" class="text-center">Size</th>
                 <th style="width:12%" class="num">QTY</th>
                 <th style="width:10%" class="num">Boxes</th>
@@ -151,18 +151,15 @@
 <div class="signatures avoid-break">
     <div class="signature-box">
         <div class="signature-line"></div>
-        <div class="signature-label">Customer Signature</div>
-        <div class="signature-label" style="margin-top:4px;">Date: ___________</div>
+        <div class="signature-label">Signature</div>
     </div>
     <div class="signature-box">
         <div class="signature-line"></div>
         <div class="signature-label">Delivery Person</div>
-        <div class="signature-label" style="margin-top:4px;">Name: ___________</div>
     </div>
     <div class="signature-box">
         <div class="signature-line"></div>
         <div class="signature-label">Authorized Signatory</div>
-        <div class="signature-label" style="margin-top:4px;">Company Seal</div>
     </div>
 </div>
 

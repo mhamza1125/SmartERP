@@ -623,7 +623,7 @@ class TransactionRepository implements GlobalInterface
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
             ->leftJoin('order_items', function ($join) {
-                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                $join->on('order_items.order_id', '=', \DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
             ->where('orders.customer_id', $id)
@@ -652,7 +652,7 @@ class TransactionRepository implements GlobalInterface
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
             ->leftJoin('order_items', function ($join) {
-                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                $join->on('order_items.order_id', '=', \DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
             ->where('orders.customer_id', $id)
@@ -690,7 +690,7 @@ class TransactionRepository implements GlobalInterface
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
             ->leftJoin('order_items', function ($join) {
-                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                $join->on('order_items.order_id', '=', \DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
             ->where('orders.customer_id', $id)
@@ -714,7 +714,7 @@ class TransactionRepository implements GlobalInterface
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
             ->leftJoin('order_items', function ($join) {
-                $join->on('order_items.order_id', '=', 'stocks.order_id')
+                $join->on('order_items.order_id', '=', \DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
             ->where('orders.customer_id', $id)

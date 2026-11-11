@@ -51,7 +51,7 @@
         .doc-header__inner {
             display: grid;
             /* Fixed shares: a long title wraps inside its own column instead of pushing into the logo */
-            grid-template-columns: minmax(0, 28fr) minmax(0, 44fr) minmax(0, 28fr);
+            grid-template-columns: minmax(0, 46fr) minmax(0, 30fr) minmax(0, 24fr);
             align-items: center;
             gap: 12px;
             padding: 3mm 14mm 2.5mm;
@@ -60,7 +60,7 @@
         .doc-header__brand { min-width: 0; }  /* fills its column, so the logo is capped at the column width */
 
         .doc-header__logo {
-            height: 50px;
+            height: 72px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -70,7 +70,7 @@
         .doc-header__title { text-align: center; min-width: 0; }
 
         .doc-header__title-main {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--accent);
             text-transform: uppercase;
@@ -166,6 +166,21 @@
 
         .meta-value.mono { font-family: var(--mono); }
 
+        /* Compact meta band laid out in rows (3 fields per row; --cols-4 for 4). Hairlines are
+           drawn as shadows so a short last row leaves no grey gaps; the outer ones are clipped. */
+        .meta-band--grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .meta-band--grid.meta-band--cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .meta-band--grid .meta-field {
+            min-width: 0;
+            border-right: none;
+            box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline);
+            overflow-wrap: anywhere;
+        }
+        .meta-band--grid .meta-field--wide { grid-column: 1 / -1; }
+
         /* ── 8. Status pills ─────────────────────────────────────────────── */
         .status-pill {
             display: inline-block;
@@ -242,9 +257,9 @@
         .print-table thead th {
             color: #fff;
             font-family: var(--mono);
-            font-size: 8.5px;
+            font-size: 10.5px;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.03em;
             padding: 6px 8px;
             text-align: left;
             font-weight: 700;
@@ -253,6 +268,16 @@
 
         .print-table thead th.text-right  { text-align: right; }
         .print-table thead th.text-center { text-align: center; }
+
+        /* Column widths follow the content and the page width: static widths set on cells are
+           ignored, so long article numbers, names and sizes use the space other columns leave.
+           Tables marked data-fixed-widths (blank forms filled in by hand) keep their widths. */
+        .print-table:not([data-fixed-widths]) th,
+        .print-table:not([data-fixed-widths]) td { width: auto !important; }
+
+        /* Numbers, codes and dates never break over two lines */
+        .print-table td.num, .print-table td.code, .print-table td.mono,
+        .print-table td.amount { white-space: nowrap; }
 
         .print-table tbody tr {
             border-bottom: 1px solid var(--hairline);
@@ -346,13 +371,15 @@
             padding: 5px 10px;
             border: 1px solid var(--hairline);
             background: var(--row-alt);
-            font-size: 10.5px;
+            font-family: var(--sans);
+            font-size: 13px;
+            font-weight: 600;
             line-height: 1.5;
         }
 
         .amount-words-label {
             font-family: var(--mono);
-            font-size: 8px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             color: var(--muted);
@@ -573,6 +600,8 @@
             font-weight: 700;
             font-size: 11px;
         }
+
+        .certification-statement p { white-space: nowrap; }
 
 
         /* ── Table titles & sign-off lines ───────────────────────────────── */

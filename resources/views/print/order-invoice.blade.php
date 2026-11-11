@@ -72,7 +72,7 @@
             <tr>
                 <th style="width:5%">Sr.</th>
                 <th style="width:12%" class="text-center">Article No</th>
-                <th>Product Name</th>
+                <th>Product</th>
                 <th style="width:10%" class="text-center">Size</th>
                 <th style="width:10%" class="text-center">Stage</th>
                 <th style="width:9%" class="text-right">QTY</th>

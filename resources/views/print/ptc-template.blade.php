@@ -54,7 +54,7 @@
 {{-- PTC Process Table --}}
 <div class="document-section">
     <h3>Production Processes</h3>
-    <table class="print-table">
+    <table class="print-table" data-fixed-widths>
         <thead>
             <tr>
                 <th style="width: 5%">Sr.</th>

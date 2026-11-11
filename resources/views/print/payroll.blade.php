@@ -17,7 +17,7 @@
         .doc-body, .doc-header__inner, .doc-header__rule { max-width: 297mm !important; }
     }
     .payroll-print { font-size: 8.5px; }
-    .payroll-print thead th { font-size: 7.5px !important; letter-spacing: .04em !important; padding: 4px 4px !important; white-space: normal !important; text-align: center !important; vertical-align: middle; }
+    .payroll-print thead th { font-size: 9px !important; letter-spacing: .04em !important; padding: 4px 4px !important; white-space: normal !important; text-align: center !important; vertical-align: middle; }
     .payroll-print tbody td, .payroll-print tfoot td { padding: 3px 4px !important; }
     .payroll-print .name { font-weight: 600; }
     .payroll-print tfoot td { font-weight: 700; }
@@ -34,7 +34,7 @@
     <div class="meta-field"><span class="meta-label">Paid From</span><span class="meta-value">{{ $accountName }}</span></div>
 </div>
 
-<table class="print-table payroll-print" data-no-align>
+<table class="print-table payroll-print" data-no-align data-fixed-widths>
     <thead>
         <tr>
             <th style="width:2.5%">Sr.</th>

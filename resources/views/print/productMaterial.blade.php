@@ -67,7 +67,7 @@
             <tr>
                 <th>Sr.</th>
                 <th>Material No</th>
-                <th>Material Name</th>
+                <th>Material</th>
                 <th>QTY</th>
                 <th>Unit</th>
             </tr>

@@ -89,7 +89,7 @@
                     <tr>
                         <th>Sr.</th>
                         <th>Material No</th>
-                        <th>Material Name</th>
+                        <th>Material</th>
                         <th>QTY</th>
                         <th>Price</th>
                         <th>Units</th>
@@ -137,7 +137,7 @@
         <thead>
             <tr>
                 <th>Sr.</th>
-                <th>Stage Name</th>
+                <th>Stage</th>
             </tr>
         </thead>
         <tbody>

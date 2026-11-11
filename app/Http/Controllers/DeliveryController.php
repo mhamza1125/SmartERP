@@ -11,6 +11,7 @@ use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
 use App\Http\Requests\DeliveryRequest;
+use App\Http\Requests\CommercialInvoiceRequest;
 use App\Repositories\CompanyRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DeliveryRepository;
@@ -173,7 +174,14 @@ class DeliveryController extends Controller
             $order = $this->orderRepository->get($orderId);
             if ($order) {
                 $orders[] = $order;
-                $orderItems = $this->stockItemRepository->orderDelivery($orderId, $editDeliveryId ? $this->deliveryRepository->get($editDeliveryId)->stock_id : null, $orderIds);
+                $orderItems = $this->stockItemRepository->orderDelivery($orderId, $editDeliveryId ? $this->deliveryRepository->get($editDeliveryId)->stock_id : null, $orderIds)
+                    // Each order's items stay separate lines, so the delivery records the quantity per order
+                    ->map(function ($row) use ($order) {
+                        $row->order_id = (int) data_get($order, 'order_id');
+                        $row->order_no = data_get($order, 'order_no');
+
+                        return $row;
+                    });
                 // Convert Collection to array before merging
                 $allOrderItems = array_merge($allOrderItems, $orderItems->toArray());
             }
@@ -303,7 +311,7 @@ class DeliveryController extends Controller
                 $this->orderRepository->update($request->input('order_id'), $orderStatus);
             }
 
-            $this->storeSI($getId, $ptid, $mid, $quantities, $stages); // Delivery Items
+            $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $this->lineOrderIds($request)); // Delivery Items
             $this->allocateBatches($getId, $request);
             $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
             $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
@@ -421,21 +429,39 @@ class DeliveryController extends Controller
     /**
      * Print commercial invoice
      */
-    public function printCommercial($id)
+    public function printCommercial(CommercialInvoiceRequest $request, $id)
     {
         $this->authorize('show', Delivery::class);
+        $options = $request->validated();
         $delivery = $this->deliveryRepository->get($id);
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $company = $this->companyRepository->first();
 
-        // Get optional parameters from query string
-        $hsCode = request()->input('hs_code');
-        $sellingType = request()->input('selling_type');
-        $uom = request()->input('uom');
-        $statementOfOrigin = request()->input('statement_of_origin');
+        // Optional values entered in the commercial invoice modal
+        $hsCode = $options['hs_code'] ?? null;
+        $sellingType = $options['selling_type'] ?? null;
+        $uom = $options['uom'] ?? null;
+        $statementOfOrigin = $options['statement_of_origin'] ?? null;
+
+        // FI No: typed in the modal, else the delivery's own, else the default from Settings > Company
+        $fiNo = trim((string) ($options['fi_no'] ?? ''));
+        if ($fiNo === '') {
+            $fiNo = trim((string) ($delivery['fi_no'] ?? '')) ?: trim((string) ($company->fi_no ?? ''));
+        }
+
+        // Share of the invoice value requested on this invoice (100% unless a partial payment is asked)
+        $paymentPercent = round((float) ($options['payment_percent'] ?? 100), 2);
+
+        // Combined invoice: each order's lines stay separate (same article on several orders = one line per order)
+        $lineOrderCount = $deliveryItem->pluck('line_order_id')->filter()->unique()->count();
+        if ($lineOrderCount > 1) {
+            $deliveryItem = $deliveryItem
+                ->sortBy(fn ($item) => [(int) $item->product_id, (int) $item->product_type_id, (string) $item->line_order_no])
+                ->values();
+        }
 
         // Bank account picked in the commercial invoice modal (optional)
-        $bankDetails = $this->bankRepository->printDetails(request()->input('bank_id'));
+        $bankDetails = $this->bankRepository->printDetails($options['bank_id'] ?? null);
 
         // Get packing list for this delivery if it exists
         $packingList = null;
@@ -471,6 +497,9 @@ class DeliveryController extends Controller
             'sellingType' => $sellingType,
             'uom' => $uom,
             'statementOfOrigin' => $statementOfOrigin,
+            'fiNo' => $fiNo,
+            'paymentPercent' => $paymentPercent,
+            'showLineOrders' => $lineOrderCount > 1,
             'packingList' => $packingList,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
@@ -642,10 +671,17 @@ class DeliveryController extends Controller
                 $request->input('rowQty'),
                 $request->input('totalQty')
             );
-            $this->stockItemRepository->update($request->input('stock_id'), $request->input());
             $relatedOrderIds = $isMultiOrder && ! $request->input('order_ids')
                 ? array_map(fn ($order) => ((array) $order)['order_id'], $this->getRelatedOrdersForDelivery($delivery))
                 : null;
+            $itemData = $request->input();
+            $lineOrders = $this->lineOrderIds($request, $relatedOrderIds ?: null);
+            if ($lineOrders) {
+                $itemData['line_order_id'] = $lineOrders;
+            } else {
+                unset($itemData['line_order_id']);
+            }
+            $this->stockItemRepository->update($request->input('stock_id'), $itemData);
             $this->allocateBatches($request->input('stock_id'), $request, $relatedOrderIds ?: null);
 
             DB::commit();
@@ -674,6 +710,30 @@ class DeliveryController extends Controller
     }
 
     /**
+     * Order each delivery line is for (multi-order deliveries list every order's items as
+     * separate lines), aligned with quantity[]. Only the delivery's own orders are accepted;
+     * single-order deliveries and container lines get null.
+     *
+     * @return array<int, int|null>
+     */
+    private function lineOrderIds(Request $request, ?array $orderIds = null): array
+    {
+        $orderIds = array_map('intval', $orderIds ?? $this->deliveryOrderIds($request));
+        if (count($orderIds) < 2) {
+            return [];
+        }
+
+        $productTypes = (array) $request->input('product_type_id', []);
+
+        $lineOrders = collect((array) $request->input('line_order_id', []))
+            ->map(fn ($orderId, $key) => (int) ($productTypes[$key] ?? 0) !== 0 && in_array((int) $orderId, $orderIds, true) ? (int) $orderId : null)
+            ->all();
+
+        // A form without per-order lines keeps the old behaviour (orders taken from reserved batches)
+        return array_filter($lineOrders) ? $lineOrders : [];
+    }
+
+    /**
      * Take the delivered products from the orders' own batches first, then free stock
      * (or from the batch picked on the form), and record which order each line was for.
      *
@@ -699,9 +759,9 @@ class DeliveryController extends Controller
         $this->authorize('delete', Delivery::class);
     }
 
-    private function storeSI($getId, $ptids, $mids, $quantities, $stages)
+    private function storeSI($getId, $ptids, $mids, $quantities, $stages, array $lineOrders = [])
     {
-        // Store Delivery Items
+        // Store Delivery Items (a multi-order delivery line records the order it is delivered for)
         foreach ($quantities as $key => $quantity) {
             if ($quantity > 0) {
                 $ptid = $ptids[$key] ?? null;
@@ -713,6 +773,7 @@ class DeliveryController extends Controller
                     'material_id' => $mid,
                     'quantity' => $quantity,
                     'stage_id' => $stage,
+                    'order_id' => $lineOrders[$key] ?? null,
                     'work_logs' => '0',
                     'work_wages' => '0',
                 ];

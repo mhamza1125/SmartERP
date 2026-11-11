@@ -31,7 +31,7 @@
             <tr>
                 <th>Sr.</th>
                 <th>Article No</th>
-                <th>Item / Product</th>
+                <th>Item</th>
                 <th>Size</th>
                 <th>Stage</th>
                 <th>QTY</th>

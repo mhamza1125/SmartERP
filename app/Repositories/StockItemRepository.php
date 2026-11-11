@@ -62,11 +62,14 @@ class StockItemRepository implements GlobalInterface
                             ->where('material_type_id', 61);
                     });
             })
+            // Each line is priced from the order it was delivered for (multi-order deliveries),
+            // falling back to the delivery's order
             ->leftJoin('order_items', function ($join) {
                 $join->on('order_items.product_type_id', '=', 'stock_items.product_type_id')
                     ->on('order_items.product_stage_id', '=', 'stock_items.stage_id')
-                    ->on('order_items.order_id', '=', 'stocks.order_id');
+                    ->on('order_items.order_id', '=', DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'));
             })
+            ->leftJoin('orders as line_order', 'line_order.order_id', '=', DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
             ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('customers', 'customers.customer_id', '=', 'orders.customer_id')
             ->leftJoin('heads as chead', 'chead.head_id', '=', 'customers.currency_id')
@@ -87,9 +90,12 @@ class StockItemRepository implements GlobalInterface
                 'materials.material_id',
                 'product_materials.quantity as bqty',
                 'order_items.price',
+                'line_order.order_id as line_order_id',
+                'line_order.order_no as line_order_no',
                 'chead.name as cname'
             )
             ->orderBy('products.product_id')
+            ->orderBy('stock_items.stock_item_id')
             ->get();
     }
 
@@ -1100,6 +1106,9 @@ class StockItemRepository implements GlobalInterface
     {
         $existingItems = StockItem::where('stock_id', $id)->get();
         $componentIds = $data['component_id'] ?? [];
+        // Multi-order delivery: each line is for one order (null = legacy line without an order)
+        $byOrder = array_key_exists('line_order_id', $data);
+        $lineOrders = $data['line_order_id'] ?? [];
 
         // Assuming $data['product_type_id'] and $data['material_id'] are arrays of IDs.
         foreach ($existingItems as $existingItem) {
@@ -1115,7 +1124,8 @@ class StockItemRepository implements GlobalInterface
                     $existingItem->product_type_id == $ptid &&
                     $existingItem->material_id == $mid &&
                     $existingItem->stage_id == $sid &&
-                    $existingItem->component_product_type_id == $cid
+                    $existingItem->component_product_type_id == $cid &&
+                    (! $byOrder || $existingItem->order_id === null || (int) $existingItem->order_id === (int) ($lineOrders[$key] ?? 0))
                 ) {
                     $found = true;
                     break;
@@ -1159,6 +1169,14 @@ class StockItemRepository implements GlobalInterface
                     $stockQuery->where('component_product_type_id', $cid);
                 } else {
                     $stockQuery->whereNull('component_product_type_id');
+                }
+
+                if ($byOrder) {
+                    // This order's line, else a legacy line without an order (it takes this order)
+                    $lineOrderId = $lineOrders[$key] ?? null;
+                    $stockItem['order_id'] = $lineOrderId;
+                    $stockQuery->where(fn ($query) => $query->whereNull('order_id')->when($lineOrderId, fn ($query) => $query->orWhere('order_id', $lineOrderId)))
+                        ->orderByRaw('order_id IS NULL');
                 }
 
                 $stock = $stockQuery->first();

@@ -335,25 +335,19 @@
                       @if(isset($isMultiOrder) && $isMultiOrder)
                         @if(isset($orderItems) && count($orderItems) > 0)
                           @php
-                            $aggregatedItems = [];
-                            foreach($orderItems as $item) {
-                              $item = (object) $item;
-                              $key = $item->product_type_id . '_' . $item->stage_id;
-                              if (!isset($aggregatedItems[$key])) {
-                                $aggregatedItems[$key] = $item;
-                              } else {
-                                $aggregatedItems[$key]->quantity += $item->quantity;
-                                // Don't sum stockIn, stockOut or stockOutDelivered - they represent totals for this product/stage
-                                // Just keep the value from the first item (they should all be the same)
-                                // stockIn, stockOut and stockOutDelivered are NOT summed - they're already totals
-                              }
-                            }
+                            // One line per order: the same article on several orders stays separate,
+                            // so the delivery (and its commercial invoice) keep each order's quantity and price.
+                            // Available stock is shared by the orders; the server checks the total.
+                            $orderLines = collect($orderItems)->map(fn ($item) => (object) $item);
+                            $pickerShown = [];
                             $index = 1;
                           @endphp
-                          @foreach($aggregatedItems as $item)
+                          @foreach($orderLines as $item)
                             @php
-                              // Calculate available quantity for delivery
-                              $availableQty = $item->stockIn - $item->stockOut;
+                              // Available for this order's line: its own reserved batches plus free stock
+                              $availableQty = collect($item->batches ?? [])->map(fn ($batch) => (object) $batch)
+                                ->filter(fn ($batch) => empty($batch->order_id) || (int) $batch->order_id === (int) ($item->order_id ?? 0))
+                                ->sum('balance');
                               // Calculate remaining to deliver (ordered - already delivered)
                               $remainingQty = $item->quantity - $item->stockOutDelivered;
                               // Actual deliverable is the minimum of available and remaining
@@ -371,11 +365,18 @@
                               }
                             @endphp
                             @unless($deliverableQty <= 0)
+                              @php
+                                $pickerKey = $item->product_type_id . '_' . $item->stage_id;
+                                $showPicker = !isset($pickerShown[$pickerKey]);
+                                $pickerShown[$pickerKey] = true;
+                              @endphp
                               <tr>
                                 <td>{{$index++}}</td>
                                 <td>{{$item->article_no}} - Size {{$item->sname}}
+                                  <br><span class="badge badge-light">{{ $item->order_no ?? '' }}</span>
                                   <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}" required>
                                   <input type="hidden" name="material_id[]" value="0" required>
+                                  <input type="hidden" name="line_order_id[]" value="{{ $item->order_id ?? '' }}">
                                 </td>
                                 <td>{{$item->stname}}
                                   <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
@@ -384,7 +385,11 @@
                                 <td>{{number_format($remainingQty)}}</td>
                                 <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                                 <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes
-                                  @include('batchPicker', ['item' => $item])
+                                  @if($showPicker)
+                                    @include('batchPicker', ['item' => $item])
+                                  @else
+                                    <br><small class="text-muted">Batches: see the line above</small>
+                                  @endif
                                 </td>
                                 <td class="form-group">
                                   <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$existingDeliveredQty}}" min="0" max="{{$deliverableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">

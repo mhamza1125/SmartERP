@@ -228,13 +228,13 @@
 <div class="sign-row po-signs">
     <span class="sign-row__field">Prepared By:<span class="sign-row__line"></span></span>
     <span class="sign-row__field">Approved By:<span class="sign-row__line"></span></span>
-    <span class="sign-row__field">Supplier Sign:<span class="sign-row__line"></span></span>
+    <span class="sign-row__field">Vendor Sign:<span class="sign-row__line"></span></span>
 </div>
 
 {{-- ── Gate Inward Pass: blank rows filled in by hand at the gate ───────────── --}}
 <div class="avoid-break" style="margin-top: 16px;">
     <div class="table-title">Gate Inward Pass</div>
-    <table class="print-table gate-pass" data-no-align>
+    <table class="print-table gate-pass" data-no-align data-fixed-widths>
         <thead>
             <tr>
                 <th style="width:11%">Date</th>

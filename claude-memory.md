@@ -265,7 +265,11 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Print views in `resources/views/print/` — self-contained with inline CSS
 - `$company` and `$printContacts` (phone/email/website) are always available in print views via `PrintComposer`
 - Default: portrait; landscape only for wide-column tables
-- **No footer.** Standard header (`print/header.blade.php`): logo left, title middle, phone/email/website right. Each view sets `@section('doc_title', '...')` and optionally `@section('doc_no', ...)`; never put a title inside the body
+- **No footer.** Standard header (`print/header.blade.php`): logo left (46% column, 72px), title middle (13px), phone/email/website right. Each view sets `@section('doc_title', '...')`; never put a title inside the body. `doc_no` is no longer shown in the header (2026-11-11) - every print shows its record code in the body instead
+- Print table columns size to content: `.print-table` cells ignore static `width` styles (`width: auto !important`); tables that must keep widths (blank forms filled by hand: PTC card, PTC template, gate pass, payroll sheet) carry `data-fixed-widths`. Column headings 10.5px (voucher 9.5px); keep headings short (Product, Material, Stock, Avail. QTY)
+- Compact meta header in rows: `.meta-band.meta-band--grid` (3 per row, `--cols-4` for 4, `.meta-field--wide` spans the row). Used by order, production order, delivery prints
+- Amount in words: 13px sans, semibold. Certification line ("CERTIFIED TO BE TRUE AND CORRECT "COMPANY"") stays on one line
+- Settings > Company has no listing: `company` route redirects to `company.edit` of the single company
 - Table titles: `<div class="table-title">`; sign-off lines: `.sign-row` / `.sign-row__field` / `.sign-row__line`
 - Column titles are short (QTY, Price, Total). Numeric columns are right-aligned (`class="num"` on th and td); the layout script `alignPrintTables()` also right-aligns columns whose header looks numeric and copies each column's data alignment to its `<th>`
 - Logo URL: `printLogoUrl($company)` (app/helpers.php) - company logo if the file exists, else assets/print-logo.png; built with asset() so it follows the request's base URL (app may run under a sub-folder, e.g. http://host:8080/ERP/public)
@@ -280,6 +284,14 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Customer ledger delivery debit = items (order price × delivered qty) + that delivery's freight (`TransactionRepository::cDetail/cDetailFilter`, `customerFreight()`)
 - Commercial invoice shows Items Total, Freight Charges, and Grand Total including freight
 - `company.fi_no` = default FI No (Settings > Company); a delivery's own `fi_no` overrides it on the commercial invoice
+
+## Commercial Invoice (2026-11-11)
+- `delivery.commercial` (print of one delivery), options from the modal on deliveryInfo via query string, validated by `CommercialInvoiceRequest`: hs_code, selling_type, uom, bank_id, statement_of_origin, `fi_no`, `payment_percent`
+- FI No priority: modal `fi_no` > delivery's `fi_no` > `company.fi_no` (resolved in `DeliveryController::printCommercial`)
+- `payment_percent` (0 < x <= 100, empty = 100): items stay at full price; totals show Invoice Value + "Payment Due (x% of Invoice Value)" incl. freight. 100% = the original layout. Proforma invoice (`order.proforma`) is separate and untouched
+- Combined invoice = a multi-order delivery. **Multi-order delivery lines are one row per order** (add/edit forms post `line_order_id[]` aligned with `quantity[]`; container rows post ""), stored in `stock_items.order_id`. Same article on 2 orders = 2 lines. `allocateStockOut` limits such a line to its order's batches + free stock; `markLineOrders` keeps a valid explicit line order
+- Line price = `order_items` of `COALESCE(stock_items.order_id, stocks.order_id)` in `StockItemRepository::delivery()` (also returns `line_order_no`) and in customer ledger (`TransactionRepository::cDetail/cDetailFilter`). Invoice shows an Order No column when lines span >1 order
+- Legacy multi-order lines with NULL order_id show on the first order's row in the edit form and take that order on save
 
 ---
 

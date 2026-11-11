@@ -91,11 +91,11 @@
             '.dtp-frame > thead > tr > td, .dtp-frame > tbody > tr > td { padding: 0; border: none; }',
 
             /* Header: logo | title | contacts */
-            '.dtp-header { display: grid; grid-template-columns: minmax(0, 28fr) minmax(0, 44fr) minmax(0, 28fr); align-items: center; gap: 12px;',
+            '.dtp-header { display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 30fr) minmax(0, 24fr); align-items: center; gap: 12px;',
             '  padding-bottom: 6px; border-bottom: 3px solid ' + ACCENT + '; margin-bottom: 10px; }',
-            '.dtp-header__logo { height: 44px; max-width: 100%; width: auto; object-fit: contain; display: block; }',
+            '.dtp-header__logo { height: 64px; max-width: 100%; width: auto; object-fit: contain; display: block; }',
             '.dtp-header__title { text-align: center; min-width: 0; }',
-            '.dtp-header__title-main { font-size: 15px; font-weight: 700; color: ' + ACCENT + '; text-transform: uppercase; letter-spacing: 0.05em;',
+            '.dtp-header__title-main { font-size: 13px; font-weight: 700; color: ' + ACCENT + '; text-transform: uppercase; letter-spacing: 0.05em;',
             '  line-height: 1.2; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }',
             '.dtp-header__title-sub { font-family: ' + MONO + '; font-size: 9.5px; color: ' + MUTED + '; margin-top: 2px; }',
             '.dtp-header__contacts { justify-self: end; text-align: right; font-size: 9px; line-height: 1.5; min-width: 0; overflow-wrap: anywhere; }',
@@ -105,9 +105,11 @@
                even when the browser's "Background graphics" option is off. */
             'table.dataTable, table.dtp-data { width: 100% !important; border-collapse: collapse !important; font-size: 10.5px; margin: 0 !important; }',
             'table.dtp-data thead { display: table-header-group; }',
-            'table.dtp-data thead th { background: #e9eef4 !important; color: ' + ACCENT + ' !important; font-size: 9px; font-weight: 700;',
-            '  text-transform: uppercase; letter-spacing: 0.05em; text-align: left; padding: 6px 7px !important;',
+            'table.dtp-data thead th { background: #e9eef4 !important; color: ' + ACCENT + ' !important; font-size: 10.5px; font-weight: 700;',
+            '  text-transform: uppercase; letter-spacing: 0.03em; text-align: left; padding: 6px 7px !important; white-space: nowrap;',
             '  border: none !important; border-top: 2px solid ' + ACCENT + ' !important; border-bottom: 2px solid ' + ACCENT + ' !important; }',
+            /* Columns size to their content (widths DataTables set on screen are dropped) */
+            'table.dtp-data th, table.dtp-data td { width: auto !important; }',
             'table.dtp-data tbody td { padding: 4px 7px !important; vertical-align: top; border: none !important;',
             '  border-bottom: 1px solid ' + HAIRLINE + ' !important; word-break: break-word; }',
             'table.dtp-data tbody tr:nth-child(even) td { background: ' + ROW_ALT + ' !important; }',

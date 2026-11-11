@@ -8,6 +8,9 @@
 <style>
     .document-info { display: flex; width: 100%; }
     .info-section   { width: 50%; box-sizing: border-box; }
+    /* Long statements (even without spaces) wrap inside the page width; line breaks are kept */
+    .statement-of-origin   { margin-top: 15px; width: 100%; max-width: 100%; }
+    .statement-of-origin p { white-space: pre-line; overflow-wrap: anywhere; word-break: break-word; }
 </style>
 @endpush
 
@@ -20,8 +23,17 @@
     $currencyName = $deliveryItem->first()->cname ?? 'PKR';
     $totalLabel = !empty($sellingType) ? 'Total ' . $sellingType . ' Amount:' : 'Grand Total:';
 
-    // A delivery's own FI No wins; otherwise the default from Settings > Company
-    $fiNo = !empty($delivery['fi_no']) ? $delivery['fi_no'] : ($company->fi_no ?? null);
+    // FI No is resolved by the controller: modal value, else the delivery's, else Settings > Company
+    $fiNo = $fiNo ?? null;
+
+    // Partial payment: the invoice still shows the full value of the goods, plus the share requested now
+    $paymentPercent = (float) ($paymentPercent ?? 100);
+    $isPartialPayment = $paymentPercent < 100;
+    $percentLabel = rtrim(rtrim(number_format($paymentPercent, 2), '0'), '.') . '%';
+    $amountDue = round($grandTotal * $paymentPercent / 100, 2);
+
+    // Combined invoice for several orders: an Order column identifies each line's order
+    $showLineOrders = !empty($showLineOrders);
 
     // Payment terms of the order(s) this delivery is for
     $paymentTerms = (!empty($isMultiOrder) && !empty($relatedOrders))
@@ -85,16 +97,10 @@
             <span class="info-label">Invoice No:</span>
             <span class="info-value">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
         </div>
-        @if(!empty($delivery['delivery_date']))
-        <div class="info-row">
-            <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ formatDate($delivery['delivery_date']) }}</span>
-        </div>
-        @endif
         <div class="info-row">
             @if(!empty($isMultiOrder) && !empty($relatedOrders))
                 <span class="info-label">Order Numbers:</span>
-                <span class="info-value">{{ collect($relatedOrders)->pluck('order_no')->implode(', ') }}</span>
+                <span class="info-value">{{ collect($relatedOrders)->map(fn ($order) => ((array) $order)['order_no'] ?? '')->filter()->implode(', ') }}</span>
             @else
                 <span class="info-label">Order Number:</span>
                 <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
@@ -116,6 +122,12 @@
             <span class="info-value">{{ $packingList['carton_count'] }}</span>
         </div>
         @endif
+        @if($isPartialPayment)
+        <div class="info-row">
+            <span class="info-label">Payment Requested:</span>
+            <span class="info-value">{{ $percentLabel }} of invoice value</span>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -127,8 +139,14 @@
             <tr>
                 <th class="text-center" style="width: 5%">Sr.</th>
                 <th class="text-center" style="width: 12%">Article No</th>
-                <th class="text-left" style="width: 27%">Product Name</th>
+                @if($showLineOrders)
+                <th class="text-center" style="width: 13%">Order No</th>
+                <th class="text-left" style="width: 20%">Product</th>
+                <th class="text-center" style="width: 10%">Size</th>
+                @else
+                <th class="text-left" style="width: 27%">Product</th>
                 <th class="text-center" style="width: 16%">Size</th>
+                @endif
                 <th class="num" style="width: 10%">QTY</th>
                 <th class="num" style="width: 13%">Price</th>
                 <th class="num" style="width: 17%">Total</th>
@@ -139,6 +157,9 @@
             <tr>
                 <td class="text-center">{{ $loop->iteration }}</td>
                 <td class="text-center">{{ $item->article_no }}</td>
+                @if($showLineOrders)
+                <td class="text-center">{{ $item->line_order_no ?? '-' }}</td>
+                @endif
                 <td class="text-left">{{ $item->name }}</td>
                 <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
                 <td class="num">{{ number_format($item->quantity) }}</td>
@@ -149,14 +170,14 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="4" class="text-right">Items Total</td>
+                <td colspan="{{ $showLineOrders ? 5 : 4 }}" class="text-right">Items Total</td>
                 <td class="num">{{ number_format($totalQuantity) }}</td>
                 <td></td>
                 <td class="num">{{ number_format($itemsTotal, 2) }}</td>
             </tr>
             @if($freightCharges > 0)
             <tr>
-                <td colspan="6" class="text-right">Freight Charges</td>
+                <td colspan="{{ $showLineOrders ? 7 : 6 }}" class="text-right">Freight Charges</td>
                 <td class="num">{{ number_format($freightCharges, 2) }}</td>
             </tr>
             @endif
@@ -166,6 +187,20 @@
 
 {{-- Invoice Totals --}}
 <div class="totals-section avoid-break">
+    @if($isPartialPayment)
+    <div class="total-row">
+        <span>Invoice Value ({{ trim($totalLabel, ':') }}):</span>
+        <span class="amount">{{ number_format($grandTotal, 2) }} {{ $currencyName }}</span>
+    </div>
+    <div class="total-row grand-total">
+        <span>Payment Due ({{ $percentLabel }} of Invoice Value):
+            @if(function_exists('numberToWordsWithCurrency'))
+                {{ numberToWordsWithCurrency($amountDue) }} {{ $currencyName }}
+            @endif
+        </span>
+        <span class="amount">{{ number_format($amountDue, 2) }} {{ $currencyName }}</span>
+    </div>
+    @else
     <div class="total-row grand-total">
         <span>{{ $totalLabel }}
             @if(function_exists('numberToWordsWithCurrency'))
@@ -174,11 +209,12 @@
         </span>
         <span class="amount">{{ number_format($grandTotal, 2) }} {{ $currencyName }}</span>
     </div>
+    @endif
 </div>
 
 {{-- Statement of Origin (if provided) --}}
 @if(!empty($statementOfOrigin))
-<div class="avoid-break" style="margin-top: 15px;">
+<div class="avoid-break statement-of-origin">
     <div class="table-title">Statement of Origin</div>
     <p>{{ $statementOfOrigin }}</p>
 </div>
@@ -188,8 +224,7 @@
 
 {{-- Certification Statement --}}
 <div class="certification-statement avoid-break">
-    <p>CERTIFIED TO BE TRUE AND CORRECT</p>
-    <p>{{ strtoupper($company->name ?? '') }}</p>
+    <p>CERTIFIED TO BE TRUE AND CORRECT @if(!empty($company->name))&ldquo;{{ strtoupper($company->name) }}&rdquo;@endif</p>
 </div>
 @endif
 

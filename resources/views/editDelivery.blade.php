@@ -206,10 +206,21 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @php $deliveryMap = [];
+                      @php
+                        // Multi-order delivery: one line per order, so each order's quantity stays separate.
+                        // Lines saved before per-order lines existed have no order; they show on the first
+                        // order's line for that product/stage and take that order when saved.
+                        $perOrder = !empty($isMultiOrder);
+                        $deliveryMap = [];
+                        $unassigned = [];
                         foreach ($deliveryItem as $di) {
                             $key = $di['product_type_id'] . '-' . $di['stage_id'];
-                            $deliveryMap[$key] = $di['quantity'];
+                            if ($perOrder && empty($di['order_id'])) {
+                                $unassigned[$key] = ($unassigned[$key] ?? 0) + $di['quantity'];
+                            } else {
+                                $orderKey = $perOrder ? $key . '-' . $di['order_id'] : $key;
+                                $deliveryMap[$orderKey] = ($deliveryMap[$orderKey] ?? 0) + $di['quantity'];
+                            }
                         } @endphp
                       @if(count($stock))
                       @php $index = 1; $shownKeys = []; @endphp
@@ -217,22 +228,39 @@
                           @php
                             $item = (object) $item;
                             $key = $item->product_type_id . '-' . $item->stage_id;
-                            $qty = $deliveryMap[$key] ?? 0;
+                            $lineOrderId = $perOrder ? ($item->order_id ?? null) : null;
+                            $rowKey = $lineOrderId ? $key . '-' . $lineOrderId : $key;
+                            $firstOfKey = !isset($shownKeys[$key]);
+                            $qty = ($deliveryMap[$rowKey] ?? 0) + ($lineOrderId && $firstOfKey ? ($unassigned[$key] ?? 0) : 0);
                             // stockIn = available without this delivery's own lines (its quantity is included);
                             // stockOutDelivered = delivered to the order by other deliveries
                             $availableQty = $item->stockIn - $item->stockOut;
+                            if ($lineOrderId) {
+                                // This order's line: its own reserved batches plus free stock
+                                $availableQty = collect($item->batches ?? [])->map(fn ($batch) => (object) $batch)
+                                    ->filter(fn ($batch) => empty($batch->order_id) || (int) $batch->order_id === (int) $lineOrderId)
+                                    ->sum('balance');
+                            }
                             $deliveredOther = $item->stockOutDelivered ?? 0;
                             $remainingQty = $item->quantity - $deliveredOther;
-                            // A multi-order delivery lists each product/stage once
-                            $duplicate = isset($shownKeys[$key]);
-                            $shownKeys[$key] = true;
+                            // Without per-order lines a product/stage is listed once
+                            $duplicate = !$lineOrderId && isset($shownKeys[$key]);
+                            $hide = $duplicate || ($availableQty <= 0 && $qty <= 0);
+                            $showPicker = $firstOfKey;
+                            if (!$hide) {
+                                $shownKeys[$key] = true;
+                            }
                           @endphp
-                          @unless($duplicate || ($availableQty <= 0 && $qty <= 0))
+                          @unless($hide)
                             <tr>
                               <td>{{$index++}}</td>
                               <td>{{$item->article_no}} - Size {{$item->sname}}
+                                @if($lineOrderId)
+                                  <br><span class="badge badge-light">{{ $item->order_no ?? '' }}</span>
+                                @endif
                                 <input type="hidden" name="product_type_id[]" value="{{$item->product_type_id}}" required>
                                 <input type="hidden" name="material_id[]" value="0" required>
+                                <input type="hidden" name="line_order_id[]" value="{{ $lineOrderId }}">
                               </td>
                               <td>{{$item->stname}}
                                 <input type="hidden" name="stage_id[]" value="{{$item->stage_id}}" required>
@@ -241,7 +269,11 @@
                               <td>{{number_format($remainingQty)}}</td>
                               <td>{{$item->bqty > 0 ? number_format(1/$item->bqty) : '0'}} {{$item->uname}}</td>
                               <td>{{number_format($availableQty)}} {{$item->uname}} / {{number_format($availableQty*$item->bqty, 2)}} boxes
-                                @include('batchPicker', ['item' => $item, 'picks' => $batchPicks ?? []])
+                                @if($showPicker)
+                                  @include('batchPicker', ['item' => $item, 'picks' => $batchPicks ?? []])
+                                @else
+                                  <br><small class="text-muted">Batches: see the line above</small>
+                                @endif
                               </td>
                               <td class="form-group">
                                 <input type="number" class="form-control quantity-input" name="quantity[]" value="{{$qty}}" min="0" max="{{$availableQty}}" data-bqty="{{$item->bqty}}" data-remaining="{{$remainingQty}}" style="width:100px">
@@ -336,6 +368,7 @@
                                 <input type="hidden" name="material_id[]" value="{{$item->material_id}}">
                                 <input type="hidden" name="product_type_id[]" value="0">
                                 <input type="hidden" name="stage_id[]" value="0">
+                                <input type="hidden" name="line_order_id[]" value="">
                               </td>
                               <td>{{$item->quantity}}
                                 <input type="hidden" name="quantity[]" value="{{$item->quantity}}">

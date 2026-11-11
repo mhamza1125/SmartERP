@@ -21,11 +21,14 @@ class CompanyController extends Controller
     public function index()
     {
         $this->authorize('access', Settings::class);
-        $company = $this->companyRepository->all();
 
-        return view('company', [
-            'company' => $company,
-        ]);
+        // There is only one company: Settings > Company opens its edit page (no listing)
+        $company = $this->companyRepository->first();
+        if (! $company) {
+            return redirect()->route('company.add');
+        }
+
+        return redirect()->route('company.edit', $company->id);
     }
 
     public function create()

@@ -78,7 +78,7 @@
                 <th style="width: 15%">Article No</th>
                 <th style="width: 10%">Size</th>
                 <th style="width: 10%">Stage</th>
-                <th style="width: 10%">Original QTY</th>
+                <th style="width: 10%">Orig. QTY</th>
                 <th style="width: 10%">Returned</th>
                 <th style="width: 10%">Unit</th>
                 <th style="width: 10%">Reason</th>

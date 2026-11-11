@@ -6,33 +6,26 @@
 
 @section('content')
 
-{{-- Production Order Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $order['job_no'] ?? 'N/A' }}</span>
-        </div>
-        @if(isset($order['description']) && !empty($order['description']))
-        <div class="info-row">
-            <span class="info-label">Description:</span>
-            <span class="info-value">{{ substr($order['description'], 0, 100) }}{{ strlen($order['description']) > 100 ? '...' : '' }}</span>
-        </div>
-        @endif
+{{-- Production Order Header Information: compact rows --}}
+<div class="meta-band meta-band--grid">
+    <div class="meta-field">
+        <span class="meta-label">Job No</span>
+        <span class="meta-value mono">{{ $order['job_no'] ?? 'N/A' }}</span>
     </div>
-
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Order Date:</span>
-            <span class="info-value">{{ !empty($order['order_date']) ? \Carbon\Carbon::parse($order['order_date'])->format('d-m-Y') : 'N/A' }}</span>
-        </div>
-        @if(isset($order['due_date']) && !empty($order['due_date']))
-        <div class="info-row">
-            <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ \Carbon\Carbon::parse($order['due_date'])->format('d-m-Y') }}</span>
-        </div>
-        @endif
+    <div class="meta-field">
+        <span class="meta-label">Order Date</span>
+        <span class="meta-value mono">{{ formatDate($order['order_date'] ?? null, 'N/A') }}</span>
     </div>
+    <div class="meta-field">
+        <span class="meta-label">Delivery Date</span>
+        <span class="meta-value mono">{{ formatDate($order['due_date'] ?? null) }}</span>
+    </div>
+    @if(!empty($order['description']))
+    <div class="meta-field meta-field--wide">
+        <span class="meta-label">Description</span>
+        <span class="meta-value">{{ \Illuminate\Support\Str::limit(strip_tags($order['description']), 160) }}</span>
+    </div>
+    @endif
 </div>
 
 {{-- Production Items Table --}}
@@ -43,10 +36,10 @@
             <tr>
                 <th class="text-center" style="width: 6%">Sr.</th>
                 <th class="text-center" style="width: 12%">Article No</th>
-                <th class="text-left" style="width: 26%">Product Name</th>
+                <th class="text-left" style="width: 26%">Product</th>
                 <th class="text-center" style="width: 14%">Size</th>
                 <th class="num" style="width: 10%">QTY</th>
-                <th class="num" style="width: 11%">Total Stock</th>
+                <th class="num" style="width: 11%">Stock</th>
                 <th class="num" style="width: 10%">Finished</th>
                 <th class="num" style="width: 11%">Unfinished</th>
             </tr>

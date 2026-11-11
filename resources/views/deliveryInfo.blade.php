@@ -605,6 +605,20 @@ function generateInvoicePrintDocument(content, title, company) {
           <label for="uom"><strong>UOM (Optional)</strong></label>
           <input type="text" class="form-control" id="uom" placeholder="Pair, Dozen, etc">
         </div>
+        @php
+          // Used when the FI Number field is left empty: the delivery's own FI No, else Settings > Company
+          $defaultFiNo = ($delivery['fi_no'] ?? null) ?: ($company->fi_no ?? '');
+        @endphp
+        <div class="form-group">
+          <label for="ciFiNo"><strong>FI Number (Optional)</strong></label>
+          <input type="text" class="form-control" id="ciFiNo" maxlength="255" placeholder="{{ $defaultFiNo !== '' ? 'Default: ' . $defaultFiNo : 'Enter FI Number' }}">
+          <small class="form-text text-muted">Leave empty to use the default FI Number{{ $defaultFiNo !== '' ? ' (' . $defaultFiNo . ')' : ' from Settings' }}.</small>
+        </div>
+        <div class="form-group">
+          <label for="ciPaymentPercent"><strong>Payment Requested (%)</strong></label>
+          <input type="number" class="form-control" id="ciPaymentPercent" value="100" min="0.01" max="100" step="0.01">
+          <small class="form-text text-muted">100% = full invoice value. Enter less (e.g. 50) to request part of the invoice value, such as the balance after an advance.</small>
+        </div>
         <div class="form-group">
           <label for="commercialBankSelect"><strong>Select Bank Account (Optional)</strong></label>
           <select class="form-control" id="commercialBankSelect">
@@ -633,6 +647,14 @@ function printCommercialInvoice() {
     const uom = document.getElementById('uom').value;
     const bankId = document.getElementById('commercialBankSelect').value;
     const statementOfOrigin = document.getElementById('statementOfOrigin').value;
+    const fiNo = document.getElementById('ciFiNo').value.trim();
+    const percentInput = document.getElementById('ciPaymentPercent').value.trim();
+    const paymentPercent = percentInput === '' ? 100 : parseFloat(percentInput);
+
+    if (isNaN(paymentPercent) || paymentPercent <= 0 || paymentPercent > 100) {
+        alert('Payment Requested must be more than 0% and at most 100%.');
+        return;
+    }
 
     let url = '{{ route("delivery.commercial", $deliveryId) }}';
 
@@ -643,6 +665,8 @@ function printCommercialInvoice() {
     if (uom) params.append('uom', uom);
     if (bankId) params.append('bank_id', bankId);
     if (statementOfOrigin) params.append('statement_of_origin', statementOfOrigin);
+    if (fiNo) params.append('fi_no', fiNo);
+    if (paymentPercent < 100) params.append('payment_percent', paymentPercent);
 
     if (params.toString()) {
         url += '?' + params.toString();

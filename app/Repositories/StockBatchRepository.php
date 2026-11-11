@@ -711,9 +711,23 @@ class StockBatchRepository implements GlobalInterface
             }
             $linePicks = isset($wholeBatch[$key]) ? [$wholeBatch[$key] => (float) $line->quantity] : ($picks[$key] ?? []);
 
-            $allocation = $this->take($pools[$key], (float) $line->quantity, $linePicks, $this->productLabel($productTypeId, $line->stage_id));
+            // A multi-order delivery line delivered for one order takes that order's batches
+            // and free stock only, never another selected order's reserved batch. The batch
+            // objects are shared with the stage pool, so balances stay correct across lines.
+            $pool = $pools[$key];
+            $otherPicks = [];
+            $lineOrderId = (int) $line->order_id;
+            if (count($orderIds) > 1 && $lineOrderId && in_array($lineOrderId, $orderIds, true)) {
+                $pool = $pool->filter(fn ($batch) => $this->allowed($batch, [$lineOrderId]));
+                if (! isset($wholeBatch[$key])) {
+                    $otherPicks = array_diff_key($linePicks, $pool->keyBy('batch_id')->all());
+                    $linePicks = array_diff_key($linePicks, $otherPicks);
+                }
+            }
+
+            $allocation = $this->take($pool, (float) $line->quantity, $linePicks, $this->productLabel($productTypeId, $line->stage_id));
             if (! isset($wholeBatch[$key])) {
-                $picks[$key] = $linePicks; // what is left of the picks for the next line at this stage
+                $picks[$key] = $linePicks + $otherPicks; // what is left of the picks for the next line at this stage
             }
 
             $this->assign($line->stock_item_id, $allocation);
@@ -795,6 +809,7 @@ class StockBatchRepository implements GlobalInterface
      * Record the order each product line of a delivery was delivered for (stock_items.order_id).
      * A multi-order delivery line belongs to the order whose reserved batch it was taken from;
      * a line taken only from free stock stays NULL (the delivery header's order applies).
+     * A line the delivery form already recorded for one of the selected orders keeps it.
      *
      * @param  int|array|null  $orderIds
      */
@@ -804,9 +819,14 @@ class StockBatchRepository implements GlobalInterface
         $lines = StockItem::where('stock_id', $stockId)
             ->where('ptc_virtual', 0)
             ->where(fn ($query) => self::whereProductLine($query))
-            ->pluck('stock_item_id');
+            ->get(['stock_item_id', 'order_id']);
 
-        foreach ($lines as $stockItemId) {
+        foreach ($lines as $line) {
+            $stockItemId = $line->stock_item_id;
+            if (count($orderIds) > 1 && $line->order_id && in_array((int) $line->order_id, $orderIds, true)) {
+                continue;
+            }
+
             $reservedFor = DB::table('stock_item_batches')
                 ->join('stock_batches', 'stock_batches.batch_id', '=', 'stock_item_batches.batch_id')
                 ->where('stock_item_batches.stock_item_id', $stockItemId)

@@ -1,7 +1,7 @@
 {{--
     Standard print header used by every print view (via print.layout / print.layout-voucher).
-    Left: company logo. Middle: document title (@section('doc_title')) and optional number
-    (@section('doc_no')). Right: phone, email, website.
+    Left: company logo. Middle: document title (@section('doc_title')). Right: phone, email, website.
+    Record codes (@section('doc_no')) are not shown here; each print shows its code in the body.
     $company and $printContacts are injected by App\Http\View\Composers\PrintComposer.
 --}}
 <div class="doc-header__inner">
@@ -11,9 +11,6 @@
 
     <div class="doc-header__title">
         <div class="doc-header__title-main">@yield('doc_title')</div>
-        @hasSection('doc_no')
-            <div class="doc-header__title-no">@yield('doc_no')</div>
-        @endif
     </div>
 
     <div class="doc-header__contacts">

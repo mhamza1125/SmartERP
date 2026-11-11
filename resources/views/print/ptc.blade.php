@@ -88,7 +88,7 @@
 {{-- PTC traveller card: every production stage, first to last; stages without activity stay blank --}}
 <div class="document-section">
     <div class="table-title">Production Stages</div>
-    <table class="print-table ptc-card" data-no-align>
+    <table class="print-table ptc-card" data-no-align data-fixed-widths>
         <thead>
             <tr>
                 <th style="width: 4%">Sr.</th>
@@ -181,7 +181,7 @@
                 <th style="width: 18%">Stage (From &rarr; To)</th>
                 <th style="width: 12%">Avg QTY</th>
                 <th style="width: 12%">Date</th>
-                <th style="width: 24%">Issued To / Received From</th>
+                <th style="width: 24%">To / From</th>
             </tr>
         </thead>
         <tbody>

@@ -98,7 +98,7 @@
             <tr>
                 <th class="text-center" style="width: 5%">Sr.</th>
                 <th class="text-center" style="width: 11%">Article No</th>
-                <th class="text-left" style="width: 26%">Product Name</th>
+                <th class="text-left" style="width: 26%">Product</th>
                 <th class="text-center" style="width: 18%">Size</th>
                 <th class="num" style="width: 10%">QTY</th>
                 <th class="num" style="width: 13%">Price</th>
@@ -146,8 +146,7 @@
 
 {{-- Certification Statement --}}
 <div class="certification-statement avoid-break">
-    <p>CERTIFIED TO BE TRUE AND CORRECT</p>
-    <p>{{ strtoupper($company->name ?? '') }}</p>
+    <p>CERTIFIED TO BE TRUE AND CORRECT @if(!empty($company->name))&ldquo;{{ strtoupper($company->name) }}&rdquo;@endif</p>
 </div>
 
 @endsection

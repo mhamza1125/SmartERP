@@ -16,9 +16,9 @@
             <tr>
                 <th>Sr.</th>
                 <th>Code</th>
-                <th>Material Name</th>
+                <th>Material</th>
                 <th>Type</th>
-                <th style="text-align: right;">Available QTY</th>
+                <th style="text-align: right;">Avail. QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>
@@ -49,10 +49,10 @@
             <tr>
                 <th>Sr.</th>
                 <th>Article No</th>
-                <th>Product Name</th>
+                <th>Product</th>
                 <th>Size</th>
                 <th>Stage</th>
-                <th style="text-align: right;">Available QTY</th>
+                <th style="text-align: right;">Avail. QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>
@@ -84,8 +84,8 @@
             <tr>
                 <th>Sr.</th>
                 <th>Code</th>
-                <th>Material Name</th>
-                <th style="text-align: right;">Available QTY</th>
+                <th>Material</th>
+                <th style="text-align: right;">Avail. QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>

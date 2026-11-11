@@ -7,11 +7,6 @@
         <div class="card">
           <div class="card-header">
             <h4>Edit Company</h4>
-            <div class="card-header-action">
-              <a href="{{ url()->previous() }}" class="btn btn-primary">
-                Back
-              </a>
-            </div>
           </div>
           <div class="card-body">
             <form action="{{ route('company.update', $company->id) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">

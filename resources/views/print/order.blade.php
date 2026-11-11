@@ -6,8 +6,8 @@
 
 @section('content')
 
-{{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
-<div class="meta-band">
+{{-- ── Meta band: two rows of three ───────────────────────────────────────── --}}
+<div class="meta-band meta-band--grid">
     <div class="meta-field">
         <span class="meta-label">Order No</span>
         <span class="meta-value mono">{{ $order['order_no'] ?? 'N/A' }}</span>
@@ -18,22 +18,16 @@
     </div>
     <div class="meta-field">
         <span class="meta-label">Order Date</span>
-        <span class="meta-value mono">
-            {{ !empty($order['order_date']) ? \Carbon\Carbon::parse($order['order_date'])->format('d-m-Y') : 'N/A' }}
-        </span>
+        <span class="meta-value mono">{{ formatDate($order['order_date'] ?? null, 'N/A') }}</span>
     </div>
-    @if(!empty($order['due_date']))
     <div class="meta-field">
         <span class="meta-label">Delivery Date</span>
-        <span class="meta-value mono">{{ \Carbon\Carbon::parse($order['due_date'])->format('d-m-Y') }}</span>
+        <span class="meta-value mono">{{ formatDate($order['due_date'] ?? null) }}</span>
     </div>
-    @endif
-    @if(!empty($order['payment_terms']))
     <div class="meta-field">
         <span class="meta-label">Payment Terms</span>
-        <span class="meta-value">{{ $order['payment_terms'] }}</span>
+        <span class="meta-value">{{ !empty($order['payment_terms']) ? $order['payment_terms'] : '-' }}</span>
     </div>
-    @endif
     <div class="meta-field">
         <span class="meta-label">Status</span>
         <span class="meta-value">
@@ -63,7 +57,7 @@
             <tr>
                 <th style="width:6%">Sr.</th>
                 <th style="width:13%" class="text-center">Article No</th>
-                <th>Product Name</th>
+                <th>Product</th>
                 <th style="width:15%" class="text-center">Size</th>
                 <th style="width:10%" class="text-right">QTY</th>
                 <th style="width:12%" class="text-right">Price</th>

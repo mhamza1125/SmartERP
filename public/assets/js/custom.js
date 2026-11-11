@@ -123,11 +123,24 @@ $(document).ready(function () {
                     exportOptions: exportOptions,
                     customize: function (doc) {
                         // Header row styled like the prints; wide tables use the full width
-                        doc.styles.tableHeader = { bold: true, fontSize: 9, color: '#1f3a5f', fillColor: '#e9eef4' };
+                        doc.styles.tableHeader = { bold: true, fontSize: 10, color: '#1f3a5f', fillColor: '#e9eef4' };
                         doc.defaultStyle.fontSize = 8.5;
                         var body = doc.content[1] && doc.content[1].table;
                         if (body) {
-                            body.widths = body.body[0].map(function () { return '*'; });
+                            // Short columns (numbers, dates, codes) take their content width;
+                            // longer text columns share the rest of the page
+                            body.widths = body.body[0].map(function (head, col) {
+                                var longest = 0;
+                                body.body.forEach(function (row) {
+                                    var cell = row[col];
+                                    var text = cell && typeof cell === 'object' ? String(cell.text || '') : String(cell || '');
+                                    longest = Math.max(longest, text.length);
+                                });
+                                return longest > 22 ? '*' : 'auto';
+                            });
+                            if (body.widths.indexOf('*') === -1) {
+                                body.widths = body.widths.map(function () { return '*'; });
+                            }
                             body.headerRows = 1;
                         }
                     }
@@ -1408,7 +1421,7 @@ $(document).ready(function () {
                 // Material does not exist, add row to table
                 var newRow = '<tr>' +
                     '<td>' + tableRowCount + '</td>' +
-                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"><input type="hidden" name="product_type_id[]" value="0"><input type="hidden" name="stage_id[]" value="0"></td>' +
+                    '<td>' + materialName + '<input type="hidden" name="material_name[]" value="' + materialName + '"><input type="hidden" name="material_id[]" value="' + materialId + '"><input type="hidden" name="product_type_id[]" value="0"><input type="hidden" name="stage_id[]" value="0"><input type="hidden" name="line_order_id[]" value=""></td>' +
                     '<td>' + quantity + '<input type="hidden" name="quantity[]" value="' + quantity + '"></td>' +
                     '<td><button class="deleteRowBtn btn btn-danger">X</button></td>' +
                     '</tr>';

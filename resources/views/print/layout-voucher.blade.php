@@ -51,7 +51,7 @@
         .doc-header__inner {
             display: grid;
             /* Fixed shares: a long title wraps inside its own column instead of pushing into the logo */
-            grid-template-columns: minmax(0, 28fr) minmax(0, 44fr) minmax(0, 28fr);
+            grid-template-columns: minmax(0, 46fr) minmax(0, 30fr) minmax(0, 24fr);
             align-items: center;
             gap: 12px;
             padding: 2.5mm 8mm 2mm;
@@ -60,7 +60,7 @@
         .doc-header__brand { min-width: 0; }  /* fills its column, so the logo is capped at the column width */
 
         .doc-header__logo {
-            height: 34px;
+            height: 48px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -70,7 +70,7 @@
         .doc-header__title { text-align: center; min-width: 0; }
 
         .doc-header__title-main {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 700;
             color: var(--accent);
             text-transform: uppercase;
@@ -181,9 +181,9 @@
         .print-table thead th {
             color: #fff;
             font-family: var(--mono);
-            font-size: 8px;
+            font-size: 9.5px;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.03em;
             padding: 4px 6px;
             text-align: left;
             font-weight: 700;
@@ -191,6 +191,16 @@
 
         .print-table thead th.text-right  { text-align: right; }
         .print-table thead th.text-center { text-align: center; }
+
+        /* Column widths follow the content and the page width: static widths set on cells are
+           ignored, so long article numbers, names and sizes use the space other columns leave.
+           Tables marked data-fixed-widths (blank forms filled in by hand) keep their widths. */
+        .print-table:not([data-fixed-widths]) th,
+        .print-table:not([data-fixed-widths]) td { width: auto !important; }
+
+        /* Numbers, codes and dates never break over two lines */
+        .print-table td.num, .print-table td.code, .print-table td.mono,
+        .print-table td.amount { white-space: nowrap; }
 
         .print-table tbody tr { border-bottom: 1px solid var(--hairline); }
         .print-table tbody tr:nth-child(even) { background: var(--row-alt); }
@@ -272,13 +282,15 @@
             padding: 4px 8px;
             border: 1px solid var(--hairline);
             background: var(--row-alt);
-            font-size: 9.5px;
+            font-family: var(--sans);
+            font-size: 11.5px;
+            font-weight: 600;
             line-height: 1.5;
         }
 
         .amount-words-label {
             font-family: var(--mono);
-            font-size: 7.5px;
+            font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             color: var(--muted);

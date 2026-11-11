@@ -334,11 +334,11 @@ function printProformaInvoice() {
             <table class="table table-striped table-hover">
               <thead class="table-light">
                 <tr>
-                  <th style="width: 15%">PTC No</th>
-                  <th style="width: 20%">Quantity</th>
-                  <th style="width: 25%">Status</th>
-                  <th style="width: 20%">Date</th>
-                  <th style="width: 20%">Action</th>
+                  <th>PTC No</th>
+                  <th>Quantity</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
