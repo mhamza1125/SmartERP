@@ -1,7 +1,7 @@
 @extends('print.layout-voucher')
 
 {{--
-    Half-page (A5 landscape) voucher for payments, receipts, expenses, balance adjustments and bank/cash transfers.
+    Half-page (top half of a portrait A4 sheet) voucher for payments, receipts, expenses, balance adjustments and bank/cash transfers.
     $info = TransactionRepository::describe(): type, party, accounts, purchase / order, cheque no, note.
 --}}
 @php
@@ -50,27 +50,25 @@
 
 @push('styles')
 <style>
-    .voucher-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 2px; margin-bottom: 6px; }
-    .voucher-grid .info-row { margin-bottom: 0; }
     .voucher-note { font-size: 9.5px; margin: 2px 0 6px; padding: 3px 6px; border: 1px solid var(--hairline); background: var(--row-alt); }
     .voucher-note b { color: var(--muted); font-weight: 600; margin-right: 4px; }
 </style>
 @endpush
 
 @section('content')
-<div class="voucher-grid">
-    <div class="info-row">
-        <span class="info-label">Voucher No:</span>
-        <span class="info-value voucher-number">{{ $voucherNumber ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-field">
+        <span class="meta-label">Voucher No</span>
+        <span class="meta-value voucher-number">{{ $voucherNumber ?? 'N/A' }}</span>
     </div>
-    <div class="info-row">
-        <span class="info-label">Date:</span>
-        <span class="info-value">{{ formatDate($transaction['transaction_date'] ?? null, 'N/A') }}</span>
+    <div class="meta-field">
+        <span class="meta-label">Date</span>
+        <span class="meta-value">{{ formatDate($transaction['transaction_date'] ?? null, 'N/A') }}</span>
     </div>
     @foreach($details as $label => $value)
-        <div class="info-row">
-            <span class="info-label">{{ $label }}:</span>
-            <span class="info-value">{{ $value }}</span>
+        <div class="meta-field">
+            <span class="meta-label">{{ $label }}</span>
+            <span class="meta-value">{{ $value }}</span>
         </div>
     @endforeach
 </div>

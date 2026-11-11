@@ -6,23 +6,23 @@
 
 @section('content')
 {{-- Item Group Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Item Group No:</span>
-            <span class="info-value">{{ $igroup['igroup_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Item Group No</span>
+            <span class="meta-value">{{ $igroup['igroup_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Date:</span>
-            <span class="info-value">{{ formatDate($igroup['igroup_date'] ?? null, 'N/A') }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{ formatDate($igroup['igroup_date'] ?? null, 'N/A') }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $igroup['job_no'] ?? 'Default' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Job No</span>
+            <span class="meta-value">{{ $igroup['job_no'] ?? 'Default' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">{{ $igroup['status'] ?? 'Active' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">{{ $igroup['status'] ?? 'Active' }}</span>
         </div>
     </div>
 </div>

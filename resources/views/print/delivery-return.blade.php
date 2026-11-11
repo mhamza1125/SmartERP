@@ -6,9 +6,6 @@
 
 @push('styles')
 <style>
-    .document-info  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .info-section   { border: 1px solid #ddd; padding: 12px; }
-    .info-value     { flex: 1; text-align: right; }
     .document-section { margin-bottom: 20px; }
     .document-section h3 { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 4px; }
     .summary-info   { border: 1px solid #ddd; padding: 12px; }
@@ -22,46 +19,46 @@
 
 @section('content')
 {{-- Return Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Return No:</span>
-            <span class="info-value">{{ $return['return_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Return No</span>
+            <span class="meta-value">{{ $return['return_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Return Date:</span>
-            <span class="info-value">{{ !empty($return['return_date']) ? \Carbon\Carbon::parse($return['return_date'])->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Return Date</span>
+            <span class="meta-value">{{ !empty($return['return_date']) ? \Carbon\Carbon::parse($return['return_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Return Reason:</span>
-            <span class="info-value">{{ $return['return_reason'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Return Reason</span>
+            <span class="meta-value">{{ $return['return_reason'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Description:</span>
-            <span class="info-value">{{ $return['return_description'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Description</span>
+            <span class="meta-value">{{ $return['return_description'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Order No:</span>
-            <span class="info-value">{{ $return['order_no'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Order No</span>
+            <span class="meta-value">{{ $return['order_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $return['job_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Job No</span>
+            <span class="meta-value">{{ $return['job_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Customer:</span>
-            <span class="info-value">{{ $return['fname'] ?? '' }} {{ $return['lname'] ?? '' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Customer</span>
+            <span class="meta-value">{{ $return['fname'] ?? '' }} {{ $return['lname'] ?? '' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Stock No:</span>
-            <span class="info-value">{{ $return['stock_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Stock No</span>
+            <span class="meta-value">{{ $return['stock_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Original Delivery Date:</span>
-            <span class="info-value">{{ !empty($return['stock_date']) ? \Carbon\Carbon::parse($return['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Original Delivery Date</span>
+            <span class="meta-value">{{ !empty($return['stock_date']) ? \Carbon\Carbon::parse($return['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
     </div>
 </div>

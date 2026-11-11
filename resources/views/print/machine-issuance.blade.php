@@ -6,38 +6,38 @@
 
 @section('content')
 {{-- Issuance Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Issuance No:</span>
-            <span class="info-value">{{ $issue['stock_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Issuance No</span>
+            <span class="meta-value">{{ $issue['stock_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Issuance Date:</span>
-            <span class="info-value">{{ !empty($issue['stock_date']) ? \Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Issuance Date</span>
+            <span class="meta-value">{{ !empty($issue['stock_date']) ? \Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Employee:</span>
-            <span class="info-value">{{ $issue['employee_no'] ?? '' }} - {{ $issue['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Employee</span>
+            <span class="meta-value">{{ $issue['employee_no'] ?? '' }} - {{ $issue['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Department:</span>
-            <span class="info-value">{{ $issue['hname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Department</span>
+            <span class="meta-value">{{ $issue['hname'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Machine No:</span>
-            <span class="info-value">{{ $issue['machine_no'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Machine No</span>
+            <span class="meta-value">{{ $issue['machine_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Machine Type:</span>
-            <span class="info-value">{{ $issue['mname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Machine Type</span>
+            <span class="meta-value">{{ $issue['mname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Machine Location:</span>
-            <span class="info-value">{{ $issue['location'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Machine Location</span>
+            <span class="meta-value">{{ $issue['location'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

@@ -8,7 +8,8 @@
         /* =================================================================
            SmartERP — Voucher Print Layout
            Inherits the same design tokens as layout.blade.php.
-           Half-page voucher: A5 landscape (half an A4 sheet).
+           Half-page voucher: printed on a portrait A4 sheet, filling its top half
+           (210 x 148.5 mm) with a dashed cut line, so two vouchers fit on one sheet.
            ================================================================= */
 
         /* ── 0. Design tokens (must match layout.blade.php) ────────────── */
@@ -27,7 +28,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         /* ── 2. Page ────────────────────────────────────────────────────── */
-        @page { size: A5 landscape; margin: 0; }
+        @page { size: A4 portrait; margin: 0; }
 
         /* ── 3. Body ────────────────────────────────────────────────────── */
         body {
@@ -434,6 +435,48 @@
 
         .print-button:hover { opacity: .88; }
 
+        /* ── Boxed header (same design as the A4 prints, sized for the half page) ── */
+        .meta-band {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid var(--hairline);
+            border-radius: 2px;
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+        .meta-field { flex: 1; min-width: 80px; padding: 3px 8px; border-right: 1px solid var(--hairline); }
+        .meta-field:last-child { border-right: none; }
+        .meta-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 7.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 1px;
+        }
+        .meta-value { display: block; font-size: 10px; font-weight: 600; color: var(--ink); }
+        .meta-value.mono { font-family: var(--mono); }
+
+        /* Boxed header grid (all prints): 3 boxes per row (--cols-4 for 4). Hairlines are
+           drawn as shadows so a short last row leaves no grey gaps; the outer ones are clipped.
+           .meta-group only groups fields in the markup (old two-column sections). */
+        .meta-band--grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .meta-band--grid.meta-band--cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .meta-band--grid .meta-field {
+            min-width: 0;
+            border-right: none;
+            box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline);
+            overflow-wrap: anywhere;
+        }
+        .meta-band--grid .meta-field--span2 { grid-column: span 2; }
+        .meta-band--grid .meta-field--wide  { grid-column: 1 / -1; }
+        .meta-group { display: contents; }
+        .party-block--spaced { margin-bottom: 6px; }
+
         /* ── 16. @media print ────────────────────────────────────────────── */
         @media print {
             body {
@@ -445,6 +488,18 @@
             }
 
             .no-print { display: none !important; }
+
+            /* Top half of the A4 sheet: header and voucher flow together (no header fixed to
+               the page top), ending at the middle of the sheet with a cut line */
+            .half-sheet {
+                width: 210mm;
+                min-height: 148.5mm;
+                border-bottom: 1px dashed #9aa0a8;
+                page-break-inside: avoid;
+            }
+            .doc-header { position: static; }
+            .page-frame__header-space,
+            .page-frame__footer-space { display: none; }
 
             .print-table tbody tr { page-break-inside: avoid; }
             .avoid-break  { page-break-inside: avoid; }
@@ -482,6 +537,7 @@
 <body>
     <button onclick="window.print()" class="print-button no-print">Print</button>
 
+    <div class="half-sheet">
     <header class="doc-header">
         @include('print.header')
     </header>
@@ -497,6 +553,7 @@
         </td></tr></tbody>
         <tfoot><tr><td><div class="page-frame__footer-space"></div></td></tr></tfoot>
     </table>
+    </div>
 
 
     <script>
@@ -553,6 +610,19 @@
             });
         }
         document.addEventListener('DOMContentLoaded', alignPrintTables);
+
+        // Boxed header grid: a long value (address, description, several numbers) gets a
+        // double-width box, a very long one the whole row, so it is not squeezed into one box
+        function widenLongMetaFields() {
+            document.querySelectorAll('.meta-band--grid .meta-field').forEach(function (field) {
+                if (field.classList.contains('meta-field--wide') || field.classList.contains('meta-field--span2')) return;
+                var value = field.querySelector('.meta-value');
+                var length = value ? value.textContent.replace(/\s+/g, ' ').trim().length : 0;
+                if (length > 70) field.classList.add('meta-field--wide');
+                else if (length > 28) field.classList.add('meta-field--span2');
+            });
+        }
+        document.addEventListener('DOMContentLoaded', widenLongMetaFields);
     </script>
 
     @stack('scripts')

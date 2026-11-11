@@ -6,42 +6,42 @@
 
 @section('content')
 {{-- Customer Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Customer No:</span>
-            <span class="info-value">{{ $customer['customer_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Customer No</span>
+            <span class="meta-value">{{ $customer['customer_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Customer Name:</span>
-            <span class="info-value">{{ ($customer['fname'] ?? '') . ' ' . ($customer['lname'] ?? '') }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Customer Name</span>
+            <span class="meta-value">{{ ($customer['fname'] ?? '') . ' ' . ($customer['lname'] ?? '') }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">{{ $customer['email'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Email</span>
+            <span class="meta-value">{{ $customer['email'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $customer['phone'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $customer['phone'] ?? 'N/A' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Report Period:</span>
-            <span class="info-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Report Period</span>
+            <span class="meta-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Opening Balance:</span>
-            <span class="info-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Opening Balance</span>
+            <span class="meta-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Country:</span>
-            <span class="info-value">{{ $customer['coname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Country</span>
+            <span class="meta-value">{{ $customer['coname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Currency:</span>
-            <span class="info-value">{{ $customer['cuname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{ $customer['cuname'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

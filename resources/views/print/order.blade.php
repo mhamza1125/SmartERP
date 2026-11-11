@@ -42,7 +42,7 @@
 </div>
 
 {{-- ── Customer ─────────────────────────────────────────────────────────────── --}}
-<div class="party-block">
+<div class="party-block party-block--spaced">
     <div class="party-label">CUSTOMER</div>
     <div class="party-name">
         @if(!empty($order['customer_no'])){{ $order['customer_no'] }} — @endif{{ $order['fname'] ?? '' }} {{ $order['lname'] ?? '' }}

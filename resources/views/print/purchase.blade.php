@@ -7,7 +7,7 @@
 @section('content')
 
 {{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
-<div class="meta-band">
+<div class="meta-band meta-band--grid">
     <div class="meta-field">
         <span class="meta-label">Purchase No</span>
         <span class="meta-value mono">{{ $purchase['purchase_no'] ?? 'N/A' }}</span>
@@ -106,7 +106,7 @@
             <tr>
                 <th class="text-center" style="width:4%">Sr.</th>
                 <th class="code" style="width:12%; white-space:nowrap">{{ $isMaterial ? 'Material No' : 'Article No' }}</th>
-                <th class="text-left">{{ $isMaterial ? 'Material Name' : 'Product Name' }}</th>
+                <th class="text-left">{{ $isMaterial ? 'Material' : 'Product' }}</th>
                 <th class="text-center" style="width:10%">{{ $isMaterial ? 'Unit' : 'Size' }}</th>
                 <th class="num" style="width:8%">Ordered</th>
                 <th class="num" style="width:8%">Price</th>

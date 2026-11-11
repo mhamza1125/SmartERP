@@ -14,8 +14,6 @@
 
 @push('styles')
 <style>
-    .slip-employee { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 1px; margin-bottom: 6px; }
-    .slip-employee .info-row { margin-bottom: 0; }
     .slip-grid { display: grid; grid-template-columns: 0.8fr 1fr 1fr; gap: 8px; margin-bottom: 6px; }
     .slip-box { border: 1px solid var(--hairline); }
     .slip-box__title { background: var(--accent); color: #fff; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 3px 6px; }
@@ -29,13 +27,13 @@
 @endpush
 
 @section('content')
-<div class="slip-employee">
-    <div class="info-row"><span class="info-label">Employee:</span><span class="info-value"><strong>{{ $item->name }}</strong> ({{ $item->employee_no }})</span></div>
-    <div class="info-row"><span class="info-label">Salary Month:</span><span class="info-value">{{ $monthLabel }}</span></div>
-    <div class="info-row"><span class="info-label">Designation:</span><span class="info-value">{{ $item->designation ?? '-' }}</span></div>
-    <div class="info-row"><span class="info-label">Payment Date:</span><span class="info-value">{{ formatDate($item->payment_date) }}</span></div>
-    <div class="info-row"><span class="info-label">Department:</span><span class="info-value">{{ $item->department ?? '-' }}</span></div>
-    <div class="info-row"><span class="info-label">Paid From:</span><span class="info-value">{{ $accountName }}</span></div>
+<div class="meta-band meta-band--grid">
+    <div class="meta-field"><span class="meta-label">Employee</span><span class="meta-value"><strong>{{ $item->name }}</strong> ({{ $item->employee_no }})</span></div>
+    <div class="meta-field"><span class="meta-label">Salary Month</span><span class="meta-value">{{ $monthLabel }}</span></div>
+    <div class="meta-field"><span class="meta-label">Designation</span><span class="meta-value">{{ $item->designation ?? '-' }}</span></div>
+    <div class="meta-field"><span class="meta-label">Payment Date</span><span class="meta-value">{{ formatDate($item->payment_date) }}</span></div>
+    <div class="meta-field"><span class="meta-label">Department</span><span class="meta-value">{{ $item->department ?? '-' }}</span></div>
+    <div class="meta-field"><span class="meta-label">Paid From</span><span class="meta-value">{{ $accountName }}</span></div>
 </div>
 
 <div class="slip-grid">

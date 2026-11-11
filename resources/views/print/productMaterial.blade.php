@@ -6,23 +6,23 @@
 
 @section('content')
 {{-- Product Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Article No:</span>
-            <span class="info-value">{{ $productType['article_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Article No</span>
+            <span class="meta-value">{{ $productType['article_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Product Name:</span>
-            <span class="info-value">{{ $productType['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Product Name</span>
+            <span class="meta-value">{{ $productType['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Size:</span>
-            <span class="info-value">{{ $productType['hname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Size</span>
+            <span class="meta-value">{{ $productType['hname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Unit:</span>
-            <span class="info-value">{{ $productType['uname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Unit</span>
+            <span class="meta-value">{{ $productType['uname'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>
@@ -32,19 +32,19 @@
 @if($packingItem)
 <div class="info-section avoid-break">
     <h3>Product Packing</h3>
-    <div class="document-info">
-        <div class="info-section">
-            <div class="info-row">
-                <span class="info-label">Box No:</span>
-                <span class="info-value">{{ $packingItem->material_no ?? 'N/A' }}</span>
+    <div class="meta-band meta-band--grid">
+        <div class="meta-group">
+            <div class="meta-field">
+                <span class="meta-label">Box No</span>
+                <span class="meta-value">{{ $packingItem->material_no ?? 'N/A' }}</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Box Name:</span>
-                <span class="info-value">{{ $packingItem->name ?? 'N/A' }}</span>
+            <div class="meta-field">
+                <span class="meta-label">Box Name</span>
+                <span class="meta-value">{{ $packingItem->name ?? 'N/A' }}</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Quantity in Box:</span>
-                <span class="info-value">{{ $packingItem->quantity ? number_format(1/$packingItem->quantity, 2) : 'N/A' }} {{ $productType['uname'] ?? '' }}</span>
+            <div class="meta-field">
+                <span class="meta-label">Quantity in Box</span>
+                <span class="meta-value">{{ $packingItem->quantity ? number_format(1/$packingItem->quantity, 2) : 'N/A' }} {{ $productType['uname'] ?? '' }}</span>
             </div>
         </div>
     </div>

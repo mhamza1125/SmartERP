@@ -7,47 +7,47 @@
 @section('content')
 
 {{-- Return Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Return No:</span>
-            <span class="info-value">{{ $return['return_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Return No</span>
+            <span class="meta-value">{{ $return['return_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Receive No:</span>
-            <span class="info-value">{{ $return['receive_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Receive No</span>
+            <span class="meta-value">{{ $return['receive_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">P.O.#:</span>
-            <span class="info-value">{{ $return['purchase_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">P.O.#</span>
+            <span class="meta-value">{{ $return['purchase_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $return['job_no'] ?? 'Default Purchase' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Job No</span>
+            <span class="meta-value">{{ $return['job_no'] ?? 'Default Purchase' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Vendor:</span>
-            <span class="info-value">{{ $return['fname'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Vendor</span>
+            <span class="meta-value">{{ $return['fname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $return['phone1'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $return['phone1'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ $return['address'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Address</span>
+            <span class="meta-value">{{ $return['address'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Return Date:</span>
-            <span class="info-value">{{ !empty($return['return_date']) ? \Carbon\Carbon::parse($return['return_date'])->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Return Date</span>
+            <span class="meta-value">{{ !empty($return['return_date']) ? \Carbon\Carbon::parse($return['return_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
         @if(isset($return['receive_date']) && !empty($return['receive_date']))
-            <div class="info-row">
-                <span class="info-label">Received Date:</span>
-                <span class="info-value">{{ !empty($return['receive_date']) ? \Carbon\Carbon::parse($return['receive_date'])->format('d-m-Y') : 'N/A' }}</span>
+            <div class="meta-field">
+                <span class="meta-label">Received Date</span>
+                <span class="meta-value">{{ !empty($return['receive_date']) ? \Carbon\Carbon::parse($return['receive_date'])->format('d-m-Y') : 'N/A' }}</span>
             </div>
         @endif
     </div>
@@ -73,7 +73,7 @@
             <tr>
                 <th class="text-center" style="width: 6%">Sr.</th>
                 <th class="text-center" style="width: 14%">{{ $isMaterial ? 'Material No' : 'Article No' }}</th>
-                <th class="text-left">{{ $isMaterial ? 'Material Name' : 'Product Name' }}</th>
+                <th class="text-left">{{ $isMaterial ? 'Material' : 'Product' }}</th>
                 <th class="text-center" style="width: 12%">{{ $isMaterial ? 'Unit' : 'Size' }}</th>
                 <th class="num" style="width: 12%">QTY</th>
                 <th class="text-left" style="width: 22%">Remarks</th>

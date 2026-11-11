@@ -16,7 +16,7 @@
 @section('content')
 
 {{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
-<div class="meta-band">
+<div class="meta-band meta-band--grid">
     <div class="meta-field">
         <span class="meta-label">Order No</span>
         <span class="meta-value mono">{{ $order->order_no }}</span>

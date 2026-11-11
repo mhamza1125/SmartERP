@@ -6,9 +6,6 @@
 
 @push('styles')
 <style>
-    .document-info  { display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ddd; padding: 12px; background-color: #f9f9f9; }
-    .info-section   { flex: 1; margin-right: 16px; }
-    .info-section:last-child { margin-right: 0; }
     .document-section { margin-top: 20px; }
     .document-section h3 { font-size: 13px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 4px; }
     .print-table td { height: 28px; }
@@ -17,19 +14,19 @@
 
 @section('content')
 {{-- Product Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Product Name:</span>
-            <span class="info-value">{{ $product->name ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Product Name</span>
+            <span class="meta-value">{{ $product->name ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Article No:</span>
-            <span class="info-value">{{ $product->article_no ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Article No</span>
+            <span class="meta-value">{{ $product->article_no ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Size:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Size</span>
+            <span class="meta-value">
                 @if($size && count($size) > 0)
                     {{ collect($size)->pluck('name')->join(', ') }}
                 @else
@@ -39,14 +36,14 @@
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Category:</span>
-            <span class="info-value">{{ $product->cname ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Category</span>
+            <span class="meta-value">{{ $product->cname ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Unit:</span>
-            <span class="info-value">{{ $product->hname ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Unit</span>
+            <span class="meta-value">{{ $product->hname ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

@@ -6,8 +6,6 @@
 
 @push('styles')
 <style>
-    .document-info { display: flex; width: 100%; }
-    .info-section   { width: 50%; box-sizing: border-box; padding: 0 10px; }
 </style>
 @endpush
 
@@ -19,75 +17,69 @@
     $totalLabel = !empty($sellingType) ? 'Total ' . $sellingType . ' Amount:' : 'Grand Total:';
 @endphp
 
-{{-- Customer / invoice details --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Customer Name:</span>
-            <span class="info-value">{{ $order['fname'] ?? 'N/A' }} {{ $order['lname'] ?? '' }}</span>
-        </div>
-        @if(!empty($order['address']))
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ $order['address'] }}</span>
-        </div>
-        @endif
-        @if(!empty($company->ntn))
-        <div class="info-row">
-            <span class="info-label">NTN:</span>
-            <span class="info-value">{{ $company->ntn }}</span>
-        </div>
-        @endif
-        @if(!empty($company->rex_no))
-        <div class="info-row">
-            <span class="info-label">REX No:</span>
-            <span class="info-value">{{ $company->rex_no }}</span>
-        </div>
-        @endif
-        @if(!empty($uom))
-        <div class="info-row">
-            <span class="info-label">UOM:</span>
-            <span class="info-value">{{ $uom }}</span>
-        </div>
-        @endif
-        @if(!empty($order['payment_terms']))
-        <div class="info-row">
-            <span class="info-label">Payment Terms:</span>
-            <span class="info-value">{{ $order['payment_terms'] }}</span>
-        </div>
-        @endif
+{{-- Proforma invoice details --}}
+<div class="meta-band meta-band--grid">
+    <div class="meta-field">
+        <span class="meta-label">P-Invoice No</span>
+        <span class="meta-value mono">PI-{{ $order['order_id'] ?? '' }}</span>
     </div>
+    <div class="meta-field">
+        <span class="meta-label">P-Invoice Date</span>
+        <span class="meta-value mono">{{ formatDate($order['order_date'] ?? null, 'N/A') }}</span>
+    </div>
+    <div class="meta-field">
+        <span class="meta-label">Order No</span>
+        <span class="meta-value mono">{{ $order['order_no'] ?? 'N/A' }}</span>
+    </div>
+    @if(!empty($order['due_date']))
+    <div class="meta-field">
+        <span class="meta-label">Delivery Date</span>
+        <span class="meta-value mono">{{ formatDate($order['due_date']) }}</span>
+    </div>
+    @endif
+    <div class="meta-field">
+        <span class="meta-label">Total QTY</span>
+        <span class="meta-value mono">{{ number_format($totalQuantity) }}</span>
+    </div>
+    @if(!empty($uom))
+    <div class="meta-field">
+        <span class="meta-label">UOM</span>
+        <span class="meta-value">{{ $uom }}</span>
+    </div>
+    @endif
+    @if(!empty($hsCode))
+    <div class="meta-field">
+        <span class="meta-label">HS Code</span>
+        <span class="meta-value mono">{{ $hsCode }}</span>
+    </div>
+    @endif
+    @if(!empty($company->ntn))
+    <div class="meta-field">
+        <span class="meta-label">NTN</span>
+        <span class="meta-value mono">{{ $company->ntn }}</span>
+    </div>
+    @endif
+    @if(!empty($company->rex_no))
+    <div class="meta-field">
+        <span class="meta-label">REX No</span>
+        <span class="meta-value mono">{{ $company->rex_no }}</span>
+    </div>
+    @endif
+    @if(!empty($order['payment_terms']))
+    <div class="meta-field">
+        <span class="meta-label">Payment Terms</span>
+        <span class="meta-value">{{ $order['payment_terms'] }}</span>
+    </div>
+    @endif
+</div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Order No:</span>
-            <span class="info-value">{{ $order['order_no'] ?? 'N/A' }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">P-Invoice No:</span>
-            <span class="info-value">PI-{{ $order['order_id'] ?? '' }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">P-Invoice Date:</span>
-            <span class="info-value">{{ formatDate($order['order_date'] ?? null, 'N/A') }}</span>
-        </div>
-        @if(!empty($order['due_date']))
-        <div class="info-row">
-            <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ formatDate($order['due_date']) }}</span>
-        </div>
-        @endif
-        @if(!empty($hsCode))
-        <div class="info-row">
-            <span class="info-label">HS Code:</span>
-            <span class="info-value">{{ $hsCode }}</span>
-        </div>
-        @endif
-        <div class="info-row">
-            <span class="info-label">Total QTY:</span>
-            <span class="info-value">{{ number_format($totalQuantity) }}</span>
-        </div>
-    </div>
+{{-- Customer --}}
+<div class="party-block party-block--spaced">
+    <div class="party-label">CUSTOMER</div>
+    <div class="party-name">{{ $order['fname'] ?? 'N/A' }} {{ $order['lname'] ?? '' }}</div>
+    @if(!empty($order['address']))
+        <div class="party-detail">{{ $order['address'] }}</div>
+    @endif
 </div>
 
 {{-- Order Items Table --}}

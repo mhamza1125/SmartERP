@@ -6,30 +6,30 @@
 
 @section('content')
 {{-- Product Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Article No:</span>
-            <span class="info-value">{{ $product['article_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Article No</span>
+            <span class="meta-value">{{ $product['article_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Product Name:</span>
-            <span class="info-value">{{ $product['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Product Name</span>
+            <span class="meta-value">{{ $product['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Unit:</span>
-            <span class="info-value">{{ $product['hname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Unit</span>
+            <span class="meta-value">{{ $product['hname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Category:</span>
-            <span class="info-value">{{ $product['cname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Category</span>
+            <span class="meta-value">{{ $product['cname'] ?? 'N/A' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Current Status:</span>
-            <span class="info-value status-badge">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Current Status</span>
+            <span class="meta-value status-badge">
                 @if($product['product_status']) 
                     <span class="status-badge status-badge-success">Active</span> 
                 @else 
@@ -37,9 +37,9 @@
                 @endif
             </span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Sizes Available:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Sizes Available</span>
+            <span class="meta-value">
                 @if($size->count())
                     @foreach($size as $item) 
                         {{ $item->name }}@if(!$loop->last), @endif

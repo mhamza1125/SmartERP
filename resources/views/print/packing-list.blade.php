@@ -11,14 +11,10 @@
 @endpush
 
 @section('content')
-<div class="document-info" style="margin-bottom:12px;">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Invoice No:</span>
-            <span class="info-value">{{ $packingList->delivery_no ?? 'N/A' }}</span>
-        </div>
-    </div>
-    <div class="info-section">
+<div class="meta-band meta-band--grid">
+    <div class="meta-field">
+        <span class="meta-label">Invoice No</span>
+        <span class="meta-value mono">{{ $packingList->delivery_no ?? 'N/A' }}</span>
     </div>
 </div>
 

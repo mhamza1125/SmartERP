@@ -6,9 +6,6 @@
 
 @push('styles')
 <style>
-    .document-info  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .info-section   { border: 1px solid #ddd; padding: 12px !important;}
-    .info-value     { flex: 1; text-align: right; }
     .document-section { margin-bottom: 20px; }
     .document-section h3 { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 4px; }
     .summary-info   { border: 1px solid #ddd; padding: 12px; }
@@ -39,23 +36,23 @@
 
 @section('content')
 {{-- PTC Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">PTC No:</span>
-            <span class="info-value">PTC-{{ $ptc->stock_no ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">PTC No</span>
+            <span class="meta-value">PTC-{{ $ptc->stock_no ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Date:</span>
-            <span class="info-value">{{ $ptc->stock_date ? \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{ $ptc->stock_date ? \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Order:</span>
-            <span class="info-value">{{ $ptc->job_no ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Order</span>
+            <span class="meta-value">{{ $ptc->job_no ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
                 @if($ptc->stock_status == 6)
                     In Progress
                 @elseif($ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED)
@@ -69,18 +66,18 @@
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Product:</span>
-            <span class="info-value">{{ $product->name ?? 'N/A' }} - {{ $product->size_name ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Product</span>
+            <span class="meta-value">{{ $product->name ?? 'N/A' }} - {{ $product->size_name ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Quantity:</span>
-            <span class="info-value">{{ preg_match('/\[QTY:(\d+(?:\.\d+)?)\]/', $ptc->description ?? '', $qtyMatch) ? $qtyMatch[1] : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Quantity</span>
+            <span class="meta-value">{{ preg_match('/\[QTY:(\d+(?:\.\d+)?)\]/', $ptc->description ?? '', $qtyMatch) ? $qtyMatch[1] : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">{{ $ptc->stock_status == 6 ? 'Current Stage:' : ($ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED ? 'Completed At Stage:' : 'Closed At Stage:') }}</span>
-            <span class="info-value">{{ $ptc->current_stage_name ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">{{ $ptc->stock_status == 6 ? 'Current Stage' : ($ptc->stock_status == \App\Models\Stock::STATUS_PTC_COMPLETED ? 'Completed At Stage' : 'Closed At Stage') }}</span>
+            <span class="meta-value">{{ $ptc->current_stage_name ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

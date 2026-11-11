@@ -166,8 +166,9 @@
 
         .meta-value.mono { font-family: var(--mono); }
 
-        /* Compact meta band laid out in rows (3 fields per row; --cols-4 for 4). Hairlines are
-           drawn as shadows so a short last row leaves no grey gaps; the outer ones are clipped. */
+        /* Boxed header grid (all prints): 3 boxes per row (--cols-4 for 4). Hairlines are
+           drawn as shadows so a short last row leaves no grey gaps; the outer ones are clipped.
+           .meta-group only groups fields in the markup (old two-column sections). */
         .meta-band--grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -179,7 +180,13 @@
             box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline);
             overflow-wrap: anywhere;
         }
-        .meta-band--grid .meta-field--wide { grid-column: 1 / -1; }
+        .meta-band--grid .meta-field--span2 { grid-column: span 2; }
+        .meta-band--grid .meta-field--wide  { grid-column: 1 / -1; }
+        .meta-group { display: contents; }
+        /* Every box reads the same way: values start at the left, even ones the old layout right-aligned */
+        .meta-band--grid .meta-value,
+        .meta-band--grid .meta-value.text-right { text-align: left !important; }
+        .party-block--spaced { margin-bottom: 12px; }
 
         /* ── 8. Status pills ─────────────────────────────────────────────── */
         .status-pill {
@@ -274,6 +281,8 @@
            Tables marked data-fixed-widths (blank forms filled in by hand) keep their widths. */
         .print-table:not([data-fixed-widths]) th,
         .print-table:not([data-fixed-widths]) td { width: auto !important; }
+        /* Fixed-width blank forms have many narrow columns: their headings may wrap */
+        .print-table[data-fixed-widths] thead th { white-space: normal; }
 
         /* Numbers, codes and dates never break over two lines */
         .print-table td.num, .print-table td.code, .print-table td.mono,
@@ -784,6 +793,19 @@
             });
         }
         document.addEventListener('DOMContentLoaded', alignPrintTables);
+
+        // Boxed header grid: a long value (address, description, several numbers) gets a
+        // double-width box, a very long one the whole row, so it is not squeezed into one box
+        function widenLongMetaFields() {
+            document.querySelectorAll('.meta-band--grid .meta-field').forEach(function (field) {
+                if (field.classList.contains('meta-field--wide') || field.classList.contains('meta-field--span2')) return;
+                var value = field.querySelector('.meta-value');
+                var length = value ? value.textContent.replace(/\s+/g, ' ').trim().length : 0;
+                if (length > 70) field.classList.add('meta-field--wide');
+                else if (length > 28) field.classList.add('meta-field--span2');
+            });
+        }
+        document.addEventListener('DOMContentLoaded', widenLongMetaFields);
     </script>
 
     @stack('scripts')

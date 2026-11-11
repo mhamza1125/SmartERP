@@ -6,42 +6,42 @@
 
 @section('content')
 {{-- Employee Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Employee No:</span>
-            <span class="info-value">{{ $employee['employee_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Employee No</span>
+            <span class="meta-value">{{ $employee['employee_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Employee Name:</span>
-            <span class="info-value">{{ $employee['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Employee Name</span>
+            <span class="meta-value">{{ $employee['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Department:</span>
-            <span class="info-value">{{ $employee['dname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Department</span>
+            <span class="meta-value">{{ $employee['dname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Employee Type:</span>
-            <span class="info-value">{{ $employee['etname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Employee Type</span>
+            <span class="meta-value">{{ $employee['etname'] ?? 'N/A' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Report Period:</span>
-            <span class="info-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Report Period</span>
+            <span class="meta-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Opening Balance:</span>
-            <span class="info-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Opening Balance</span>
+            <span class="meta-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $employee['phone'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $employee['phone'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">CNIC:</span>
-            <span class="info-value">{{ $employee['cnic'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">CNIC</span>
+            <span class="meta-value">{{ $employee['cnic'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

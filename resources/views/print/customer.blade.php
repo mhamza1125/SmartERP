@@ -6,42 +6,42 @@
 
 @section('content')
 {{-- Customer Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Customer No:</span>
-            <span class="info-value">{{ $customer['customer_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Customer No</span>
+            <span class="meta-value">{{ $customer['customer_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Customer Name:</span>
-            <span class="info-value">{{ $customer['fname'] ?? 'N/A' }} {{ $customer['lname'] ?? '' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Customer Name</span>
+            <span class="meta-value">{{ $customer['fname'] ?? 'N/A' }} {{ $customer['lname'] ?? '' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Company:</span>
-            <span class="info-value">{{ $customer['company'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Company</span>
+            <span class="meta-value">{{ $customer['company'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Country:</span>
-            <span class="info-value">{{ $customer['coname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Country</span>
+            <span class="meta-value">{{ $customer['coname'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">{{ $customer['email'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Email</span>
+            <span class="meta-value">{{ $customer['email'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $customer['phone'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $customer['phone'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Fax:</span>
-            <span class="info-value">{{ $customer['fax'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Fax</span>
+            <span class="meta-value">{{ $customer['fax'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
                 @if(isset($customer['status']) && $customer['status'])
                     <span class="status-badge status-badge-success">Active</span>
                 @else

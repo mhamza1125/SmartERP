@@ -5,19 +5,19 @@
 
 @section('content')
 {{-- Report Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Report Type:</span>
-            <span class="info-value">Purchase Ledger</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Report Type</span>
+            <span class="meta-value">Purchase Ledger</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Report Period:</span>
-            <span class="info-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Report Period</span>
+            <span class="meta-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Opening Balance:</span>
-            <span class="info-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Opening Balance</span>
+            <span class="meta-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
         </div>
     </div>
 </div>

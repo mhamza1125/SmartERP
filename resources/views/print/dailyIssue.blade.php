@@ -5,19 +5,19 @@
 
 @section('content')
 {{-- Report Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Report Date:</span>
-            <span class="info-value">{{ date('d-m-Y') }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Report Date</span>
+            <span class="meta-value">{{ date('d-m-Y') }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Period From:</span>
-            <span class="info-value">{{ isset($dfrom) ? date('d-m-Y', strtotime($dfrom)) : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Period From</span>
+            <span class="meta-value">{{ isset($dfrom) ? date('d-m-Y', strtotime($dfrom)) : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Period To:</span>
-            <span class="info-value">{{ isset($dto) ? date('d-m-Y', strtotime($dto)) : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Period To</span>
+            <span class="meta-value">{{ isset($dto) ? date('d-m-Y', strtotime($dto)) : 'N/A' }}</span>
         </div>
     </div>
 </div>

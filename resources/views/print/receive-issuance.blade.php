@@ -7,30 +7,30 @@
 @section('content')
 
 {{-- Receive Issuance Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Receive No:</span>
-            <span class="info-value">{{ $issue['stock_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Receive No</span>
+            <span class="meta-value">{{ $issue['stock_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Receive Date:</span>
-            <span class="info-value">{{ !empty($issue['stock_date']) ? \Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Receive Date</span>
+            <span class="meta-value">{{ !empty($issue['stock_date']) ? \Carbon\Carbon::parse($issue['stock_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $issue['job_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Job No</span>
+            <span class="meta-value">{{ $issue['job_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Order No:</span>
-            <span class="info-value">{{ $issue['order_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Order No</span>
+            <span class="meta-value">{{ $issue['order_no'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Received From:</span>
-            <span class="info-value">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Received From</span>
+            <span class="meta-value">
                 @if($issue['table_name'] == 'employee')
                     {{ $issue['employee_no'] ?? '' }} - {{ $issue['name'] ?? 'Employee' }}
                 @elseif($issue['table_name'] == 'vendor')
@@ -41,27 +41,27 @@
             </span>
         </div>
         @if($issue['table_name'] == 'employee' && !empty($issue['employee_phone']))
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $issue['employee_phone'] }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $issue['employee_phone'] }}</span>
         </div>
         @endif
         @if($issue['table_name'] == 'employee' && !empty($issue['employee_address']))
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ $issue['employee_address'] }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Address</span>
+            <span class="meta-value">{{ $issue['employee_address'] }}</span>
         </div>
         @endif
         @if($issue['table_name'] == 'vendor' && !empty($issue['vendor_phone']))
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $issue['vendor_phone'] }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $issue['vendor_phone'] }}</span>
         </div>
         @endif
         @if($issue['table_name'] == 'vendor' && !empty($issue['vendor_address']))
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ $issue['vendor_address'] }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Address</span>
+            <span class="meta-value">{{ $issue['vendor_address'] }}</span>
         </div>
         @endif
     </div>

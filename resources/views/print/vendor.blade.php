@@ -6,42 +6,42 @@
 
 @section('content')
 {{-- Vendor Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Vendor No:</span>
-            <span class="info-value">{{ $vendor['vendor_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Vendor No</span>
+            <span class="meta-value">{{ $vendor['vendor_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Name:</span>
-            <span class="info-value">{{ $vendor['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Name</span>
+            <span class="meta-value">{{ $vendor['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Full Name:</span>
-            <span class="info-value">{{ $vendor['fname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Full Name</span>
+            <span class="meta-value">{{ $vendor['fname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Vendor Type:</span>
-            <span class="info-value">{{ $vendor['vtname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Vendor Type</span>
+            <span class="meta-value">{{ $vendor['vtname'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">City:</span>
-            <span class="info-value">{{ $vendor['cname'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">City</span>
+            <span class="meta-value">{{ $vendor['cname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Contact No:</span>
-            <span class="info-value">{{ $vendor['phone1'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Contact No</span>
+            <span class="meta-value">{{ $vendor['phone1'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Contact Person:</span>
-            <span class="info-value">{{ $vendor['cperson'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Contact Person</span>
+            <span class="meta-value">{{ $vendor['cperson'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone No:</span>
-            <span class="info-value">{{ $vendor['phone2'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone No</span>
+            <span class="meta-value">{{ $vendor['phone2'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

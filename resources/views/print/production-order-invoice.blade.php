@@ -14,32 +14,27 @@
 @endpush
 
 @section('content')
-<div class="document-info">
-    <div class="info-section">
-        <h3 style="margin:0 0 8px; font-size:12px; border-bottom:1px solid #ccc; padding-bottom:4px;">Production Information</h3>
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $order->job_no }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Order Date:</span>
-            <span class="info-value">{{ \Carbon\Carbon::parse($order->order_date)->format('d-m-Y') }}</span>
-        </div>
-        @if($order->due_date)
-        <div class="info-row">
-            <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ \Carbon\Carbon::parse($order->due_date)->format('d-m-Y') }}</span>
-        </div>
-        @endif
+<div class="meta-band meta-band--grid">
+    <div class="meta-field">
+        <span class="meta-label">Job No</span>
+        <span class="meta-value mono">{{ $order->job_no }}</span>
     </div>
-
-    @if($order->description)
-    <div class="info-section avoid-break">
-        <h3 style="margin:0 0 8px; font-size:12px; border-bottom:1px solid #ccc; padding-bottom:4px;">Production Details</h3>
-        <div class="note-box">{!! $order->description !!}</div>
+    <div class="meta-field">
+        <span class="meta-label">Order Date</span>
+        <span class="meta-value mono">{{ formatDate($order->order_date, 'N/A') }}</span>
     </div>
-    @endif
+    <div class="meta-field">
+        <span class="meta-label">Delivery Date</span>
+        <span class="meta-value mono">{{ formatDate($order->due_date) }}</span>
+    </div>
 </div>
+
+@if($order->description)
+<div class="avoid-break" style="margin-bottom:12px;">
+    <div class="section-head">Production Details</div>
+    <div class="note-box">{!! $order->description !!}</div>
+</div>
+@endif
 
 @if(isset($orderItems) && $orderItems->count())
 <div class="avoid-break">

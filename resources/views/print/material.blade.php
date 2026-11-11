@@ -6,46 +6,46 @@
 
 @section('content')
 {{-- Material Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Material No:</span>
-            <span class="info-value">{{ $material['material_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Material No</span>
+            <span class="meta-value">{{ $material['material_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Material Name:</span>
-            <span class="info-value">{{ $material['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Material Name</span>
+            <span class="meta-value">{{ $material['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Material Type:</span>
-            <span class="info-value">{{ $material['mtname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Material Type</span>
+            <span class="meta-value">{{ $material['mtname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Unit:</span>
-            <span class="info-value">{{ $material['uname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Unit</span>
+            <span class="meta-value">{{ $material['uname'] ?? 'N/A' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Current Price:</span>
-            <span class="info-value">{{ isset($material['cprice']) ? number_format($material['cprice'], 2) : 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Current Price</span>
+            <span class="meta-value">{{ isset($material['cprice']) ? number_format($material['cprice'], 2) : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Current Stock:</span>
-            <span class="info-value">{{ number_format($currentStock ?? 0) }} {{ $material['uname'] ?? '' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Current Stock</span>
+            <span class="meta-value">{{ number_format($currentStock ?? 0) }} {{ $material['uname'] ?? '' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Opening Stock:</span>
-            <span class="info-value">{{ number_format($material['quantity'] ?? 0) }} {{ $material['uname'] ?? '' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Opening Stock</span>
+            <span class="meta-value">{{ number_format($material['quantity'] ?? 0) }} {{ $material['uname'] ?? '' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Location:</span>
-            <span class="info-value">{{ $material['location'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Location</span>
+            <span class="meta-value">{{ $material['location'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">{{ $material['status'] ?? 'Active' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">{{ $material['status'] ?? 'Active' }}</span>
         </div>
     </div>
 </div>
@@ -53,15 +53,15 @@
 {{-- Vendor Information --}}
 <div class="info-section avoid-break">
     <h3>Vendor Information</h3>
-    <div class="document-info">
-        <div class="info-section">
-            <div class="info-row">
-                <span class="info-label">Vendor No:</span>
-                <span class="info-value">{{ $material['vendor_no'] ?? 'N/A' }}</span>
+    <div class="meta-band meta-band--grid">
+        <div class="meta-group">
+            <div class="meta-field">
+                <span class="meta-label">Vendor No</span>
+                <span class="meta-value">{{ $material['vendor_no'] ?? 'N/A' }}</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Vendor Name:</span>
-                <span class="info-value">{{ $material['fname'] ?? 'N/A' }}</span>
+            <div class="meta-field">
+                <span class="meta-label">Vendor Name</span>
+                <span class="meta-value">{{ $material['fname'] ?? 'N/A' }}</span>
             </div>
         </div>
     </div>

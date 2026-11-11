@@ -7,46 +7,46 @@
 @section('content')
 
 {{-- Receive Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Receive No:</span>
-            <span class="info-value">{{ $receive['receive_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Receive No</span>
+            <span class="meta-value">{{ $receive['receive_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">P.O.#:</span>
-            <span class="info-value">{{ $receive['purchase_no'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">P.O.#</span>
+            <span class="meta-value">{{ $receive['purchase_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Job No:</span>
-            <span class="info-value">{{ $receive['job_no'] ?? 'Default Purchase' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Job No</span>
+            <span class="meta-value">{{ $receive['job_no'] ?? 'Default Purchase' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Required Date:</span>
-            <span class="info-value">{{ formatDate($receive['require_date'] ?? null, 'N/A') }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Required Date</span>
+            <span class="meta-value">{{ formatDate($receive['require_date'] ?? null, 'N/A') }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Vendor:</span>
-            <span class="info-value">{{ $receive['fname'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Vendor</span>
+            <span class="meta-value">{{ $receive['fname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $receive['phone1'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $receive['phone1'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ $receive['address'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Address</span>
+            <span class="meta-value">{{ $receive['address'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Receive Date:</span>
-            <span class="info-value">{{ !empty($receive['receive_date']) ? \Carbon\Carbon::parse($receive['receive_date'])->format('d-m-Y') : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Receive Date</span>
+            <span class="meta-value">{{ !empty($receive['receive_date']) ? \Carbon\Carbon::parse($receive['receive_date'])->format('d-m-Y') : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
                 @php
                     $statusText = 'Pending';
                     if(isset($receive['stock_status'])) {
@@ -83,7 +83,7 @@
             <tr>
                 <th class="text-center" style="width: 6%">Sr.</th>
                 <th class="text-center" style="width: 15%">{{ $isMaterial ? 'Material No' : 'Article No' }}</th>
-                <th class="text-left">{{ $isMaterial ? 'Material Name' : 'Product Name' }}</th>
+                <th class="text-left">{{ $isMaterial ? 'Material' : 'Product' }}</th>
                 <th class="text-center" style="width: 14%">{{ $isMaterial ? 'Unit' : 'Size' }}</th>
                 <th class="num" style="width: 14%">QTY</th>
             </tr>

@@ -6,8 +6,6 @@
 
 @push('styles')
 <style>
-    .document-info { display: flex; width: 100%; }
-    .info-section   { width: 50%; box-sizing: border-box; }
     /* Long statements (even without spaces) wrap inside the page width; line breaks are kept */
     .statement-of-origin   { margin-top: 15px; width: 100%; max-width: 100%; }
     .statement-of-origin p { white-space: pre-line; overflow-wrap: anywhere; word-break: break-word; }
@@ -41,94 +39,85 @@
         : trim((string) ($delivery['payment_terms'] ?? ''));
 @endphp
 
-{{-- Customer / invoice details --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Customer Name:</span>
-            <span class="info-value">{{ $delivery['fname'] ?? 'N/A' }} {{ $delivery['lname'] ?? '' }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ !empty($delivery['tshipping']) ? $delivery['tshipping'] : ($delivery['address'] ?? 'N/A') }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Destination Port:</span>
-            <span class="info-value">{{ $delivery['tport_no'] ?? 'N/A' }}</span>
-        </div>
-        @if(!empty($company->ntn))
-        <div class="info-row">
-            <span class="info-label">NTN:</span>
-            <span class="info-value">{{ $company->ntn }}</span>
-        </div>
-        @endif
-        @if(!empty($company->rex_no))
-        <div class="info-row">
-            <span class="info-label">REX No:</span>
-            <span class="info-value">{{ $company->rex_no }}</span>
-        </div>
-        @endif
-        @if(!empty($fiNo))
-        <div class="info-row">
-            <span class="info-label">FI No:</span>
-            <span class="info-value">{{ $fiNo }}</span>
-        </div>
-        @endif
-        @if(!empty($hsCode))
-        <div class="info-row">
-            <span class="info-label">HS Code:</span>
-            <span class="info-value">{{ $hsCode }}</span>
-        </div>
-        @endif
-        @if($paymentTerms !== '')
-        <div class="info-row">
-            <span class="info-label">Payment Terms:</span>
-            <span class="info-value">{{ $paymentTerms }}</span>
-        </div>
+{{-- Invoice details --}}
+<div class="meta-band meta-band--grid">
+    <div class="meta-field">
+        <span class="meta-label">Invoice No</span>
+        <span class="meta-value mono">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
+    </div>
+    <div class="meta-field">
+        <span class="meta-label">Invoice Date</span>
+        <span class="meta-value mono">{{ date('d-m-Y') }}</span>
+    </div>
+    <div class="meta-field">
+        @if(!empty($isMultiOrder) && !empty($relatedOrders))
+            <span class="meta-label">Order Numbers</span>
+            <span class="meta-value mono">{{ collect($relatedOrders)->map(fn ($order) => ((array) $order)['order_no'] ?? '')->filter()->implode(', ') }}</span>
+        @else
+            <span class="meta-label">Order Number</span>
+            <span class="meta-value mono">{{ $delivery['order_no'] ?? 'N/A' }}</span>
         @endif
     </div>
+    <div class="meta-field">
+        <span class="meta-label">Total QTY</span>
+        <span class="meta-value mono">{{ number_format($totalQuantity) }}</span>
+    </div>
+    @if(!empty($packingList['carton_count']))
+    <div class="meta-field">
+        <span class="meta-label">Total Packages</span>
+        <span class="meta-value mono">{{ $packingList['carton_count'] }}</span>
+    </div>
+    @endif
+    @if(!empty($uom))
+    <div class="meta-field">
+        <span class="meta-label">UOM</span>
+        <span class="meta-value">{{ $uom }}</span>
+    </div>
+    @endif
+    @if(!empty($hsCode))
+    <div class="meta-field">
+        <span class="meta-label">HS Code</span>
+        <span class="meta-value mono">{{ $hsCode }}</span>
+    </div>
+    @endif
+    @if(!empty($fiNo))
+    <div class="meta-field">
+        <span class="meta-label">FI No</span>
+        <span class="meta-value mono">{{ $fiNo }}</span>
+    </div>
+    @endif
+    @if(!empty($company->ntn))
+    <div class="meta-field">
+        <span class="meta-label">NTN</span>
+        <span class="meta-value mono">{{ $company->ntn }}</span>
+    </div>
+    @endif
+    @if(!empty($company->rex_no))
+    <div class="meta-field">
+        <span class="meta-label">REX No</span>
+        <span class="meta-value mono">{{ $company->rex_no }}</span>
+    </div>
+    @endif
+    @if($paymentTerms !== '')
+    <div class="meta-field">
+        <span class="meta-label">Payment Terms</span>
+        <span class="meta-value">{{ $paymentTerms }}</span>
+    </div>
+    @endif
+    @if($isPartialPayment)
+    <div class="meta-field">
+        <span class="meta-label">Payment Requested</span>
+        <span class="meta-value">{{ $percentLabel }} of invoice value</span>
+    </div>
+    @endif
+</div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Invoice Date:</span>
-            <span class="info-value">{{ date('d-m-Y') }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Invoice No:</span>
-            <span class="info-value">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
-        </div>
-        <div class="info-row">
-            @if(!empty($isMultiOrder) && !empty($relatedOrders))
-                <span class="info-label">Order Numbers:</span>
-                <span class="info-value">{{ collect($relatedOrders)->map(fn ($order) => ((array) $order)['order_no'] ?? '')->filter()->implode(', ') }}</span>
-            @else
-                <span class="info-label">Order Number:</span>
-                <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
-            @endif
-        </div>
-        @if(!empty($uom))
-        <div class="info-row">
-            <span class="info-label">UOM:</span>
-            <span class="info-value">{{ $uom }}</span>
-        </div>
-        @endif
-        <div class="info-row">
-            <span class="info-label">Total QTY:</span>
-            <span class="info-value">{{ number_format($totalQuantity) }}</span>
-        </div>
-        @if(!empty($packingList['carton_count']))
-        <div class="info-row">
-            <span class="info-label">Total Packages:</span>
-            <span class="info-value">{{ $packingList['carton_count'] }}</span>
-        </div>
-        @endif
-        @if($isPartialPayment)
-        <div class="info-row">
-            <span class="info-label">Payment Requested:</span>
-            <span class="info-value">{{ $percentLabel }} of invoice value</span>
-        </div>
-        @endif
-    </div>
+{{-- Customer --}}
+<div class="party-block party-block--spaced">
+    <div class="party-label">CUSTOMER</div>
+    <div class="party-name">{{ $delivery['fname'] ?? 'N/A' }} {{ $delivery['lname'] ?? '' }}</div>
+    <div class="party-detail">{{ !empty($delivery['tshipping']) ? $delivery['tshipping'] : ($delivery['address'] ?? 'N/A') }}</div>
+    <div class="party-contact">Destination Port: {{ $delivery['tport_no'] ?? 'N/A' }}</div>
 </div>
 
 {{-- Delivered Items Table --}}

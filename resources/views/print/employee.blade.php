@@ -6,42 +6,42 @@
 
 @section('content')
 {{-- Employee Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Employee No:</span>
-            <span class="info-value">{{ $employee['employee_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Employee No</span>
+            <span class="meta-value">{{ $employee['employee_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Name:</span>
-            <span class="info-value">{{ $employee['name'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Name</span>
+            <span class="meta-value">{{ $employee['name'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Department:</span>
-            <span class="info-value">{{ $employee['dname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Department</span>
+            <span class="meta-value">{{ $employee['dname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Employee Type:</span>
-            <span class="info-value">{{ $employee['etname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Employee Type</span>
+            <span class="meta-value">{{ $employee['etname'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">CNIC:</span>
-            <span class="info-value">{{ $employee['cnic'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">CNIC</span>
+            <span class="meta-value">{{ $employee['cnic'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Contact No:</span>
-            <span class="info-value">{{ $employee['phone1'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Contact No</span>
+            <span class="meta-value">{{ $employee['phone1'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Emergency No:</span>
-            <span class="info-value">{{ $employee['phone2'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Emergency No</span>
+            <span class="meta-value">{{ $employee['phone2'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
                 @if($employee['employee_status'] ?? false)
                     <span class="status-badge status-badge-success">Active</span>
                 @else
@@ -53,38 +53,38 @@
 </div>
 
 {{-- Employment Details --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Joining Date:</span>
-            <span class="info-value">{{ formatDate($employee['joining_date'] ?? null, 'N/A') }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Joining Date</span>
+            <span class="meta-value">{{ formatDate($employee['joining_date'] ?? null, 'N/A') }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Salary:</span>
-            <span class="info-value">{{ isset($employee['salary']) ? 'Rs. ' . number_format($employee['salary']) : 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Salary</span>
+            <span class="meta-value">{{ isset($employee['salary']) ? 'Rs. ' . number_format($employee['salary']) : 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">City:</span>
-            <span class="info-value">{{ $employee['cname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">City</span>
+            <span class="meta-value">{{ $employee['cname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Designation:</span>
-            <span class="info-value">{{ $employee['designation'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Designation</span>
+            <span class="meta-value">{{ $employee['designation'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Short Name:</span>
-            <span class="info-value">{{ $employee['sname'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Short Name</span>
+            <span class="meta-value">{{ $employee['sname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Father Name:</span>
-            <span class="info-value">{{ $employee['fname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Father Name</span>
+            <span class="meta-value">{{ $employee['fname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Attendance ID:</span>
-            <span class="info-value">{{ $employee['attendance_id'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Attendance ID</span>
+            <span class="meta-value">{{ $employee['attendance_id'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>

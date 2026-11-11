@@ -6,42 +6,42 @@
 
 @section('content')
 {{-- Contractor Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Contractor No:</span>
-            <span class="info-value">{{ $vendor['vendor_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Contractor No</span>
+            <span class="meta-value">{{ $vendor['vendor_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Contractor Name:</span>
-            <span class="info-value">{{ $vendor['fname'] ?? 'N/A' }} {{ $vendor['lname'] ?? '' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Contractor Name</span>
+            <span class="meta-value">{{ $vendor['fname'] ?? 'N/A' }} {{ $vendor['lname'] ?? '' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Company:</span>
-            <span class="info-value">{{ $vendor['company'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Company</span>
+            <span class="meta-value">{{ $vendor['company'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">City:</span>
-            <span class="info-value">{{ $vendor['cname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">City</span>
+            <span class="meta-value">{{ $vendor['cname'] ?? 'N/A' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">{{ $vendor['email'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Email</span>
+            <span class="meta-value">{{ $vendor['email'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone 1:</span>
-            <span class="info-value">{{ $vendor['phone1'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone 1</span>
+            <span class="meta-value">{{ $vendor['phone1'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone 2:</span>
-            <span class="info-value">{{ $vendor['phone2'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone 2</span>
+            <span class="meta-value">{{ $vendor['phone2'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value">
+        <div class="meta-field">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
                 @if(isset($vendor['status']) && $vendor['status'])
                     <span class="status-badge status-badge-success">Active</span>
                 @else

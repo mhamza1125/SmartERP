@@ -6,38 +6,38 @@
 
 @section('content')
 {{-- Vendor Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Vendor No:</span>
-            <span class="info-value">{{ $vendor['vendor_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Vendor No</span>
+            <span class="meta-value">{{ $vendor['vendor_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Vendor Name:</span>
-            <span class="info-value">{{ $vendor['fname'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Vendor Name</span>
+            <span class="meta-value">{{ $vendor['fname'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value">{{ $vendor['address'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Address</span>
+            <span class="meta-value">{{ $vendor['address'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">{{ $vendor['phone1'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ $vendor['phone1'] ?? 'N/A' }}</span>
         </div>
     </div>
     
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Report Period:</span>
-            <span class="info-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Report Period</span>
+            <span class="meta-value">{{ $dfrom ?? 'All Time' }} to {{ $dto ?? 'Current' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Opening Balance:</span>
-            <span class="info-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Opening Balance</span>
+            <span class="meta-value amount">{{ number_format($oBalance ?? 0, 2) }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Vendor Type:</span>
-            <span class="info-value">{{ $vendor['vendor_type'] == '1' ? 'Contractor' : 'Vendor' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Vendor Type</span>
+            <span class="meta-value">{{ $vendor['vendor_type'] == '1' ? 'Contractor' : 'Vendor' }}</span>
         </div>
     </div>
 </div>

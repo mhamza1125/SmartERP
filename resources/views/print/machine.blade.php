@@ -6,26 +6,26 @@
 
 @section('content')
 {{-- Machine Header Information --}}
-<div class="document-info">
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Machine No:</span>
-            <span class="info-value">{{ $machine['machine_no'] ?? 'N/A' }}</span>
+<div class="meta-band meta-band--grid">
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Machine No</span>
+            <span class="meta-value">{{ $machine['machine_no'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Machine Type:</span>
-            <span class="info-value">{{ $machine['machine_type'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Machine Type</span>
+            <span class="meta-value">{{ $machine['machine_type'] ?? 'N/A' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Location:</span>
-            <span class="info-value">{{ $machine['location'] ?? 'N/A' }}</span>
+        <div class="meta-field">
+            <span class="meta-label">Location</span>
+            <span class="meta-value">{{ $machine['location'] ?? 'N/A' }}</span>
         </div>
     </div>
 
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Employee:</span>
-            <span class="info-value">{{ $machine['employee_name'] ?? 'N/A' }}</span>
+    <div class="meta-group">
+        <div class="meta-field">
+            <span class="meta-label">Employee</span>
+            <span class="meta-value">{{ $machine['employee_name'] ?? 'N/A' }}</span>
         </div>
     </div>
 </div>
