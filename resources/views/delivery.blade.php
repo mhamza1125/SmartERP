@@ -202,7 +202,7 @@ $(document).ready(function() {
 
     function loadCustomerOrders(customerId) {
         $.ajax({
-            url: '/ajax/customer-orders/' + customerId,
+            url: appUrl('ajax/customer-orders/' + customerId),
             type: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'

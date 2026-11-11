@@ -87,7 +87,24 @@ $(document).ready(function () {
         return document.title.replace(/\s*[-|]\s*SmartERP.*/i, '').trim() || 'Report';
     }
 
+    /* Shared by every export button: skip the Action column (and any column marked
+       .no-export) and export each cell's visible value, not its menus or form controls */
+    var exportOptions = {
+        columns: function (index, data, node) {
+            var text = $(node).text().replace(/\s+/g, ' ').trim();
+            return !/^actions?$/i.test(text) && !$(node).hasClass('no-export');
+        },
+        format: {
+            body: function (data, row, column, node) { return window.dtExportCell(data, row, column, node); },
+            header: function (data, column, node) { return $(node).text().replace(/\s+/g, ' ').trim(); },
+            footer: function (data, column, node) { return node ? $(node).text().replace(/\s+/g, ' ').trim() : data; }
+        }
+    };
+
     function initializeDataTable(tableId) {
+        if (!$(tableId).length) {
+            return;
+        }
         if ($.fn.DataTable.isDataTable(tableId)) {
             $(tableId).DataTable().destroy();
         }
@@ -96,33 +113,33 @@ $(document).ready(function () {
             dom: 'Bfrtip',
             pageLength: 200,
             buttons: [
-                {
-                    extend: 'copyHtml5',
-                    title: '',
-                    exportOptions: { columns: ':not(:contains("Action"))' }
-                },
-                {
-                    extend: 'excelHtml5',
-                    title: '',
-                    exportOptions: { columns: ':not(:contains("Action"))' }
-                },
-                {
-                    extend: 'csvHtml5',
-                    title: '',
-                    exportOptions: { columns: ':not(:contains("Action"))' }
-                },
+                { extend: 'copyHtml5', title: '', exportOptions: exportOptions },
+                { extend: 'excelHtml5', title: getPageTitle(), exportOptions: exportOptions },
+                { extend: 'csvHtml5', title: getPageTitle(), exportOptions: exportOptions },
                 {
                     extend: 'pdfHtml5',
-                    title: '',
-                    exportOptions: { columns: ':not(:contains("Action"))' }
+                    title: getPageTitle(),
+                    orientation: $(tableId).find('thead th').length > 7 ? 'landscape' : 'portrait',
+                    exportOptions: exportOptions,
+                    customize: function (doc) {
+                        // Header row styled like the prints; wide tables use the full width
+                        doc.styles.tableHeader = { bold: true, fontSize: 9, color: '#1f3a5f', fillColor: '#e9eef4' };
+                        doc.defaultStyle.fontSize = 8.5;
+                        var body = doc.content[1] && doc.content[1].table;
+                        if (body) {
+                            body.widths = body.body[0].map(function () { return '*'; });
+                            body.headerRows = 1;
+                        }
+                    }
                 },
                 {
                     extend: 'print',
                     title: '',
+                    footer: true,
                     customize: function (win) {
                         window.dtPrintCustomize(win, getPageTitle());
                     },
-                    exportOptions: { columns: ':not(:contains("Action"))' }
+                    exportOptions: exportOptions
                 }
             ]
         });
@@ -1692,7 +1709,7 @@ $(document).ready(function () {
         // Function to load all available products for Default Production
         function loadAllProducts() {
             $.ajax({
-                url: '/ajax/getAllProducts', // We'll need to create this route
+                url: appUrl('ajax/getAllProducts'), // We'll need to create this route
                 type: "GET",
                 dataType: "json",
                 success: function (response) {
@@ -1714,7 +1731,7 @@ $(document).ready(function () {
         // Function to load all products (for issuance forms - regardless of stock)
         function loadAllProductsWithStock() {
             $.ajax({
-                url: '/ajax/getAllProducts', // Get ALL products regardless of stock
+                url: appUrl('ajax/getAllProducts'), // Get ALL products regardless of stock
                 type: "GET",
                 dataType: "json",
                 success: function (response) {

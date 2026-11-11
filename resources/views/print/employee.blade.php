@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Employee_Info_' . ($employee['employee_no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('doc_title', 'Employee Information')
+@section('doc_no', $employee['employee_no'] ?? '')
 
 @section('content')
-<div class="document-title">Employee Information</div>
-
 {{-- Employee Header Information --}}
 <div class="document-info">
     <div class="info-section">

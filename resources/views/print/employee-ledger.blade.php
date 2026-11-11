@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Employee_Ledger_' . ($employee['employee_no'] ?? 'N/A') . '_' . ($dfrom ?? 'All') . '_to_' . ($dto ?? 'Current'))
+@section('doc_title', 'Employee Ledger')
+@section('doc_no', $employee['employee_no'] ?? '')
 
 @section('content')
-<div class="document-title">Employee Ledger</div>
-
 {{-- Employee Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -53,12 +53,12 @@
     <table class="print-table">
         <thead>
             <tr>
-                <th style="width: 12%">Date</th>
-                <th style="width: 15%">Reference</th>
-                <th style="width: 35%">Description</th>
-                <th style="width: 12%">Debit</th>
-                <th style="width: 12%">Credit</th>
-                <th style="width: 14%">Balance</th>
+                <th style="width: 10%">Date</th>
+                <th style="width: 13%">Reference</th>
+                <th style="width: 41%">Description</th>
+                <th class="num" style="width: 12%">Debit</th>
+                <th class="num" style="width: 12%">Credit</th>
+                <th class="num" style="width: 12%">Balance</th>
             </tr>
         </thead>
         <tbody>
@@ -77,7 +77,7 @@
             </tr>
             @endif
             
-            @foreach($detail as $transaction)
+            @foreach($detail as $rowKey => $transaction)
                 @php
                     $debit = $transaction->debit ?? 0;
                     $credit = $transaction->credit ?? 0;
@@ -103,40 +103,7 @@
                             -
                         @endif
                     </td>
-                    <td>
-                        @if(isset($transaction->transaction_type))
-                            @switch($transaction->transaction_type)
-                              @case('advance')
-                                Give Loan
-                                @break
-                              @case('receiveAdvance')
-                                Receive Loan Repayment
-                                @break
-                              @case('salaryAdvance')
-                                Salary Advance
-                                @break
-                              @case('salary')
-                                Monthly Salary{{ isset($transaction->description) ? ' - ' . strip_tags($transaction->description) : '' }}
-                                @break
-                              @default
-                                @if(isset($transaction->description))
-                                    {{ strip_tags($transaction->description) }}
-                                @elseif(isset($transaction->stock_no))
-                                    Work: {{ $transaction->stock_no }}
-                                @else
-                                    {{ ucfirst($transaction->transaction_type) }}
-                                @endif
-                            @endswitch
-                        @else
-                            @if(isset($transaction->description))
-                                {{ strip_tags($transaction->description) }}
-                            @elseif(isset($transaction->stock_no))
-                                Work: {{ $transaction->stock_no }}
-                            @else
-                                Transaction
-                            @endif
-                        @endif
-                    </td>
+                    <td>{{ $notes[$rowKey] ?? strip_tags($transaction->description ?? 'Transaction') }}</td>
                     <td class="text-right amount">{{ $displayDebit > 0 ? number_format($displayDebit, 2) : '-' }}</td>
                     <td class="text-right amount">{{ $displayCredit > 0 ? number_format($displayCredit, 2) : '-' }}</td>
                     <td class="text-right amount">{{ number_format($runningBalance, 2) }}</td>

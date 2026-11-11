@@ -135,6 +135,7 @@ Additional domain-specific methods are added per repository beyond these five.
 - `stocks.end_stage_id` = planned last stage (NULL on old PTCs -> product's last stage). One finish action (`ptc.close` -> `PtcStockRepository::finish()`) stores Completed if the end stage is fully received, else Closed Early
 - All PTC stock logic lives in `PtcStockRepository` (locks the master row, validates, throws `PtcStockException`)
 - **Stage workflow (user-confirmed 2026-10-12): the PTC start stage is the stock it starts from (e.g. Stage 1 = unfinished product bought in), NOT a work stage. Each issuance moves product from stage X to its Issue For stage Y, and it is received into Y.** Stage 1 -> 2, receive in 2; issue 2 -> 3, receive in 3; PTC 1..3 complete
+- `stocks.start_from` (master, 2026-11-12): `stock` (default; NULL on older PTCs = same) = the start stage is stock already held, first issuance for the stage after it; `materials` = started from raw materials, the start stage IS the first work stage (master issue_for/current = start stage, received there, no "Starting stock" stage status, first movement shown as "Raw Materials"). One rule: `PtcStockRepository::firstWorkIndex()` (used by ptcStore, issueStages, stageSummary); `Stock::startsFromMaterials()`. Chosen on the Create PTC form ("Start From")
 - `stocks.start_stage_id` (master) stores the start stage; the master's `issue_for` = the stage after it (= `current_stage_id` at creation). Legacy masters (start_stage_id NULL) stored the start stage as `issue_for`; `startStageId()` falls back to that. `php artisan ptc:backfill-start-stage [--dry-run]` corrects them (stage labels only, no stock change) - user had NOT run it as of 2026-10-12
 - Stage Progress: start stage shows status `start` ("Starting stock") when no work was issued for it
 - Stage display: `stocks.current_stage_id` on issuances/receipts/releases is NOT the movement stage. Show movements via `PtcStockRepository::movementStages()` + `ptcStageMove` partial: issuance = product line stage(s) -> `issue_for`; receipt = its issuance's from-stage(s) -> received item stage(s); release = item stage -> General Stock
@@ -152,6 +153,8 @@ Additional domain-specific methods are added per repository beyond these five.
 - Products on an issuance must be received back in full (outstanding = issued - received, any stage incl. Rejected 105); materials may vary; components capped at issued
 - Close is blocked while product is outstanding or PTC stock remains; closing changes only the status (stages keep their actual status, no stock movement)
 - "No component" must be stored as NULL, never 0 (general stock uses `component_product_type_id IS NULL` for product lines)
+- Component lines (another product used to make the PTC product) are recorded at the COMPONENT's own stage(s), never the PTC product's stage: `StockBatchRepository::componentStageSplit()` splits the quantity over the component's stages holding stock the order may use (own + free batches, rejected excluded, component's final stage first). PTC create/edit/issue all use it; forms show `componentStock()->sum()` (2026-11-11)
+- PTC page lists issuances newest first by sequence (stock_id desc), not by date
 
 ### Batch-Tracked Product Stock (2026-10-14)
 - `stock_batches`: one lot of one product type. `source_type` is one of ptc | purchase | issuance | opening | split | legacy, with `source_id`. `order_id` = reserved for that order; NULL = free.
@@ -255,8 +258,23 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 ## Print System
 - 28 dedicated print routes; all return Blade views (no PDF generation)
 - Print views in `resources/views/print/` — self-contained with inline CSS
-- `$company` is always available in print views via `PrintComposer`
+- `$company` and `$printContacts` (phone/email/website) are always available in print views via `PrintComposer`
 - Default: portrait; landscape only for wide-column tables
+- **No footer.** Standard header (`print/header.blade.php`): logo left, title middle, phone/email/website right. Each view sets `@section('doc_title', '...')` and optionally `@section('doc_no', ...)`; never put a title inside the body
+- Table titles: `<div class="table-title">`; sign-off lines: `.sign-row` / `.sign-row__field` / `.sign-row__line`
+- Column titles are short (QTY, Price, Total). Numeric columns are right-aligned (`class="num"` on th and td); the layout script `alignPrintTables()` also right-aligns columns whose header looks numeric and copies each column's data alignment to its `<th>`
+- Logo URL: `printLogoUrl($company)` (app/helpers.php) - company logo if the file exists, else assets/print-logo.png; built with asset() so it follows the request's base URL (app may run under a sub-folder, e.g. http://host:8080/ERP/public)
+- Page JS must never use root-relative URLs (`'/company/data'`, `origin + '/assets'`): use `appUrl('path')` / `window.SmartERP` (baseUrl, logo, companyName, contacts), set in index.blade.php by `PrintComposer@layout`
+- DataTables exports (`#tableExport`, public/assets/js/custom.js + datatable-print.js): every button exports cleaned cell text (`dtExportCell`: drops .dropdown-menu / .no-export / forms, takes the selected option); a cell can set `data-export="..."`; columns titled Action or with .no-export are skipped. Print = Blade-style header repeated on every page, no footer
+- Transaction narration: `TransactionRepository::describe($ids)` -> type, party, narration, summary, cheque_no, note, details[label=>value] (cheque parsed from "Check No: x" in the description - there is no cheque column). Used by payment/expense/transaction lists, vouchers and transfer info. People ledger prints use `ledgerDescriptions($detail)` (purchases / returns / deliveries with items)
+- Vouchers (`print.payment`, layout-voucher) are A5 landscape (half page); payment, receipt, expense, adjustment and transfer (`transfer.print`) all use it
+- Invoice bank details: `BankRepository::printDetails($bankId)` (includes `bank_name` from heads) + partial `print/partials/bank-details`; modal options from `bankOptions.blade.php`
+
+## Freight Charges (2026-11-10)
+- `deliveries.freight_charges` (order currency, default 0) entered on the delivery add/edit form
+- Customer ledger delivery debit = items (order price × delivered qty) + that delivery's freight (`TransactionRepository::cDetail/cDetailFilter`, `customerFreight()`)
+- Commercial invoice shows Items Total, Freight Charges, and Grand Total including freight
+- `company.fi_no` = default FI No (Settings > Company); a delivery's own `fi_no` overrides it on the commercial invoice
 
 ---
 

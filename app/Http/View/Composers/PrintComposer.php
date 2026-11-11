@@ -9,59 +9,67 @@ class PrintComposer
 {
     protected ?Company $company;
 
-    protected array $footer;
+    protected array $contacts;
 
     public function __construct()
     {
         $this->company = Company::first();
-        $this->footer  = $this->buildFooter();
+        $this->contacts = $this->buildContacts();
     }
 
     public function compose(View $view): void
     {
         $view->with('company', $this->company);
-        $view->with('printFooter', $this->footer);
+        $view->with('printContacts', $this->contacts);
     }
 
     /**
-     * Split company footer text into an address line and a list of contact items.
-     *
-     * footer_text is stored as "address <br> Phone: x || Email: y || Web: z";
-     * labels are stripped so the footer shows the bare values.
-     * Falls back to the structured company fields when footer_text is empty.
+     * For the main app layout: what the in-page JavaScript prints (DataTables print,
+     * deliveryInfo / print.js) need, with URLs built from the request's own base URL.
      */
-    protected function buildFooter(): array
+    public function layout(View $view): void
     {
-        $footer = ['address' => null, 'contacts' => []];
+        $view->with('printConfig', [
+            'baseUrl' => url('/'),
+            'logo' => printLogoUrl($this->company),
+            'companyName' => $this->company->name ?? '',
+            'contacts' => $this->contacts,
+        ]);
+    }
+
+    /**
+     * Phone, email and website shown on the right of the print header.
+     *
+     * Uses the structured company fields; any that are empty fall back to the
+     * labelled values in footer_text ("address <br> Phone: x || Email: y || Web: z").
+     */
+    protected function buildContacts(): array
+    {
+        $contacts = ['phone' => null, 'email' => null, 'website' => null];
 
         if (! $this->company) {
-            return $footer;
+            return $contacts;
         }
 
-        $lines = collect(preg_split('/<br\s*\/?>|\R/i', (string) $this->company->footer_text))
-            ->map(fn ($line) => trim(strip_tags($line)))
-            ->filter()
-            ->values();
-
-        if ($lines->isEmpty()) {
-            return [
-                'address'  => $this->company->address ? trim(strtok($this->company->address, "\r\n")) : null,
-                'contacts' => array_values(array_filter([
-                    $this->company->phone,
-                    $this->company->email,
-                    $this->company->website,
-                ])),
-            ];
+        $fromFooter = [];
+        $items = preg_split('/\s*\|{1,2}\s*|<br\s*\/?>|\R/i', (string) $this->company->footer_text);
+        foreach ($items as $item) {
+            $item = trim(strip_tags($item));
+            if (preg_match('/^(phone|tel|cell|mobile)\s*:\s*(.+)$/i', $item, $m)) {
+                $fromFooter['phone'] ??= trim($m[2]);
+            } elseif (preg_match('/^(email|e-mail)\s*:\s*(.+)$/i', $item, $m)) {
+                $fromFooter['email'] ??= trim($m[2]);
+            } elseif (preg_match('/^(web|website)\s*:\s*(.+)$/i', $item, $m)) {
+                $fromFooter['website'] ??= trim($m[2]);
+            }
         }
 
-        $footer['address'] = $lines->shift();
+        foreach (array_keys($contacts) as $key) {
+            $value = trim((string) $this->company->{$key});
+            // A placeholder such as "." or "-" counts as empty
+            $contacts[$key] = preg_match('/[\p{L}\p{N}]/u', $value) ? $value : ($fromFooter[$key] ?? null);
+        }
 
-        $footer['contacts'] = collect(preg_split('/\s*\|{1,2}\s*/', $lines->implode(' || ')))
-            ->map(fn ($item) => trim(preg_replace('/^(phone|tel|cell|mobile|email|e-mail|web|website)\s*:\s*/i', '', trim($item))))
-            ->filter()
-            ->values()
-            ->all();
-
-        return $footer;
+        return $contacts;
     }
 }

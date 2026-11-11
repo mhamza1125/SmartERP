@@ -253,19 +253,22 @@ class OrderController extends Controller
                 // which stages happen to hold stock today.
                 $finalStageId = $finalStageByProductType->get($ptid);
 
+                // Same figures as the /stock page: balances are not clamped, so
+                // finished + unfinished always equals the Total Stock shown there.
+                $balance = fn ($s) => ($s->stockIn ?? 0) - ($s->stockOut ?? 0);
+
                 // Finished Stock = stock sitting in the final production stage (e.g. Packing).
-                $finishedQty = 0;
-                if ($finalStageId !== null) {
-                    $finalRow    = $usableStages->firstWhere('stage_id', $finalStageId);
-                    $finishedQty = max(0, ($finalRow->stockIn ?? 0) - ($finalRow->stockOut ?? 0));
-                }
+                $finishedQty = $finalStageId !== null
+                    ? $usableStages->where('stage_id', $finalStageId)->sum($balance)
+                    : 0;
 
                 // Unfinished Stock = stock in every usable stage that is NOT the final stage.
-                $unfinishedQty = max(0, $usableStages
-                    ->filter(fn($s) => $s->stage_id != $finalStageId)
-                    ->sum(fn($s) => ($s->stockIn ?? 0) - ($s->stockOut ?? 0)));
+                $unfinishedQty = $usableStages
+                    ->filter(fn ($s) => $s->stage_id != $finalStageId)
+                    ->sum($balance);
 
                 $productTypeCache[$ptid] = [
+                    'total_stock'      => $usableStages->sum($balance),
                     'finished_stock'   => $finishedQty,
                     'unfinished_stock' => $unfinishedQty,
                 ];
@@ -291,17 +294,8 @@ class OrderController extends Controller
         $orderItem = $this->orderItemRepository->get($id);
         $company = $this->companyRepository->first();
 
-        // Get bank details if bank_id is provided in query parameter
-        $bankDetails = null;
-        if (request()->has('bank_id')) {
-            $bankDetailsObj = DB::table('banks')
-                ->where('bank_id', request()->input('bank_id'))
-                ->first();
-            // Convert stdClass object to array for view compatibility
-            if ($bankDetailsObj) {
-                $bankDetails = (array) $bankDetailsObj;
-            }
-        }
+        // Bank account picked in the proforma modal (optional)
+        $bankDetails = $this->bankRepository->printDetails(request()->input('bank_id'));
 
         // Get optional parameters
         $hsCode = request()->input('hs_code');

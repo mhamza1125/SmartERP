@@ -1,10 +1,9 @@
 @extends('print.layout')
 
 @section('title', 'Material_Detail_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
+@section('doc_title', 'Material Detail Report')
 
 @section('content')
-<div class="document-title">Material Detail Report</div>
-
 {{-- Report Header Information --}}
 <div class="document-info">
     <div class="info-section">

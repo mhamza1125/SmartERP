@@ -1,338 +1,130 @@
 @extends('print.layout-voucher')
 
-@section('title', 'Payment_Voucher_' . ($voucherNumber ?? 'N/A') . '_' . formatDate($transaction['transaction_date'] ?? now()))
+{{--
+    Half-page (A5 landscape) voucher for payments, receipts, expenses, balance adjustments and bank/cash transfers.
+    $info = TransactionRepository::describe(): type, party, accounts, purchase / order, cheque no, note.
+--}}
+@php
+    $type = $transaction['transaction_type'] ?? '';
+    $isTransfer = $type === 'transfer';
+    $isAdjustment = ($transaction['transaction_to'] ?? '') === 'brs';
+    $isReceipt = in_array($type, ['orderPayment', 'receiveAdvance'], true);
+    $debit = (float) ($transaction['debit'] ?? 0);
+    $credit = (float) ($transaction['credit'] ?? 0);
+    $amount = abs($debit != 0 ? $debit : $credit);
+    $details = $info->details ?? [];
+    $note = $details['Description'] ?? null;
+    unset($details['Description']);
+
+    $isExpense = ($transaction['transaction_to'] ?? '') === 'expense';
+    $docTitle = $isTransfer ? 'Transfer Voucher' : ($isAdjustment ? 'Adjustment Voucher' : ($isReceipt ? 'Receipt Voucher' : ($isExpense ? 'Expense Voucher' : 'Payment Voucher')));
+
+    // Double entry lines: [account, debit, credit]
+    if ($isTransfer) {
+        $lines = [
+            [$details['To Account'] ?? '-', $amount, null],
+            [$details['From Account'] ?? '-', null, $amount],
+        ];
+    } elseif ($isAdjustment) {
+        $lines = [[$details['Account'] ?? 'Cash', $debit > 0 ? $amount : null, $debit > 0 ? null : $amount]];
+    } else {
+        $partyLine = trim(($info->party ?? '') !== '' ? $info->party : ($info->type ?? 'Payment'));
+        foreach (['Purchase No' => 'Purchase', 'Order No' => 'Order', 'Delivery No' => 'Delivery'] as $key => $label) {
+            if (!empty($details[$key])) {
+                $partyLine .= ' (' . $label . ' ' . $details[$key] . ')';
+            }
+        }
+        $accountLine = $details['Paid From'] ?? $details['Received Into'] ?? 'Cash';
+        $lines = [
+            [$partyLine, $credit ?: null, $debit ?: null],
+            [$accountLine, $debit ?: null, $credit ?: null],
+        ];
+    }
+    $totalDebit = collect($lines)->sum(fn ($line) => (float) $line[1]);
+    $totalCredit = collect($lines)->sum(fn ($line) => (float) $line[2]);
+@endphp
+
+@section('title', str_replace(' ', '_', $docTitle) . '_' . ($voucherNumber ?? 'N/A') . '_' . formatDate($transaction['transaction_date'] ?? now()))
+@section('doc_title', $docTitle)
+@section('doc_no', $voucherNumber ?? '')
+
+@push('styles')
+<style>
+    .voucher-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 2px; margin-bottom: 6px; }
+    .voucher-grid .info-row { margin-bottom: 0; }
+    .voucher-note { font-size: 9.5px; margin: 2px 0 6px; padding: 3px 6px; border: 1px solid var(--hairline); background: var(--row-alt); }
+    .voucher-note b { color: var(--muted); font-weight: 600; margin-right: 4px; }
+</style>
+@endpush
 
 @section('content')
-<div class="document-title">Payment Voucher</div>
-
-{{-- Voucher Header Information --}}
-<div class="watermark-container">
-    <div class="document-info">
-        <div class="info-section">
-            <div class="info-row">
-                <span class="info-label">Voucher No:</span>
-                <span class="info-value voucher-number">{{ $voucherNumber ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Date:</span>
-                <span class="info-value">{{ !empty($transaction['transaction_date']) ? \Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y') : 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Transaction Type:</span>
-                <span class="info-value">
-                    @if($transaction['transaction_to'] == 'brs')
-                        Balance Adjustment
-                    @elseif($transaction['transaction_to'] == 'employee')
-                        @if($transaction['transaction_type'] == 'salary')
-                            Salary Payment
-                        @elseif($transaction['transaction_type'] == 'wages')
-                            Wages Payment
-                        @elseif($transaction['transaction_type'] == 'advance')
-                            Advance Payment to Employee
-                        @elseif($transaction['transaction_type'] == 'receiveAdvance')
-                            Loan Received from Employee
-                        @else
-                            {{ ucfirst($transaction['transaction_type'] ?? 'Employee Payment') }}
-                        @endif
-                    @elseif($transaction['transaction_to'] == 'customer')
-                        @if($transaction['transaction_type'] == 'orderPayment')
-                            Order Payment Received
-                        @elseif($transaction['transaction_type'] == 'receiveAdvance')
-                            Advance Payment Received
-                        @else
-                            Customer Payment
-                        @endif
-                    @else
-                        {{ ucfirst($transaction['transaction_to'] ?? 'N/A') }} Payment
-                    @endif
-                </span>
-            </div>
-            {{-- <div class="info-row">
-                <span class="info-label">Payment Method:</span>
-                <span class="info-value">{{ $transaction['bank_id'] ? 'Bank Transfer' : 'Cash' }}</span>
-            </div> --}}
-        </div>
-
-        <div class="info-section">
-            @if($transaction['transaction_to'] == 'vendor')
-                <div class="info-row">
-                    <span class="info-label">Vendor:</span>
-                    <span class="info-value">{{ $transaction['vendor_no'] ?? '' }} - {{ $transaction['fname'] ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Payment For:</span>
-                    <span class="info-value">
-                        @if($transaction['transaction_type'] == 'wages')
-                            Vendor Services/Wages
-                        @elseif(isset($transaction['order_id']) && $transaction['order_id'])
-                            Purchase #{{ $transaction['order_id'] }}
-                            @if(isset($transaction['purchase_no']))
-                                ({{ $transaction['purchase_no'] }})
-                            @endif
-                        @else
-                            Vendor Services/Bills
-                        @endif
-                    </span>
-                </div>
-            @elseif($transaction['transaction_to'] == 'employee')
-                <div class="info-row">
-                    <span class="info-label">Employee:</span>
-                    <span class="info-value">{{ $transaction['employee_no'] ?? '' }} - {{ $transaction['name'] ?? 'N/A' }}</span>
-                </div>
-            @elseif($transaction['transaction_to'] == 'customer')
-                <div class="info-row">
-                    <span class="info-label">Customer:</span>
-                    <span class="info-value">{{ $transaction['customer_no'] ?? '' }} - {{ $transaction['fname'] ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Payment For:</span>
-                    <span class="info-value">
-                        @if($transaction['transaction_type'] == 'orderPayment' && isset($transaction['order_id']) && $transaction['order_id'])
-                            Order #{{ $transaction['order_id'] }}
-                            @if(isset($transaction['order_date']) && !empty($transaction['order_date']))
-                                ({{ \Carbon\Carbon::parse($transaction['order_date'])->format('d-m-Y') }})
-                            @endif
-                        @elseif($transaction['transaction_type'] == 'receiveAdvance')
-                            Advance Payment from Customer
-                        @else
-                            Customer Payment
-                        @endif
-                    </span>
-                </div>
-            @elseif($transaction['transaction_to'] == 'contractor')
-                <div class="info-row">
-                    <span class="info-label">Contractor:</span>
-                    <span class="info-value">{{ $transaction['vendor_no'] ?? '' }} - {{ $transaction['fname'] ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Payment For:</span>
-                    <span class="info-value">
-                        @if($transaction['transaction_type'] == 'wages')
-                            Contractor Wages/Services
-                        @elseif(isset($transaction['order_id']) && $transaction['order_id'])
-                            Purchase #{{ $transaction['order_id'] }}
-                            @if(isset($transaction['purchase_no']))
-                                ({{ $transaction['purchase_no'] }})
-                            @endif
-                        @else
-                            Contractor Services
-                        @endif
-                    </span>
-                </div>
-            @elseif($transaction['transaction_to'] == 'brs')
-                <div class="info-row">
-                    <span class="info-label">Adjustment Type:</span>
-                    <span class="info-value">
-                        {{-- This is temporary reversed --}}
-                        @if($transaction['debit'] < 0)
-                            Decrease Balance
-                        @else
-                            Increase Balance
-                        @endif
-                    </span>
-                </div>
-            @elseif($transaction['transaction_type'] == 'generalVoucher')
-                @if($transaction['transaction_to'] == 'vendor')
-                    <div class="info-row">
-                        <span class="info-label">Vendor:</span>
-                        <span class="info-value">{{ $transaction['vendor_no'] ?? '' }} - {{ $transaction['vendor_name'] ?? $transaction['fname'] ?? 'N/A' }}</span>
-                    </div>
-                @elseif($transaction['transaction_to'] == 'contractor')
-                    <div class="info-row">
-                        <span class="info-label">Contractor:</span>
-                        <span class="info-value">{{ $transaction['vendor_no'] ?? '' }} - {{ $transaction['vendor_name'] ?? $transaction['fname'] ?? 'N/A' }}</span>
-                    </div>
-                @elseif($transaction['transaction_to'] == 'employee')
-                    <div class="info-row">
-                        <span class="info-label">Employee:</span>
-                        <span class="info-value">{{ $transaction['employee_no'] ?? '' }} - {{ $transaction['employee_name'] ?? $transaction['name'] ?? 'N/A' }}</span>
-                    </div>
-                @elseif($transaction['transaction_to'] == 'customer')
-                    <div class="info-row">
-                        <span class="info-label">Customer:</span>
-                        <span class="info-value">{{ $transaction['customer_no'] ?? '' }} - {{ $transaction['customer_name'] ?? $transaction['fname'] ?? 'N/A' }}</span>
-                    </div>
-                @endif
-                <div class="info-row">
-                    <span class="info-label">Charge Description:</span>
-                    <span class="info-value">{{ $transaction['description'] ?? 'General Voucher Charge' }}</span>
-                </div>
-            @endif
-
-            @if($transaction['bank_id'])
-                <div class="info-row">
-                    <span class="info-label">Payment Bank:</span>
-                    <span class="info-value">{{ $transaction['bname'] ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Account Title:</span>
-                    <span class="info-value">{{ $transaction['account_title'] ?? 'N/A' }}</span>
-                </div>
-                {{-- <div class="info-row">
-                    <span class="info-label">Account No:</span>
-                    <span class="info-value">{{ $transaction['account'] ?? 'N/A' }}</span>
-                </div> --}}
-            @endif
-
-            {{-- Customer Payment Breakdown (inline) --}}
-            @if($transaction['transaction_to'] == 'customer')
-                @php
-                    $grossAmount = $transaction['debit'] ?? $transaction['credit'] ?? 0;
-                    $netAmount = $grossAmount - ($transaction['fees_expenses'] ?? 0);
-                @endphp
-                @if($grossAmount > 0)
-                <div class="info-row">
-                    <span class="info-label">Amount Received:</span>
-                    <span class="info-value amount">{{ number_format($grossAmount, 2) }}</span>
-                </div>
-                @if(isset($transaction['fees_expenses']) && $transaction['fees_expenses'] > 0)
-                <div class="info-row">
-                    <span class="info-label">Fees/Expenses:</span>
-                    <span class="info-value amount">{{ number_format($transaction['fees_expenses'], 2) }}</span>
-                </div>
-                <div class="info-row" style="font-weight: bold; background-color: #f5f5f5; padding: 5px;">
-                    <span class="info-label">Net Amount:</span>
-                    <span class="info-value amount">{{ number_format($netAmount, 2) }}</span>
-                </div>
-                @endif
-                @endif
-            @endif
-        </div>
+<div class="voucher-grid">
+    <div class="info-row">
+        <span class="info-label">Voucher No:</span>
+        <span class="info-value voucher-number">{{ $voucherNumber ?? 'N/A' }}</span>
     </div>
-
-
-
-{{-- Payment Details Table --}}
-<div class="avoid-break" >
-    <h3>Payment Details</h3>
-    @if($transaction['transaction_to'] == 'brs')
-        {{-- Balance Adjustment: Show only one column based on adjustment type --}}
-        <table class="print-table">
-            <thead>
-                <tr>
-                    <th style="width: 50%">Description</th>
-                    <th style="width: 50%">
-                        @if($transaction['debit'] > 0)
-                        Increase Amount
-                        @else
-                        Decrease Amount
-                        @endif
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Bank Reconciliation Adjustment</td>
-                    <td class="text-right amount">
-                        @if($transaction['debit'] > 0)
-                            {{ number_format($transaction['debit'], 2) }}
-                        @else
-                            {{ number_format($transaction['credit'], 2) }}
-                        @endif
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr style="font-weight: bold; background-color: #f5f5f5;">
-                    <td class="text-right">Total:</td>
-                    <td class="text-right amount">{{ number_format(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0, 2) }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    @else
-        {{-- Regular transactions: Show both columns --}}
-        <table class="print-table">
-            <thead>
-                <tr>
-                    <th style="width: 50%">Description</th>
-                    <th style="width: 25%">Debit Amount</th>
-                    <th style="width: 25%">Credit Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        @if($transaction['transaction_to'] == 'customer' && isset($transaction['order_id']))
-                            Payment for Order #{{ $transaction['order_id'] ?? 'N/A' }}
-                            @if(isset($transaction['order_date']) && !empty($transaction['order_date']))
-                                ({{ \Carbon\Carbon::parse($transaction['order_date'])->format('d-m-Y') }})
-                            @endif
-                        @else
-                            Payment Transaction
-                            {{-- {{ $transaction['description'] ?? 'Payment Transaction' }} --}}
-                        @endif
-                    </td>
-                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
-                    <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
-                </tr>
-                @if($transaction['bank_id'])
-                <tr>
-                    <td>{{ $transaction['bname'] ?? 'Bank Account' }} {!! $transaction['description'] ?? '' !!}</td>
-                    <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
-                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
-                </tr>
-                @else
-                <tr>
-                    <td>Cash Account</td>
-                    <td class="text-right amount">{{ $transaction['debit'] ? number_format($transaction['debit'], 2) : '-' }}</td>
-                    <td class="text-right amount">{{ $transaction['credit'] ? number_format($transaction['credit'], 2) : '-' }}</td>
-                </tr>
-                @endif
-            </tbody>
-            <tfoot>
-           <tr style="font-weight: bold; background-color: #f5f5f5;">
-                <td class="text-right">Total:</td>
-                <td class="text-right amount">
-                    {{ number_format(!empty($transaction['debit']) && $transaction['debit'] != 0 ? $transaction['debit'] : (!empty($transaction['credit']) && $transaction['credit'] != 0 ? $transaction['credit'] : 0), 2) }}
-                </td>
-                <td class="text-right amount">
-                    {{ number_format(!empty($transaction['debit']) && $transaction['debit'] != 0 ? $transaction['debit'] : (!empty($transaction['credit']) && $transaction['credit'] != 0 ? $transaction['credit'] : 0), 2) }}
-                </td>
-            </tr>
-
-            </tfoot>
-        </table>
-    @endif
+    <div class="info-row">
+        <span class="info-label">Date:</span>
+        <span class="info-value">{{ formatDate($transaction['transaction_date'] ?? null, 'N/A') }}</span>
+    </div>
+    @foreach($details as $label => $value)
+        <div class="info-row">
+            <span class="info-label">{{ $label }}:</span>
+            <span class="info-value">{{ $value }}</span>
+        </div>
+    @endforeach
 </div>
 
+@if($note)
+    <div class="voucher-note"><b>Description:</b>{{ $note }}</div>
+@endif
 
+<table class="print-table">
+    <thead>
+        <tr>
+            <th class="text-left">Account</th>
+            <th class="num" style="width: 22%">Debit</th>
+            <th class="num" style="width: 22%">Credit</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($lines as [$account, $lineDebit, $lineCredit])
+            <tr>
+                <td class="text-left">{{ $account }}</td>
+                <td class="num">{{ $lineDebit ? number_format($lineDebit, 2) : '-' }}</td>
+                <td class="num">{{ $lineCredit ? number_format($lineCredit, 2) : '-' }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+    <tfoot>
+        <tr>
+            <td class="text-right">Total</td>
+            <td class="num">{{ number_format($totalDebit, 2) }}</td>
+            <td class="num">{{ number_format($totalCredit, 2) }}</td>
+        </tr>
+    </tfoot>
+</table>
 
-{{-- Payment Summary --}}
 <div class="totals-section avoid-break">
     <div class="total-row grand-total">
-        <span>Payment Amount: &nbsp;&nbsp; </span>
-        <span class="amount">{{ number_format(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0, 2) }}</span>
+        <span>{{ $isReceipt ? 'Amount Received' : ($isTransfer ? 'Amount Transferred' : ($isAdjustment ? 'Adjustment Amount' : 'Amount Paid')) }}</span>
+        <span class="amount">{{ number_format($amount, 2) }}</span>
     </div>
 </div>
 
-{{-- Amount in Words --}}
 @if(function_exists('numberToWordsWithCurrency'))
-<div class="amount-words avoid-break" style="margin-top: 8px; margin-bottom: 8px;">
+<div class="amount-words avoid-break">
     <span class="amount-words-label">Amount in Words:</span>
-    <span>{{ numberToWordsWithCurrency(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0) }}</span>
-    {{-- <div>{{ numberToWordsWithCurrency(($transaction['debit'] > 0 ? $transaction['debit'] : $transaction['credit']) ?? 0) }}</div> --}}
+    <span>{{ numberToWordsWithCurrency($amount) }}</span>
 </div>
 @endif
 
-{{-- Signatures --}}
-<div class="signatures avoid-break" style="margin-top: 8px;">
-    <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line-sm"></div>
-        <div style="font-size: 10px;">Prepared By</div>
-    </div>
-    <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line-sm"></div>
-        <div style="font-size: 10px;">Verified By</div>
-    </div>
-    <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line-sm"></div>
-        <div style="font-size: 10px;">Approved By</div>
-    </div>
-    <div class="signature-box" style="padding: 4px;">
-        <div class="signature-line-sm"></div>
-        <div style="font-size: 10px;">Received By</div>
-    </div>
-</div>
-
+<div class="signatures avoid-break">
+    @foreach(['Prepared By', 'Verified By', 'Approved By', $isReceipt ? 'Paid By' : 'Received By'] as $signature)
+        <div class="signature-box">
+            <div class="signature-line-sm"></div>
+            <div class="signature-label">{{ $signature }}</div>
+        </div>
+    @endforeach
 </div>
 @endsection

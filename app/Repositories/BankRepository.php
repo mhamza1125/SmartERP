@@ -35,6 +35,33 @@ class BankRepository implements GlobalInterface
             ->first();
     }
 
+    /**
+     * One of the company's own bank accounts with its bank name (from heads),
+     * as an array for the proforma / commercial invoice prints. Null when not found.
+     */
+    public function printDetails($bankId): ?array
+    {
+        if (empty($bankId)) {
+            return null;
+        }
+
+        $bank = Bank::leftJoin('heads', 'heads.head_id', '=', 'banks.head_id')
+            ->where('banks.bank_id', $bankId)
+            ->select(
+                'banks.bank_id',
+                'banks.account_title',
+                'banks.account',
+                'banks.iban',
+                'banks.address',
+                'banks.branch_code',
+                'banks.swift_code',
+                'heads.name as bank_name'
+            )
+            ->first();
+
+        return $bank ? $bank->toArray() : null;
+    }
+
     public function self()
     {
         return Bank::join('heads', 'heads.head_id', '=', 'banks.head_id')
@@ -68,7 +95,5 @@ class BankRepository implements GlobalInterface
         return $update->customer_id;
     }
 
-    public function delete($id)
-    {
-    }
+    public function delete($id) {}
 }

@@ -1,9 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Production_Order_' . ($order['job_no'] ?? 'N/A') . '_' . formatDate($order['order_date'] ?? now()))
+@section('doc_title', 'Production Order')
+@section('doc_no', $order['job_no'] ?? '')
 
 @section('content')
-<div class="document-title">Production Order</div>
 
 {{-- Production Order Header Information --}}
 <div class="document-info">
@@ -40,36 +41,32 @@
     <table class="print-table">
         <thead>
             <tr>
-                <th style="width: 6%">Sr.</th>
-                <th style="width: 10%">Article No</th>
-                <th style="width: 20%">Product Name</th>
-                <th style="width: 10%">Size</th>
-                <th style="width: 20%">Stage</th>
-                <th style="width: 10%">Quantity</th>
-                <th style="width: 12%">Finished Stock</th>
-                <th style="width: 12%">Unfinished Stock</th>
+                <th class="text-center" style="width: 6%">Sr.</th>
+                <th class="text-center" style="width: 12%">Article No</th>
+                <th class="text-left" style="width: 26%">Product Name</th>
+                <th class="text-center" style="width: 14%">Size</th>
+                <th class="num" style="width: 10%">QTY</th>
+                <th class="num" style="width: 11%">Total Stock</th>
+                <th class="num" style="width: 10%">Finished</th>
+                <th class="num" style="width: 11%">Unfinished</th>
             </tr>
         </thead>
         <tbody>
-            @if($orderItem->count())
-                @foreach($orderItem as $item)
-                @php
-                    $key = $item->product_type_id . '_' . $item->product_stage_id;
-                    $finishedStock = $stockData[$key]['finished_stock'] ?? 0;
-                    $unfinishedStock = $stockData[$key]['unfinished_stock'] ?? 0;
-                @endphp
-                <tr>
-                    <td class="text-center">{{ $loop->index + 1 }}</td>
-                    <td class="text-center">{{ $item->article_no }}</td>
-                    <td class="text-left">{{ $item->pname }}</td>
-                    <td class="text-center">{{ $item->name }}</td>
-                    <td class="text-center">{{ $item->sname ?? 'N/A' }}</td>
-                    <td class="text-center">{{ number_format($item->quantity) }}</td>
-                    <td class="text-center">{{ number_format($finishedStock) }}</td>
-                    <td class="text-center">{{ number_format($unfinishedStock) }}</td>
-                </tr>
-                @endforeach
-            @endif
+            @foreach($orderItem as $item)
+            @php
+                $stock = $stockData[$item->product_type_id . '_' . $item->product_stage_id] ?? [];
+            @endphp
+            <tr>
+                <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $item->article_no }}</td>
+                <td class="text-left">{{ $item->pname }}</td>
+                <td class="text-center">{{ $item->name }}</td>
+                <td class="num">{{ number_format($item->quantity) }}</td>
+                <td class="num">{{ number_format($stock['total_stock'] ?? 0) }}</td>
+                <td class="num">{{ number_format($stock['finished_stock'] ?? 0) }}</td>
+                <td class="num">{{ number_format($stock['unfinished_stock'] ?? 0) }}</td>
+            </tr>
+            @endforeach
         </tbody>
     </table>
 </div>
@@ -78,7 +75,7 @@
 {{-- Additional Notes Section --}}
 @if(isset($order['description']) && !empty($order['description']))
 <div class="info-section avoid-break">
-    <h3>Production Notes</h3>
+    <div class="table-title">Production Notes</div>
     <div style="border: 1px solid #333; padding: 10px; background-color: #f9f9f9;">
         {!! nl2br(e(strip_tags($order['description']))) !!}
     </div>

@@ -72,6 +72,7 @@
                     <th>Order No</th>
                     <th>Amount</th>
                     <th>Fees</th>
+                    <th>Details</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -86,6 +87,7 @@
                       <td>{{$item->order_no}}</td>
                       <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
                       <td>{{$item->fb_charges ? number_format($item->fb_charges) : 'N/A'}}</td>
+                      <td>{{ $details[$item->transaction_id]->summary ?? '' }}</td>
                       <td>
                         <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('transaction.editOPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
@@ -103,6 +105,7 @@
                     <th>Order No</th>
                     <th>Amount</th>
                     <th>Fees</th>
+                    <th>Details</th>
                     <th>Action</th>
                   </tr>
                 </tfoot>

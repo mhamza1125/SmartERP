@@ -93,8 +93,11 @@
                     @if($company && $company->ntn)
                     <tr><td><b>NTN:</b> {{$company->ntn}}</td></tr>
                     @endif
-                    @if($delivery['fi_no'])
-                    <tr><td><b>FI No:</b> {{$delivery['fi_no']}}</td></tr>
+                    @if($delivery['fi_no'] || ($company && $company->fi_no))
+                    <tr><td><b>FI No:</b> {{ $delivery['fi_no'] ?: $company->fi_no }}</td></tr>
+                    @endif
+                    @if(($delivery['freight_charges'] ?? 0) > 0)
+                    <tr><td><b>Freight Charges:</b> {{ number_format($delivery['freight_charges'], 2) }}</td></tr>
                     @endif
                     @php $description = is_array($delivery) ? $delivery['description'] : $delivery->description; @endphp
                     @if($description)<tr><td><b>Detail:</b></td></tr>
@@ -481,7 +484,7 @@ function printInvoice(content, title) {
     console.log('Fetching company data...');
 
     // Fetch company data and generate print document
-    fetch('/company/data')
+    fetch(appUrl('company/data'))
         .then(response => response.json())
         .then(company => {
             generateInvoicePrintDocument(content, title, company);
@@ -547,7 +550,7 @@ function generateInvoicePrintDocument(content, title, company) {
         </head>
         <body>
             <div class="print-header">
-                <img src="${window.location.origin}/${company.logo_path}" alt="Company Logo">
+                <img src="${window.SmartERP.logo || appUrl(company.logo_path)}" alt="Company Logo">
                 <h1>${company.name}</h1>
                 <p>${company.address}</p>
                 <p>Phone: ${company.phone} || Email: ${company.email} || Web: ${company.website}</p>
@@ -605,20 +608,7 @@ function generateInvoicePrintDocument(content, title, company) {
         <div class="form-group">
           <label for="commercialBankSelect"><strong>Select Bank Account (Optional)</strong></label>
           <select class="form-control" id="commercialBankSelect">
-            <option value="">-- No Bank Details --</option>
-            @if(isset($banks) && $banks->count() > 0)
-              @foreach($banks as $bank)
-                <option value="{{ $bank->bank_id }}"
-                        data-title="{{ $bank->account_title }}"
-                        data-account="{{ $bank->account }}"
-                        data-iban="{{ $bank->iban ?? '' }}"
-                        data-address="{{ $bank->address ?? '' }}"
-                        data-branch="{{ $bank->branch_code ?? '' }}"
-                        data-swift="{{ $bank->swift_code ?? '' }}">
-                  {{ $bank->account_title }} - {{ $bank->account }}
-                </option>
-              @endforeach
-            @endif
+            @include('bankOptions')
           </select>
         </div>
         <div class="form-group">

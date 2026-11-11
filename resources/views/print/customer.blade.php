@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Customer_Info_' . ($customer['customer_no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('doc_title', 'Customer Information')
+@section('doc_no', $customer['customer_no'] ?? '')
 
 @section('content')
-<div class="document-title">Customer Information</div>
-
 {{-- Customer Header Information --}}
 <div class="document-info">
     <div class="info-section">

@@ -1,6 +1,8 @@
 @extends('print.layout')
 
 @section('title', 'Delivery_Return_' . ($return['return_no'] ?? 'N/A') . '_' . formatDate($return['return_date'] ?? now()))
+@section('doc_title', 'Delivery Return')
+@section('doc_no', $return['return_no'] ?? '')
 
 @push('styles')
 <style>
@@ -19,8 +21,6 @@
 @endpush
 
 @section('content')
-<div class="document-title">Delivery Return</div>
-
 {{-- Return Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -78,8 +78,8 @@
                 <th style="width: 15%">Article No</th>
                 <th style="width: 10%">Size</th>
                 <th style="width: 10%">Stage</th>
-                <th style="width: 10%">Original Qty</th>
-                <th style="width: 10%">Returned Qty</th>
+                <th style="width: 10%">Original QTY</th>
+                <th style="width: 10%">Returned</th>
                 <th style="width: 10%">Unit</th>
                 <th style="width: 10%">Reason</th>
             </tr>

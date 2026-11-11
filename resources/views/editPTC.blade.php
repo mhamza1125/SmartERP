@@ -47,7 +47,7 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Start Stage</label>
-                    <input type="text" class="form-control" value="{{ $startStage ? $startStage->name : 'N/A' }}" readonly>
+                    <input type="text" class="form-control" value="{{ $startStage ? $startStage->name : 'N/A' }}{{ $ptc->startsFromMaterials() ? ' (raw materials)' : ' (stock)' }}" readonly>
                   </div>
                 </div>
                 <div class="col-md-4">

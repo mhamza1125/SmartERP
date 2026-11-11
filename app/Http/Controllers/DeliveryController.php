@@ -434,17 +434,8 @@ class DeliveryController extends Controller
         $uom = request()->input('uom');
         $statementOfOrigin = request()->input('statement_of_origin');
 
-        // Get bank details if bank_id is provided in query parameter
-        $bankDetails = null;
-        if (request()->has('bank_id')) {
-            $bankDetailsObj = DB::table('banks')
-                ->where('bank_id', request()->input('bank_id'))
-                ->first();
-            // Convert stdClass object to array for view compatibility
-            if ($bankDetailsObj) {
-                $bankDetails = (array) $bankDetailsObj;
-            }
-        }
+        // Bank account picked in the commercial invoice modal (optional)
+        $bankDetails = $this->bankRepository->printDetails(request()->input('bank_id'));
 
         // Get packing list for this delivery if it exists
         $packingList = null;

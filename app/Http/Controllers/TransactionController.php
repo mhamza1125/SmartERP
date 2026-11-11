@@ -73,6 +73,8 @@ class TransactionController extends Controller
         }
 
         return view('transaction', [
+            // What each transaction was about (party, purchase / order, account, cheque, note) for the printed list
+            'details' => $this->transactionRepository->describe($transaction->pluck('transaction_id')),
             'transaction' => $transaction,
             'dfrom' => $dfrom,
             'dto' => $dto,
@@ -96,6 +98,8 @@ class TransactionController extends Controller
         $customers = $this->customerRepository->all();
 
         return view('oPayment', [
+            // What each transaction was about (party, purchase / order, account, cheque, note) for the printed list
+            'details' => $this->transactionRepository->describe($transaction->pluck('transaction_id')),
             'transaction' => $transaction,
             'customers' => $customers,
             'dfrom' => $dfrom,
@@ -121,6 +125,8 @@ class TransactionController extends Controller
         $employees = $this->employeeRepository->all();
 
         return view('ePayment', [
+            // What each transaction was about (party, purchase / order, account, cheque, note) for the printed list
+            'details' => $this->transactionRepository->describe($transaction->pluck('transaction_id')),
             'transaction' => $transaction,
             'employees' => $employees,
             'dfrom' => $dfrom,
@@ -146,6 +152,8 @@ class TransactionController extends Controller
         $vendors = $this->vendorRepository->all()->where('vendor_type', '0');
 
         return view('vPayment', [
+            // What each transaction was about (party, purchase / order, account, cheque, note) for the printed list
+            'details' => $this->transactionRepository->describe($transaction->pluck('transaction_id')),
             'transaction' => $transaction,
             'vendors' => $vendors,
             'dfrom' => $dfrom,
@@ -171,6 +179,8 @@ class TransactionController extends Controller
         $contractors = $this->vendorRepository->all()->where('vendor_type', '1');
 
         return view('cPayment', [
+            // What each transaction was about (party, purchase / order, account, cheque, note) for the printed list
+            'details' => $this->transactionRepository->describe($transaction->pluck('transaction_id')),
             'transaction' => $transaction,
             'contractors' => $contractors,
             'dfrom' => $dfrom,
@@ -196,6 +206,8 @@ class TransactionController extends Controller
         $heads = $this->headRepository->get('7');
 
         return view('expense', [
+            // What each transaction was about (party, purchase / order, account, cheque, note) for the printed list
+            'details' => $this->transactionRepository->describe($transaction->pluck('transaction_id')),
             'transaction' => $transaction,
             'heads' => $heads,
             'dfrom' => $dfrom,
@@ -886,6 +898,7 @@ class TransactionController extends Controller
 
         return view('transferInfo', [
             'transaction' => $transaction,
+            'info' => $this->transactionRepository->describe([$id])->first(),
         ]);
     }
 
@@ -1325,6 +1338,27 @@ class TransactionController extends Controller
         return view('print.payment', [
             'transaction' => $transaction,
             'voucherNumber' => $voucherNumber,
+            // Everything the View page shows: party, purchase / order, accounts, cheque, note
+            'info' => $this->transactionRepository->describe([$id])->first(),
+        ]);
+    }
+
+    /**
+     * Print a bank / cash transfer voucher (either side of the transfer pair).
+     */
+    public function printTransfer($id)
+    {
+        $this->authorize('show', Transaction::class);
+        $transaction = $this->transactionRepository->getTransfer($id);
+
+        if (! $transaction || $transaction->transaction_to !== 'transfer') {
+            return redirect()->back()->with('error', 'Transfer not found');
+        }
+
+        return view('print.payment', [
+            'transaction' => $transaction,
+            'voucherNumber' => 'SLE-' . date('Y') . '-' . str_pad($transaction['transaction_id'], 4, '0', STR_PAD_LEFT),
+            'info' => $this->transactionRepository->describe([$id])->first(),
         ]);
     }
 
@@ -1340,8 +1374,10 @@ class TransactionController extends Controller
             return redirect()->back()->with('error', 'Expense not found');
         }
 
-        return view('print.expense', [
-            'expense' => $expense,
+        return view('print.payment', [
+            'transaction' => $expense,
+            'voucherNumber' => 'SLE-' . date('Y') . '-' . str_pad($expense['transaction_id'], 4, '0', STR_PAD_LEFT),
+            'info' => $this->transactionRepository->describe([$id])->first(),
         ]);
     }
 
@@ -1363,6 +1399,7 @@ class TransactionController extends Controller
         return view('print.payment', [
             'transaction' => $transaction,
             'voucherNumber' => $voucherNumber,
+            'info' => $this->transactionRepository->describe([$id])->first(),
         ]);
     }
 

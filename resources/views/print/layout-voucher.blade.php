@@ -8,7 +8,7 @@
         /* =================================================================
            SmartERP — Voucher Print Layout
            Inherits the same design tokens as layout.blade.php.
-           Tighter sizing so the voucher fits the upper portion of an A4 page.
+           Half-page voucher: A5 landscape (half an A4 sheet).
            ================================================================= */
 
         /* ── 0. Design tokens (must match layout.blade.php) ────────────── */
@@ -21,14 +21,13 @@
             --sans:      "Arial", "Helvetica Neue", Helvetica, sans-serif;
             --mono:      "Courier New", Courier, monospace;
             --header-h:  18mm;
-            --footer-h:  14mm;
         }
 
         /* ── 1. Reset ───────────────────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         /* ── 2. Page ────────────────────────────────────────────────────── */
-        @page { size: A4 portrait; margin: 0; }
+        @page { size: A5 landscape; margin: 0; }
 
         /* ── 3. Body ────────────────────────────────────────────────────── */
         body {
@@ -50,57 +49,73 @@
         }
 
         .doc-header__inner {
-            display: flex;
+            display: grid;
+            /* Fixed shares: a long title wraps inside its own column instead of pushing into the logo */
+            grid-template-columns: minmax(0, 28fr) minmax(0, 44fr) minmax(0, 28fr);
             align-items: center;
-            justify-content: center;
-            padding: 3mm 12mm 2mm;
+            gap: 12px;
+            padding: 2.5mm 8mm 2mm;
         }
 
+        .doc-header__brand { min-width: 0; }  /* fills its column, so the logo is capped at the column width */
+
         .doc-header__logo {
-            height: 42px;
+            height: 34px;
             width: auto;
+            max-width: 100%;
             object-fit: contain;
+            display: block;
+        }
+
+        .doc-header__title { text-align: center; min-width: 0; }
+
+        .doc-header__title-main {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .doc-header__title-no {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-top: 2px;
+        }
+
+        .doc-header__contacts {
+            justify-self: end;
+            text-align: right;
+            font-size: 9px;
+            line-height: 1.5;
+            color: var(--ink);
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .doc-header__contact-label {
+            font-family: var(--mono);
+            font-size: 7.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-right: 3px;
         }
 
         .doc-header__rule { height: 3px; background: var(--accent); }
 
-        /* ── 5. Fixed footer ─────────────────────────────────────────────── */
-        .doc-footer {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            width: 100%;
-            background: var(--accent);
-            padding: 1.5mm 12mm;
-            z-index: 1000;
-        }
-
-        .doc-footer__address {
-            font-size: 8.5px;
-            font-weight: 700;
-            color: #fff;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .doc-footer__contacts {
-            display: flex;
-            margin-top: 1mm;
-            padding-top: 1mm;
-            border-top: 1px solid rgba(255, 255, 255, 0.35);
-            font-size: 8.5px;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1.5;
-        }
-
-        .doc-footer__contacts span             { flex: 1; text-align: center; white-space: nowrap; }
-        .doc-footer__contacts span:first-child { text-align: left; }
-        .doc-footer__contacts span:last-child  { text-align: right; }
-        .doc-footer__contacts span:only-child  { text-align: center; }
-
         /* ── 6. Voucher container ────────────────────────────────────────── */
         .doc-body {
-            padding: 4mm 12mm 6mm;
+            padding: 3mm 8mm 4mm;
         }
 
         /* Page frame: thead/tfoot spacers repeat on every printed page so
@@ -108,7 +123,7 @@
         .page-frame                { width: 100%; border-collapse: collapse; }
         .page-frame > * > tr > td  { padding: 0; }
         .page-frame__header-space  { height: calc(var(--header-h) + 3mm); }
-        .page-frame__footer-space  { height: var(--footer-h); }
+        .page-frame__footer-space  { height: 8mm; }
 
         .voucher-container {
             border: 1.5px solid var(--ink);
@@ -337,6 +352,55 @@
             margin-bottom: 6px;
         }
 
+
+        /* ── Table titles & sign-off lines ───────────────────────────────── */
+        .table-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 6px 0 6px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .section-head,
+        .doc-body h3 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent);
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .sign-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            margin-top: 28px;
+            font-size: 11px;
+            font-weight: 600;
+            page-break-inside: avoid;
+        }
+
+        .sign-row--single { justify-content: flex-start; }
+
+        .sign-row__field { white-space: nowrap; }
+
+        .sign-row__line {
+            display: inline-block;
+            width: 55mm;
+            border-bottom: 1px solid var(--ink);
+            margin-left: 6px;
+        }
+
+        /* Numeric columns (qty, price, amount): right-aligned in head, body and foot */
+        .print-table th.num, .print-table td.num { text-align: right !important; }
+
         /* ── 14. Page-break helpers ──────────────────────────────────────── */
         .page-break  { page-break-before: always; }
         .avoid-break { page-break-inside: avoid; }
@@ -344,7 +408,7 @@
         /* ── 15. Print button ────────────────────────────────────────────── */
         .print-button {
             position: fixed;
-            top: 16px; right: 16px;
+            bottom: 16px; right: 16px;
             z-index: 9999;
             padding: 7px 18px;
             background: var(--accent);
@@ -361,8 +425,8 @@
         /* ── 16. @media print ────────────────────────────────────────────── */
         @media print {
             body {
-                padding-right:  12mm             !important;
-                padding-left:   12mm             !important;
+                padding-right:  0                !important;
+                padding-left:   0                !important;
                 background: #fff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -384,8 +448,10 @@
         @media screen {
             body { background: #e6e9ef; }
 
-            .doc-header,
-            .doc-footer { position: relative; }
+            .doc-header { position: relative; background: transparent; }
+
+            .doc-header__inner,
+            .doc-header__rule { max-width: 210mm; margin: 0 auto; background: #fff; }
 
             .page-frame__header-space,
             .page-frame__footer-space { display: none; }
@@ -395,7 +461,7 @@
                 margin: 0 auto;
                 background: #fff;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.10);
-                min-height: 250mm;
+                min-height: 128mm;
             }
         }
     </style>
@@ -420,21 +486,61 @@
         <tfoot><tr><td><div class="page-frame__footer-space"></div></td></tr></tfoot>
     </table>
 
-    <footer class="doc-footer">
-        @include('print.footer')
-    </footer>
 
     <script>
         function applyChromeHeights() {
             var root = document.documentElement.style;
             var h = document.querySelector('.doc-header');
-            var f = document.querySelector('.doc-footer');
             if (h) root.setProperty('--header-h', h.offsetHeight + 'px');
-            if (f) root.setProperty('--footer-h', f.offsetHeight + 'px');
         }
         window.addEventListener('load', applyChromeHeights);
         window.addEventListener('beforeprint', applyChromeHeights);
         setTimeout(applyChromeHeights, 600);
+
+        // Table alignment rules for every print:
+        //  1. Numeric columns (QTY, price, totals, amounts, debit/credit, balance, weight...) are
+        //     right-aligned in the header, body and footer.
+        //  2. Every header cell takes the alignment of the data below it, so titles and values line up.
+        // Cells are mapped to columns through their colspans; tables using rowspan keep their own classes.
+        var NUMERIC_HEAD = /\b(qty|quantity|price|rate|total|amount|debit|credit|balance|stock in|stock out|total stock|weight|pcs|boxes|cartons|average|avg|ordered|received|returned|remaining|finished|unfinished|work done|wages|cost|value)\b/i;
+        var NOT_NUMERIC_HEAD = /\b(no|name|date|from|to|by|type|description|method|reference|details|head|stage|remarks|reason|code|status)\b/i;
+
+        function cellsByColumn(row) {
+            var map = {}, col = 0;
+            Array.prototype.forEach.call(row.cells, function (cell) {
+                if (cell.colSpan === 1) map[col] = cell;
+                col += cell.colSpan;
+            });
+            return map;
+        }
+
+        function alignPrintTables() {
+            document.querySelectorAll('table.print-table').forEach(function (table) {
+                // data-no-align: blank forms keep their own (centred) headers
+                if (!table.tHead || table.querySelector('[rowspan]') || table.hasAttribute('data-no-align')) return;
+                var headRow = table.tHead.rows[table.tHead.rows.length - 1];
+                var heads = cellsByColumn(headRow);
+                var rows = [];
+                Array.prototype.forEach.call(table.tBodies, function (b) { rows = rows.concat(Array.prototype.slice.call(b.rows)); });
+                if (table.tFoot) rows = rows.concat(Array.prototype.slice.call(table.tFoot.rows));
+
+                Object.keys(heads).forEach(function (col) {
+                    var text = heads[col].textContent.replace(/\s+/g, ' ').trim();
+                    if (NUMERIC_HEAD.test(text) && !NOT_NUMERIC_HEAD.test(text)) {
+                        heads[col].style.setProperty('text-align', 'right', 'important');
+                        rows.forEach(function (r) {
+                            var cell = cellsByColumn(r)[col];
+                            if (cell) cell.style.setProperty('text-align', 'right', 'important');
+                        });
+                        return;
+                    }
+                    var sample = rows.map(function (r) { return cellsByColumn(r)[col]; })
+                        .filter(function (c) { return c && c.textContent.trim() !== ''; })[0];
+                    if (sample) heads[col].style.setProperty('text-align', window.getComputedStyle(sample).textAlign, 'important');
+                });
+            });
+        }
+        document.addEventListener('DOMContentLoaded', alignPrintTables);
     </script>
 
     @stack('scripts')

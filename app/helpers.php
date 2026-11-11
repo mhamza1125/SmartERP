@@ -3,15 +3,15 @@
 use App\Helpers\NumberHelper;
 use Carbon\Carbon;
 
-if (!function_exists('formatDate')) {
+if (! function_exists('formatDate')) {
     /**
      * Format a date for display as DD-MM-YYYY (e.g. 30-09-2026).
      * Null, empty, zero or unparseable dates return $default.
      * Display only - never use for form values or stored dates.
      *
-     * @param mixed $date
-     * @param string $default
-     * @param string $format
+     * @param  mixed  $date
+     * @param  string  $default
+     * @param  string  $format
      * @return string
      */
     function formatDate($date, $default = '-', $format = 'd-m-Y')
@@ -28,12 +28,12 @@ if (!function_exists('formatDate')) {
     }
 }
 
-if (!function_exists('formatDateTime')) {
+if (! function_exists('formatDateTime')) {
     /**
      * Format a date-time for display as DD-MM-YYYY HH:MM.
      *
-     * @param mixed $date
-     * @param string $default
+     * @param  mixed  $date
+     * @param  string  $default
      * @return string
      */
     function formatDateTime($date, $default = '-')
@@ -42,11 +42,11 @@ if (!function_exists('formatDateTime')) {
     }
 }
 
-if (!function_exists('numberToWords')) {
+if (! function_exists('numberToWords')) {
     /**
      * Convert number to words
-     * 
-     * @param float|int $number
+     *
+     * @param  float|int  $number
      * @return string
      */
     function numberToWords($number)
@@ -55,12 +55,12 @@ if (!function_exists('numberToWords')) {
     }
 }
 
-if (!function_exists('numberToWordsWithCurrency')) {
+if (! function_exists('numberToWordsWithCurrency')) {
     /**
      * Convert number to words with currency
-     * 
-     * @param float|int $number
-     * @param string $currency
+     *
+     * @param  float|int  $number
+     * @param  string  $currency
      * @return string
      */
     function numberToWordsWithCurrency($number, $currency = 'Rupees')
@@ -69,13 +69,13 @@ if (!function_exists('numberToWordsWithCurrency')) {
     }
 }
 
-if (!function_exists('generateVoucherNumber')) {
+if (! function_exists('generateVoucherNumber')) {
     /**
      * Generate voucher number
-     * 
-     * @param int $id
-     * @param string $prefix
-     * @param int $padding
+     *
+     * @param  int  $id
+     * @param  string  $prefix
+     * @param  int  $padding
      * @return string
      */
     function generateVoucherNumber($id, $prefix = 'VCH', $padding = 4)
@@ -84,16 +84,37 @@ if (!function_exists('generateVoucherNumber')) {
     }
 }
 
-if (!function_exists('generateVoucherByType')) {
+if (! function_exists('generateVoucherByType')) {
     /**
      * Generate voucher number by type
-     * 
-     * @param int $id
-     * @param string $type
+     *
+     * @param  int  $id
+     * @param  string  $type
      * @return string
      */
     function generateVoucherByType($id, $type = 'general')
     {
         return NumberHelper::generateVoucherByType($id, $type);
+    }
+}
+
+if (! function_exists('printLogoUrl')) {
+    /**
+     * URL of the logo for printed documents, built from the request's own base URL
+     * (works under a sub-folder such as http://host:8080/ERP/public).
+     * Company logo when its file exists, otherwise the bundled default logo.
+     */
+    function printLogoUrl(?\App\Models\Company $company = null): string
+    {
+        $company ??= \App\Models\Company::first();
+
+        foreach ([$company?->logo_path, $company?->logo ? 'storage/'.$company->logo : null] as $path) {
+            $path = ltrim((string) $path, '/');
+            if ($path !== '' && is_file(public_path($path))) {
+                return asset($path);
+            }
+        }
+
+        return asset('assets/print-logo.png');
     }
 }

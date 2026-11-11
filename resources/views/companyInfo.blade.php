@@ -39,6 +39,10 @@
                                             <td>{{ $company->ntn ?? 'N/A' }}</td>
                                         </tr>
                                         <tr>
+                                            <td><strong>FI No:</strong></td>
+                                            <td>{{ $company->fi_no ?? 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
                                             <td><strong>Phone:</strong></td>
                                             <td>{{ $company->phone }}</td>
                                         </tr>

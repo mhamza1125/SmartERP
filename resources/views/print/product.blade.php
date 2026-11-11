@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Product_Info_' . ($product['article_no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('doc_title', 'Product Information')
+@section('doc_no', $product['article_no'] ?? '')
 
 @section('content')
-<div class="document-title">Product Information</div>
-
 {{-- Product Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -90,7 +90,7 @@
                         <th>Sr.</th>
                         <th>Material No</th>
                         <th>Material Name</th>
-                        <th>Quantity</th>
+                        <th>QTY</th>
                         <th>Price</th>
                         <th>Units</th>
                     </tr>
@@ -167,7 +167,7 @@
                 <th>Sr.</th>
                 <th>Size</th>
                 <th>Stage</th>
-                <th>Quantity</th>
+                <th>QTY</th>
             </tr>
         </thead>
         <tbody>

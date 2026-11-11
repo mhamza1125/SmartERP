@@ -71,17 +71,14 @@
                           <td>{{$index++}}</td>
                           <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                           <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
-                          <td>
+                          @php $info = $details[$item->transaction_id] ?? null; @endphp
+                          {{-- Printed / exported as one line saying what the transaction was about --}}
+                          <td data-export="{{ $info->narration ?? ucfirst($item->transaction_to) }}">
                             {{ucfirst($item->transaction_to)}}
-                            @if(isset($item->vendor_no)) <br>
-                              {{$item->vendor_no}} - {{$item->fname}}
-                            @elseif(isset($item->employee_no)) <br>
-                              {{$item->employee_no}} - {{$item->name}}
-                            @elseif(isset($item->order_no)) <br>
-                              {{$item->order_no}} | {{$item->job_no}}
-                            @endif
+                            @if($info && $info->party) <br>{{ $info->party }} @endif
+                            @if($info && $info->summary) <br><small class="text-muted">{{ $info->summary }}</small> @endif
                           </td>
-                          <td>{{ucfirst($item->transaction_type)}}</td>
+                          <td>{{ $info->type ?? ucfirst($item->transaction_type) }}</td>
                           <td>{{isset($item->debit) ? number_format($item->debit) : ''}}</td>
                           <td>{{isset($item->credit) ? number_format($item->credit) : ''}}</td>
                           <td>
@@ -109,6 +106,7 @@
                 <tfoot>
                   <tr>
                     <th>Sr.</th>
+                    <th>Voucher No</th>
                     <th>Date</th>
                     <th>Transaction</th>
                     <th>Transaction Type</th>

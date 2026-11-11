@@ -20,6 +20,7 @@ class Delivery extends Model
         'delivery_method',
         'delivery_status',
         'fi_no',
+        'freight_charges',
         'delivery_no',
         'delivery_date',
         'created_by',

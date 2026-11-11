@@ -1,6 +1,8 @@
 @extends('print.layout')
 
-@section('title', 'Issuance Information')
+@section('title', 'Issuance_' . ($issue['stock_no'] ?? 'N/A'))
+@section('doc_title', 'Stock Issuance')
+@section('doc_no', $issue['stock_no'] ?? '')
 
 @section('content')
 
@@ -85,7 +87,7 @@
                 <th>Sr.</th>
                 <th>Article No</th>
                 <th>Material / Stage</th>
-                <th>Quantity</th>
+                <th>QTY</th>
                 <th>Average</th>
             </tr>
         </thead>
@@ -120,7 +122,7 @@
                     <th>Article No</th>
                     <th>Material / Stage</th>
                     <th>Work Done</th>
-                    <th>Quantity</th>
+                    <th>QTY</th>
                 </tr>
             </thead>
             <tbody>

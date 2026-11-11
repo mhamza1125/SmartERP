@@ -301,20 +301,7 @@ function printProformaInvoice() {
         <div class="form-group">
           <label for="proformaBankSelect"><strong>Select Bank Account (Optional)</strong></label>
           <select class="form-control" id="proformaBankSelect">
-            <option value="">-- No Bank Details --</option>
-            @if(isset($banks) && $banks->count() > 0)
-              @foreach($banks as $bank)
-                <option value="{{ $bank->bank_id }}"
-                        data-title="{{ $bank->account_title }}"
-                        data-account="{{ $bank->account }}"
-                        data-iban="{{ $bank->iban ?? '' }}"
-                        data-address="{{ $bank->address ?? '' }}"
-                        data-branch="{{ $bank->branch_code ?? '' }}"
-                        data-swift="{{ $bank->swift_code ?? '' }}">
-                  {{ $bank->account_title }} - {{ $bank->account }}
-                </option>
-              @endforeach
-            @endif
+            @include('bankOptions')
           </select>
         </div>
       </div>

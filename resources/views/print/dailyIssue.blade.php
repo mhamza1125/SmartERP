@@ -1,10 +1,9 @@
 @extends('print.layout')
 
 @section('title', 'Daily_Issuance_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
+@section('doc_title', 'Daily Issuance Report')
 
 @section('content')
-<div class="document-title">Daily Issuance Report</div>
-
 {{-- Report Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -35,7 +34,7 @@
                 <th>Item / Product</th>
                 <th>Size</th>
                 <th>Stage</th>
-                <th>Quantity</th>
+                <th>QTY</th>
             </tr>
         </thead>
         <tbody>

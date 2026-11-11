@@ -68,7 +68,7 @@
                     <th>Sr.</th>
                     <th>Date</th>
                     <th>Voucher No</th>
-                    <th>Description</th>
+                    <th>Expense Details</th>
                     <th>Debit</th>
                     <th>Credit</th>
                     <th>Balance</th>
@@ -95,7 +95,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                       <td>SLE-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
-                      <td>{{$item->name}}</td>
+                      <td>{{ $details[$item->transaction_id]->narration ?? $item->name }}</td>
                       <td class="text-right">{{ $credit > 0 ? number_format($credit, 2) : '-' }}</td>
                       <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>
                       <td class="text-right">{{ number_format($balance, 2) }}</td>

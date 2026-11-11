@@ -434,10 +434,11 @@ class PtcStockRepository implements GlobalInterface
     }
 
     /**
-     * Stage of the stock the PTC starts from (e.g. Stage 1 = the unfinished product
-     * brought in). It is not a work stage: the first issuance is for the stage after it.
-     * PTCs created before start_stage_id was stored issued their master for the start
-     * stage itself, so their master issue_for is the start.
+     * The PTC's start stage. Started from stock (default): the stage of the stock it starts
+     * from (e.g. Stage 1 = the unfinished product brought in), not a work stage - the first
+     * issuance is for the stage after it. Started from raw materials: the first work stage
+     * itself. PTCs created before start_stage_id was stored issued their master for the
+     * start stage itself, so their master issue_for is the start.
      */
     public function startStageId(Stock $ptc)
     {
@@ -445,8 +446,17 @@ class PtcStockRepository implements GlobalInterface
     }
 
     /**
-     * Stages an issuance of this PTC can be made for: the work stages after its start
-     * stage through its end stage, in product order (a single-stage PTC: that stage).
+     * Index of the first work stage, given the start / end stage indexes: the start stage
+     * itself for a raw-material PTC or a single-stage PTC, otherwise the stage after it.
+     */
+    public function firstWorkIndex(Stock $ptc, int $startIndex, int $endIndex): int
+    {
+        return ! $ptc->startsFromMaterials() && $startIndex < $endIndex ? $startIndex + 1 : $startIndex;
+    }
+
+    /**
+     * Stages an issuance of this PTC can be made for: its work stages (see firstWorkIndex)
+     * through its end stage, in product order.
      */
     public function issueStages(Stock $ptc, Collection $stages): Collection
     {
@@ -455,9 +465,84 @@ class PtcStockRepository implements GlobalInterface
         $endIndex = $stages->search(fn ($stage) => $stage->head_id == $this->endStageId($ptc, $stages));
         $startIndex = $startIndex === false ? 0 : $startIndex;
         $endIndex = $endIndex === false ? $stages->count() - 1 : $endIndex;
-        $firstWorkIndex = $startIndex < $endIndex ? $startIndex + 1 : $startIndex;
+        $firstWorkIndex = $this->firstWorkIndex($ptc, $startIndex, $endIndex);
 
         return $stages->slice($firstWorkIndex, $endIndex - $firstWorkIndex + 1)->values();
+    }
+
+    /**
+     * The PTC traveller card: one row for every stage of the product (first to last,
+     * whether or not work was done there), for the printed PTC. Stages without
+     * activity come back with empty values so the row prints blank.
+     *
+     * Each row: name, status (see stageSummary), started (first issuance date for the
+     * stage), issued (product issued), received, rejected (received into Rejection),
+     * passed (received - rejected), completed (last receipt date once the stage is fully
+     * received), workers (who the stage was issued to), refs (its issuance and receipt
+     * references, e.g. "I002, R1-I002", numbered as on the PTC page).
+     */
+    public function stageCard(Stock $ptc, ?Collection $stages = null): Collection
+    {
+        $stages = ($stages ?? $this->productStages($ptc->stock_id))->values();
+        $summary = collect($this->stageSummary($ptc, $stages)['stages'])->keyBy('head_id');
+
+        $worker = fn ($query) => $query
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')->where('stocks.table_name', 'vendor');
+            });
+
+        $issuances = $worker(Stock::where(function ($query) use ($ptc) {
+            $query->where(function ($q) use ($ptc) {
+                $q->where('stocks.stock_id', $ptc->stock_id)->where('stocks.is_ptc_master', 1);
+            })->orWhere(function ($q) use ($ptc) {
+                $q->where('stocks.ptc_id', $ptc->stock_id)->where('stocks.stock_type', 2);
+            });
+        }))->get(['stocks.stock_id', 'stocks.issue_for', 'stocks.stock_date', DB::raw('COALESCE(employees.name, vendors.fname) as worker')]);
+
+        $receipts = Stock::where('ptc_id', $ptc->stock_id)
+            ->where('stock_type', 1)
+            ->where('stock_status', '!=', Stock::STATUS_PTC_RELEASED)
+            ->whereIn('issue_id', $issuances->pluck('stock_id'))
+            ->get(['stock_id', 'issue_id', 'stock_date']);
+
+        $rejected = $receipts->isEmpty() ? collect() : DB::table('stock_items')
+            ->whereIn('stock_id', $receipts->pluck('stock_id'))
+            ->where('stage_id', Stock::STAGE_REJECTED)
+            ->where('material_id', 0)
+            ->whereNull('component_product_type_id')
+            ->groupBy('stock_id')
+            ->select('stock_id', DB::raw('SUM(quantity) as qty'))
+            ->pluck('qty', 'stock_id');
+
+        $issueFor = $issuances->pluck('issue_for', 'stock_id');
+        $refs = $this->references($ptc->stock_id);
+
+        return $stages->map(function ($stage) use ($summary, $issuances, $receipts, $rejected, $issueFor, $refs) {
+            $row = $summary->get($stage->head_id);
+            $stageIssuances = $issuances->where('issue_for', $stage->head_id);
+            $stageReceipts = $receipts->filter(fn ($receipt) => ($issueFor[$receipt->issue_id] ?? null) == $stage->head_id);
+            $rejectedQty = $stageReceipts->sum(fn ($receipt) => (float) ($rejected[$receipt->stock_id] ?? 0));
+            $received = (float) ($row->received ?? 0);
+            $hasActivity = $stageIssuances->isNotEmpty();
+
+            return (object) [
+                'head_id' => $stage->head_id,
+                'name' => $stage->name,
+                'status' => $row->status ?? 'outside',
+                'started' => $hasActivity ? $stageIssuances->min('stock_date') : null,
+                'issued' => $hasActivity && ($row->issued ?? 0) > 0 ? $row->issued : null,
+                'received' => $stageReceipts->isNotEmpty() ? $this->round($received) : null,
+                'rejected' => $rejectedQty > 0 ? $this->round($rejectedQty) : null,
+                'passed' => $stageReceipts->isNotEmpty() ? $this->round($received - $rejectedQty) : null,
+                'completed' => ($row->status ?? null) === 'completed' ? $stageReceipts->max('stock_date') : null,
+                'workers' => $stageIssuances->pluck('worker')->filter()->unique()->implode(', ') ?: null,
+                'refs' => $stageIssuances->pluck('stock_id')->merge($stageReceipts->pluck('stock_id'))
+                    ->sort()->map(fn ($stockId) => $refs[$stockId] ?? null)->filter()->implode(', ') ?: null,
+            ];
+        });
     }
 
     /**
@@ -466,7 +551,8 @@ class PtcStockRepository implements GlobalInterface
      * Closing a PTC does not change any of this.
      *
      * Status: outside (before the PTC's start stage or after its end stage), start
-     * (the starting stock, no work issued for it), not_started, in_progress (issued,
+     * (the starting stock of a PTC started from stock, no work issued for it - a
+     * raw-material PTC works at its start stage, so it has no such stage), not_started, in_progress (issued,
      * nothing received), partial (some product still outstanding), completed
      * (everything issued for the stage received back).
      */
@@ -493,7 +579,7 @@ class PtcStockRepository implements GlobalInterface
 
             if ($stageBalances->isEmpty()) {
                 $status = ($index < $startIndex || $index > $endIndex) ? 'outside'
-                    : ($index == $startIndex && $startIndex < $endIndex ? 'start' : 'not_started');
+                    : ($index == $startIndex && $this->firstWorkIndex($ptc, $startIndex, $endIndex) > $startIndex ? 'start' : 'not_started');
             } elseif (! $receivedAny) {
                 $status = 'in_progress';
             } elseif ($outstanding > 0) {
@@ -595,7 +681,7 @@ class PtcStockRepository implements GlobalInterface
             ->leftJoin('heads as cur_stage', 'cur_stage.head_id', '=', 'stocks.current_stage_id')
             ->orderBy('stocks.stock_id')
             ->get(['stocks.stock_id', 'stocks.stock_type', 'stocks.stock_status', 'stocks.is_ptc_master', 'stocks.issue_id',
-                'stocks.issue_for', 'for_stage.name as issue_for_name', 'cur_stage.name as current_stage_name']);
+                'stocks.issue_for', 'stocks.start_from', 'for_stage.name as issue_for_name', 'cur_stage.name as current_stage_name']);
 
         $items = DB::table('stock_items')
             ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
@@ -623,7 +709,9 @@ class PtcStockRepository implements GlobalInterface
             } elseif ($record->stock_type == 2 || $record->is_ptc_master) {
                 $from = $productLines->unique(fn ($line) => $line->stage_id.'_'.$line->ptc_virtual)
                     ->map(fn ($line) => $stageEndpoint($line, $line->ptc_virtual ? 'PTC stock' : 'General stock'))
-                    ->values()->all() ?: [$endpoint('Materials only', 'none', 'No product issued')];
+                    ->values()->all() ?: ($record->is_ptc_master && $record->start_from === Stock::START_FROM_MATERIALS
+                        ? [$endpoint('Raw Materials', 'none', 'Started from raw materials')]
+                        : [$endpoint('Materials only', 'none', 'No product issued')]);
                 $to = [$endpoint($record->issue_for_name ?? $record->current_stage_name, 'stage', 'Issued for')];
             } else {
                 $issuedFrom = $moves[$record->issue_id]['from'] ?? [$endpoint($record->current_stage_name, 'stage')];
@@ -658,6 +746,7 @@ class PtcStockRepository implements GlobalInterface
             $ptc = $this->lockOpenPtc($ptcId);
             $ptcProductTypeId = $this->ptcProductTypeId($ptcId);
             $lines = $this->normalizeLines($lines, $ptcProductTypeId, $ptc->current_stage_id);
+            $lines = $this->componentStageLines($lines, $ptc->order_id);
 
             if (empty($lines)) {
                 throw new PtcStockException('No items to issue.');
@@ -983,6 +1072,34 @@ class PtcStockRepository implements GlobalInterface
      *
      * @param  array  $pins  "{product_type_id}_{stage_id}" => [batch_id => quantity] entered on the form
      */
+    /**
+     * Component lines are taken from the component's own stages (where its stock is), not the
+     * PTC product's stage: each is replaced by one line per component stage it draws from.
+     *
+     * @throws PtcStockException when the component stock this order may use falls short
+     */
+    private function componentStageLines(array $lines, $orderId): array
+    {
+        $result = [];
+        foreach ($lines as $line) {
+            if (! $line['component_id']) {
+                $result[] = $line;
+
+                continue;
+            }
+            try {
+                $split = $this->stockBatchRepository->componentStageSplit($line['component_id'], $line['quantity'], $orderId);
+            } catch (StockBatchException $e) {
+                throw new PtcStockException($e->getMessage());
+            }
+            foreach ($split as $stageId => $quantity) {
+                $result[] = array_merge($line, ['stage_id' => $stageId, 'quantity' => $quantity]);
+            }
+        }
+
+        return $result;
+    }
+
     private function allocateGeneralStock($stockId, array $pins = []): void
     {
         try {

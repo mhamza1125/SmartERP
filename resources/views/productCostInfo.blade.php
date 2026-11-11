@@ -18,33 +18,39 @@
             </div>
           </div>
           <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-3"><b>Article No:</b> {{ $product['article_no'] }}</div>
+              <div class="col-md-3"><b>Article:</b> {{ $product['name'] }}</div>
+              <div class="col-md-3"><b>Category:</b> {{ $product['cname'] ?? 'N/A' }}</div>
+              <div class="col-md-3"><b>Unit:</b> {{ $product['hname'] ?? 'N/A' }}</div>
+            </div>
             <table class="table" id="tableExport" style="width:100%;">
               <thead>
                 <tr>
                   <th>Sr.</th>
                   <th>Employee / Vendor</th>
                   <th>Cost Head</th>
-                  <th>Price</th>
+                  <th class="text-right">Price</th>
                 </tr>
               </thead>
               <tbody>
-                <tr class="trow">
-                  <th></th>
-                  <th>Article No: &nbsp {{$product['article_no']}}</th>
-                  <th>Article: &nbsp {{$product['name']}}</th>
-                  <th></th>
-                </tr>
                 @if($productCost->count())
                   @foreach($productCost as $item)
                   <tr>
                     <td>{{$loop->index + 1}}</td>
                     <td>{{$item->employee_no ?? $item->vendor_no}}{{$item->name ? ' - '.$item->name : 'General Cost'}}</td>
                     <td>{{$item->hname}}</td>
-                    <td>{{$item->amount}}</td>
+                    <td class="text-right">{{ number_format($item->amount, 2) }}</td>
                   </tr>
                   @endforeach
                 @endif
               </tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="3" class="text-right">Total Cost (General Cost only; labor-specific wages excluded)</th>
+                  <th class="text-right">{{ number_format($productCost->where('table_name', 'general')->sum('amount'), 2) }}</th>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>

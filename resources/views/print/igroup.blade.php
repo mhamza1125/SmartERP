@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Item_Group_' . ($igroup['igroup_no'] ?? 'N/A') . '_' . formatDate($igroup['igroup_date'] ?? now()))
+@section('doc_title', 'Item Group')
+@section('doc_no', $igroup['igroup_no'] ?? '')
 
 @section('content')
-<div class="document-title">Item Group Information</div>
-
 {{-- Item Group Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -47,7 +47,7 @@
                 <th>Sr.</th>
                 <th>Article No</th>
                 <th>Material / Stage</th>
-                <th>Quantity</th>
+                <th>QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>

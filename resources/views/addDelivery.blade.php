@@ -293,6 +293,21 @@
                   </div>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Freight Charges <small class="text-muted">(Optional, order currency)</small></label>
+                    @php
+                      $freightCharges = old('freight_charges');
+                      if ($freightCharges === null && isset($editMode) && $editMode && isset($existingDelivery)) {
+                        $freightCharges = $existingDelivery['freight_charges'] ?? '';
+                      }
+                    @endphp
+                    <input type="number" step="0.01" min="0" class="form-control" name="freight_charges" placeholder="0.00" value="{{ $freightCharges }}">
+                    <small class="form-text text-muted">Charged to the customer on top of the items; added to the commercial invoice and customer ledger.</small>
+                  </div>
+                </div>
+              </div>
 
               @if(isset($isMultiOrder) && $isMultiOrder)
                 <h5 class="mt-4"><i class="fas fa-list-alt"></i> Selected Orders <span class="badge badge-info">{{ count($orders) }} Orders Combined</span></h5>

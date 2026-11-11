@@ -16,6 +16,7 @@ class Company extends Model
         'ceo',
         'ntn',
         'rex_no',
+        'fi_no',
         'address',
         'city',
         'country',

@@ -78,6 +78,18 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label>FI No <small class="text-muted">(default for commercial invoices)</small></label>
+                                            <input type="text" class="form-control" name="fi_no" value="{{ old('fi_no', $company->fi_no) }}">
+                                            @error('fi_no')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label>Website</label>
                                             <input type="text" class="form-control" name="website" value="{{ old('website', $company->website) }}">
                                             @error('website')

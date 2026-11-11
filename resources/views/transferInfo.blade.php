@@ -9,6 +9,9 @@
             <h4>Bank/Cash Transfer Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
+                <a href="{{ route('transfer.print', $transaction['transaction_id']) }}" class="btn btn-info" target="_blank">
+                  <i class="fas fa-print"></i> Print
+                </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('transaction.editTransfer', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
               </div>
@@ -19,17 +22,14 @@
               <div class="col-md-7">
                 <table class="table table-sm">
                   <tbody>
-                    <tr><td><b>Transfer From:</b> 
-                      @if($transaction['bank_id'] == 0)
-                        Petty Cash
-                      @else
-                        {{$transaction['bname']}} - {{$transaction['account_title']}}
-                      @endif
-                    </td></tr>
+                    <tr><td><b>Transfer From:</b> {{ $info->details['From Account'] ?? (($transaction['bank_id'] ?? 0) == 0 ? 'Cash' : $transaction['bname'] . ' - ' . $transaction['account_title']) }}</td></tr>
+                    <tr><td><b>Transfer To:</b> {{ $info->details['To Account'] ?? '-' }}</td></tr>
                     <tr><td><b>Transfer Type:</b> Bank/Cash Transfer</td></tr>
-                    @if($transaction['description'])
-                      <tr><td><b>Description:</b></td></tr>
-                      <tr><td colspan="3">@php echo $transaction['description'] @endphp</td></tr>
+                    @if(!empty($info->cheque_no))
+                      <tr><td><b>Cheque No:</b> {{ $info->cheque_no }}</td></tr>
+                    @endif
+                    @if(!empty($info->note))
+                      <tr><td><b>Description:</b> {{ $info->note }}</td></tr>
                     @endif
                   </tbody>
                 </table>

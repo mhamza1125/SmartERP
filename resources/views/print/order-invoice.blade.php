@@ -1,6 +1,8 @@
 @extends('print.layout')
 
 @section('title', 'Order_Invoice_' . ($order->order_no ?? 'N/A') . '_' . formatDate($order->order_date ?? now()))
+@section('doc_title', 'Order Invoice')
+@section('doc_no', $order->order_no ?? '')
 
 @push('scripts')
 <script>
@@ -12,11 +14,6 @@
 @endpush
 
 @section('content')
-
-<div class="doc-title-row">
-    <span class="doc-title-label">ORDER INVOICE</span>
-    <span class="doc-title-no"># {{ $order->order_no ?? 'N/A' }}</span>
-</div>
 
 {{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
 <div class="meta-band">
@@ -78,8 +75,8 @@
                 <th>Product Name</th>
                 <th style="width:10%" class="text-center">Size</th>
                 <th style="width:10%" class="text-center">Stage</th>
-                <th style="width:9%" class="text-right">Qty</th>
-                <th style="width:11%" class="text-right">Unit Price</th>
+                <th style="width:9%" class="text-right">QTY</th>
+                <th style="width:11%" class="text-right">Price</th>
                 <th style="width:11%" class="text-right">Total</th>
             </tr>
         </thead>

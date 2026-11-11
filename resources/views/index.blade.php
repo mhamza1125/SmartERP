@@ -22,6 +22,11 @@
   <link rel="stylesheet" href="{{ URL::asset('assets/css/custom.css') }}">
   <link rel='shortcut icon' type='image/x-icon' href='{{ URL::asset('assets/img/favicon.ico') }}' />
   {{-- Custom JS --}}
+  {{-- Base URL and print settings for page scripts (the app may run under a sub-folder, e.g. /ERP/public) --}}
+  <script>
+    window.SmartERP = @json($printConfig ?? ['baseUrl' => url('/')]);
+    window.appUrl = function (path) { return window.SmartERP.baseUrl.replace(/\/+$/, '') + '/' + String(path || '').replace(/^\/+/, ''); };
+  </script>
   <script src="{{ URL::asset('assets/bundles/jquery-3.6.0.min.js') }}"></script>
 </head>
 

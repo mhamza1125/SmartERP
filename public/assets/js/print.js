@@ -52,7 +52,7 @@ function globalPrint(mode = 'page', tabId = null, pageTitle = null) {
     }
 
     // Fetch company data and generate print document
-    fetch('/company/data')
+    fetch(appUrl('company/data'))
         .then(response => response.json())
         .then(company => {
             generatePrintDocument(title, printContent, company);
@@ -315,7 +315,7 @@ function printInvoice(content, title) {
     }
 
     // Fetch company data and generate invoice
-    fetch('/company/data')
+    fetch(appUrl('company/data'))
         .then(response => response.json())
         .then(company => {
             generateInvoiceDocument(printWindow, content, title, company);
@@ -426,7 +426,7 @@ function printTableProfessional(tableId, title = 'Table Print') {
         <html>
         <head>
             <title>${title}</title>
-            <link rel="stylesheet" href="/assets/css/print.css">
+            <link rel="stylesheet" href="${appUrl('assets/css/print.css')}">
             <style>
                 body {
                     font-family: Arial, sans-serif;

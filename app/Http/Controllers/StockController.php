@@ -1178,11 +1178,9 @@ class StockController extends Controller
             // Add stock info for each product component
             $productComponentsWithStock = [];
             foreach ($productComponents as $component) {
-                $componentStockItems = $this->stockItemRepository->pStockGet($component->component_pt_id);
-                $totalStock = 0;
-                foreach ($componentStockItems as $stockItem2) {
-                    $totalStock += ($stockItem2->stockIn ?? 0) - ($stockItem2->stockOut ?? 0);
-                }
+                // What can actually be issued: the component's stock at its own stages, from the order's
+                // batches + free stock (rejected excluded) - the same figure the issue is validated against
+                $totalStock = $this->stockBatchRepository->componentStock($component->component_pt_id, $orderId)->sum();
                 $productComponentsWithStock[] = [
                     'product_material_id' => $component->product_material_id,
                     'component_product_type_id' => $component->component_pt_id,
@@ -1233,9 +1231,11 @@ class StockController extends Controller
             'ptc_product_type_id' => 'required',
             'start_stage_id' => 'required',
             'end_stage_id' => 'required',
+            'start_from' => 'nullable|in:' . Stock::START_FROM_STOCK . ',' . Stock::START_FROM_MATERIALS,
         ]);
 
         $productTypeId = $request->input('ptc_product_type_id');
+        $startFrom = $request->input('start_from') ?: Stock::START_FROM_STOCK;
         $startStageId = $request->input('start_stage_id');
         $endStageId = $request->input('end_stage_id');
 
@@ -1251,10 +1251,14 @@ class StockController extends Controller
         $startIndex = array_search($startStageId, $stageIds);
         $endIndex = array_search($endStageId, $stageIds);
 
-        // The start stage is the stock the PTC starts from, not a work stage: the initial
-        // issuance is for the stage after it (Stage 1 stock -> issued for Stage 2), which
-        // becomes the current stage. A single-stage PTC (start = end) works at that stage.
-        $firstWorkIndex = ($startIndex !== false && $startIndex < $endIndex) ? $startIndex + 1 : $startIndex;
+        // Started from stock (default): the start stage is the stock the PTC starts from, not a
+        // work stage - the initial issuance is for the stage after it (Stage 1 stock -> issued
+        // for Stage 2). Started from raw materials: the initial issuance is for the start stage
+        // itself (materials -> Stage 1). Either way that stage becomes the current stage; a
+        // single-stage PTC (start = end) works at that stage.
+        $firstWorkIndex = $startIndex !== false && $endIndex !== false
+            ? $this->ptcStockRepository->firstWorkIndex(new Stock(['start_from' => $startFrom]), $startIndex, $endIndex)
+            : $startIndex;
         $firstWorkStageId = $firstWorkIndex !== false ? ($stageIds[$firstWorkIndex] ?? $startStageId) : $startStageId;
         $nextStageId = ($firstWorkIndex !== false && $firstWorkIndex < $endIndex) ? ($stageIds[$firstWorkIndex + 1] ?? null) : null;
 
@@ -1274,6 +1278,7 @@ class StockController extends Controller
             'is_ptc_master' => 1,
             'current_stage_id' => $firstWorkStageId,
             'start_stage_id' => $startStageId,
+            'start_from' => $startFrom,
             'next_stage_id' => $nextStageId,
             'end_stage_id' => $endStageId,
             'issue_for' => $firstWorkStageId,
@@ -1301,20 +1306,26 @@ class StockController extends Controller
                         // NULL, not 0: general stock treats component_product_type_id IS NULL as a product line
                         $componentProductTypeId = ($componentIds[$key] ?? null) ?: null;
 
+                        // A component is taken from its own stages (where its stock is), not the PTC's start stage
+                        $stageQuantities = $componentProductTypeId
+                            ? $this->stockBatchRepository->componentStageSplit($componentProductTypeId, (float) $quantity, $ptcData['order_id'] ?? null)
+                            : [(($itemStageId > 0) ? $itemStageId : $startStageId) => $quantity];
+
                         // For material issuance, use the PTC's product_type_id
                         // For product issuance, use the item's product_type_id
-                        $stockItem = [
-                            'stock_id' => $ptcId,
-                            'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
-                            'material_id' => $itemMaterialId,
-                            'quantity' => $quantity,
-                            'stage_id' => ($itemStageId > 0) ? $itemStageId : $startStageId,
-                            'work_logs' => '0',
-                            'work_wages' => '0',
-                            'component_product_type_id' => $componentProductTypeId,
-                            'created_by' => auth()->id(),
-                        ];
-                        $this->stockItemRepository->store($stockItem);
+                        foreach ($stageQuantities as $lineStageId => $lineQuantity) {
+                            $this->stockItemRepository->store([
+                                'stock_id' => $ptcId,
+                                'product_type_id' => ($itemProductTypeId > 0) ? $itemProductTypeId : $productTypeId,
+                                'material_id' => $itemMaterialId,
+                                'quantity' => $lineQuantity,
+                                'stage_id' => $lineStageId,
+                                'work_logs' => '0',
+                                'work_wages' => '0',
+                                'component_product_type_id' => $componentProductTypeId,
+                                'created_by' => auth()->id(),
+                            ]);
+                        }
                     }
                 }
 
@@ -1420,8 +1431,9 @@ class StockController extends Controller
             ->select('stocks.*', 'employees.name as employee_name', 'vendors.fname as vendor_name', 'stage_head.name as stage_name')
             ->get();
 
-        // Merge initial issuance with subsequent issuances (initial first, then sorted by date desc)
-        $issuances = $initialIssuance->merge($subsequentIssuances)->sortByDesc('stock_date')->values();
+        // Latest issuance first, by issuance sequence (I001 = master; sequence follows stock_id,
+        // see PtcStockRepository::issuances). Dates are not used: issuances often share a date.
+        $issuances = $initialIssuance->merge($subsequentIssuances)->sortByDesc('stock_id')->values();
 
         // Get all receiving records for this PTC (separate list)
         $receivings = Stock::where('ptc_id', $id)
@@ -1656,6 +1668,8 @@ class StockController extends Controller
             'issuanceSeq' => $this->ptcStockRepository->issuances($id)->pluck('seq_no', 'stock_id'),
             'ptcRefs' => $this->ptcStockRepository->references($id),
             'stageMoves' => $this->ptcStockRepository->movementStages($id),
+            // Traveller card: every product stage, filled where work was done
+            'stageCard' => $this->ptcStockRepository->stageCard($ptc),
             'ptc' => $ptc,
             'product' => $product,
             'movements' => $movements,
@@ -1789,6 +1803,26 @@ class StockController extends Controller
         }
 
         try {
+            // Components are taken from their own stages (where their stock is), not the PTC's start
+            // stage: one row per component stage. The PTC's own lines count as available again.
+            $componentQty = [];
+            foreach ($items['quantity'] as $key => $quantity) {
+                if ($items['component_id'][$key] && $quantity > 0) {
+                    $componentQty[$items['component_id'][$key]] = ($componentQty[$items['component_id'][$key]] ?? 0) + (float) $quantity;
+                    unset($items['quantity'][$key]);
+                }
+            }
+            foreach ($componentQty as $componentId => $quantity) {
+                foreach ($this->stockBatchRepository->componentStageSplit($componentId, $quantity, $ptc->order_id, $id) as $stageId => $stageQty) {
+                    $items['quantity'][] = $stageQty;
+                    $key = array_key_last($items['quantity']);
+                    $items['product_type_id'][$key] = $ptcProductTypeId;
+                    $items['stage_id'][$key] = $stageId;
+                    $items['material_id'][$key] = 0;
+                    $items['component_id'][$key] = $componentId;
+                }
+            }
+
             DB::transaction(function () use ($ptc, $request, $id, $items) {
                 // Update PTC record
                 $ptc->update([
@@ -1887,11 +1921,9 @@ class StockController extends Controller
             // Add stock info for each product component
             $productComponentsWithStock = [];
             foreach ($productComponents as $component) {
-                $componentStockItems = $this->stockItemRepository->pStockGet($component->component_pt_id);
-                $totalStock = 0;
-                foreach ($componentStockItems as $stockItem2) {
-                    $totalStock += ($stockItem2->stockIn ?? 0) - ($stockItem2->stockOut ?? 0);
-                }
+                // What can actually be issued: the component's stock at its own stages, from the PTC order's
+                // batches + free stock (rejected excluded) - the same figure the issue is validated against
+                $totalStock = $this->stockBatchRepository->componentStock($component->component_pt_id, $ptc->order_id)->sum();
                 $productComponentsWithStock[] = [
                     'product_material_id' => $component->product_material_id,
                     'component_product_type_id' => $component->component_pt_id,

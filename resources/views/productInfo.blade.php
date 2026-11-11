@@ -8,10 +8,20 @@
           <div class="card-header">
             <h4>Product Info</h4>
             <div class="card-header-action">
+              <div class="dropdown d-inline-block">
+                <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="{{ route('product.print', $product['product_id']) }}" target="_blank">
+                    <i class="fas fa-file-alt"></i> Product Print
+                  </a>
+                  <a class="dropdown-item" href="{{ route('productCost.print', $product['product_id']) }}" target="_blank">
+                    <i class="fas fa-coins"></i> Costing / Wages Print
+                  </a>
+                </div>
+              </div>
               <div class="btn-group">
-                <a class="btn btn-info" href="{{ route('product.print', $product['product_id']) }}" target="_blank">
-                  <i class="fas fa-file-alt"></i> Print
-                </a>
                 <a href="{{ route('product') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>
               </div>

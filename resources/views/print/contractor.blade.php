@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Contractor_Info_' . ($vendor['vendor_no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('doc_title', 'Contractor Information')
+@section('doc_no', $vendor['vendor_no'] ?? '')
 
 @section('content')
-<div class="document-title">Contractor Information</div>
-
 {{-- Contractor Header Information --}}
 <div class="document-info">
     <div class="info-section">

@@ -246,6 +246,8 @@ class CustomerController extends Controller
         $balance = $oBalance + $totalDeliveries - $totalPayments + $totalGeneralDebit - $totalGeneralCredit + $cBalance;
 
         return view('print.customer-ledger', [
+            // A readable description per row (the printed ledger cannot be clicked)
+            'notes' => $this->transactionRepository->ledgerDescriptions($detail),
             'customer' => $customer,
             'detail' => $detail,
             'balance' => $balance,

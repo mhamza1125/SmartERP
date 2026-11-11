@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Material_Process_' . ($purchase['purchase_no'] ?? 'N/A') . '_' . formatDate($purchase['purchase_date'] ?? now()))
+@section('doc_title', 'Material Processing')
+@section('doc_no', $purchase['purchase_no'] ?? '')
 
 @section('content')
-<div class="document-title">Material Processing</div>
-
 {{-- Material Process Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -78,9 +78,9 @@
                 <th>Sr.</th>
                 <th>Material A</th>
                 <th>Material B</th>
-                <th>Quantity A</th>
-                <th>Quantity B</th>
-                <th>Rate</th>
+                <th>QTY A</th>
+                <th>QTY B</th>
+                <th>Price</th>
                 <th>Amount</th>
             </tr>
         </thead>
@@ -134,9 +134,9 @@
                 <th>Sr.</th>
                 <th>Material</th>
                 <th>Units</th>
-                <th>Order Qty</th>
-                <th>Receive Qty</th>
-                <th>Return Qty</th>
+                <th>Ordered</th>
+                <th>Received</th>
+                <th>Returned</th>
                 <th>Remaining</th>
             </tr>
         </thead>

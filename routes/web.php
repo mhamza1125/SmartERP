@@ -450,6 +450,7 @@ Route::get('/vLedger/print/{id}', [VendorController::class, 'printVendorLedger']
 Route::get('/pLedger/print', [PurchaseController::class, 'printPurchaseLedger'])->name('purchase.ledger.print');
 Route::get('/expense/print/{id}', [TransactionController::class, 'printExpense'])->name('expense.print');
 Route::get('/brs/print/{id}', [TransactionController::class, 'printBRS'])->name('brs.print');
+Route::get('/transfer/print/{id}', [TransactionController::class, 'printTransfer'])->name('transfer.print');
 
 // Bank
 Route::get('/bank', [BankController::class, 'index'])->name('bank');

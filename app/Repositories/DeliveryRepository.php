@@ -30,7 +30,7 @@ class DeliveryRepository implements GlobalInterface
             $hasMultiOrderPattern = strpos($delivery->stock_no, '|') !== false;
 
             // Fallback: Check for old patterns (for backward compatibility)
-            if (!$hasMultiOrderPattern) {
+            if (! $hasMultiOrderPattern) {
                 $hasMultiOrderPattern = strpos($delivery->stock_no, ',') !== false ||
                                        strpos($delivery->stock_no, 'Multi') !== false ||
                                        $distinctItemTypes > 5; // Threshold for multi-order detection
@@ -61,6 +61,7 @@ class DeliveryRepository implements GlobalInterface
             $data['delivery_no'] = Delivery::generateDeliveryNo();
         }
 
+        $data = $this->normalizeFreight($data);
         $store = Delivery::create($data);
 
         return $store->delivery_id;
@@ -69,12 +70,22 @@ class DeliveryRepository implements GlobalInterface
     public function update($id, array $data)
     {
         $update = Delivery::findOrFail($id);
-        $update->update($data);
+        $update->update($this->normalizeFreight($data));
 
         return $update->delivery_id;
     }
 
-    public function delete($id)
+    public function delete($id) {}
+
+    /**
+     * Freight charges are never negative; blank means none.
+     */
+    private function normalizeFreight(array $data): array
     {
+        if (array_key_exists('freight_charges', $data)) {
+            $data['freight_charges'] = max(0, round((float) ($data['freight_charges'] ?: 0), 2));
+        }
+
+        return $data;
     }
 }

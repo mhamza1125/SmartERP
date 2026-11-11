@@ -1,6 +1,8 @@
 @extends('print.layout')
 
 @section('title', 'PTC_Template_' . ($product->article_no ?? 'N/A'))
+@section('doc_title', 'Process Travel Card')
+@section('doc_no', $product->article_no ?? '')
 
 @push('styles')
 <style>
@@ -14,8 +16,6 @@
 @endpush
 
 @section('content')
-<div class="document-title">Process Travel Card (PTC)</div>
-
 {{-- Product Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -60,10 +60,10 @@
                 <th style="width: 5%">Sr.</th>
                 <th style="width: 20%">Processes</th>
                 <th style="width: 12%">Starting Date</th>
-                <th style="width: 8%">Qty</th>
+                <th style="width: 8%">QTY</th>
                 <th style="width: 8%">Re-Work</th>
                 <th style="width: 8%">Rej</th>
-                <th style="width: 12%">Pass Qty</th>
+                <th style="width: 12%">Pass QTY</th>
                 <th style="width: 12%">Date of Completion</th>
                 <th style="width: 10%">Checked by</th>
                 <th style="width: 10%">Contractor</th>

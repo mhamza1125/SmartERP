@@ -90,7 +90,7 @@
                     @foreach($stages as $index => $stage)
                       <div class="badge {{ $index == 0 ? 'badge-primary' : 'badge-secondary' }} mr-2 mb-2 p-2">
                         {{ $index + 1 }}. {{ $stage->name }}
-                        @if($index == 0) <small>(Start stock)</small> @endif
+                        @if($index == 0) <small class="js-start-tag">(Start stock)</small> @endif
                         @if($index == count($stages) - 1) <small>(End)</small> @endif
                       </div>
                       @if($index < count($stages) - 1)
@@ -102,14 +102,50 @@
               </div>
 
               <hr>
-              {{-- The start stage is the stock the PTC starts from; the first issuance is for the stage after it --}}
-              @php $firstWorkStage = $stages->get(1) ?? $startStage; @endphp
+              {{-- Start from stock: the start stage is stock already held, the first issuance is for the stage after it.
+                   Start from raw materials: the first issuance is for the start stage itself. --}}
+              @php
+                $startFrom = old('start_from', \App\Models\Stock::START_FROM_STOCK);
+                $nextStage = $stages->get(1) ?? $startStage;
+              @endphp
+              <div class="form-group mb-2">
+                <label class="d-block">Start From</label>
+                <div class="custom-control custom-radio custom-control-inline">
+                  <input type="radio" id="start_from_stock" name="start_from" value="{{ \App\Models\Stock::START_FROM_STOCK }}" class="custom-control-input" {{ $startFrom === \App\Models\Stock::START_FROM_STOCK ? 'checked' : '' }}>
+                  <label class="custom-control-label" for="start_from_stock">Stock at {{ $startStage->name }}</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                  <input type="radio" id="start_from_materials" name="start_from" value="{{ \App\Models\Stock::START_FROM_MATERIALS }}" class="custom-control-input" {{ $startFrom === \App\Models\Stock::START_FROM_MATERIALS ? 'checked' : '' }}>
+                  <label class="custom-control-label" for="start_from_materials">Raw materials</label>
+                </div>
+                <small class="form-text text-muted js-start-help"></small>
+              </div>
               <h5>
                 Initial Issuance:
-                <span class="badge badge-primary">{{ $startStage->name }}</span> stock
+                <span class="badge badge-primary js-start-from">{{ $startStage->name }} stock</span>
                 <i class="fas fa-long-arrow-alt-right text-muted mx-1"></i>
-                issued for <span class="badge badge-success">{{ $firstWorkStage->name }}</span>
+                issued for <span class="badge badge-success js-first-work">{{ $nextStage->name }}</span>
               </h5>
+              <script>
+                // Start From choice: update the initial-issuance line and the start-stage tag
+                document.addEventListener('DOMContentLoaded', function () {
+                  var startName = @json($startStage->name), nextName = @json($nextStage->name);
+                  function showStartFrom() {
+                    var materials = document.getElementById('start_from_materials').checked;
+                    document.querySelector('.js-start-from').textContent = materials ? 'Raw materials' : startName + ' stock';
+                    document.querySelector('.js-first-work').textContent = materials ? startName : nextName;
+                    document.querySelector('.js-start-help').textContent = materials
+                      ? 'Materials are issued for ' + startName + ' and received into ' + startName + '.'
+                      : 'Product already at ' + startName + ' is issued for ' + nextName + ' and received into ' + nextName + '.';
+                    var tag = document.querySelector('.js-start-tag');
+                    if (tag) tag.textContent = materials ? '(Start - raw materials)' : '(Start stock)';
+                  }
+                  document.querySelectorAll('input[name="start_from"]').forEach(function (radio) {
+                    radio.addEventListener('change', showStartFrom);
+                  });
+                  showStartFrom();
+                });
+              </script>
 
               <div class="row">
                 <div class="col-md-5">

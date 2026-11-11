@@ -529,6 +529,71 @@ class StockBatchRepository implements GlobalInterface
     }
 
     /**
+     * Stock of a component (another product used to make a PTC's product) that $orderIds may
+     * take, per the COMPONENT's own stage: its batches for the order, then free stock;
+     * rejected stock excluded. Ordered final stage of the component first.
+     * This is what PTC forms show as the component's available stock.
+     *
+     * @param  int|array|null  $orderIds
+     * @return Collection<int, float> stage_id => quantity
+     */
+    public function componentStock($componentProductTypeId, $orderIds, $excludeStockId = null): Collection
+    {
+        $stageIds = DB::table('product_types')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->where('product_types.product_type_id', $componentProductTypeId)
+            ->value('products.stage_ids');
+        // Position in the component's workflow, last stage first; stages outside it go last
+        $rank = array_flip(array_reverse(array_values(array_filter(array_map('intval', explode('|', (string) $stageIds))))));
+
+        return $this->allowedStock($orderIds, $excludeStockId)
+            ->filter(fn ($row) => (int) $row->product_type_id === (int) $componentProductTypeId
+                && (int) $row->stage_id !== Stock::STAGE_REJECTED
+                && $row->stockIn > self::EPSILON)
+            ->sortBy(fn ($row) => $rank[(int) $row->stage_id] ?? PHP_INT_MAX)
+            ->mapWithKeys(fn ($row) => [(int) $row->stage_id => (float) $row->stockIn]);
+    }
+
+    /**
+     * Where a component line is taken from: $quantity split over the component's own stages
+     * (see componentStock). Component lines must be recorded at the component's stage, not the
+     * PTC product's stage, or the batch allocation finds no component stock there.
+     *
+     * @param  int|array|null  $orderIds
+     * @return array<int, float> stage_id => quantity
+     *
+     * @throws StockBatchException when the component stock falls short
+     */
+    public function componentStageSplit($componentProductTypeId, float $quantity, $orderIds, $excludeStockId = null): array
+    {
+        $available = $this->componentStock($componentProductTypeId, $orderIds, $excludeStockId);
+
+        if ($quantity > $available->sum() + self::EPSILON) {
+            $label = DB::table('product_types')
+                ->join('products', 'products.product_id', '=', 'product_types.product_id')
+                ->leftJoin('heads', 'heads.head_id', '=', 'product_types.size_id')
+                ->where('product_types.product_type_id', $componentProductTypeId)
+                ->selectRaw("CONCAT(products.article_no, ' ', products.name, ' (', IFNULL(heads.name, ''), ')') as label")
+                ->value('label') ?? 'Component';
+
+            throw new StockBatchException("{$label}: only {$this->round($available->sum())} available for this order, {$this->round($quantity)} requested.");
+        }
+
+        $split = [];
+        $left = $quantity;
+        foreach ($available as $stageId => $qty) {
+            if ($left <= self::EPSILON) {
+                break;
+            }
+            $take = min($qty, $left);
+            $split[$stageId] = $this->round($take);
+            $left -= $take;
+        }
+
+        return $split;
+    }
+
+    /**
      * Batch choices for one product on an issue form, per stage: stage_id, stage_name and the
      * batches $orderIds may take from (own first, then free) - the shape batchPicker expects.
      * $excludeStockId: a stock-out being edited - its own lines are left out.

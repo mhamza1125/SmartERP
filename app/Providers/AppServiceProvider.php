@@ -13,5 +13,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('print.*', PrintComposer::class);
+        View::composer('index', PrintComposer::class.'@layout');
     }
 }

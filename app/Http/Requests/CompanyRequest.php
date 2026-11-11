@@ -26,6 +26,7 @@ class CompanyRequest extends FormRequest
             'ceo' => 'required|string|max:255',
             'ntn' => 'nullable|string|max:255',
             'rex_no' => 'nullable|string|max:255',
+            'fi_no' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',

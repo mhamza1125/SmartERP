@@ -275,6 +275,68 @@ class PtcVirtualStockTest extends TestCase
     }
 
     /** Stage ids of a movement's from/to endpoints, resolved by name. */
+    /**
+     * A component's stock sits at the component's own stage, which the PTC product does not
+     * have: issuing it must take it from there, not look for it at the PTC's stage.
+     */
+    public function test_component_is_issued_from_its_own_stage(): void
+    {
+        [$s1, $s2] = $this->stages;
+        $component = DB::table('product_types')->whereNotIn('product_type_id', [$this->pt, $this->componentPt])->value('product_type_id');
+        $componentStage = (int) DB::table('heads')->whereNotIn('head_id', array_merge($this->stages, [Stock::STAGE_REJECTED]))->value('head_id');
+        StockItem::create([
+            'stock_id' => 1, 'product_type_id' => $component, 'material_id' => 0, 'quantity' => 30,
+            'stage_id' => $componentStage, 'work_logs' => '0', 'work_wages' => '0', 'created_by' => auth()->id(),
+        ]);
+        $row = fn (float $qty) => ['quantity' => $qty, 'product_type_id' => $this->pt, 'material_id' => 0, 'stage_id' => 0, 'component_id' => $component, 'source' => 'general'];
+        $componentLines = fn (int $stockId) => StockItem::where('stock_id', $stockId)->where('component_product_type_id', $component)
+            ->get(['stage_id', 'quantity'])->map(fn ($line) => [(int) $line->stage_id, (float) $line->quantity])->all();
+
+        // Issued from its own stage
+        $ptcId = $this->createPtc($s1, [$this->materialRow(1)]);
+        $this->issue($ptcId, $s2, [$row(20)])->assertSessionHas('success');
+        $this->assertSame([[$componentStage, 20.0]], $componentLines($this->latestIssuance($ptcId)));
+
+        // Only 10 left: more is refused with a clear message, nothing saved
+        $issuances = Stock::where('ptc_id', $ptcId)->count();
+        $this->issue($ptcId, $s2, [$row(11)])->assertSessionHas('fails');
+        $this->assertSame($issuances, Stock::where('ptc_id', $ptcId)->count());
+
+        // Creating a PTC with the component takes it from the same stage
+        $secondPtcId = $this->createPtc($s1, [$this->materialRow(1), $row(10)]);
+        $this->assertSame([[$componentStage, 10.0]], $componentLines($secondPtcId));
+    }
+
+    /**
+     * Started from raw materials: the first issuance is for the start stage itself and is received
+     * there; a PTC started from stock still works from the stage after its start (unchanged).
+     */
+    public function test_raw_material_ptc_works_at_its_start_stage(): void
+    {
+        [$s1, $s2, $s3] = $this->stages;
+
+        $ptcId = $this->createPtc($s1, [$this->materialRow(5)], $s3, Stock::START_FROM_MATERIALS);
+        $ptc = Stock::find($ptcId);
+        $this->assertSame(Stock::START_FROM_MATERIALS, $ptc->start_from);
+        $this->assertSame([$s1, $s1, $s1], [(int) $ptc->start_stage_id, (int) $ptc->issue_for, (int) $ptc->current_stage_id]);
+        $this->assertSame($s2, (int) $ptc->next_stage_id);
+        $this->assertSame([$s1, $s2, $s3], app(PtcStockRepository::class)->issueStages($ptc, collect($this->stages)->map(fn ($id) => (object) ['head_id' => $id, 'name' => (string) $id]))->pluck('head_id')->map(fn ($id) => (int) $id)->all());
+
+        // The start stage is a work stage: received into it, and more can be issued for it
+        $this->receive($ptcId, $ptcId, [$this->receiveProductRow(5, $s1)])->assertSessionHas('success');
+        $this->assertVirtual($ptcId, [$s1 => 5]);
+        $this->issue($ptcId, $s1, [$this->materialRow(1)])->assertSessionHas('success');
+        $summary = $this->stageSummary(Stock::find($ptcId));
+        $this->assertNotSame('start', $summary['stages'][0]->status);
+        $this->assertSame('Raw Materials', app(PtcStockRepository::class)->movementStages($ptcId)[$ptcId]['from'][0]['label']);
+
+        // Started from stock (the default): unchanged - Stage 1 stock is issued for Stage 2
+        $stockPtc = Stock::find($this->createPtc($s1, [$this->productRow(5, $s1)], $s3, Stock::START_FROM_STOCK));
+        $this->assertSame([$s2, $s2], [(int) $stockPtc->issue_for, (int) $stockPtc->current_stage_id]);
+        $this->issue($stockPtc->stock_id, $s1, [$this->materialRow(1)])->assertSessionHas('fails');
+        $this->assertSame('start', $this->stageSummary($stockPtc)['stages'][0]->status);
+    }
+
     private function moveStageIds(array $move): array
     {
         $ids = DB::table('heads')->whereIn('head_id', $this->stages)->pluck('head_id', 'name');
@@ -334,9 +396,10 @@ class PtcVirtualStockTest extends TestCase
 
     // ------------------------------------------------------------------
 
-    private function createPtc(int $startStage, array $rows, ?int $endStage = null): int
+    private function createPtc(int $startStage, array $rows, ?int $endStage = null, ?string $startFrom = null): int
     {
         $this->post(route('ptc.store'), array_merge([
+            'start_from' => $startFrom,
             'stock_no' => app(StockRepository::class)->ptcRefNo().'T',
             'stock_date' => now()->toDateString(),
             'ptc_product_type_id' => $this->pt,

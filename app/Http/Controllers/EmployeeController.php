@@ -184,6 +184,8 @@ class EmployeeController extends Controller
         $balance = $oBalance + $totalDebit - $totalCredit;
 
         return view('print.employee-ledger', [
+            // A readable description per row (the printed ledger cannot be clicked)
+            'notes' => $this->transactionRepository->ledgerDescriptions($detail),
             'employee' => $employee,
             'detail' => $detail,
             'balance' => $balance,

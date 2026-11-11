@@ -1,69 +1,78 @@
 @extends('print.layout')
 
 @section('title', 'Commercial_Invoice_' . ($delivery['delivery_no'] ?? $delivery['cust_no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('doc_title', 'Commercial Invoice')
+@section('doc_no', $delivery['delivery_no'] ?? '')
 
 @push('styles')
 <style>
     .document-info { display: flex; width: 100%; }
     .info-section   { width: 50%; box-sizing: border-box; }
-    .full-width-section { width: 100%; box-sizing: border-box; }
 </style>
 @endpush
 
 @section('content')
-<div class="document-title">Commercial Invoice</div>
+@php
+    $totalQuantity = $deliveryItem->sum('quantity');
+    $itemsTotal = $deliveryItem->sum(fn ($item) => $item->quantity * ($item->price ?? 0));
+    $freightCharges = (float) ($delivery['freight_charges'] ?? 0);
+    $grandTotal = $itemsTotal + $freightCharges;
+    $currencyName = $deliveryItem->first()->cname ?? 'PKR';
+    $totalLabel = !empty($sellingType) ? 'Total ' . $sellingType . ' Amount:' : 'Grand Total:';
 
-{{-- Customer Information --}}
+    // A delivery's own FI No wins; otherwise the default from Settings > Company
+    $fiNo = !empty($delivery['fi_no']) ? $delivery['fi_no'] : ($company->fi_no ?? null);
+
+    // Payment terms of the order(s) this delivery is for
+    $paymentTerms = (!empty($isMultiOrder) && !empty($relatedOrders))
+        ? collect($relatedOrders)->map(fn ($order) => trim((string) ((array) $order)['payment_terms']))->filter()->unique()->implode('; ')
+        : trim((string) ($delivery['payment_terms'] ?? ''));
+@endphp
+
+{{-- Customer / invoice details --}}
 <div class="document-info">
     <div class="info-section">
         <div class="info-row">
             <span class="info-label">Customer Name:</span>
             <span class="info-value">{{ $delivery['fname'] ?? 'N/A' }} {{ $delivery['lname'] ?? '' }}</span>
         </div>
-
         <div class="info-row">
             <span class="info-label">Address:</span>
-            @if(isset($delivery['tshipping']) && !empty($delivery['tshipping']))
-                <span class="info-value">{{ $delivery['tshipping'] }}</span>
-            @else
-                <span class="info-value">{{ $delivery['address'] ?? 'N/A' }}</span>
-            @endif
+            <span class="info-value">{{ !empty($delivery['tshipping']) ? $delivery['tshipping'] : ($delivery['address'] ?? 'N/A') }}</span>
         </div>
-
         <div class="info-row">
             <span class="info-label">Destination Port:</span>
             <span class="info-value">{{ $delivery['tport_no'] ?? 'N/A' }}</span>
         </div>
-
-        {{-- Company info (no title) --}}
-        @if(isset($company))
-            @if(!empty($company->ntn))
-            <div class="info-row">
-                <span class="info-label">NTN:</span>
-                <span class="info-value">{{ $company->ntn }}</span>
-            </div>
-            @endif
-
-            @if(!empty($company->rex_no))
-            <div class="info-row">
-                <span class="info-label">REX No:</span>
-                <span class="info-value">{{ $company->rex_no }}</span>
-            </div>
-            @endif
+        @if(!empty($company->ntn))
+        <div class="info-row">
+            <span class="info-label">NTN:</span>
+            <span class="info-value">{{ $company->ntn }}</span>
+        </div>
         @endif
-
-        @if(isset($hsCode) && !empty($hsCode))
+        @if(!empty($company->rex_no))
+        <div class="info-row">
+            <span class="info-label">REX No:</span>
+            <span class="info-value">{{ $company->rex_no }}</span>
+        </div>
+        @endif
+        @if(!empty($fiNo))
+        <div class="info-row">
+            <span class="info-label">FI No:</span>
+            <span class="info-value">{{ $fiNo }}</span>
+        </div>
+        @endif
+        @if(!empty($hsCode))
         <div class="info-row">
             <span class="info-label">HS Code:</span>
             <span class="info-value">{{ $hsCode }}</span>
         </div>
         @endif
-
-        @if(!empty($delivery['fi_no']))
-            <div class="info-row">
-                <span class="info-label">FI No:</span>
-                <span class="info-value">{{ $delivery['fi_no'] }}</span>
-            </div>
+        @if($paymentTerms !== '')
+        <div class="info-row">
+            <span class="info-label">Payment Terms:</span>
+            <span class="info-value">{{ $paymentTerms }}</span>
+        </div>
         @endif
     </div>
 
@@ -76,44 +85,32 @@
             <span class="info-label">Invoice No:</span>
             <span class="info-value">{{ $delivery['delivery_no'] ?? 'N/A' }}</span>
         </div>
-        @if(isset($delivery['delivery_date']) && !empty($delivery['delivery_date']))
+        @if(!empty($delivery['delivery_date']))
         <div class="info-row">
             <span class="info-label">Delivery Date:</span>
-            <span class="info-value">{{ \Carbon\Carbon::parse($delivery['delivery_date'])->format('d-m-Y') }}</span>
+            <span class="info-value">{{ formatDate($delivery['delivery_date']) }}</span>
         </div>
         @endif
-        @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 0)
         <div class="info-row">
-            <span class="info-label">Order Numbers:</span>
-            <span class="info-value">
-                @php
-                    $orderNumbers = collect($relatedOrders)->pluck('order_no')->implode(', ');
-                @endphp
-                {{ $orderNumbers }}
-            </span>
+            @if(!empty($isMultiOrder) && !empty($relatedOrders))
+                <span class="info-label">Order Numbers:</span>
+                <span class="info-value">{{ collect($relatedOrders)->pluck('order_no')->implode(', ') }}</span>
+            @else
+                <span class="info-label">Order Number:</span>
+                <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
+            @endif
         </div>
-        @else
-        <div class="info-row">
-            <span class="info-label">Order Number:</span>
-            <span class="info-value">{{ $delivery['order_no'] ?? 'N/A' }}</span>
-        </div>
-        @endif
-
-        @if(isset($uom) && !empty($uom))
+        @if(!empty($uom))
         <div class="info-row">
             <span class="info-label">UOM:</span>
             <span class="info-value">{{ $uom }}</span>
         </div>
         @endif
-
-        @php
-            $totalQuantity = $deliveryItem->sum('quantity');
-        @endphp
         <div class="info-row">
-            <span class="info-label">Total Quantity:</span>
-            <span class="info-value">{{ $totalQuantity }}</span>
+            <span class="info-label">Total QTY:</span>
+            <span class="info-value">{{ number_format($totalQuantity) }}</span>
         </div>
-        @if(isset($packingList) && $packingList && isset($packingList['carton_count']))
+        @if(!empty($packingList['carton_count']))
         <div class="info-row">
             <span class="info-label">Total Packages:</span>
             <span class="info-value">{{ $packingList['carton_count'] }}</span>
@@ -123,119 +120,76 @@
 </div>
 
 {{-- Delivered Items Table --}}
-@if(isset($deliveryItem) && $deliveryItem->count() > 0)
+@if($deliveryItem->count() > 0)
 <div class="avoid-break">
     <table class="print-table">
         <thead>
             <tr>
-                <th style="width: 5%">Sr.</th>
-                <th style="width: 12%">Article No</th>
-                <th style="width: 28%">Product Name</th>
-                <th style="width: 10%">Size</th>
-                {{-- <th style="width: 10%">Unit</th> --}}
-                <th style="width: 10%">Quantity</th>
-                <th style="width: 13%">Unit Price</th>
-                <th style="width: 13%">Total</th>
+                <th class="text-center" style="width: 5%">Sr.</th>
+                <th class="text-center" style="width: 12%">Article No</th>
+                <th class="text-left" style="width: 27%">Product Name</th>
+                <th class="text-center" style="width: 16%">Size</th>
+                <th class="num" style="width: 10%">QTY</th>
+                <th class="num" style="width: 13%">Price</th>
+                <th class="num" style="width: 17%">Total</th>
             </tr>
         </thead>
         <tbody>
-            @if($deliveryItem->count())
-                @foreach($deliveryItem as $item)
-                <tr>
-                    <td class="text-center">{{ $loop->index + 1 }}</td>
-                    <td class="text-center">{{ $item->article_no }}</td>
-                    <td class="text-left">{{ $item->name }}</td>
-                    <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
-                    {{-- <td class="text-center">{{ $item->puname ?? 'N/A' }}</td> --}}
-                    <td class="text-right">{{ number_format($item->quantity) }}</td>
-                    <td class="text-right amount">{{ number_format($item->price ?? 0, 2) }}</td>
-                    <td class="text-right amount">{{ number_format($item->quantity * ($item->price ?? 0), 2) }}</td>
-                </tr>
-                @endforeach
-            @endif
+            @foreach($deliveryItem as $item)
+            <tr>
+                <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $item->article_no }}</td>
+                <td class="text-left">{{ $item->name }}</td>
+                <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
+                <td class="num">{{ number_format($item->quantity) }}</td>
+                <td class="num">{{ number_format($item->price ?? 0, 2) }}</td>
+                <td class="num">{{ number_format($item->quantity * ($item->price ?? 0), 2) }}</td>
+            </tr>
+            @endforeach
         </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-right">Items Total</td>
+                <td class="num">{{ number_format($totalQuantity) }}</td>
+                <td></td>
+                <td class="num">{{ number_format($itemsTotal, 2) }}</td>
+            </tr>
+            @if($freightCharges > 0)
+            <tr>
+                <td colspan="6" class="text-right">Freight Charges</td>
+                <td class="num">{{ number_format($freightCharges, 2) }}</td>
+            </tr>
+            @endif
+        </tfoot>
     </table>
 </div>
 
 {{-- Invoice Totals --}}
-@php
-$totalOriginal = $deliveryItem->sum(function($item) {
-    return $item->quantity * ($item->price ?? 0);
-});
-$firstItem = $deliveryItem->first();
-$currencyName = $firstItem->cname ?? 'PKR';
-
-// Determine the total label based on selling type
-$totalLabel = 'Grand Total:';
-if (isset($sellingType) && !empty($sellingType)) {
-    $totalLabel = 'Total ' . $sellingType . ' Amount:';
-}
-@endphp
 <div class="totals-section avoid-break">
     <div class="total-row grand-total">
         <span>{{ $totalLabel }}
             @if(function_exists('numberToWordsWithCurrency'))
-                {{ numberToWordsWithCurrency($totalOriginal ?? 0) }} {{ $currencyName }}
+                {{ numberToWordsWithCurrency($grandTotal) }} {{ $currencyName }}
             @endif
         </span>
-        <span class="amount">{{ number_format($totalOriginal, 2) }} {{ $currencyName }}</span>
+        <span class="amount">{{ number_format($grandTotal, 2) }} {{ $currencyName }}</span>
     </div>
 </div>
 
 {{-- Statement of Origin (if provided) --}}
-@if(isset($statementOfOrigin) && !empty($statementOfOrigin))
+@if(!empty($statementOfOrigin))
 <div class="avoid-break" style="margin-top: 15px;">
-    <h3>Statement of Origin</h3>
+    <div class="table-title">Statement of Origin</div>
     <p>{{ $statementOfOrigin }}</p>
 </div>
 @endif
 
-{{-- Bank Account Details --}}
-@if(isset($bankDetails) && !empty($bankDetails))
-<div class="avoid-break" style="margin-top: 15px;">
-    <h3>Bank Account Details</h3>
-    <table class="print-table">
-        <tbody>
-            <tr>
-                <td><strong>Account Title:</strong></td>
-                <td>{{ $bankDetails['account_title'] ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td><strong>Account Number:</strong></td>
-                <td>{{ $bankDetails['account'] ?? 'N/A' }}</td>
-            </tr>
-            @if(isset($bankDetails['iban']) && !empty($bankDetails['iban']))
-            <tr>
-                <td><strong>IBAN:</strong></td>
-                <td>{{ $bankDetails['iban'] }}</td>
-            </tr>
-            @endif
-            @if(isset($bankDetails['swift_code']) && !empty($bankDetails['swift_code']))
-            <tr>
-                <td><strong>SWIFT Code:</strong></td>
-                <td>{{ $bankDetails['swift_code'] }}</td>
-            </tr>
-            @endif
-            @if(isset($bankDetails['branch_code']) && !empty($bankDetails['branch_code']))
-            <tr>
-                <td><strong>Branch Code:</strong></td>
-                <td>{{ $bankDetails['branch_code'] }}</td>
-            </tr>
-            @endif
-            @if(isset($bankDetails['address']) && !empty($bankDetails['address']))
-            <tr>
-                <td><strong>Bank Address:</strong></td>
-                <td>{{ $bankDetails['address'] }}</td>
-            </tr>
-            @endif
-        </tbody>
-    </table>
-</div>
-@endif
+@include('print.partials.bank-details')
 
 {{-- Certification Statement --}}
 <div class="certification-statement avoid-break">
-    <p>CERTIFIED TO BE TRUE AND CORRECT: {{ $company->name ?? '' }}</p>
+    <p>CERTIFIED TO BE TRUE AND CORRECT</p>
+    <p>{{ strtoupper($company->name ?? '') }}</p>
 </div>
 @endif
 

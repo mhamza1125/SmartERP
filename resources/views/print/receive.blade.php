@@ -1,6 +1,8 @@
 @extends('print.layout')
 
-@section('title', 'Receive Information')
+@section('title', 'Receive_' . ($receive['receive_no'] ?? 'N/A') . '_' . formatDate($receive['receive_date'] ?? now()))
+@section('doc_title', 'Goods Received')
+@section('doc_no', $receive['receive_no'] ?? '')
 
 @section('content')
 
@@ -71,50 +73,44 @@
 </div>
 @endif
 
-{{-- Received Materials --}}
+{{-- Received Items (materials or products) --}}
 @if(isset($receiveMaterial) && $receiveMaterial->count() > 0)
+@php $isMaterial = ($receive['purchase_type'] ?? '') == 'material'; @endphp
 <div class="items-section avoid-break">
-    <h3>Received Materials</h3>
+    <div class="table-title">Received Items</div>
     <table class="print-table">
         <thead>
             <tr>
-                <th>Sr.</th>
-                @if($receive['purchase_type'] == 'material')
-                    <th>Material No</th>
-                    <th>Material Name</th>
-                    <th>Unit</th>
-                @else
-                    <th>Article No</th>
-                    <th>Product Name</th>
-                    <th>Size</th>
-                @endif
-                <th>Receive Qty</th>
+                <th class="text-center" style="width: 6%">Sr.</th>
+                <th class="text-center" style="width: 15%">{{ $isMaterial ? 'Material No' : 'Article No' }}</th>
+                <th class="text-left">{{ $isMaterial ? 'Material Name' : 'Product Name' }}</th>
+                <th class="text-center" style="width: 14%">{{ $isMaterial ? 'Unit' : 'Size' }}</th>
+                <th class="num" style="width: 14%">QTY</th>
             </tr>
         </thead>
         <tbody>
             @foreach($receiveMaterial as $item)
             <tr>
                 <td class="text-center">{{ $loop->iteration }}</td>
-                @if($receive['purchase_type'] == 'material')
-                    <td class="text-center">{{ $item->material_no ?? '' }}</td>
-                    <td>{{ $item->name ?? '' }}</td>
-                @else
-                    <td class="text-center">{{ $item->article_no ?? '' }}</td>
-                    <td>{{ $item->name ?? '' }}</td>
-                @endif
+                <td class="text-center">{{ $isMaterial ? ($item->material_no ?? '') : ($item->article_no ?? '') }}</td>
+                <td class="text-left">{{ $item->name ?? '' }}</td>
                 <td class="text-center">{{ $item->hname ?? '' }}</td>
-                <td class="text-right">{{ number_format($item->quantity ?? 0, 2) }}</td>
+                <td class="num">{{ number_format($item->quantity ?? 0, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
-        {{-- <tfoot>
-            <tr class="total-row">
-                <td colspan="4" class="text-right"><strong>Total Items:</strong></td>
-                <td class="text-right"><strong>{{ $receiveMaterial->count() }}</strong></td>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-right">Total</td>
+                <td class="num">{{ number_format($receiveMaterial->sum('quantity'), 2) }}</td>
             </tr>
-        </tfoot> --}}
+        </tfoot>
     </table>
 </div>
 @endif
+
+<div class="sign-row sign-row--single">
+    <span class="sign-row__field">Received By:<span class="sign-row__line"></span></span>
+</div>
 
 @endsection

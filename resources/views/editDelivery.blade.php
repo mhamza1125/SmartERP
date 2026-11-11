@@ -169,6 +169,15 @@
                 </div>
               </div>
               <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Freight Charges <small class="text-muted">(Optional, order currency)</small></label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="freight_charges" placeholder="0.00" value="{{ old('freight_charges', $order['freight_charges'] ?? '') }}">
+                    <small class="form-text text-muted">Charged to the customer on top of the items; added to the commercial invoice and customer ledger.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Statement of Origin <small class="text-muted">(Optional)</small></label>

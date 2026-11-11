@@ -1,6 +1,8 @@
 @extends('print.layout')
 
-@section('title', 'Receive Issuance Information')
+@section('title', 'Receive_Issuance_' . ($issue['stock_no'] ?? 'N/A'))
+@section('doc_title', 'Issuance Receipt')
+@section('doc_no', $issue['stock_no'] ?? '')
 
 @section('content')
 
@@ -87,7 +89,7 @@
                 <th>Article No</th>
                 <th>Material / Stage / Component</th>
                 <th>Work Done</th>
-                <th>Quantity</th>
+                <th>QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>

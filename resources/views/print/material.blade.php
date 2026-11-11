@@ -1,10 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Material_Info_' . ($material['material_no'] ?? 'N/A') . '_' . date('d-m-Y'))
+@section('doc_title', 'Material Information')
+@section('doc_no', $material['material_no'] ?? '')
 
 @section('content')
-<div class="document-title">Material Information</div>
-
 {{-- Material Header Information --}}
 <div class="document-info">
     <div class="info-section">
@@ -33,7 +33,11 @@
         </div>
         <div class="info-row">
             <span class="info-label">Current Stock:</span>
-            <span class="info-value">{{ isset($material['quantity']) ? number_format($material['quantity']) : '0' }} {{ $material['uname'] ?? '' }}</span>
+            <span class="info-value">{{ number_format($currentStock ?? 0) }} {{ $material['uname'] ?? '' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Opening Stock:</span>
+            <span class="info-value">{{ number_format($material['quantity'] ?? 0) }} {{ $material['uname'] ?? '' }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Location:</span>
@@ -95,7 +99,7 @@
 <div class="totals-section avoid-break">
     <div class="total-row">
         <span>Current Stock Value:</span>
-        <span>{{ isset($material['quantity']) && isset($material['cprice']) ? number_format($material['quantity'] * $material['cprice'], 2) : 'N/A' }}</span>
+        <span>{{ isset($material['cprice']) ? number_format(($currentStock ?? 0) * $material['cprice'], 2) : 'N/A' }}</span>
     </div>
     <div class="total-row">
         <span>Material Status:</span>

@@ -36,7 +36,7 @@
                       <td>{{$loop->index + 1}}</td>
                       <td>{{\Carbon\Carbon::parse($item->purchase_date)->format('d-m-Y')}}</td>                      
                       <td>{{$item->purchase_no}}</td>
-                      <td><span class="badge {{ $item->purchase_type == 'material' ? 'badge-secondary' : 'badge-dark' }}">{{ucfirst($item->purchase_type)}}</span></td>
+                      <td><span class="badge {{ $item->purchase_type == 'material' ? 'badge-info' : 'badge-primary' }}">{{ucfirst($item->purchase_type)}}</span></td>
                       <td>{{($item->job_no)? $item->job_no:'Default Purchase'}}</td>
                       <td>{{$item->vendor_no}} - {{$item->fname}}</td>
                       <td>@if($item->has_received) 

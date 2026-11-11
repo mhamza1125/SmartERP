@@ -1,13 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Delivery_Details_' . ($delivery['delivery_no'] ?? 'N/A') . '_' . formatDate($delivery['delivery_date'] ?? now()))
+@section('doc_title', 'Delivery Note')
+@section('doc_no', $delivery['delivery_no'] ?? '')
 
 @section('content')
-
-<div class="doc-title-row">
-    <span class="doc-title-label">DELIVERY NOTE</span>
-    <span class="doc-title-no"># {{ $delivery['delivery_no'] ?? 'N/A' }}</span>
-</div>
 
 {{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
 <div class="meta-band">
@@ -46,6 +43,12 @@
         <span class="meta-value mono">{{ $delivery['job_no'] ?? 'N/A' }}</span>
     </div>
     @endif
+    @if(!empty($packingListInfo['total_cartons']))
+    <div class="meta-field">
+        <span class="meta-label">Cartons</span>
+        <span class="meta-value mono">{{ number_format($packingListInfo['total_cartons']) }}</span>
+    </div>
+    @endif
     <div class="meta-field">
         <span class="meta-label">Method</span>
         <span class="meta-value">
@@ -68,41 +71,18 @@
     </div>
 </div>
 
-{{-- ── Parties ──────────────────────────────────────────────────────────────── --}}
-<div class="party-grid">
-    {{-- Shipper (our company) --}}
-    <div class="party-block">
-        <div class="party-label">SHIPPER / FROM</div>
-        <div class="party-name">{{ $company->name ?? '' }}</div>
-        @if(!empty($delivery['fshipping']))
-            <div class="party-detail">{{ $delivery['fshipping'] }}</div>
-        @endif
-        @if(!empty($delivery['fport_no']))
-            <div class="party-contact">Port: {{ $delivery['fport_no'] }}</div>
-        @endif
-        @if(!empty($company->ntn))
-            <div class="party-detail">NTN: {{ $company->ntn }}</div>
-        @endif
-        @if(!empty($company->rex_no))
-            <div class="party-detail">REX: {{ $company->rex_no }}</div>
-        @endif
-    </div>
-
-    {{-- Consignee --}}
-    <div class="party-block">
-        <div class="party-label">CONSIGNEE / TO</div>
-        <div class="party-name">{{ $delivery['fname'] ?? ($delivery['customer_no'] ?? 'N/A') }}</div>
-        @if(!empty($delivery['tshipping']))
-            <div class="party-detail">{{ $delivery['tshipping'] }}</div>
-        @endif
-        @if(!empty($delivery['tport_no']))
-            <div class="party-contact">Port: {{ $delivery['tport_no'] }}</div>
-        @endif
-        @if(!empty($delivery['fi_no']))
-            <div class="party-detail">FI: {{ $delivery['fi_no'] }}</div>
-        @endif
-    </div>
+{{-- ── Shipper ──────────────────────────────────────────────────────────────── --}}
+@if(!empty($delivery['fshipping']) || !empty($delivery['fport_no']))
+<div class="party-block" style="margin-bottom:12px;">
+    <div class="party-label">SHIPPED FROM</div>
+    @if(!empty($delivery['fshipping']))
+        <div class="party-detail">{{ $delivery['fshipping'] }}</div>
+    @endif
+    @if(!empty($delivery['fport_no']))
+        <div class="party-contact">Port: {{ $delivery['fport_no'] }}</div>
+    @endif
 </div>
+@endif
 
 {{-- ── Statement of Origin ─────────────────────────────────────────────────── --}}
 @if(!empty($delivery['so_origin']))
@@ -123,15 +103,16 @@
 {{-- ── Delivery Items ───────────────────────────────────────────────────────── --}}
 @if(isset($deliveryItem) && $deliveryItem->count() > 0)
 <div class="avoid-break">
+    <div class="table-title">Delivered Items</div>
     <table class="print-table">
         <thead>
             <tr>
-                <th style="width:6%">Sr.</th>
-                <th style="width:13%" class="text-center">Article No</th>
-                <th>Product Name</th>
+                <th style="width:6%" class="text-center">Sr.</th>
+                <th style="width:13%" class="code">Article No</th>
+                <th class="text-left">Product Name</th>
                 <th style="width:13%" class="text-center">Size</th>
-                <th style="width:12%" class="text-right">Qty Delivered</th>
-                <th style="width:10%" class="text-right">Boxes</th>
+                <th style="width:12%" class="num">QTY</th>
+                <th style="width:10%" class="num">Boxes</th>
             </tr>
         </thead>
         <tbody>
@@ -148,7 +129,7 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="4" class="text-right">Total:</td>
+                <td colspan="4" class="text-right">Total</td>
                 <td class="num">{{ number_format($deliveryItem->sum('quantity') ?? 0) }}</td>
                 <td class="num">{{ number_format($deliveryItem->sum(function($item) { return ceil($item->quantity * ($item->bqty ?? 1)); }) ?? 0) }}</td>
             </tr>
@@ -156,31 +137,6 @@
     </table>
 </div>
 
-{{-- Summary tiles --}}
-<div class="totals-wrap avoid-break">
-    <div class="totals-block">
-        <div class="totals-block__row">
-            <span class="lbl">Total Items Delivered</span>
-            <span class="val">{{ number_format($deliveryItem->sum('quantity') ?? 0) }}</span>
-        </div>
-        <div class="totals-block__row">
-            <span class="lbl">Total Boxes</span>
-            <span class="val">{{ number_format($deliveryItem->sum(function($item) { return ceil($item->quantity * ($item->bqty ?? 1)); }) ?? 0) }}</span>
-        </div>
-        @if(isset($packingListInfo) && $packingListInfo)
-        <div class="totals-block__row">
-            <span class="lbl">Total Cartons</span>
-            <span class="val">{{ number_format($packingListInfo['total_cartons']) }}</span>
-        </div>
-        @endif
-        @if(isset($delivery['delivery_charges']) && $delivery['delivery_charges'] > 0)
-        <div class="totals-block__row">
-            <span class="lbl">Delivery Charges</span>
-            <span class="val">{{ number_format($delivery['delivery_charges'], 2) }}</span>
-        </div>
-        @endif
-    </div>
-</div>
 @endif
 
 {{-- ── Delivery Instructions ────────────────────────────────────────────────── --}}

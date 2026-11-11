@@ -1,10 +1,9 @@
 @extends('print.layout')
 
 @section('title', 'Stock_Report_' . date('d-m-Y'))
+@section('doc_title', 'Stock Report')
 
 @section('content')
-<div class="document-title">Stock Report</div>
-
 <div style="text-align: center; margin-bottom: 20px; font-size: 11px;">
     <p><strong>Generated on:</strong> {{ \Carbon\Carbon::now()->format('d-m-Y H:i:s') }}</p>
 </div>
@@ -19,7 +18,7 @@
                 <th>Code</th>
                 <th>Material Name</th>
                 <th>Type</th>
-                <th style="text-align: right;">Available Quantity</th>
+                <th style="text-align: right;">Available QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>
@@ -53,7 +52,7 @@
                 <th>Product Name</th>
                 <th>Size</th>
                 <th>Stage</th>
-                <th style="text-align: right;">Available Quantity</th>
+                <th style="text-align: right;">Available QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>
@@ -86,7 +85,7 @@
                 <th>Sr.</th>
                 <th>Code</th>
                 <th>Material Name</th>
-                <th style="text-align: right;">Available Quantity</th>
+                <th style="text-align: right;">Available QTY</th>
                 <th>Unit</th>
             </tr>
         </thead>

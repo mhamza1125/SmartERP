@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Transaction;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class TransactionRepository implements GlobalInterface
@@ -69,11 +70,11 @@ class TransactionRepository implements GlobalInterface
             ->join('customers', 'customers.customer_id', '=', 'transactions.payee_id')
             ->join('orders', 'orders.order_id', '=', 'transactions.order_id');
 
-        if (!empty($dfrom) && !empty($dto)) {
+        if (! empty($dfrom) && ! empty($dto)) {
             $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
         }
 
-        if (!empty($customer_id)) {
+        if (! empty($customer_id)) {
             $query->where('transactions.payee_id', $customer_id);
         }
 
@@ -93,11 +94,11 @@ class TransactionRepository implements GlobalInterface
         $query = Transaction::where('transaction_to', 'employee')
             ->join('employees', 'employees.employee_id', '=', 'transactions.payee_id');
 
-        if (!empty($dfrom) && !empty($dto)) {
+        if (! empty($dfrom) && ! empty($dto)) {
             $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
         }
 
-        if (!empty($employee_id)) {
+        if (! empty($employee_id)) {
             $query->where('transactions.payee_id', $employee_id);
         }
 
@@ -119,11 +120,11 @@ class TransactionRepository implements GlobalInterface
             ->join('vendors', 'vendors.vendor_id', '=', 'transactions.payee_id')
             ->where('vendor_type', '0');
 
-        if (!empty($dfrom) && !empty($dto)) {
+        if (! empty($dfrom) && ! empty($dto)) {
             $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
         }
 
-        if (!empty($vendor_id)) {
+        if (! empty($vendor_id)) {
             $query->where('transactions.payee_id', $vendor_id);
         }
 
@@ -145,11 +146,11 @@ class TransactionRepository implements GlobalInterface
             ->join('vendors', 'vendors.vendor_id', '=', 'transactions.payee_id')
             ->where('vendor_type', '1');
 
-        if (!empty($dfrom) && !empty($dto)) {
+        if (! empty($dfrom) && ! empty($dto)) {
             $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
         }
 
-        if (!empty($contractor_id)) {
+        if (! empty($contractor_id)) {
             $query->where('transactions.payee_id', $contractor_id);
         }
 
@@ -169,11 +170,11 @@ class TransactionRepository implements GlobalInterface
         $query = Transaction::where('transaction_to', 'expense')
             ->join('heads', 'heads.head_id', '=', 'transactions.payee_id');
 
-        if (!empty($dfrom) && !empty($dto)) {
+        if (! empty($dfrom) && ! empty($dto)) {
             $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
         }
 
-        if (!empty($head_id)) {
+        if (! empty($head_id)) {
             $query->where('transactions.payee_id', $head_id);
         }
 
@@ -374,9 +375,7 @@ class TransactionRepository implements GlobalInterface
             ->first();
     }
 
-    public function get($id)
-    {
-    }
+    public function get($id) {}
 
     public function getExpense($id)
     {
@@ -394,7 +393,7 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
-            ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
+            ->leftJoin('heads as rhead', 'rhead.head_id', 'rbank.head_id')
             ->join('employees', 'employees.employee_id', 'transactions.payee_id')
             ->select('transactions.*', 'employees.employee_no', 'employees.name', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title')
             ->first();
@@ -406,7 +405,7 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
-            ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
+            ->leftJoin('heads as rhead', 'rhead.head_id', 'rbank.head_id')
             ->join('vendors', 'vendors.vendor_id', 'transactions.payee_id')
             ->leftJoin('purchases', 'purchases.purchase_id', 'transactions.order_id')
             ->select('transactions.*', 'vendors.vendor_no', 'vendors.fname', 'rhead.name as rname', 'bhead.name as bname', 'rbank.account as raccount', 'rbank.account_title as raccount_title', 'banks.account', 'banks.account_title', 'purchases.purchase_no')
@@ -419,7 +418,7 @@ class TransactionRepository implements GlobalInterface
             ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->leftJoin('banks as rbank', 'rbank.bank_id', '=', 'transactions.payee_bank_id')
             ->leftJoin('heads as bhead', 'bhead.head_id', 'banks.head_id')
-            ->leftJoin('heads as rhead', 'rhead.head_id', 'banks.head_id')
+            ->leftJoin('heads as rhead', 'rhead.head_id', 'rbank.head_id')
             ->join('customers', 'customers.customer_id', 'transactions.payee_id')
             ->leftJoin('heads as chead', 'chead.head_id', '=', 'customers.currency_id')
             ->join('orders', 'orders.order_id', 'transactions.order_id')
@@ -617,12 +616,13 @@ class TransactionRepository implements GlobalInterface
                 'stocks.stock_date',
                 'deliveries.delivery_id',
                 'stocks.created_at as timestamp',
-                \DB::raw('COALESCE(SUM(order_items.price * stock_items.quantity), 0) as debit')
+                \DB::raw('COALESCE(MAX(deliveries.freight_charges), 0) as freight_charges'),
+                \DB::raw('COALESCE(SUM(order_items.price * stock_items.quantity), 0) + COALESCE(MAX(deliveries.freight_charges), 0) as debit')
             )
             ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->leftJoin('order_items', function($join) {
+            ->leftJoin('order_items', function ($join) {
                 $join->on('order_items.order_id', '=', 'stocks.order_id')
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
@@ -651,7 +651,7 @@ class TransactionRepository implements GlobalInterface
             ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->leftJoin('order_items', function($join) {
+            ->leftJoin('order_items', function ($join) {
                 $join->on('order_items.order_id', '=', 'stocks.order_id')
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
@@ -671,7 +671,7 @@ class TransactionRepository implements GlobalInterface
             )
             ->first();
 
-        $totalDebitBefore = ($deliveriesBefore->debit ?? 0) + ($transactionsBefore->debit ?? 0);
+        $totalDebitBefore = ($deliveriesBefore->debit ?? 0) + $this->customerFreight($id, fn ($q) => $q->where('stocks.stock_date', '<', $dfrom)) + ($transactionsBefore->debit ?? 0);
         $totalCreditBefore = $transactionsBefore->credit ?? 0;
         $openingBalance = $totalCreditBefore - $totalDebitBefore;
 
@@ -683,12 +683,13 @@ class TransactionRepository implements GlobalInterface
                 'stocks.stock_date',
                 'deliveries.delivery_id',
                 'stocks.created_at as timestamp',
-                \DB::raw('COALESCE(SUM(order_items.price * stock_items.quantity), 0) as debit')
+                \DB::raw('COALESCE(MAX(deliveries.freight_charges), 0) as freight_charges'),
+                \DB::raw('COALESCE(SUM(order_items.price * stock_items.quantity), 0) + COALESCE(MAX(deliveries.freight_charges), 0) as debit')
             )
             ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->leftJoin('order_items', function($join) {
+            ->leftJoin('order_items', function ($join) {
                 $join->on('order_items.order_id', '=', 'stocks.order_id')
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
@@ -712,7 +713,7 @@ class TransactionRepository implements GlobalInterface
             ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
             ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
             ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->leftJoin('order_items', function($join) {
+            ->leftJoin('order_items', function ($join) {
                 $join->on('order_items.order_id', '=', 'stocks.order_id')
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
@@ -732,7 +733,7 @@ class TransactionRepository implements GlobalInterface
             )
             ->first();
 
-        $totalDebitAfter = ($deliveriesAfter->debit ?? 0) + ($transactionsAfter->debit ?? 0);
+        $totalDebitAfter = ($deliveriesAfter->debit ?? 0) + $this->customerFreight($id, fn ($q) => $q->where('stocks.stock_date', '>', $dto)) + ($transactionsAfter->debit ?? 0);
         $totalCreditAfter = $transactionsAfter->credit ?? 0;
         $closingBalance = $totalCreditAfter - $totalDebitAfter;
 
@@ -742,10 +743,6 @@ class TransactionRepository implements GlobalInterface
             'closing_balance' => $closingBalance,
         ];
     }
-
-
-
-
 
     public function eDetail($id)
     {
@@ -997,7 +994,310 @@ class TransactionRepository implements GlobalInterface
         }
     }
 
-    public function delete($id)
+    public function delete($id) {}
+
+    /**
+     * Total freight charged on a customer's deliveries (stock_status 3), narrowed by $filter.
+     * Kept separate from the item sums because those are joined per stock line.
+     */
+    private function customerFreight($customerId, callable $filter): float
     {
+        $query = \DB::table('deliveries')
+            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
+            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->where('orders.customer_id', $customerId)
+            ->where('stocks.stock_status', '=', 3);
+        $filter($query);
+
+        return (float) $query->sum('deliveries.freight_charges');
+    }
+
+    /** Display names of transaction_type values */
+    public const TYPE_LABELS = [
+        'payment' => 'Payment',
+        'wages' => 'Wages',
+        'salary' => 'Salary',
+        'advance' => 'Loan Given',
+        'receiveAdvance' => 'Loan Received',
+        'openingBalance' => 'Opening Balance',
+        'orderPayment' => 'Order Payment',
+        'expense' => 'Expense',
+        'bankCharges' => 'Bank Charges',
+        'deliveryExpense' => 'Delivery Expense',
+        'transfer' => 'Bank / Cash Transfer',
+        'brs' => 'Balance Adjustment',
+        'generalVoucher' => 'General Voucher',
+    ];
+
+    /**
+     * What each transaction was about, for printed lists, ledgers and vouchers where
+     * nothing can be clicked: who it was with, what it was for (purchase / order /
+     * delivery / expense head), which account it went through, the cheque number
+     * (stored in the description as "Check No: x") and the rest of the description.
+     *
+     * Looks everything up in batches. Keyed by transaction_id; each value:
+     *   type       type label ("Payment", "Loan Given", ...)
+     *   party      "V0003 - Ashraf" / expense head name / ... (null when none)
+     *   cheque_no  cheque number or null
+     *   note       description without the cheque part, or null
+     *   narration  one line: "Payment to V0003 - Ashraf · Purchase P2611003 · via Meezan Bank - ... · Cheque 123 · note"
+     *   summary    the narration without its leading "Payment to V0003 - Ashraf" part
+     *   details    [label => value] for vouchers (empty values left out)
+     */
+    public function describe(iterable $transactionIds): Collection
+    {
+        $ids = collect($transactionIds)->filter()->map(fn ($id) => (int) $id)->unique()->values();
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        $rows = DB::table('transactions')->whereIn('transaction_id', $ids)->get()->keyBy('transaction_id');
+        $pairIds = $rows->pluck('transfer_pair_id')->filter()->map(fn ($id) => (int) $id)->diff($ids);
+        $pairs = $pairIds->isEmpty() ? collect() : DB::table('transactions')->whereIn('transaction_id', $pairIds)->get()->keyBy('transaction_id');
+        $all = $rows->union($pairs);
+
+        $of = fn (array $tos) => $rows->filter(fn ($row) => in_array($row->transaction_to, $tos, true));
+        $banks = DB::table('banks')
+            ->leftJoin('heads', 'heads.head_id', '=', 'banks.head_id')
+            ->whereIn('banks.bank_id', $all->pluck('bank_id')->merge($all->pluck('payee_bank_id'))->filter()->unique())
+            ->get(['banks.bank_id', 'banks.account', 'banks.account_title', 'heads.name as bank_name'])
+            ->keyBy('bank_id');
+        $vendors = DB::table('vendors')->whereIn('vendor_id', $of(['vendor', 'contractor'])->pluck('payee_id'))->get(['vendor_id', 'vendor_no', 'fname'])->keyBy('vendor_id');
+        $employees = DB::table('employees')->whereIn('employee_id', $of(['employee'])->pluck('payee_id'))->get(['employee_id', 'employee_no', 'name'])->keyBy('employee_id');
+        $customers = DB::table('customers')->whereIn('customer_id', $of(['customer'])->pluck('payee_id'))->get(['customer_id', 'customer_no', 'fname', 'lname'])->keyBy('customer_id');
+        $heads = DB::table('heads')->whereIn('head_id', $of(['expense'])->pluck('payee_id'))->pluck('name', 'head_id');
+        $purchases = DB::table('purchases')->whereIn('purchase_id', $of(['vendor', 'contractor'])->pluck('order_id')->filter())->pluck('purchase_no', 'purchase_id');
+        $orders = DB::table('orders')->whereIn('order_id', $of(['customer'])->pluck('order_id')->filter())->get(['order_id', 'order_no', 'job_no'])->keyBy('order_id');
+        $deliveries = DB::table('deliveries')
+            ->whereIn('delivery_id', $rows->where('transaction_type', 'deliveryExpense')->pluck('order_id')->filter())
+            ->pluck('delivery_no', 'delivery_id');
+
+        // "Cash" for bank_id 0, otherwise "Bank name - Account title - A/C number"
+        $account = function ($bankId) use ($banks) {
+            if (! $bankId) {
+                return 'Cash';
+            }
+            $bank = $banks->get($bankId);
+
+            return $bank ? collect([$bank->bank_name, $bank->account_title, $bank->account ? 'A/C '.$bank->account : null])->filter()->implode(' - ') : null;
+        };
+        $amount = fn ($value) => $value !== null && (float) $value != 0 ? number_format((float) $value, 2) : null;
+
+        return $rows->map(function ($row) use ($all, $account, $amount, $vendors, $employees, $customers, $heads, $purchases, $orders, $deliveries) {
+            [$note, $cheque] = $this->splitCheque($row->description);
+            $type = self::TYPE_LABELS[$row->transaction_type] ?? ucfirst((string) $row->transaction_type);
+
+            $party = null;
+            if (in_array($row->transaction_to, ['vendor', 'contractor'], true) && ($vendor = $vendors->get($row->payee_id))) {
+                $party = trim($vendor->vendor_no.' - '.$vendor->fname);
+            } elseif ($row->transaction_to === 'employee' && ($employee = $employees->get($row->payee_id))) {
+                $party = trim($employee->employee_no.' - '.$employee->name);
+            } elseif ($row->transaction_to === 'customer' && ($customer = $customers->get($row->payee_id))) {
+                $party = trim($customer->customer_no.' - '.$customer->fname.' '.$customer->lname);
+            } elseif ($row->transaction_to === 'expense') {
+                $party = $heads->get($row->payee_id);
+            }
+            $partyLabel = [
+                'vendor' => 'Vendor', 'contractor' => 'Contractor', 'employee' => 'Employee',
+                'customer' => 'Customer', 'expense' => 'Expense Head',
+            ][$row->transaction_to] ?? 'Party';
+            $incoming = in_array($row->transaction_type, ['receiveAdvance', 'orderPayment'], true);
+            $noAccount = in_array($row->transaction_type, ['openingBalance', 'generalVoucher'], true);
+
+            $details = ['Type' => $type, $partyLabel => $party];
+            $parts = [];
+
+            if ($row->transaction_type === 'transfer') {
+                $pair = $all->get($row->transfer_pair_id);
+                // The credit side is the account the money left
+                $outRow = $row->credit !== null && (float) $row->credit != 0 ? $row : $pair;
+                $inRow = $outRow === $row ? $pair : $row;
+                $from = $outRow ? $account($outRow->bank_id) : null;
+                $to = $inRow ? $account($inRow->bank_id) : null;
+                $details['From Account'] = $from;
+                $details['To Account'] = $to;
+                $parts[] = 'Transfer from '.($from ?? '-').' to '.($to ?? '-');
+            } elseif ($row->transaction_to === 'brs') {
+                $details['Account'] = $account($row->bank_id);
+                $parts[] = 'Balance adjustment on '.$account($row->bank_id).' ('.((float) $row->debit > 0 ? 'increase' : 'decrease').')';
+            } elseif ($row->transaction_to === 'expense') {
+                $parts[] = $type.($party && strcasecmp(trim($party), $type) !== 0 ? ': '.$party : '');
+                if ($row->transaction_type === 'deliveryExpense' && $deliveries->get($row->order_id)) {
+                    $details['Delivery No'] = $deliveries->get($row->order_id);
+                    $parts[] = 'Delivery '.$deliveries->get($row->order_id);
+                }
+                $details['Paid From'] = $account($row->bank_id);
+                $parts[] = 'paid from '.$account($row->bank_id);
+            } else {
+                $parts[] = $type.($party ? ($noAccount ? ' - ' : ($incoming ? ' from ' : ' to ')).$party : '');
+                if (in_array($row->transaction_to, ['vendor', 'contractor'], true) && $purchases->get($row->order_id)) {
+                    $details['Purchase No'] = $purchases->get($row->order_id);
+                    $parts[] = 'Purchase '.$purchases->get($row->order_id);
+                }
+                if ($row->transaction_to === 'customer' && ($order = $orders->get($row->order_id))) {
+                    $details['Order No'] = $order->order_no;
+                    $details['Job No'] = $order->job_no;
+                    $parts[] = 'Order '.$order->order_no.($order->job_no ? ' ('.$order->job_no.')' : '');
+                }
+                if (! $noAccount) {
+                    $details[$incoming ? 'Received Into' : 'Paid From'] = $account($row->bank_id);
+                    $parts[] = ($incoming ? 'into ' : 'via ').$account($row->bank_id);
+                    if ($row->payee_bank_id) {
+                        $details[$incoming ? 'Party Account (From)' : 'Party Account (To)'] = $account($row->payee_bank_id);
+                    }
+                }
+                if ($row->transaction_to === 'customer') {
+                    $details['Amount (Customer Currency)'] = $amount($row->cc_amount);
+                    $details['Bank Fees'] = $amount($row->fb_charges);
+                    if ($amount($row->fb_charges)) {
+                        $parts[] = 'fees '.$amount($row->fb_charges);
+                    }
+                }
+            }
+
+            $details['Cheque No'] = $cheque;
+            $details['Description'] = $note;
+            if ($cheque) {
+                $parts[] = 'Cheque '.$cheque;
+            }
+            if ($note) {
+                $parts[] = $note;
+            }
+
+            return (object) [
+                'type' => $type,
+                'party' => $party,
+                'cheque_no' => $cheque,
+                'note' => $note,
+                'narration' => implode(' · ', array_filter($parts, fn ($part) => trim((string) $part) !== '')),
+                // Without the leading "Type to party" part, for lists that already show both
+                'summary' => implode(' · ', array_filter(array_slice($parts, 1), fn ($part) => trim((string) $part) !== '')),
+                'details' => array_filter($details, fn ($value) => trim((string) $value) !== ''),
+            ];
+        });
+    }
+
+    /**
+     * Description without its "Check No: x" / "Cheque No: x" part, and that cheque number.
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function splitCheque(?string $description): array
+    {
+        $text = trim(strip_tags((string) $description));
+        if (preg_match('/\s*-?\s*\b(?:check|cheque|chq)\b\s*(?:no\.?|number|#)?\s*[:#]?\s*([A-Za-z0-9\-\/]+)/i', $text, $match)) {
+            $text = trim(str_replace($match[0], '', $text), " -\t\n");
+
+            return [$text !== '' ? $text : null, $match[1]];
+        }
+
+        return [$text !== '' ? $text : null, null];
+    }
+
+    /**
+     * A readable description for every row of a people ledger (customer / vendor / contractor /
+     * employee), for the printed ledger where rows cannot be opened:
+     *   transaction       type + purchase / order, account, cheque, note (see describe(); the party is the ledger itself)
+     *   purchase (vendor) "Purchase P2611003 received: Spatula Plastic Handle (160 MM) x 100, ..."
+     *   return (vendor)   "Return R-1 on purchase P2611003: Aluminium x 25"
+     *   delivery          "Delivery SLE-D001-26 · Order X (job) · Funnel (20MM) x 10 · incl. freight 20.00"
+     *
+     * @return Collection<int|string, string> keyed like $rows
+     */
+    public function ledgerDescriptions(iterable $rows): Collection
+    {
+        $rows = collect($rows);
+        $info = $this->describe($rows->pluck('transaction_id')->filter());
+
+        $purchaseIds = $rows->filter(fn ($row) => empty($row->transaction_id) && ! empty($row->purchase_id) && empty($row->return_id))->pluck('purchase_id');
+        $returnIds = $rows->filter(fn ($row) => empty($row->transaction_id) && ! empty($row->return_id))->pluck('return_id');
+        $deliveryStockIds = $rows->filter(fn ($row) => empty($row->transaction_id) && ! empty($row->delivery_id))->pluck('stock_id');
+
+        $itemName = "COALESCE(materials.name, CONCAT(products.name, IF(size.name IS NULL, '', CONCAT(' (', size.name, ')'))))";
+        $withNames = fn ($query, $productColumn, $materialColumn) => $query
+            ->leftJoin('materials', function ($join) use ($materialColumn) {
+                $join->on('materials.material_id', '=', $materialColumn)->where($materialColumn, '>', 0);
+            })
+            ->leftJoin('product_types', 'product_types.product_type_id', '=', $productColumn)
+            ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
+            ->leftJoin('heads as size', 'size.head_id', '=', 'product_types.size_id');
+
+        $purchaseItems = $purchaseIds->isEmpty() ? collect() : $withNames(
+            DB::table('purchase_items')->join('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id'),
+            'purchase_items.product_type_id', 'purchase_items.material_id'
+        )
+            ->whereIn('purchase_items.purchase_id', $purchaseIds)
+            ->groupBy('purchase_items.purchase_item_id', 'purchase_items.purchase_id', DB::raw($itemName))
+            ->selectRaw("purchase_items.purchase_id as doc_id, {$itemName} as item, SUM(receive_materials.quantity) as qty")
+            ->get()->groupBy('doc_id');
+
+        $returnItems = $returnIds->isEmpty() ? collect() : $withNames(
+            DB::table('return_materials')
+                ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
+                ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id'),
+            'purchase_items.product_type_id', 'purchase_items.material_id'
+        )
+            ->whereIn('return_materials.return_id', $returnIds)
+            ->groupBy('return_materials.return_id', 'purchase_items.purchase_item_id', DB::raw($itemName))
+            ->selectRaw("return_materials.return_id as doc_id, {$itemName} as item, SUM(return_materials.quantity) as qty")
+            ->get()->groupBy('doc_id');
+
+        $deliveryItems = $deliveryStockIds->isEmpty() ? collect() : $withNames(
+            DB::table('stock_items'),
+            'stock_items.product_type_id', 'stock_items.material_id'
+        )
+            ->whereIn('stock_items.stock_id', $deliveryStockIds)
+            ->groupBy('stock_items.stock_id', 'stock_items.product_type_id', 'stock_items.material_id', DB::raw($itemName))
+            ->selectRaw("stock_items.stock_id as doc_id, {$itemName} as item, SUM(stock_items.quantity) as qty")
+            ->get()->groupBy('doc_id');
+        $deliveries = $deliveryStockIds->isEmpty() ? collect() : DB::table('deliveries')
+            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->whereIn('deliveries.stock_id', $deliveryStockIds)
+            ->get(['deliveries.stock_id', 'deliveries.delivery_no', 'deliveries.freight_charges', 'orders.order_no', 'orders.job_no'])
+            ->keyBy('stock_id');
+
+        // "Item x 10, Item x 5, +2 more"
+        $itemList = function ($items) {
+            if (! $items || $items->isEmpty()) {
+                return null;
+            }
+            $shown = $items->take(4)->map(fn ($item) => trim($item->item ?? 'Item').' x '.(float) $item->qty)->implode(', ');
+
+            return $shown.($items->count() > 4 ? ', +'.($items->count() - 4).' more' : '');
+        };
+
+        return $rows->map(function ($row) use ($info, $purchaseItems, $returnItems, $deliveryItems, $deliveries, $itemList) {
+            if (! empty($row->transaction_id)) {
+                $item = $info->get($row->transaction_id);
+
+                return $item ? trim($item->type.($item->summary !== '' ? ' · '.$item->summary : '')) : 'Transaction';
+            }
+            if (! empty($row->return_id)) {
+                $items = $itemList($returnItems->get($row->return_id));
+
+                return 'Return '.($row->return_no ?? '').' on purchase '.($row->purchase_no ?? '-').($items ? ': '.$items : '');
+            }
+            if (! empty($row->purchase_id)) {
+                $items = $itemList($purchaseItems->get($row->purchase_id));
+
+                return 'Purchase '.($row->purchase_no ?? '').' received'.($items ? ': '.$items : '');
+            }
+            if (! empty($row->delivery_id)) {
+                $delivery = $deliveries->get($row->stock_id);
+                $parts = ['Delivery '.($delivery->delivery_no ?? $row->stock_no ?? '')];
+                if ($delivery && $delivery->order_no) {
+                    $parts[] = 'Order '.$delivery->order_no.($delivery->job_no ? ' ('.$delivery->job_no.')' : '');
+                }
+                $parts[] = $itemList($deliveryItems->get($row->stock_id));
+                if ($delivery && (float) $delivery->freight_charges > 0) {
+                    $parts[] = 'incl. freight '.number_format((float) $delivery->freight_charges, 2);
+                }
+
+                return implode(' · ', array_filter($parts));
+            }
+
+            return trim(strip_tags((string) ($row->description ?? ''))) ?: 'Transaction';
+        });
     }
 }

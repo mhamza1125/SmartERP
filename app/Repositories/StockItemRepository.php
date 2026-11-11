@@ -343,10 +343,10 @@ class StockItemRepository implements GlobalInterface
             ->get();
     }
 
-    public function stock()
+    public function stock(?int $materialId = null)
     {
-        // Available Material Stock
-        return DB::table(function ($subquery) {
+        // Available Material Stock (optionally for one material)
+        return DB::table(function ($subquery) use ($materialId) {
             $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'materials.location', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
                 // ->selectRaw('SUM(receive_materials.quantity) as total_received')
                 ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
@@ -357,6 +357,7 @@ class StockItemRepository implements GlobalInterface
                 ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
                 ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
                 ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+                ->when($materialId, fn ($q) => $q->where('materials.material_id', $materialId))
                 ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'materials.location', 'mthead.name', 'uhead.name');
         }, 'material_stock')
             ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
@@ -366,6 +367,17 @@ class StockItemRepository implements GlobalInterface
             ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
             ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.location', 'material_stock.mtname', 'material_stock.uname')
             ->get();
+    }
+
+    /**
+     * Current stock of one material: the same figure the /stock/material page shows
+     * (approved received - returned + stock in - stock out, opening stock included).
+     */
+    public function materialStock(int $materialId): float
+    {
+        $row = $this->stock($materialId)->first();
+
+        return $row ? (float) ($row->total_received + $row->stockIn - $row->stockOut - $row->total_returned) : 0.0;
     }
 
     /**

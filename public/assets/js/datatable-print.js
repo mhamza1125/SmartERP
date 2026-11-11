@@ -1,293 +1,204 @@
 /*!
- * SmartERP — DataTable Professional Print
- * =========================================
- * Standardises the DataTables "Print" button output with a consistent,
- * enterprise-grade layout that matches the system's Blade print design tokens.
+ * SmartERP — DataTable Print / Export
+ * ====================================
+ * Layout for the DataTables "Print" button, matching the Blade print views:
+ *   header (repeated on every page): logo left, report title middle, phone / email / web right
+ *   no footer
+ * plus the cell cleaning shared by every export button (copy / excel / csv / pdf / print).
  *
- * Usage: included globally via index.blade.php (before custom.js).
- * API:   window.dtPrintCustomize(win, title)
+ * Included globally via index.blade.php (before custom.js). Company logo, contacts and the
+ * base URL come from window.SmartERP (set in index.blade.php), so it works when the app runs
+ * under a sub-folder such as http://host:8080/ERP/public.
  *
- * Automatically pre-fetches company data on page load so the customize
- * callback can run synchronously when the user clicks Print.
+ * API:
+ *   window.dtPrintCustomize(win, title)   DataTables print `customize` callback
+ *   window.dtExportCell(data, row, column, node)   exportOptions.format.body
  */
-(function (window) {
+(function (window, $) {
     'use strict';
 
-    /* ── Design tokens (must match print/layout.blade.php) ──────────── */
     var ACCENT   = '#1f3a5f';
     var INK      = '#1a1d21';
     var MUTED    = '#6b707a';
-    var HAIRLINE = '#e6e9ee';
-    var ROW_ALT  = '#fafbfc';
+    var HAIRLINE = '#dfe3e8';
+    var ROW_ALT  = '#f6f8fa';
     var SANS     = '"Arial","Helvetica Neue",Helvetica,sans-serif';
     var MONO     = '"Courier New",Courier,monospace';
 
-    /* ── Company data cache ──────────────────────────────────────────── */
-    var _co = null;
+    // Header text that marks a numeric column (right-aligned), and words that rule it out
+    var NUMERIC_HEAD = /\b(qty|quantity|price|rate|total|amount|debit|credit|balance|stock|weight|pcs|boxes|cartons|average|avg|ordered|received|returned|remaining|wages|cost|value|salary|paid|due)\b/i;
+    var NOT_NUMERIC_HEAD = /\b(no|name|date|from|to|by|type|description|method|reference|details|head|stage|remarks|reason|code|status|detail)\b/i;
 
-    /* Start fetching immediately on script load.
-       By the time the user finds and clicks the Print button, the
-       ~100 ms local fetch will have resolved. */
-    fetch('/company/data')
-        .then(function (r) { return r.json(); })
-        .then(function (d) { _co = d; })
-        .catch(function () { /* leave null; fallback used at print time */ });
-
-    function getCompany() {
-        return _co || {
-            name:        'SmartERP',
-            address:     '',
-            phone:       '',
-            email:       '',
-            website:     '',
-            logo_path:   'assets/print-logo.png',
-            footer_text: ''
-        };
+    function config() {
+        return window.SmartERP || {};
     }
 
-    /* ── Print-window CSS ────────────────────────────────────────────── */
-    function buildStyles() {
+    function escapeHtml(text) {
+        return String(text == null ? '' : text)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function nowString() {
+        var d = new Date();
+        var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+        return pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
+    /* ── Cell text for every export ───────────────────────────────────────
+       Interactive markup in a cell (status dropdowns, menus, forms, hidden inputs)
+       is not data: keep only what the cell shows. A cell can also give its own
+       export text with data-export="...". */
+    window.dtExportCell = function (data, row, column, node) {
+        if (!node || !node.cloneNode) {
+            return typeof data === 'string' ? $('<div>').html(data).text().replace(/\s+/g, ' ').trim() : data;
+        }
+        if (node.hasAttribute && node.hasAttribute('data-export')) {
+            return node.getAttribute('data-export');
+        }
+
+        var el = node.cloneNode(true);
+        var $el = $(el);
+        $el.find('[data-export]').each(function () {
+            $(this).replaceWith(document.createTextNode(this.getAttribute('data-export')));
+        });
+        $el.find('.dropdown-menu, .no-export, .d-print-none, .modal, script, style, input[type=hidden], template').remove();
+        $el.find('select').each(function () {
+            $(this).replaceWith(document.createTextNode($(this).find('option:selected').text()));
+        });
+        $el.find('input').each(function () {
+            $(this).replaceWith(document.createTextNode(this.value || ''));
+        });
+        $el.find('br').replaceWith(' ');
+        // Keep block elements apart ("Name" + "Location" -> "Name Location", not "NameLocation")
+        $el.find('div, p, li, sub, sup, small, span.badge').each(function () {
+            $(this).before(' ').after(' ');
+        });
+
+        return $el.text().replace(/\s+/g, ' ').trim();
+    };
+
+    /* ── Print window styles ─────────────────────────────────────────── */
+    function buildStyles(landscape) {
         return [
-            /* 1. Reset */
             '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }',
+            '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: 8mm 10mm 10mm; }',
+            'html, body { background: #fff; }',
+            'body { font-family: ' + SANS + '; font-size: 10.5px; line-height: 1.4; color: ' + INK + ';',
+            '  -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
 
-            /* 2. Page — zero margin; body padding carries the gutters */
-            '@page { size: A4; margin: 0; }',
+            /* Frame: its thead (the page header) repeats on every printed page */
+            '.dtp-frame { width: 100%; border-collapse: collapse; }',
+            '.dtp-frame > thead > tr > td, .dtp-frame > tbody > tr > td { padding: 0; border: none; }',
 
-            /* 3. Body */
-            'body {',
-            '  font-family: ' + SANS + ';',
-            '  font-size: 11px;',
-            '  line-height: 1.45;',
-            '  color: ' + INK + ';',
-            '  background: #fff;',
-            '  -webkit-print-color-adjust: exact;',
-            '  print-color-adjust: exact;',
-            /* Push body content below the fixed header (logo ≈ 48px + 5mm top + 3mm margin + 3px rule ≈ 28 mm)
-               and above the fixed footer (two lines at 9px × 1.6 + 4mm padding ≈ 14 mm) */
-            '  padding: 30mm 14mm 14mm;',
-            '}',
+            /* Header: logo | title | contacts */
+            '.dtp-header { display: grid; grid-template-columns: minmax(0, 28fr) minmax(0, 44fr) minmax(0, 28fr); align-items: center; gap: 12px;',
+            '  padding-bottom: 6px; border-bottom: 3px solid ' + ACCENT + '; margin-bottom: 10px; }',
+            '.dtp-header__logo { height: 44px; max-width: 100%; width: auto; object-fit: contain; display: block; }',
+            '.dtp-header__title { text-align: center; min-width: 0; }',
+            '.dtp-header__title-main { font-size: 15px; font-weight: 700; color: ' + ACCENT + '; text-transform: uppercase; letter-spacing: 0.05em;',
+            '  line-height: 1.2; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }',
+            '.dtp-header__title-sub { font-family: ' + MONO + '; font-size: 9.5px; color: ' + MUTED + '; margin-top: 2px; }',
+            '.dtp-header__contacts { justify-self: end; text-align: right; font-size: 9px; line-height: 1.5; min-width: 0; overflow-wrap: anywhere; }',
+            '.dtp-header__label { font-family: ' + MONO + '; font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.1em; color: ' + MUTED + '; margin-right: 3px; }',
 
-            /* 4. Fixed header — logo centred, accent rule beneath */
-            '.dtp-header {',
-            '  position: fixed;',
-            '  top: 0; left: 0; right: 0;',
-            '  background: #fff;',
-            '  text-align: center;',
-            '  padding: 5mm 14mm 0;',
-            '  z-index: 1000;',
-            '}',
-            '.dtp-header__logo {',
-            '  height: 48px;',
-            '  width: auto;',
-            '  object-fit: contain;',
-            '  display: block;',
-            '  margin: 0 auto 3mm;',
-            '}',
-            '.dtp-header__rule {',
-            '  height: 3px;',
-            '  background: ' + ACCENT + ';',
-            '}',
+            /* Data table. Column titles are dark text on a light band so they print
+               even when the browser's "Background graphics" option is off. */
+            'table.dataTable, table.dtp-data { width: 100% !important; border-collapse: collapse !important; font-size: 10.5px; margin: 0 !important; }',
+            'table.dtp-data thead { display: table-header-group; }',
+            'table.dtp-data thead th { background: #e9eef4 !important; color: ' + ACCENT + ' !important; font-size: 9px; font-weight: 700;',
+            '  text-transform: uppercase; letter-spacing: 0.05em; text-align: left; padding: 6px 7px !important;',
+            '  border: none !important; border-top: 2px solid ' + ACCENT + ' !important; border-bottom: 2px solid ' + ACCENT + ' !important; }',
+            'table.dtp-data tbody td { padding: 4px 7px !important; vertical-align: top; border: none !important;',
+            '  border-bottom: 1px solid ' + HAIRLINE + ' !important; word-break: break-word; }',
+            'table.dtp-data tbody tr:nth-child(even) td { background: ' + ROW_ALT + ' !important; }',
+            'table.dtp-data tfoot th, table.dtp-data tfoot td { padding: 5px 7px !important; font-weight: 700; border-top: 2px solid ' + ACCENT + ' !important; }',
+            'table.dtp-data .num { text-align: right !important; font-family: ' + MONO + '; white-space: nowrap; }',
+            'table.dtp-data .sr { text-align: center !important; width: 1%; white-space: nowrap; }',
+            'table.dtp-data tr { page-break-inside: avoid; }',
 
-            /* 5. Title row — report name left, timestamp right */
-            '.dtp-title-row {',
-            '  display: flex;',
-            '  justify-content: space-between;',
-            '  align-items: baseline;',
-            '  margin-bottom: 10px;',
-            '  padding-bottom: 6px;',
-            '  border-bottom: 2px solid ' + ACCENT + ';',
-            '}',
-            '.dtp-title {',
-            '  font-size: 15px;',
-            '  font-weight: 700;',
-            '  color: ' + ACCENT + ';',
-            '  text-transform: uppercase;',
-            '  letter-spacing: 0.05em;',
-            '}',
-            '.dtp-meta {',
-            '  font-family: ' + MONO + ';',
-            '  font-size: 10px;',
-            '  color: ' + MUTED + ';',
-            '}',
-
-            /* 6. Table — full design-token styling, overrides DataTables defaults */
-            'table {',
-            '  width: 100%;',
-            '  border-collapse: collapse !important;',
-            '  margin-bottom: 14px;',
-            '  font-size: 11px;',
-            '}',
-            'thead tr { background: ' + ACCENT + ' !important; }',
-            'thead th {',
-            '  color: #fff !important;',
-            '  font-family: ' + MONO + ' !important;',
-            '  font-size: 8.5px !important;',
-            '  text-transform: uppercase !important;',
-            '  letter-spacing: 0.10em !important;',
-            '  padding: 6px 8px !important;',
-            '  text-align: left !important;',
-            '  font-weight: 700 !important;',
-            '  white-space: nowrap;',
-            '  border: none !important;',
-            '}',
-            'tbody tr { border-bottom: 1px solid ' + HAIRLINE + ' !important; }',
-            'tbody tr:nth-child(even) { background: ' + ROW_ALT + ' !important; }',
-            'tbody td {',
-            '  padding: 5px 8px !important;',
-            '  vertical-align: middle;',
-            '  color: ' + INK + ';',
-            '  border: none !important;',
-            '  border-bottom: 1px solid ' + HAIRLINE + ' !important;',
-            '}',
-            'tfoot tr {',
-            '  border-top: 2px solid ' + HAIRLINE + ' !important;',
-            '  background: ' + ROW_ALT + ' !important;',
-            '}',
-            'tfoot td {',
-            '  padding: 5px 8px !important;',
-            '  font-weight: 600;',
-            '  border: none !important;',
-            '}',
-
-            /* 7. Fixed footer — accent bar, centred two-line text */
-            '.dtp-footer {',
-            '  position: fixed;',
-            '  bottom: 0; left: 0; right: 0;',
-            '  background: ' + ACCENT + ';',
-            '  text-align: center;',
-            '  padding: 2mm 14mm;',
-            '  z-index: 1000;',
-            '}',
-            '.dtp-footer__line {',
-            '  font-size: 9px;',
-            '  color: #fff;',
-            '  font-weight: 700;',
-            '  line-height: 1.6;',
-            '  display: block;',
-            '}',
-            '.dtp-footer__line.mono {',
-            '  font-family: ' + MONO + ';',
-            '}',
-
-            /* 8. Page-break helpers */
-            'tr { page-break-inside: avoid; }',
-
-            /* 9. Print media — ensure color accuracy */
-            '@media print {',
-            '  body {',
-            '    -webkit-print-color-adjust: exact !important;',
-            '    print-color-adjust: exact !important;',
-            '  }',
-            '}'
+            '.dtp-count { margin-top: 6px; font-size: 9px; color: ' + MUTED + '; text-align: right; }'
         ].join('\n');
     }
 
-    /* ── Zero-pad helper ─────────────────────────────────────────────── */
-    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+    function headerHtml(title) {
+        var cfg = config();
+        var contacts = cfg.contacts || {};
+        var contactRows = [['Phone', contacts.phone], ['Email', contacts.email], ['Web', contacts.website]]
+            .filter(function (item) { return item[1] && String(item[1]).trim() && String(item[1]).trim() !== '.'; })
+            .map(function (item) {
+                return '<div><span class="dtp-header__label">' + item[0] + '</span>' + escapeHtml(item[1]) + '</div>';
+            }).join('');
+        var logo = cfg.logo || (window.appUrl ? window.appUrl('assets/print-logo.png') : 'assets/print-logo.png');
 
-    /* ── Date/time string ────────────────────────────────────────────── */
-    function nowString() {
-        var d = new Date();
-        var months = ['Jan','Feb','Mar','Apr','May','Jun',
-                      'Jul','Aug','Sep','Oct','Nov','Dec'];
-        return pad2(d.getDate()) + ' ' + months[d.getMonth()] + ' ' + d.getFullYear()
-             + '  ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+        return '<div class="dtp-header">' +
+            '<div><img class="dtp-header__logo" src="' + escapeHtml(logo) + '" alt="Logo"></div>' +
+            '<div class="dtp-header__title">' +
+                '<div class="dtp-header__title-main">' + escapeHtml(title || 'Report') + '</div>' +
+                '<div class="dtp-header__title-sub">Printed ' + nowString() + '</div>' +
+            '</div>' +
+            '<div class="dtp-header__contacts">' + contactRows + '</div>' +
+        '</div>';
     }
 
-    /* ── Core: apply the professional layout to the DataTables window ── */
+    /* Right-align numeric columns (by their title) in head, body and foot; centre Sr. */
+    function alignColumns(table) {
+        var headRow = table.tHead && table.tHead.rows[0];
+        if (!headRow) return;
+        var rows = [].slice.call(table.querySelectorAll('tbody tr, tfoot tr'));
+
+        [].forEach.call(headRow.cells, function (th, index) {
+            var text = th.textContent.replace(/\s+/g, ' ').trim();
+            var cls = /^(sr\.?|#|s\.? ?no\.?)$/i.test(text) ? 'sr'
+                : (NUMERIC_HEAD.test(text) && !NOT_NUMERIC_HEAD.test(text) ? 'num' : null);
+            if (!cls) return;
+            th.classList.add(cls);
+            rows.forEach(function (row) {
+                if (row.cells[index]) row.cells[index].classList.add(cls);
+            });
+        });
+    }
+
     function applyLayout(win, title) {
-        var co  = getCompany();
         var doc = win.document;
 
-        /* Remove DataTables own <style> blocks — we replace them entirely */
-        [].slice.call(doc.querySelectorAll('style')).forEach(function (s) {
-            s.parentNode.removeChild(s);
-        });
-
-        /* Inject design-system styles */
-        var styleEl = doc.createElement('style');
-        styleEl.textContent = buildStyles();
-        doc.head.appendChild(styleEl);
-
-        /* Set window title */
-        doc.title = title || 'Report';
-
-        /* Remove the empty <h1> DataTables writes */
+        // Replace DataTables' own styles and title
+        [].slice.call(doc.querySelectorAll('style, link[rel=stylesheet]')).forEach(function (s) { s.parentNode.removeChild(s); });
         var h1 = doc.querySelector('h1');
         if (h1) h1.parentNode.removeChild(h1);
+        doc.title = title || 'Report';
 
-        /* Build header: centred logo + accent rule */
-        var logoSrc = window.location.origin + '/assets/print-logo.png';
-        var logoHtml = '<img class="dtp-header__logo" src="' + logoSrc + '" alt="Logo">';
-        var headerHtml =
-            '<div class="dtp-header">' +
-                logoHtml +
-                '<div class="dtp-header__rule"></div>' +
-            '</div>';
-
-        /* Build title row: report title + timestamp */
-        var titleHtml =
-            '<div class="dtp-title-row">' +
-                '<span class="dtp-title">' + (title || 'Report') + '</span>' +
-                '<span class="dtp-meta">' + nowString() + '</span>' +
-            '</div>';
-
-        /* Build footer: two centred lines matching the Blade footer layout.
-           If footer_text is set, render it as-is (it may already contain line breaks).
-           Otherwise build line 1 from address and line 2 from phone/email/website. */
-        var footerHtml = '<div class="dtp-footer">';
-
-        if (co.footer_text && co.footer_text.trim()) {
-            var ftLines = co.footer_text
-                .replace(/<br\s*\/?>/gi, '\n')
-                .replace(/<[^>]+>/g, '')
-                .split('\n');
-            for (var i = 0; i < ftLines.length; i++) {
-                var line = ftLines[i].trim();
-                if (line) {
-                    footerHtml += '<span class="dtp-footer__line">' + line + '</span>';
-                }
-            }
-        } else {
-            var addrParts = [co.address, co.city, co.country]
-                .filter(function (p) { return p && p.trim(); });
-            var addrLine = addrParts.join(', ');
-
-            var contactParts = [co.phone, co.email, co.website]
-                .filter(function (p) { return p && p.trim(); });
-            var contactLine = contactParts.join('  |  ');
-
-            if (addrLine) {
-                footerHtml += '<span class="dtp-footer__line">' + addrLine + '</span>';
-            }
-            if (contactLine) {
-                footerHtml += '<span class="dtp-footer__line mono">' + contactLine + '</span>';
-            }
+        var table = doc.querySelector('table');
+        if (!table) return;
+        table.classList.add('dtp-data');
+        // Many listings repeat the column titles in <tfoot>: print a footer only when it has totals
+        var titles = function (section) { return section ? section.textContent.replace(/\s+/g, ' ').trim().toLowerCase() : ''; };
+        if (table.tFoot && (titles(table.tFoot) === titles(table.tHead) || titles(table.tFoot) === '')) {
+            table.removeChild(table.tFoot);
         }
+        alignColumns(table);
 
-        footerHtml += '</div>';
+        var columns = table.tHead && table.tHead.rows[0] ? table.tHead.rows[0].cells.length : 0;
+        var styleEl = doc.createElement('style');
+        styleEl.textContent = buildStyles(columns > 7);
+        doc.head.appendChild(styleEl);
 
-        /* Inject header + title row before existing body content */
-        var topWrap = doc.createElement('div');
-        topWrap.innerHTML = headerHtml + titleHtml;
-        doc.body.insertBefore(topWrap, doc.body.firstChild);
+        // Frame table: page header in its thead (repeats per page), the data table in its body
+        var frame = doc.createElement('table');
+        frame.className = 'dtp-frame';
+        frame.innerHTML = '<thead><tr><td>' + headerHtml(title) + '</td></tr></thead><tbody><tr><td></td></tr></tbody>';
+        table.parentNode.insertBefore(frame, table);
+        var cell = frame.tBodies[0].rows[0].cells[0];
+        cell.appendChild(table);
 
-        /* Inject footer after existing body content */
-        var botWrap = doc.createElement('div');
-        botWrap.innerHTML = footerHtml;
-        doc.body.appendChild(botWrap);
+        var count = table.tBodies[0] ? table.tBodies[0].rows.length : 0;
+        var countEl = doc.createElement('div');
+        countEl.className = 'dtp-count';
+        countEl.textContent = count + ' record' + (count === 1 ? '' : 's');
+        cell.appendChild(countEl);
     }
 
-    /* ── Public API ──────────────────────────────────────────────────── */
-    /**
-     * Called from the DataTables print button `customize` callback.
-     *
-     * @param {Window} win   - The DataTables-created print window
-     * @param {string} title - Report title to display (e.g. "Order List")
-     */
     window.dtPrintCustomize = function (win, title) {
         applyLayout(win, title);
     };
 
-})(window);
+})(window, jQuery);

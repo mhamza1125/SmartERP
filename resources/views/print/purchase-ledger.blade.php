@@ -1,10 +1,9 @@
 @extends('print.layout')
 
 @section('title', 'Purchase_Ledger_' . ($dfrom ?? 'All') . '_to_' . ($dto ?? 'Current'))
+@section('doc_title', 'Purchase Ledger')
 
 @section('content')
-<div class="document-title">Purchase Ledger</div>
-
 {{-- Report Information --}}
 <div class="document-info">
     <div class="info-section">

@@ -136,6 +136,7 @@
                         <td>
                           @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
                           @elseif(isset($item->stock_no)) Delivery - ({{$item->stock_no}})
+                            @if(!empty($item->freight_charges) && $item->freight_charges > 0)<small class="text-muted">(incl. freight {{ number_format($item->freight_charges, 2) }})</small>@endif
                           @else Unknown Type @endif
                         </td>
                         <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>

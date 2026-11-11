@@ -1,6 +1,8 @@
 @extends('print.layout')
 
 @section('title', 'Production_Order_' . ($order->job_no ?? 'N/A') . '_' . formatDate($order->order_date ?? now()))
+@section('doc_title', 'Production Order')
+@section('doc_no', $order->job_no ?? '')
 
 @push('scripts')
 <script>
@@ -12,8 +14,6 @@
 @endpush
 
 @section('content')
-<div class="document-title">Production Order</div>
-
 <div class="document-info">
     <div class="info-section">
         <h3 style="margin:0 0 8px; font-size:12px; border-bottom:1px solid #ccc; padding-bottom:4px;">Production Information</h3>
@@ -51,7 +51,7 @@
                 <th>Product Name</th>
                 <th style="width:10%">Size</th>
                 <th style="width:12%">Stage</th>
-                <th style="width:10%" class="text-center">Qty</th>
+                <th style="width:10%" class="text-center">QTY</th>
             </tr>
         </thead>
         <tbody>

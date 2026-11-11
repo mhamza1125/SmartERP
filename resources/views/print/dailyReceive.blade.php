@@ -1,9 +1,9 @@
 @extends('print.layout')
 
 @section('title', 'Daily_Receiving_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
+@section('doc_title', 'Daily Receiving Report')
 
 @section('content')
-<div class="document-title">Daily Receiving Report</div>
 
 {{-- Report Header Information --}}
 <div class="document-info">
@@ -35,7 +35,7 @@
                 <th>Item / Product</th>
                 <th>Size</th>
                 <th>Stage</th>
-                <th>Quantity</th>
+                <th>QTY</th>
             </tr>
         </thead>
         <tbody>

@@ -1,13 +1,10 @@
 @extends('print.layout')
 
 @section('title', 'Order_' . ($order['order_no'] ?? 'N/A') . '_' . formatDate($order['order_date'] ?? now()))
+@section('doc_title', 'Order')
+@section('doc_no', $order['order_no'] ?? '')
 
 @section('content')
-
-<div class="doc-title-row">
-    <span class="doc-title-label">ORDER</span>
-    <span class="doc-title-no"># {{ $order['order_no'] ?? 'N/A' }}</span>
-</div>
 
 {{-- ── Meta band ──────────────────────────────────────────────────────────── --}}
 <div class="meta-band">
@@ -68,8 +65,8 @@
                 <th style="width:13%" class="text-center">Article No</th>
                 <th>Product Name</th>
                 <th style="width:15%" class="text-center">Size</th>
-                <th style="width:10%" class="text-right">Qty</th>
-                <th style="width:12%" class="text-right">Rate</th>
+                <th style="width:10%" class="text-right">QTY</th>
+                <th style="width:12%" class="text-right">Price</th>
                 <th style="width:13%" class="text-right">Total</th>
             </tr>
         </thead>
