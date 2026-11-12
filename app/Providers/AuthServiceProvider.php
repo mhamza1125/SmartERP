@@ -17,7 +17,6 @@ use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\Employee;
 use App\Models\Material;
-use App\Models\PackingList;
 use App\Models\Purchase;
 use App\Models\Receive;
 use App\Models\Returns;
@@ -30,7 +29,6 @@ use App\Policies\AdminPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\HeadPolicy;
 use App\Policies\OrderPolicy;
-use App\Policies\PackingListPolicy;
 use App\Policies\ReceivePolicy;
 use App\Policies\ReturnPolicy;
 use App\Policies\StockPolicy;
@@ -76,7 +74,6 @@ class AuthServiceProvider extends ServiceProvider
         Settings::class    => SettingsPolicy::class,
         Receive::class     => ReceivePolicy::class,
         Returns::class     => ReturnPolicy::class,
-        PackingList::class => PackingListPolicy::class,
         Category::class    => CategoryPolicy::class,
         Head::class        => HeadPolicy::class,
     ];

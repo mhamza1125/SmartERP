@@ -25,8 +25,7 @@ class PermissionRoleSeeder extends Seeder
         $modules = [
             // Sales & Delivery
             'orders'        => ['access', 'show', 'create', 'edit', 'delete'],
-            'deliveries'    => ['access', 'show', 'create', 'edit', 'delete'],
-            'packing_lists' => ['access', 'show', 'create', 'edit', 'delete'],
+            'deliveries'    => ['access', 'show', 'create', 'edit', 'delete'], // also covers packing lists
 
             // Procurement & Stock
             'purchases'     => ['access', 'show', 'create', 'edit', 'delete'],
@@ -84,7 +83,7 @@ class PermissionRoleSeeder extends Seeder
 
         // Manager-accessible modules (operational access)
         $managerModules = [
-            'orders', 'deliveries', 'packing_lists',
+            'orders', 'deliveries',
             'purchases', 'receives', 'returns',
             'stocks', 'issuances',
             'products', 'materials', 'machines',
