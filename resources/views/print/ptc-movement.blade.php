@@ -144,7 +144,7 @@
 </div>
 @endunless
 
-<div class="signatures avoid-break" style="margin-top: 40px;">
+<div class="signatures avoid-break" style="margin-top: 64px;">
     @if($isRelease)
         <div class="signature-box">
             <div class="signature-line"></div>

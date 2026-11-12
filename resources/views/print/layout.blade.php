@@ -442,8 +442,9 @@
         }
 
         /* ── 16. Signature section ───────────────────────────────────────── */
+        /* Signatures sit ~2 lines lower than the content above, with tall lines for a signature and stamp */
         .signatures {
-            margin-top: 20px;
+            margin-top: 44px;
             display: flex;
             justify-content: space-between;
             gap: 12px;
@@ -456,13 +457,13 @@
 
         .signature-line {
             border-bottom: 1px solid var(--ink);
-            height: 28px;
+            height: 46px;
             margin-bottom: 3px;
         }
 
         .signature-line-sm {
             border-bottom: 1px solid var(--ink);
-            height: 18px;
+            height: 34px;
             margin-bottom: 3px;
         }
 
@@ -633,7 +634,7 @@
             display: flex;
             justify-content: space-between;
             gap: 24px;
-            margin-top: 28px;
+            margin-top: 56px;   /* ~2 blank lines above the lines: room to sign and stamp */
             font-size: 11px;
             font-weight: 600;
             page-break-inside: avoid;

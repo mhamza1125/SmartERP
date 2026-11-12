@@ -176,6 +176,8 @@ class CustomerController extends Controller
         }
 
         return view('customerDetail', [
+            // Same readable description per row as the printed ledger
+            'notes' => $this->transactionRepository->ledgerDescriptions($detail),
             'customer' => $customer,
             'detail' => $detail,
             'balance' => $balance,

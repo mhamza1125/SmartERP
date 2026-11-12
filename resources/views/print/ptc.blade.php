@@ -26,11 +26,13 @@
     .ptc-card__releases { margin-top: 5px; font-size: 10px; color: var(--ink); }
     .qa-box { border: 1px solid var(--hairline); padding: 8px 12px; }
     .qa-box__title { font-weight: 700; font-size: 11.5px; margin-bottom: 6px; }
-    .qa-checklist { list-style: none; margin: 0 0 8px; padding: 0; }
-    .qa-checklist li { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 11px; }
-    .qa-check { display: inline-block; width: 12px; height: 12px; border: 1.2px solid var(--ink); flex-shrink: 0; }
+    /* Two columns, filled top to bottom (1-2 left, 3-4 right); boxes left empty to tick by hand */
+    .qa-checklist { list-style: none; margin: 0 0 8px; padding: 0;
+        display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, auto); grid-auto-flow: column; column-gap: 24px; row-gap: 2px; }
+    .qa-checklist li { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 11px; line-height: 1.35; break-inside: avoid; }
+    .qa-check { display: inline-block; width: 12px; height: 12px; margin-top: 1px; border: 1.2px solid var(--ink); flex-shrink: 0; }
     .qa-declaration { font-size: 10.5px; line-height: 1.5; font-style: italic; margin: 6px 0 0; }
-    .qa-signs { margin-top: 22px; }
+    .qa-signs { margin-top: 44px; }
 </style>
 @endpush
 
@@ -145,7 +147,7 @@
 <div class="document-section avoid-break">
     <div class="table-title">Production Activities</div>
     <div class="qa-box">
-        <div class="qa-box__title">QA DHR Completion Checklist</div>
+        <div class="qa-box__title">QA Completion Checklist</div>
         <ol class="qa-checklist">
             <li><span class="qa-check"></span> 1. Process traveler fully completed</li>
             <li><span class="qa-check"></span> 2. QA Inspection Checklist</li>

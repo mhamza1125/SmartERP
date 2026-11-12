@@ -298,6 +298,8 @@ class VendorController extends Controller
         $balance = $oBalance + $totalDebit - $totalCredit;
 
         return view('vendorDetail', [
+            // Same readable description per row as the printed ledger
+            'notes' => $this->transactionRepository->ledgerDescriptions($detail),
             'vendor' => $vendor,
             'detail' => $detail,
             'balance' => $balance,

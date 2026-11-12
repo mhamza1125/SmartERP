@@ -60,7 +60,8 @@
                     <tr>
                       <th>Sr.</th>
                       <th>Date</th>
-                      <th>Transaction Type</th>
+                      <th>Reference</th>
+                      <th>Description</th>
                       <th>Debit</th>
                       <th>Credit</th>
                       <th>Balance</th>
@@ -68,11 +69,12 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @php $index = 1; $balance = $oBalance; @endphp
+                    @php $index = 1; $ledgerBalance = $balance; $balance = $oBalance; @endphp
                     @if($oBalance != 0)
                       <tr>
                         <td>{{$index++}}</td>
                         <td>{{\Carbon\Carbon::parse($dfrom)->format('d-m-Y')}}</td>
+                        <td>-</td>
                         <td>Opening Balance</td>
                         <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
                         <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
@@ -81,7 +83,7 @@
                       </tr>
                     @endif
                     @if($detail->count())
-                      @foreach($detail as $item)
+                      @foreach($detail as $rowKey => $item)
                       @php
                         // For customer ledger:
                         // - Deliveries (stored in debit) should display in Debit column
@@ -133,11 +135,24 @@
                       <tr>
                         <td>{{ $loop->index + 1 }}</td>
                         <td>{{ isset($item->stock_date) ? \Carbon\Carbon::parse($item->stock_date)->format('d-m-Y') : (isset($item->transaction_date) ? $item->transaction_date : '') }}</td>
+                        <td class="text-nowrap">
+                          @if(isset($item->transaction_id))
+                            TXN-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}
+                          @elseif(isset($item->stock_no))
+                            {{ $item->stock_no }}
+                          @else
+                            -
+                          @endif
+                        </td>
                         <td>
+                          @if(!empty($notes[$rowKey]))
+                            {{ $notes[$rowKey] }}
+                          @else
                           @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
                           @elseif(isset($item->stock_no)) Delivery - ({{$item->stock_no}})
                             @if(!empty($item->freight_charges) && $item->freight_charges > 0)<small class="text-muted">(incl. freight {{ number_format($item->freight_charges, 2) }})</small>@endif
                           @else Unknown Type @endif
+                          @endif
                         </td>
                         <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>
                         <td>{{ $displayCredit > 0 ? number_format($displayCredit) : '' }}</td>
@@ -162,6 +177,7 @@
                       <tr>
                         <td>{{$index++}}</td>
                         <td>{{\Carbon\Carbon::parse($dto)->format('d-m-Y')}}</td>
+                        <td>-</td>
                         <td>Closing Balance</td>
                         <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>
                         <td>{{ $cBalance > 0 ? number_format(abs($cBalance)) : '' }}</td>
@@ -174,7 +190,8 @@
                     <tr>
                       <th>Sr.</th>
                       <th>Date</th>
-                      <th>Transaction Type</th>
+                      <th>Reference</th>
+                      <th>Description</th>
                       <th>Debit</th>
                       <th>Credit</th>
                       <th>Balance</th>
@@ -182,6 +199,27 @@
                     </tr>
                   </tfoot>
                 </table>
+                <div class="row mt-3">
+                  <div class="col-md-6">
+                    <div class="p-3 border rounded" style="background-color: {{ $ledgerBalance > 0 ? '#d4edda' : ($ledgerBalance < 0 ? '#f8d7da' : '#f9f9f9') }};">
+                      <h6 class="mb-1">Account Status</h6>
+                      @if($ledgerBalance > 0)
+                        <strong>Credit Balance:</strong> Customer owes company {{ number_format(abs($ledgerBalance), 2) }}
+                      @elseif($ledgerBalance < 0)
+                        <strong>Debit Balance:</strong> Company owes customer {{ number_format(abs($ledgerBalance), 2) }}
+                      @else
+                        <strong>Balanced Account:</strong> No outstanding amount
+                      @endif
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <table class="table table-sm mb-0">
+                      <tr><td>Total Sales:</td><td class="text-right">{{ number_format($detail->sum('debit') ?? 0, 2) }}</td></tr>
+                      <tr><td>Total Payments:</td><td class="text-right">{{ number_format($detail->sum('credit') ?? 0, 2) }}</td></tr>
+                      <tr class="font-weight-bold"><td>Current Balance:</td><td class="text-right">{{ number_format($ledgerBalance ?? 0, 2) }}</td></tr>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

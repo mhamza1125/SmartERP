@@ -49,7 +49,7 @@
         <div class="slip-box__title">Earnings</div>
         <div class="slip-line"><span>Gross Salary</span><span class="val">{{ number_format($item->gross_salary, 2) }}</span></div>
         <div class="slip-line"><span>Salary for Working Days</span><span class="val">{{ number_format($item->salary_for_days, 2) }}</span></div>
-        <div class="slip-line"><span>Overtime <small>{{ $num($item->overtime_hours) }} h x {{ number_format($item->overtime_rate, 2) }}</small></span><span class="val">{{ number_format($item->overtime_amount, 2) }}</span></div>
+        <div class="slip-line"><span>Overtime</span><span class="val">{{ number_format($item->overtime_amount, 2) }}</span></div>
         <div class="slip-line total"><span>Total Earnings</span><span class="val">{{ number_format($earnings, 2) }}</span></div>
     </div>
     <div class="slip-box">

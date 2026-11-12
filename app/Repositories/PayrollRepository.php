@@ -104,6 +104,9 @@ class PayrollRepository implements GlobalInterface
                 if (! $employee) {
                     continue;
                 }
+                // The loan is never taken from the form: always the open balance of the employee's
+                // Give Loan / repayment records (this payroll's own deductions were removed above)
+                $input['fixed_advance'] = $this->openFixedLoan((int) $employeeId);
                 $item = $this->calculate((float) $employee->salary, $input, $period);
                 if ($item['net_salary'] < 0) {
                     $errors["employees.{$employeeId}.fixed_advance_deduction"] = "{$employee->name}: deductions ("

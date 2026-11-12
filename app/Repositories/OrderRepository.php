@@ -24,8 +24,28 @@ class OrderRepository implements GlobalInterface
     {
         return Order::where('order_id', $id)
             ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
-            ->select('orders.*', 'customers.*')
+            // customers.* also has a description column and would hide the order's own one
+            ->select('orders.*', 'customers.*', 'orders.description as description', 'customers.description as customer_description')
             ->first();
+    }
+
+    /**
+     * Descriptions of the given orders that have one, keyed by order no
+     * (for documents that cover several orders, such as the commercial invoice).
+     */
+    public function descriptions(iterable $orderIds)
+    {
+        $ids = collect($orderIds)->filter()->unique()->values();
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return Order::whereIn('order_id', $ids)
+            ->whereNotNull('description')
+            ->orderBy('order_id')
+            ->pluck('description', 'order_no')
+            ->map(fn ($text) => trim(strip_tags((string) $text)))
+            ->filter(fn ($text) => $text !== '');
     }
 
     public function getOrder($id)

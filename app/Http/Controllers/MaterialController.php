@@ -96,6 +96,8 @@ class MaterialController extends Controller
         return view('materialInfo', [
             'material' => $material,
             'image' => $image,
+            // Same figure as the material print and the /stock/material page
+            'currentStock' => $this->stockItemRepository->materialStock((int) $id),
         ]);
     }
 

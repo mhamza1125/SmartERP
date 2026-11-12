@@ -100,11 +100,6 @@
     </tfoot>
 </table>
 
-<p style="font-size: 8.5px; color: var(--muted); margin-top: 4px;">
-    Salary for working days = gross x actual / total working days. Hourly wage = gross / total working days / {{ $num($payroll->hours_per_day) }} hours.
-    Overtime = hours x hourly wage x {{ $num($payroll->overtime_multiplier) }}. Late deduction = late hours x hourly wage x {{ $num($payroll->late_multiplier) }}.
-    Total salary = salary for working days + overtime - late deduction - temporary advance - fixed advance deduction.
-</p>
 
 <div class="sign-row">
     <span class="sign-row__field">Prepared By:<span class="sign-row__line"></span></span>

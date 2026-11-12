@@ -488,7 +488,13 @@ class DeliveryController extends Controller
             $relatedOrders = $this->getRelatedOrdersForDelivery($delivery);
         }
 
+        // Description of every order on this delivery (combined invoices cover several orders)
+        $orderDescriptions = $this->orderRepository->descriptions(
+            $deliveryItem->pluck('line_order_id')->push($delivery['order_id'] ?? null)
+        );
+
         return view('print.delivery-commercial', [
+            'orderDescriptions' => $orderDescriptions,
             'delivery' => $delivery,
             'deliveryItem' => $deliveryItem,
             'company' => $company,

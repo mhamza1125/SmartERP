@@ -32,8 +32,12 @@
                     <td><b>Current Price (Pkr): </b> {{$material['cprice']}}</td>
                   </tr>
                   <tr>
-                    <td><b>Opening Stock: </b> {{$material['quantity'] ?? 0}} {{$material['uname']}}</td>
-                    <td><b>Material Location (In Store): </b> {{$material['location']}}</td>
+                    <td><b>Current Stock: </b> {{ number_format($currentStock ?? 0) }} {{$material['uname']}}</td>
+                    <td><b>Opening Stock: </b> {{ number_format($material['quantity'] ?? 0) }} {{$material['uname']}}</td>
+                    <td><b>Current Stock Value (Pkr): </b> {{ isset($material['cprice']) ? number_format(($currentStock ?? 0) * $material['cprice'], 2) : 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3"><b>Material Location (In Store): </b> {{$material['location']}}</td>
                   </tr>
                   <tr>
                     <td colspan="3">

@@ -89,7 +89,8 @@
               <p class="text-muted small mb-3">
                 Hourly wage = gross salary / total working days / hours per day. Defaults come from
                 <a href="{{ route('company') }}">Settings &gt; Company</a>. Temporary advances and the open fixed loan are filled in
-                from the employee's Give Loan entries; every value can be changed.
+                from the employee's Give Loan entries. The Loan amount is read-only (it always comes from those records);
+                every other value can be changed.
               </p>
 
               <div class="table-responsive">
@@ -146,7 +147,7 @@
                         <td><input type="number" step="1" min="0" class="form-control form-control-sm js-input" data-field="late" name="employees[{{ $id }}][late_minutes]" value="{{ $field('late_minutes', $row->late_minutes) }}" title="Total late minutes this month"></td>
                         <td class="num js-late-amount"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="temp" name="employees[{{ $id }}][temp_advance]" value="{{ $field('temp_advance', $num($row->temp_advance)) }}"></td>
-                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="loan" name="employees[{{ $id }}][fixed_advance]" value="{{ $field('fixed_advance', $num($row->fixed_advance)) }}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="loan" name="employees[{{ $id }}][fixed_advance]" value="{{ $num($row->fixed_advance) }}" readonly tabindex="-1" title="Open loan from the employee's Give Loan / repayment records"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="instalment" name="employees[{{ $id }}][fixed_advance_deduction]" value="{{ $field('fixed_advance_deduction', $num($row->fixed_advance_deduction)) }}"></td>
                         <td class="num js-remaining"></td>
                         <td class="num js-net font-weight-bold"></td>

@@ -125,6 +125,14 @@
 </div>
 @endif
 
+{{-- Order description(s), right after the items table --}}
+@if(!empty($order['description']) && trim(strip_tags($order['description'])) !== '')
+<div class="avoid-break" style="margin-top:12px;">
+    <div class="section-head">Description / Notes</div>
+    <div class="note-box">{!! nl2br(e(trim(strip_tags($order['description'])))) !!}</div>
+</div>
+@endif
+
 {{-- Invoice Totals --}}
 <div class="totals-section avoid-break">
     <div class="total-row grand-total">

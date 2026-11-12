@@ -174,6 +174,16 @@
     </table>
 </div>
 
+{{-- Order description(s), right after the items table --}}
+@if(!empty($orderDescriptions) && count($orderDescriptions))
+<div class="avoid-break" style="margin-top:12px;">
+    <div class="section-head">Description / Notes</div>
+    @foreach($orderDescriptions as $orderNo => $text)
+        <div class="note-box">@if(count($orderDescriptions) > 1)<strong>{{ $orderNo }}:</strong> @endif{!! nl2br(e($text)) !!}</div>
+    @endforeach
+</div>
+@endif
+
 {{-- Invoice Totals --}}
 <div class="totals-section avoid-break">
     @if($isPartialPayment)
