@@ -1680,6 +1680,44 @@ class StockController extends Controller
     }
 
     /**
+     * Gate pass: print one PTC issuance, receipt or release (what its View modal shows)
+     * with signature lines, for stock taken out by or brought back from a worker/contractor.
+     */
+    public function printPtcMovement($id, $movementId)
+    {
+        $this->authorize('show', Stock::class);
+
+        $ptc = Stock::where('stocks.stock_id', $id)->where('stocks.is_ptc_master', 1)
+            ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
+            ->select('stocks.*', 'orders.job_no')
+            ->first();
+        $movement = $ptc ? $this->ptcStockRepository->movementRecord($id, $movementId) : null;
+
+        if (!$movement) {
+            return redirect()->route('ptc')->with('fails', 'PTC record not found');
+        }
+
+        $refs = $this->ptcStockRepository->references($id);
+        $productTypeId = \DB::table('stock_items')->where('stock_id', $id)->value('product_type_id');
+        $product = $productTypeId ? \DB::table('product_types')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->leftJoin('heads as size_head', 'size_head.head_id', '=', 'product_types.size_id')
+            ->where('product_types.product_type_id', $productTypeId)
+            ->select('products.article_no', 'products.name', 'size_head.name as size_name')
+            ->first() : null;
+
+        return view('print.ptc-movement', [
+            'ptc' => $ptc,
+            'movement' => $movement,
+            'product' => $product,
+            'reference' => $refs[$movement->stock_id] ?? Stock::ptcDisplayNo($movement->stock_no, $ptc->stock_no),
+            'issuanceRef' => $movement->issue_id ? ($refs[$movement->issue_id] ?? null) : null,
+            'stageMove' => $this->ptcStockRepository->movementStages($id)[$movement->stock_id] ?? null,
+            'items' => $this->ptcStockRepository->movementItems([$movement->stock_id])->get($movement->stock_id, collect()),
+        ]);
+    }
+
+    /**
      * Show PTC edit form
      */
     public function ptcEdit($id)

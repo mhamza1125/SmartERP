@@ -405,18 +405,18 @@
   <script src="{{ URL::asset('assets/bundles/datatables/export-tables/pdfmake.min.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/datatables/export-tables/vfs_fonts.js') }}"></script>
   <script src="{{ URL::asset('assets/bundles/datatables/export-tables/buttons.print.min.js') }}"></script>
-  <script src="{{ URL::asset('assets/js/page/datatables.js') }}"></script>
+  <script src="{{ URL::asset('assets/js/page/datatables.js') }}?v={{ @filemtime(public_path('assets/js/page/datatables.js')) }}"></script>
   <script src="{{ URL::asset('assets/bundles/lightgallery/dist/js/lightgallery-all.js') }}"></script>
   <script src="{{ URL::asset('assets/js/page/light-gallery.js') }}"></script>
   <script src="{{ URL::asset('assets/js/page/index.js') }}"></script>
   <!-- Template JS File -->
   <script src="{{ URL::asset('assets/js/scripts.js') }}"></script>
   <!-- Print JS File -->
-  <script src="{{ URL::asset('assets/js/print.js') }}"></script>
+  <script src="{{ URL::asset('assets/js/print.js') }}?v={{ @filemtime(public_path('assets/js/print.js')) }}"></script>
   <!-- DataTable Professional Print -->
-  <script src="{{ URL::asset('assets/js/datatable-print.js') }}"></script>
+  <script src="{{ URL::asset('assets/js/datatable-print.js') }}?v={{ @filemtime(public_path('assets/js/datatable-print.js')) }}"></script>
   <!-- Custom JS File -->
-  <script src="{{ URL::asset('assets/js/custom.js') }}"></script>
+  <script src="{{ URL::asset('assets/js/custom.js') }}?v={{ @filemtime(public_path('assets/js/custom.js')) }}"></script>
 
   @stack('scripts')
 </body>

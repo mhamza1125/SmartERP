@@ -101,15 +101,27 @@ $(document).ready(function () {
         }
     };
 
-    function initializeDataTable(tableId) {
-        if (!$(tableId).length) {
-            return;
-        }
-        if ($.fn.DataTable.isDataTable(tableId)) {
-            $(tableId).DataTable().destroy();
-        }
+    /* A "No records found" row is one cell spanning every column. DataTables 1.10 cannot
+       read it (it pops up a "Requested unknown parameter" warning and the table breaks),
+       so drop it and let DataTables show its own empty message. */
+    function removePlaceholderRows(table) {
+        var columns = $(table).find('thead tr:last th, thead tr:last td').length;
+        $(table).children('tbody').children('tr').each(function () {
+            var cells = $(this).children('td, th');
+            if (cells.length === 1 && columns > 1) {
+                $(this).remove();
+            }
+        });
+    }
 
-        $(tableId).DataTable({
+    function initializeDataTable(table) {
+        var $table = $(table);
+        if ($.fn.DataTable.isDataTable(table)) {
+            $table.DataTable().destroy();
+        }
+        removePlaceholderRows(table);
+
+        $table.DataTable({
             dom: 'Bfrtip',
             pageLength: 200,
             buttons: [
@@ -119,7 +131,7 @@ $(document).ready(function () {
                 {
                     extend: 'pdfHtml5',
                     title: getPageTitle(),
-                    orientation: $(tableId).find('thead th').length > 7 ? 'landscape' : 'portrait',
+                    orientation: $table.find('thead tr:last th').length > 7 ? 'landscape' : 'portrait',
                     exportOptions: exportOptions,
                     customize: function (doc) {
                         // Header row styled like the prints; wide tables use the full width
@@ -158,8 +170,16 @@ $(document).ready(function () {
         });
     }
 
-    initializeDataTable('#tableExport');
-    initializeDataTable('#tableExport1');
+    // Every table whose id starts with "tableExport" (tableExport, tableExport1, tableExportBalance, ...)
+    // gets the export / print buttons. A page keeps its row order with data-order='[]'.
+    $('table[id^="tableExport"]').each(function () {
+        initializeDataTable(this);
+    });
+
+    // Tables inside a tab that was hidden at load size their columns when the tab opens
+    $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function () {
+        $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+    });
 });
 // End - DataTable Export / Print
 

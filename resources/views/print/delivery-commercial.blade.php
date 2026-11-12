@@ -184,7 +184,7 @@
     <div class="total-row grand-total">
         <span>Payment Due ({{ $percentLabel }} of Invoice Value):
             @if(function_exists('numberToWordsWithCurrency'))
-                {{ numberToWordsWithCurrency($amountDue) }} {{ $currencyName }}
+                <span class="grand-total__words">{{ numberToWordsWithCurrency($amountDue) }} {{ $currencyName }}</span>
             @endif
         </span>
         <span class="amount">{{ number_format($amountDue, 2) }} {{ $currencyName }}</span>
@@ -193,7 +193,7 @@
     <div class="total-row grand-total">
         <span>{{ $totalLabel }}
             @if(function_exists('numberToWordsWithCurrency'))
-                {{ numberToWordsWithCurrency($grandTotal) }} {{ $currencyName }}
+                <span class="grand-total__words">{{ numberToWordsWithCurrency($grandTotal) }} {{ $currencyName }}</span>
             @endif
         </span>
         <span class="amount">{{ number_format($grandTotal, 2) }} {{ $currencyName }}</span>

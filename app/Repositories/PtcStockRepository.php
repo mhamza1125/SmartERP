@@ -730,6 +730,67 @@ class PtcStockRepository implements GlobalInterface
         return collect($moves);
     }
 
+    /**
+     * One record of a PTC (the master/initial issuance, an issuance, a receipt or a release)
+     * with the worker/contractor it was issued to or received from. Null when the record
+     * does not belong to the PTC.
+     */
+    public function movementRecord($ptcId, $movementId): ?Stock
+    {
+        return Stock::where('stocks.stock_id', $movementId)
+            ->where(function ($query) use ($ptcId) {
+                $query->where(function ($q) use ($ptcId) {
+                    $q->where('stocks.stock_id', $ptcId)->where('stocks.is_ptc_master', 1);
+                })->orWhere('stocks.ptc_id', $ptcId);
+            })
+            ->leftJoin('employees', function ($join) {
+                $join->on('employees.employee_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'employee');
+            })
+            ->leftJoin('vendors', function ($join) {
+                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
+                    ->where('stocks.table_name', 'vendor');
+            })
+            ->select('stocks.*', 'employees.name as employee_name', 'employees.employee_no', 'employees.phone1 as employee_phone',
+                'vendors.fname as vendor_name', 'vendors.vendor_no', 'vendors.phone1 as vendor_phone')
+            ->first();
+    }
+
+    /**
+     * Lines of the given PTC records, grouped by stock_id: product (with its stage),
+     * material (with its unit) or component, plus the work done names of receipt lines.
+     */
+    public function movementItems(array $stockIds): Collection
+    {
+        $items = DB::table('stock_items')
+            ->whereIn('stock_items.stock_id', $stockIds)
+            ->leftJoin('materials', 'materials.material_id', '=', 'stock_items.material_id')
+            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
+            ->leftJoin('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
+            ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
+            ->leftJoin('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
+            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'stock_items.stage_id')
+            ->leftJoin('product_types as cpt', 'cpt.product_type_id', '=', 'stock_items.component_product_type_id')
+            ->leftJoin('products as cp', 'cp.product_id', '=', 'cpt.product_id')
+            ->leftJoin('heads as cshead', 'cshead.head_id', '=', 'cpt.size_id')
+            ->orderBy('stock_items.stock_item_id')
+            ->select('stock_items.*', 'materials.name as material_name', 'uhead.name as unit_name',
+                'products.article_no', 'products.name as product_name', 'shead.name as size_name', 'sthead.name as stage_name',
+                'cp.article_no as component_article_no', 'cp.name as component_name', 'cshead.name as component_size')
+            ->get();
+
+        // work_logs holds pipe-separated head ids ("0" = none)
+        $workIds = $items->flatMap(fn ($item) => explode('|', (string) $item->work_logs))
+            ->filter(fn ($workId) => (int) $workId > 0)->unique()->values()->all();
+        $workNames = $this->headRepository->getByIds($workIds)->pluck('name', 'head_id');
+        foreach ($items as $item) {
+            $item->work_names = collect(explode('|', (string) $item->work_logs))
+                ->map(fn ($workId) => $workNames[(int) $workId] ?? null)->filter()->implode(', ');
+        }
+
+        return $items->groupBy('stock_id');
+    }
+
     // ==================================================
     // ================ Movements =======================
     // ==================================================

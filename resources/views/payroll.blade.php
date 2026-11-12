@@ -34,7 +34,7 @@
 
             <!-- Payroll Batches Table -->
             <div class="table-responsive">
-              <table class="table table-striped table-hover" id="payrollTable" style="width:100%;">
+              <table class="table table-striped table-hover" id="tableExport" data-order='[[0, "desc"]]' style="width:100%;">
                 <thead>
                   <tr>
                     <th>Month</th>
@@ -86,16 +86,5 @@
   </div>
 </section>
 
-<script>
-  $(document).ready(function() {
-    $('#payrollTable').DataTable({
-      "order": [[0, "desc"]],
-      "pageLength": 25,
-      "columnDefs": [
-        { "orderable": false, "targets": 5 }
-      ]
-    });
-  });
-</script>
 @endsection
 

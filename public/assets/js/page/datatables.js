@@ -44,9 +44,5 @@ $('#save-stage').DataTable({
   "scrollX": true,
   stateSave: true
 });
-$('#tableExport').DataTable({
-  dom: 'Bfrtip',
-  buttons: [
-    'copy', 'csv', 'excel', 'pdf', 'print'
-  ]
-});
+// #tableExport (and every table whose id starts with "tableExport") is set up in custom.js
+// with the styled export / print buttons; initialising it here as well only did the work twice.

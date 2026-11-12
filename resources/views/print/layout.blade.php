@@ -51,7 +51,7 @@
         .doc-header__inner {
             display: grid;
             /* Fixed shares: a long title wraps inside its own column instead of pushing into the logo */
-            grid-template-columns: minmax(0, 46fr) minmax(0, 30fr) minmax(0, 24fr);
+            grid-template-columns: minmax(0, 32fr) minmax(0, 36fr) minmax(0, 32fr);  /* equal sides keep the title on the page centre */
             align-items: center;
             gap: 12px;
             padding: 3mm 14mm 2.5mm;
@@ -60,7 +60,7 @@
         .doc-header__brand { min-width: 0; }  /* fills its column, so the logo is capped at the column width */
 
         .doc-header__logo {
-            height: 72px;
+            height: 50px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -147,12 +147,13 @@
 
         .meta-field:last-child { border-right: none; }
 
+        /* Header card titles 10px; the values in the cards stay 11px */
         .meta-label {
             display: block;
             font-family: var(--mono);
-            font-size: 8px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.13em;
+            letter-spacing: 0.08em;
             color: var(--muted);
             margin-bottom: 2px;
         }
@@ -221,9 +222,9 @@
 
         .party-label {
             font-family: var(--mono);
-            font-size: 8px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.13em;
+            letter-spacing: 0.08em;
             color: var(--accent);
             margin-bottom: 3px;
         }
@@ -381,7 +382,7 @@
             border: 1px solid var(--hairline);
             background: var(--row-alt);
             font-family: var(--sans);
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             line-height: 1.5;
         }
@@ -557,11 +558,14 @@
         }
 
         .grand-total {
-            font-size: 13px;
+            font-size: 12px;
             border-top: 1px solid var(--hairline);
             padding-top: 4px;
             margin-top: 8px;
         }
+
+        /* Amount in words written inside a grand-total row (proforma / commercial invoice) */
+        .grand-total__words { font-size: 11px; }
 
         .status-badge {
             display: inline-block;

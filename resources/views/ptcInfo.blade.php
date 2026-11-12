@@ -504,6 +504,9 @@
             </div>
           </div>
           <div class="modal-footer">
+            <a href="{{ route('ptc.movement.print', [$ptc->stock_id, $movement->stock_id]) }}" target="_blank" class="btn btn-info">
+              <i class="fas fa-print"></i> Print {{ $movement->stock_status == \App\Models\Stock::STATUS_PTC_RELEASED ? 'Release Note' : 'Gate Pass' }}
+            </a>
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           </div>
         </div>
@@ -545,6 +548,9 @@
                   <strong>PTC-{{ $ptc->stock_no }} / {{ $ptcRefs[$receiving->stock_id] ?? \App\Models\Stock::ptcDisplayNo($receiving->stock_no, $ptc->stock_no) }}</strong>
                   <span class="float-right">
                     {{ \carbon\Carbon::parse($receiving->stock_date)->format('d-m-Y') }}
+                    <a href="{{ route('ptc.movement.print', [$ptc->stock_id, $receiving->stock_id]) }}" target="_blank" class="btn btn-sm btn-outline-info ml-2" title="Print gate pass">
+                      <i class="fas fa-print"></i> Print
+                    </a>
                   </span>
                 </div>
                 <div class="card-body py-2">

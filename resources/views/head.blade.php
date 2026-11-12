@@ -32,7 +32,7 @@
               <!-- Tab Content for All Heads -->
               <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
                 <div class="table-responsive mt-3">
-                  <table class="table table-striped table-hover" id="save-stage" style="width:100%;">
+                  <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                     <thead>
                       <tr>
                         <th>Sr.</th>
@@ -71,7 +71,7 @@
               @foreach($headType as $ht)
               <div class="tab-pane fade" id="type-{{$ht->head_type_id}}" role="tabpanel" aria-labelledby="type-{{$ht->head_type_id}}-tab">
                 <div class="table-responsive mt-3">
-                  <table class="table table-striped table-hover">
+                  <table class="table table-striped table-hover" id="tableExportType{{$ht->head_type_id}}" style="width:100%;">
                     <thead>
                       <tr>
                         <th>Sr.</th>

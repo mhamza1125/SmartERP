@@ -52,7 +52,7 @@
         .doc-header__inner {
             display: grid;
             /* Fixed shares: a long title wraps inside its own column instead of pushing into the logo */
-            grid-template-columns: minmax(0, 46fr) minmax(0, 30fr) minmax(0, 24fr);
+            grid-template-columns: minmax(0, 32fr) minmax(0, 36fr) minmax(0, 32fr);  /* equal sides keep the title on the page centre */
             align-items: center;
             gap: 12px;
             padding: 2.5mm 8mm 2mm;
@@ -61,7 +61,7 @@
         .doc-header__brand { min-width: 0; }  /* fills its column, so the logo is capped at the column width */
 
         .doc-header__logo {
-            height: 48px;
+            height: 34px;
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -245,7 +245,7 @@
         .totals-block__row.grand {
             background: var(--accent);
             color: #fff;
-            font-size: 10.5px;
+            font-size: 12px;
             font-weight: 700;
             padding: 4px 6px;
             margin-top: 2px;
@@ -271,7 +271,7 @@
         }
 
         .grand-total {
-            font-size: 11px;
+            font-size: 12px;
             border-top: 1px solid var(--hairline);
             padding-top: 3px;
             margin-top: 4px;
@@ -284,7 +284,7 @@
             border: 1px solid var(--hairline);
             background: var(--row-alt);
             font-family: var(--sans);
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 600;
             line-height: 1.5;
         }
@@ -446,16 +446,17 @@
         }
         .meta-field { flex: 1; min-width: 80px; padding: 3px 8px; border-right: 1px solid var(--hairline); }
         .meta-field:last-child { border-right: none; }
+        /* Header card titles 10px; the values in the cards 11px (same as the other prints) */
         .meta-label {
             display: block;
             font-family: var(--mono);
-            font-size: 7.5px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.08em;
             color: var(--muted);
             margin-bottom: 1px;
         }
-        .meta-value { display: block; font-size: 10px; font-weight: 600; color: var(--ink); }
+        .meta-value { display: block; font-size: 11px; font-weight: 600; color: var(--ink); }
         .meta-value.mono { font-family: var(--mono); }
 
         /* Boxed header grid (all prints): 3 boxes per row (--cols-4 for 4). Hairlines are

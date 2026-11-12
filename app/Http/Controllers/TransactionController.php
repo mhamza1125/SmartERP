@@ -1205,7 +1205,7 @@ class TransactionController extends Controller
         // Build description with check number if provided
         $fullDescription = $description;
         if ($checkNo) {
-            $fullDescription = ($description ? $description . ' - ' : '') . 'Check No: ' . $checkNo;
+            $fullDescription = ($description ? $description . ' - ' : '') . 'Cheque No: ' . $checkNo;
         }
 
         // Update the original transaction (outflow)

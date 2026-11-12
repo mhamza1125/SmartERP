@@ -155,6 +155,7 @@ Additional domain-specific methods are added per repository beyond these five.
 - "No component" must be stored as NULL, never 0 (general stock uses `component_product_type_id IS NULL` for product lines)
 - Component lines (another product used to make the PTC product) are recorded at the COMPONENT's own stage(s), never the PTC product's stage: `StockBatchRepository::componentStageSplit()` splits the quantity over the component's stages holding stock the order may use (own + free batches, rejected excluded, component's final stage first). PTC create/edit/issue all use it; forms show `componentStock()->sum()` (2026-11-11)
 - PTC page lists issuances newest first by sequence (stock_id desc), not by date
+- Gate pass print (2026-11-11): `ptc.movement.print` (`/ptc/{id}/movement/{movementId}/print`, `print/ptc-movement.blade.php`) prints one issuance (Outward), receipt (Inward) or release (Release Note) with signature lines; linked from the View/Items modal footer and each receipt card in the Receivings modal. Data via `PtcStockRepository::movementRecord()` / `movementItems()` (resolves work_logs ids to names)
 
 ### Batch-Tracked Product Stock (2026-10-14)
 - `stock_batches`: one lot of one product type. `source_type` is one of ptc | purchase | issuance | opening | split | legacy, with `source_id`. `order_id` = reserved for that order; NULL = free.

@@ -6,6 +6,9 @@
 
 @push('styles')
 <style>
+    /* Certification line in large type; allowed to wrap so it never runs off the page */
+    .certification-statement { font-size: 18px; }
+    .certification-statement p { white-space: normal; }
 </style>
 @endpush
 
@@ -127,7 +130,7 @@
     <div class="total-row grand-total">
         <span>{{ $totalLabel }}
             @if(function_exists('numberToWordsWithCurrency'))
-                {{ numberToWordsWithCurrency($totalOriginal) }} {{ $currencyName }}
+                <span class="grand-total__words">{{ numberToWordsWithCurrency($totalOriginal) }} {{ $currencyName }}</span>
             @endif
         </span>
         <span class="amount">{{ number_format($totalOriginal, 2) }} {{ $currencyName }}</span>

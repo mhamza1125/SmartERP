@@ -46,7 +46,7 @@
           <!-- Report Table -->
           @if(count($reportData) > 0)
             <div class="table-responsive">
-              <table class="table table-striped table-hover">
+              <table class="table table-striped table-hover" id="tableExport" data-order="[]" style="width:100%;">
                 <thead class="table-light">
                   <tr>
                     <th style="width: 20%">Product</th>

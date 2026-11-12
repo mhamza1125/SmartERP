@@ -309,6 +309,7 @@ Route::get('/ptc/create', [StockController::class, 'ptcCreate'])->name('ptc.crea
 Route::post('/ptc/store', [StockController::class, 'ptcStore'])->name('ptc.store');
 Route::get('/ptc/{id}', [StockController::class, 'ptcShow'])->name('ptc.show');
 Route::get('/ptc/{id}/print', [StockController::class, 'printPTC'])->name('ptc.print');
+Route::get('/ptc/{id}/movement/{movementId}/print', [StockController::class, 'printPtcMovement'])->name('ptc.movement.print');
 Route::get('/ptc/{id}/edit', [StockController::class, 'ptcEdit'])->name('ptc.edit');
 Route::put('/ptc/{id}', [StockController::class, 'ptcUpdate'])->name('ptc.update');
 // PTC Issuance (separate page)
