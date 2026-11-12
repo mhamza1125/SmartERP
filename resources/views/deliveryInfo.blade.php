@@ -584,7 +584,7 @@ function generateInvoicePrintDocument(content, title, company) {
 
 <!-- Commercial Invoice Modal -->
 <div class="modal fade" id="commercialInvoiceModal" tabindex="-1" role="dialog" aria-labelledby="commercialInvoiceModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="commercialInvoiceModalLabel">Commercial Invoice</h5>
@@ -593,37 +593,44 @@ function generateInvoicePrintDocument(content, title, company) {
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label for="hsCode"><strong>HS Code (Optional)</strong></label>
-          <input type="text" class="form-control" id="hsCode" placeholder="Enter HS Code">
-        </div>
-        <div class="form-group">
-          <label for="sellingType"><strong>Selling Type (Optional)</strong></label>
-          <input type="text" class="form-control" id="sellingType" placeholder="Ex Works, FOB, CIF, etc">
-        </div>
-        <div class="form-group">
-          <label for="uom"><strong>UOM (Optional)</strong></label>
-          <input type="text" class="form-control" id="uom" placeholder="Pair, Dozen, etc">
-        </div>
+        {{-- Two columns on wider screens; stacks to one column on small screens --}}
         @php
           // Used when the FI Number field is left empty: the delivery's own FI No, else Settings > Company
           $defaultFiNo = ($delivery['fi_no'] ?? null) ?: ($company->fi_no ?? '');
         @endphp
-        <div class="form-group">
-          <label for="ciFiNo"><strong>FI Number (Optional)</strong></label>
-          <input type="text" class="form-control" id="ciFiNo" maxlength="255" placeholder="{{ $defaultFiNo !== '' ? 'Default: ' . $defaultFiNo : 'Enter FI Number' }}">
-          <small class="form-text text-muted">Leave empty to use the default FI Number{{ $defaultFiNo !== '' ? ' (' . $defaultFiNo . ')' : ' from Settings' }}.</small>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="hsCode"><strong>HS Code (Optional)</strong></label>
+            <input type="text" class="form-control" id="hsCode" placeholder="Enter HS Code">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="sellingType"><strong>Selling Type (Optional)</strong></label>
+            <input type="text" class="form-control" id="sellingType" placeholder="Ex Works, FOB, CIF, etc">
+          </div>
         </div>
-        <div class="form-group">
-          <label for="ciPaymentPercent"><strong>Payment Requested (%)</strong></label>
-          <input type="number" class="form-control" id="ciPaymentPercent" value="100" min="0.01" max="100" step="0.01">
-          <small class="form-text text-muted">100% = full invoice value. Enter less (e.g. 50) to request part of the invoice value, such as the balance after an advance.</small>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="uom"><strong>UOM (Optional)</strong></label>
+            <input type="text" class="form-control" id="uom" placeholder="Pair, Dozen, etc">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="ciFiNo"><strong>FI Number (Optional)</strong></label>
+            <input type="text" class="form-control" id="ciFiNo" maxlength="255" placeholder="{{ $defaultFiNo !== '' ? 'Default: ' . $defaultFiNo : 'Enter FI Number' }}">
+            <small class="form-text text-muted">Leave empty to use the default FI Number{{ $defaultFiNo !== '' ? ' (' . $defaultFiNo . ')' : ' from Settings' }}.</small>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="commercialBankSelect"><strong>Select Bank Account (Optional)</strong></label>
-          <select class="form-control" id="commercialBankSelect">
-            @include('bankOptions')
-          </select>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="ciPaymentPercent"><strong>Payment Requested (%)</strong></label>
+            <input type="number" class="form-control" id="ciPaymentPercent" value="100" min="0.01" max="100" step="0.01">
+            <small class="form-text text-muted">100% = full invoice value. Enter less (e.g. 50) to request part of the invoice value, such as the balance after an advance.</small>
+          </div>
+          <div class="form-group col-md-6">
+            <label for="commercialBankSelect"><strong>Select Bank Account (Optional)</strong></label>
+            <select class="form-control" id="commercialBankSelect">
+              @include('bankOptions')
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label for="statementOfOrigin"><strong>Statement of Origin (Optional)</strong></label>
