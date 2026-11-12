@@ -132,6 +132,8 @@ class PtcStockRepository implements GlobalInterface
      * Product lines (finished/semi-finished goods) must be received back in full
      * (any stage, including Rejected) - the difference is "outstanding".
      * Materials and components are inputs: what is not returned is consumed.
+     * Components come back Unused (to the stage they were issued from) or Damaged
+     * (to the Rejected stage): received = unused + damaged, returnable = issued - received.
      */
     public function issuanceBalances($ptcId): Collection
     {
@@ -164,7 +166,8 @@ class PtcStockRepository implements GlobalInterface
                 'stock_items.product_type_id',
                 'stock_items.material_id',
                 DB::raw('COALESCE(stock_items.component_product_type_id, 0) as component_id'),
-                DB::raw('SUM(stock_items.quantity) as qty')
+                DB::raw('SUM(stock_items.quantity) as qty'),
+                DB::raw('SUM(CASE WHEN stock_items.stage_id = '.Stock::STAGE_REJECTED.' THEN stock_items.quantity ELSE 0 END) as damaged')
             )
             ->groupBy('stocks.issue_id', 'stock_items.product_type_id', 'stock_items.material_id', DB::raw('COALESCE(stock_items.component_product_type_id, 0)'))
             ->get();
@@ -193,8 +196,11 @@ class PtcStockRepository implements GlobalInterface
                     $group = 'products';
                     $key = $row->product_type_id;
                 }
-                $line = $balances[$row->issuance_id][$group][$key] ?? ['issued' => 0, 'received' => 0];
+                $line = $balances[$row->issuance_id][$group][$key] ?? ['issued' => 0, 'received' => 0, 'damaged' => 0];
                 $line[$column] += (float) $row->qty;
+                if ($column === 'received') {
+                    $line['damaged'] += (float) ($row->damaged ?? 0);
+                }
                 $balances[$row->issuance_id][$group][$key] = $line;
             }
         }
@@ -211,6 +217,8 @@ class PtcStockRepository implements GlobalInterface
             foreach (['materials', 'components'] as $group) {
                 foreach ($balance[$group] as &$line) {
                     $line['returnable'] = max(0, $this->round($line['issued'] - $line['received']));
+                    $line['damaged'] = $this->round($line['damaged']);
+                    $line['unused'] = $this->round($line['received'] - $line['damaged']);
                 }
                 unset($line);
             }
@@ -341,6 +349,7 @@ class PtcStockRepository implements GlobalInterface
 
     /**
      * Materials and components issued into the PTC vs returned, with the consumed difference.
+     * Component returns are split into unused (back to usable stock) and damaged (Rejected stage).
      */
     public function consumption($ptcId): array
     {
@@ -392,7 +401,8 @@ class PtcStockRepository implements GlobalInterface
                 'cp.name',
                 'csize.name as size_name',
                 DB::raw('SUM(CASE WHEN stocks.stock_type = 2 OR stocks.is_ptc_master = 1 THEN stock_items.quantity ELSE 0 END) as issued'),
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as returned')
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as returned'),
+                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 AND stock_items.stage_id = '.Stock::STAGE_REJECTED.' THEN stock_items.quantity ELSE 0 END) as damaged')
             )
             ->groupBy('stock_items.component_product_type_id', 'cp.article_no', 'cp.name', 'csize.name')
             ->get();
@@ -401,6 +411,8 @@ class PtcStockRepository implements GlobalInterface
             $row->issued = $this->round($row->issued);
             $row->returned = $this->round($row->returned);
             $row->consumed = $this->round($row->issued - $row->returned);
+            $row->damaged = $this->round($row->damaged ?? 0);
+            $row->unused = $this->round($row->returned - $row->damaged);
 
             return $row;
         };
@@ -907,8 +919,10 @@ class PtcStockRepository implements GlobalInterface
      *
      * Finished/semi-finished product received is capped at what is outstanding on the
      * issuance (when the issuance included that product) and enters PTC virtual stock,
-     * not general stock. Components returned are capped at what was issued; materials
-     * are not capped (cut quantities vary). Both go back to general stock.
+     * not general stock. Components returned are capped at what was issued (unused and
+     * damaged together); materials are not capped (cut quantities vary). Both go back to
+     * general stock: an unused component to the stage it was issued from, a damaged one
+     * (line stage = Rejected) to the component's Rejected stage, outside usable stock.
      *
      * @param  array  $lines  [product_type_id, material_id, component_id, stage_id, quantity, work_logs]
      */
@@ -961,7 +975,7 @@ class PtcStockRepository implements GlobalInterface
                     'material_id' => $line['material_id'],
                     'component_product_type_id' => $line['component_id'],
                     'quantity' => $line['quantity'],
-                    'stage_id' => $line['component_id'] ? ($componentStages[$line['component_id']] ?? $line['stage_id']) : $line['stage_id'],
+                    'stage_id' => $line['component_id'] ? $this->componentReturnStage($line, $componentStages) : $line['stage_id'],
                     'ptc_virtual' => $isProduct ? 1 : 0,
                     'work_logs' => $workLog,
                     'work_wages' => $wages,
@@ -1274,6 +1288,19 @@ class PtcStockRepository implements GlobalInterface
                 throw new PtcStockException("Cannot return {$this->round($quantity)} of a component - only {$returnable} left on issuance I{$balance['seq_no']}.");
             }
         }
+    }
+
+    /**
+     * Stage a returned component is booked into: Rejected when returned damaged, otherwise
+     * back to the stage it was issued from, so general component stock nets out on that row.
+     */
+    private function componentReturnStage(array $line, Collection $componentStages): int
+    {
+        if ((int) $line['stage_id'] === Stock::STAGE_REJECTED) {
+            return Stock::STAGE_REJECTED;
+        }
+
+        return (int) ($componentStages[$line['component_id']] ?? $line['stage_id']);
     }
 
     /**

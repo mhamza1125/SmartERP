@@ -179,6 +179,46 @@ class PtcVirtualStockTest extends TestCase
         $this->assertEquals(0, $consumption['components']->first()->consumed);
     }
 
+    /**
+     * Components issued on a PTC come back unused (to the stage they were issued from) or
+     * damaged (to the component's Rejected stage); together capped at what is still out.
+     */
+    public function test_component_returns_unused_and_damaged(): void
+    {
+        [$s1, $s2, $s3] = $this->stages;
+        $rejected = Stock::STAGE_REJECTED;
+        $ptcId = $this->createPtc($s1, [$this->productRow(10, $s1)]);
+        $this->receive($ptcId, $ptcId, [$this->receiveProductRow(10, $s2)])->assertSessionHas('success');
+
+        $before = $this->generalProductStock();
+        $this->issue($ptcId, $s3, [$this->materialRow(1), $this->componentRow(10)])->assertSessionHas('success');
+        $issuance = $this->latestIssuance($ptcId);
+        $issuedStage = (int) StockItem::where('stock_id', $issuance)->where('component_product_type_id', $this->componentPt)->value('stage_id');
+
+        // 6 unused and 3 damaged in one receiving; then only 1 is left to return
+        $this->receive($ptcId, $issuance, [$this->receiveComponentRow(6), $this->receiveComponentRow(3, $rejected)])->assertSessionHas('success');
+        $this->receive($ptcId, $issuance, [$this->receiveComponentRow(2, $rejected)])->assertSessionHas('fails');
+
+        $line = $this->balance($ptcId, $issuance)['components'][$this->componentPt];
+        $this->assertEquals([10, 9, 6, 3, 1], [$line['issued'], $line['received'], $line['unused'], $line['damaged'], $line['returnable']]);
+
+        // General stock: 10 out of the issued stage, 6 back there, 3 into Rejected (outside usable stock)
+        $after = $this->generalProductStock();
+        $delta = fn (int $stage) => ($after["{$this->componentPt}_{$stage}"] ?? 0) - ($before["{$this->componentPt}_{$stage}"] ?? 0);
+        $this->assertEqualsWithDelta(-4, $delta($issuedStage), 0.0001, '10 issued - 6 unused returned');
+        $this->assertEqualsWithDelta(3, $delta($rejected), 0.0001, '3 damaged returned to Rejected');
+        $this->assertSame($rejected, (int) StockItem::join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->where('stocks.issue_id', $issuance)->where('stock_items.component_product_type_id', $this->componentPt)
+            ->where('stock_items.quantity', 3)->value('stock_items.stage_id'));
+
+        $row = app(PtcStockRepository::class)->consumption($ptcId)['components']->firstWhere('component_product_type_id', $this->componentPt);
+        $this->assertEquals([10, 9, 6, 3, 1], [$row->issued, $row->returned, $row->unused, $row->damaged, $row->consumed]);
+
+        // The last unused piece can still come back
+        $this->receive($ptcId, $issuance, [$this->receiveComponentRow(1)])->assertSessionHas('success');
+        $this->assertEquals(0, $this->balance($ptcId, $issuance)['components'][$this->componentPt]['returnable']);
+    }
+
     public function test_closing_early_keeps_actual_stage_status(): void
     {
         [$s1, $s2] = $this->stages;
@@ -469,9 +509,10 @@ class PtcVirtualStockTest extends TestCase
         return ['r_quantity' => $qty, 'r_product_type_id' => $this->pt, 'r_material_id' => $this->materialId, 'r_stage_id' => 0, 'r_work_logs' => '0', 'r_component_product_type_id' => ''];
     }
 
-    private function receiveComponentRow(float $qty): array
+    /** A component returned unused (stage 0 = back to its issued stage) or damaged (Rejected stage). */
+    private function receiveComponentRow(float $qty, int $stage = 0): array
     {
-        return ['r_quantity' => $qty, 'r_product_type_id' => 0, 'r_material_id' => 0, 'r_stage_id' => 0, 'r_work_logs' => '0', 'r_component_product_type_id' => $this->componentPt];
+        return ['r_quantity' => $qty, 'r_product_type_id' => 0, 'r_material_id' => 0, 'r_stage_id' => $stage, 'r_work_logs' => '0', 'r_component_product_type_id' => $this->componentPt];
     }
 
     /** Turn row arrays into the parallel "name[]" arrays the forms post. */

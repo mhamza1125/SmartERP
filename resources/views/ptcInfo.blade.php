@@ -328,8 +328,9 @@
                         <th>Type</th>
                         <th>Item</th>
                         <th class="num">Issued</th>
-                        <th class="num">Returned</th>
-                        <th class="num">Consumed</th>
+                        <th class="num">Returned Unused</th>
+                        <th class="num" title="Components returned damaged (booked into the Rejected stage)">Damaged</th>
+                        <th class="num" title="Issued minus everything returned (unused and damaged)">Consumed</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -339,6 +340,7 @@
                           <td>{{ $row->name }}</td>
                           <td class="num">{{ $row->issued + 0 }} {{ $row->unit }}</td>
                           <td class="num">{{ $row->returned + 0 }} {{ $row->unit }}</td>
+                          <td class="num text-muted">-</td>
                           <td class="num">{{ $row->consumed + 0 }} {{ $row->unit }}</td>
                         </tr>
                       @endforeach
@@ -347,7 +349,8 @@
                           <td><span class="badge badge-warning">Component</span></td>
                           <td>{{ $row->article_no }} - {{ $row->name }} ({{ $row->size_name }})</td>
                           <td class="num">{{ $row->issued + 0 }}</td>
-                          <td class="num">{{ $row->returned + 0 }}</td>
+                          <td class="num" title="Unused {{ $row->unused + 0 }}, damaged {{ $row->damaged + 0 }}">{{ $row->unused + 0 }}</td>
+                          <td class="num {{ $row->damaged > 0 ? 'text-danger' : '' }}">{{ $row->damaged + 0 }}</td>
                           <td class="num">{{ $row->consumed + 0 }}</td>
                         </tr>
                       @endforeach

@@ -235,8 +235,33 @@
                 </div>
               </div>
 
-              {{-- Component Product Type Receive Section --}}
+              {{-- Component Product Return Section: unused (back to stock) or damaged (Rejected stage) --}}
               @if(isset($issuedComponents) && $issuedComponents->count())
+              <h6 class="mt-2 mb-2 text-warning"><i class="fas fa-undo-alt"></i> Return Component Products</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-3">
+                  <thead class="thead-light">
+                    <tr>
+                      <th>Component</th>
+                      <th class="text-right">Issued</th>
+                      <th class="text-right">Returned Unused</th>
+                      <th class="text-right">Returned Damaged</th>
+                      <th class="text-right">Can Still Return</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($issuedComponents as $component)
+                      <tr>
+                        <td>{{ $component->component_article_no }} - {{ $component->component_name }} ({{ $component->component_size }})</td>
+                        <td class="text-right">{{ $component->issued_quantity + 0 }}</td>
+                        <td class="text-right">{{ $component->unused_quantity + 0 }}</td>
+                        <td class="text-right {{ $component->damaged_quantity > 0 ? 'text-danger' : '' }}">{{ $component->damaged_quantity + 0 }}</td>
+                        <td class="text-right font-weight-bold">{{ $component->receivable_quantity + 0 }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
@@ -255,13 +280,23 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <div class="form-group">
-                    <label for="component_receivable_stock">Receivable Stock</label>
+                    <label for="component_receivable_stock">Can Still Return</label>
                     <input type="text" class="form-control" id="component_receivable_stock" name="component_receivable_stock" readonly>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label for="r_component_condition">Condition</label>
+                    {{-- Unused goes back to the stage it was issued from; damaged goes to the Rejected stage --}}
+                    <select class="form-control" id="r_component_condition">
+                      <option value="unused">Unused</option>
+                      <option value="damaged">Damaged</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>
                     <input type="number" min="0" step="1" class="form-control" name="r_quantityComponent" placeholder="0" id="r_quantityComponent">
@@ -274,6 +309,10 @@
                   </div>
                 </div>
               </div>
+              <small class="form-text text-muted mt-n2 mb-3">
+                Unused components go back to general stock at the stage they were issued from. Damaged components go to the
+                component's Rejected stage (kept out of usable stock). Unused and damaged together cannot exceed what is still to return.
+              </small>
               @endif
 
               {{-- Receive Items Table with Tabs --}}
@@ -366,7 +405,13 @@
                                 @if($item->component_product_type_id)
                                   <td><span class="badge badge-warning">Component</span></td>
                                   <td>{{$item->article_no}} - Size {{$item->sname}}</td>
-                                  <td>{{$item->component_article_no}} - {{$item->component_name}} ({{$item->component_size}})</td>
+                                  <td>{{$item->component_article_no}} - {{$item->component_name}} ({{$item->component_size}})
+                                    @if((int) $item->stage_id === \App\Models\Stock::STAGE_REJECTED)
+                                      <span class="badge badge-danger">Damaged</span>
+                                    @else
+                                      <span class="badge badge-light border">Unused</span>
+                                    @endif
+                                  </td>
                                 @elseif($item->material_id > 0)
                                   <td><span class="badge badge-info">Material</span></td>
                                   <td>{{$item->article_no}} - Size {{$item->sname}}</td>
@@ -506,6 +551,11 @@ $(document).ready(function() {
     var receivable = parseFloat(selected.data('receivable')) || 0;
     var componentText = selected.text().split(' | ')[0]; // Get component name without receivable info
     var unit = selected.data('unit') || 'Pcs';
+    // Damaged components are booked into the Rejected stage; unused ones go back to their issued stage (0 = server decides)
+    var damaged = $('#r_component_condition').val() === 'damaged';
+    var stageId = damaged ? '{{ \App\Models\Stock::STAGE_REJECTED }}' : '0';
+    var conditionBadge = damaged ? '<span class="badge badge-danger">Damaged</span> <small class="text-muted">Rejected stage</small>'
+                                 : '<span class="badge badge-light border">Unused</span> <small class="text-muted">Back to stock</small>';
 
     if (quantity > receivable) {
       alert('Quantity cannot exceed receivable stock (' + receivable + ')');
@@ -517,13 +567,13 @@ $(document).ready(function() {
     var row = '<tr>' +
       '<td>' + rowCount + '</td>' +
       '<td>' + componentText + ' <span class="badge badge-info">Component</span></td>' +
-      '<td>-</td>' +
+      '<td>' + conditionBadge + '</td>' +
       '<td>-</td>' +
       '<td>' + quantity + ' ' + unit +
         '<input type="hidden" name="r_quantity[]" value="' + quantity + '">' +
         '<input type="hidden" name="r_product_type_id[]" value="0">' +
         '<input type="hidden" name="r_material_id[]" value="0">' +
-        '<input type="hidden" name="r_stage_id[]" value="0">' +
+        '<input type="hidden" name="r_stage_id[]" value="' + stageId + '">' +
         '<input type="hidden" name="r_work_logs[]" value="0">' +
         '<input type="hidden" name="r_component_product_type_id[]" value="' + componentId + '">' +
       '</td>' +
@@ -545,6 +595,7 @@ $(document).ready(function() {
     componentSelect.val('').trigger('change');
     $('#component_receivable_stock').val('');
     $('#r_quantityComponent').val('');
+    $('#r_component_condition').val('unused');
   });
 });
 </script>

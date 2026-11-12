@@ -2374,23 +2374,13 @@ class StockController extends Controller
                 ->groupBy('stock_items.component_product_type_id', 'cp.article_no', 'cp.name', 'csize.name', 'puhead.name')
                 ->get();
 
-            // Get already received back components for this issuance
-            $receivedComponents = \DB::table('stock_items')
-                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-                ->where('stocks.issue_id', $issuanceId)
-                ->where('stocks.stock_type', 1)
-                ->where('stock_items.component_product_type_id', '>', 0)
-                ->select(
-                    'stock_items.component_product_type_id',
-                    \DB::raw('SUM(stock_items.quantity) as received_quantity')
-                )
-                ->groupBy('stock_items.component_product_type_id')
-                ->pluck('received_quantity', 'component_product_type_id');
-
-            // Calculate receivable quantity for each component
+            // Returned so far (unused / damaged) and still returnable: the same figures the
+            // repository validates against
             foreach ($issuedComponents as $component) {
-                $received = $receivedComponents[$component->component_product_type_id] ?? 0;
-                $component->receivable_quantity = $component->issued_quantity - $received;
+                $line = $balance['components'][$component->component_product_type_id] ?? [];
+                $component->unused_quantity = $line['unused'] ?? 0;
+                $component->damaged_quantity = $line['damaged'] ?? 0;
+                $component->receivable_quantity = $line['returnable'] ?? 0;
             }
         }
 

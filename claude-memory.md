@@ -152,6 +152,7 @@ Additional domain-specific methods are added per repository beyond these five.
 - available(product, stage) = received - transferred - released
 - Products on an issuance must be received back in full (outstanding = issued - received, any stage incl. Rejected 105); materials may vary; components capped at issued
 - Close is blocked while product is outstanding or PTC stock remains; closing changes only the status (stages keep their actual status, no stock movement)
+- Component returns (2026-11-12): on the PTC receive form each returned component is Unused (back to general stock at the stage it was issued from) or Damaged (posted r_stage_id = 105 -> component's Rejected stage, outside usable stock). No new column: damaged = received component lines at stage 105. issuanceBalances components carry issued / received / unused / damaged / returnable; consumption components carry unused / damaged; unused + damaged together capped at issued
 - "No component" must be stored as NULL, never 0 (general stock uses `component_product_type_id IS NULL` for product lines)
 - Component lines (another product used to make the PTC product) are recorded at the COMPONENT's own stage(s), never the PTC product's stage: `StockBatchRepository::componentStageSplit()` splits the quantity over the component's stages holding stock the order may use (own + free batches, rejected excluded, component's final stage first). PTC create/edit/issue all use it; forms show `componentStock()->sum()` (2026-11-11)
 - PTC page lists issuances newest first by sequence (stock_id desc), not by date
