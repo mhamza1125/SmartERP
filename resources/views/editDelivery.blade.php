@@ -10,7 +10,7 @@
             <div class="card-header-action">
               <div class="btn-group">
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('purchase.add')}}" class="btn btn-primary" target="_blank">Purchase</a>
+                @if(auth()->user()->can('create', App\Models\Purchase::class))<a href="{{ route('purchase.add')}}" class="btn btn-primary" target="_blank">Purchase</a>@endif
               </div>
             </div>
           </div>

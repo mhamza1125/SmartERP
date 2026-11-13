@@ -20,7 +20,7 @@ class PermissionRoleSeeder extends Seeder
             );
         }
 
-        // 2. Create Permissions grouped by module
+        // 2. Create Permissions grouped by module (labels / descriptions: App\Support\PermissionCatalog)
         // Format: module => [actions...]
         $modules = [
             // Sales & Delivery
@@ -31,7 +31,7 @@ class PermissionRoleSeeder extends Seeder
             'purchases'     => ['access', 'show', 'create', 'edit', 'delete'],
             'receives'      => ['access', 'show', 'create', 'edit', 'delete'],
             'returns'       => ['access', 'show', 'create', 'edit', 'delete'],
-            'stocks'        => ['access', 'show', 'create', 'edit', 'delete'],
+            'stocks'        => ['access', 'show', 'edit'], // stock comes from documents; edit = batch reserve / split
             'issuances'     => ['access', 'show', 'create', 'edit', 'delete'],
 
             // Products & Materials
@@ -51,20 +51,20 @@ class PermissionRoleSeeder extends Seeder
             'assets'        => ['access', 'show', 'create', 'edit', 'delete'],
 
             // HR
-            'attendance'    => ['access', 'show', 'create', 'edit', 'delete'],
+            'attendance'    => ['access', 'create', 'edit', 'delete'],
             'payroll'       => ['access', 'show', 'create', 'edit', 'delete'],
 
             // Reports
-            'reports'       => ['access', 'show', 'create', 'edit', 'delete'],
+            'reports'       => ['access'],
 
             // Settings & Config
             'settings'      => ['access', 'show', 'create', 'edit', 'delete'],
-            'categories'    => ['access', 'show', 'create', 'edit', 'delete'],
-            'heads'         => ['access', 'show', 'create', 'edit', 'delete'],
+            'categories'    => ['access', 'create', 'edit', 'delete'],
+            'heads'         => ['access', 'create', 'edit', 'delete'],
 
             // Admin
-            'users'         => ['access', 'show', 'create', 'edit', 'delete'],
-            'roles'         => ['access', 'show', 'create', 'edit', 'delete'],
+            'users'         => ['access', 'create', 'edit', 'delete'],
+            'roles'         => ['access', 'create', 'edit', 'delete'],
         ];
 
         foreach ($modules as $module => $actions) {

@@ -13,7 +13,7 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('igroup') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Stock::class)<a href="{{ route('igroup.edit', $igroup['igroup_id']) }}" class="btn btn-primary">Edit</a>@endcan
               </div>
             </div>
           </div>

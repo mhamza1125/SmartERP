@@ -45,7 +45,7 @@ php artisan make:policy ProductPolicy --model=Product
 ```
 
 **Dev URL:** `http://05_smarterp.test` (XAMPP)  
-**Database:** MySQL, database `smarterp`
+**Database:** MySQL, database `smarterp_erp` (see `.env`)
 
 ---
 

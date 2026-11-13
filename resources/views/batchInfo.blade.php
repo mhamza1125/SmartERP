@@ -46,7 +46,7 @@
                   <tbody>
                     <tr><td><b>Reserved For:</b>
                       @if($batch->order_id)
-                        <a href="{{ route('order.status', $batch->order_id) }}" class="badge badge-warning">{{ $batch->job_no ?? 'Order ' . $batch->order_id }}</a>
+                        @if(auth()->user()->can('show', App\Models\Order::class))<a href="{{ route('order.status', $batch->order_id) }}" class="badge badge-warning">{{ $batch->job_no ?? 'Order ' . $batch->order_id }}</a>@endif
                       @else
                         <span class="badge badge-success">Free stock</span>
                       @endif

@@ -46,14 +46,20 @@ class PrintComposer
      */
     protected function buildContacts(): array
     {
-        $contacts = ['phone' => null, 'email' => null, 'website' => null];
+        return self::contacts($this->company);
+    }
 
-        if (! $this->company) {
+    /**
+     * The same contact lines for any company (also used by the invoice Excel export).
+     */
+    public static function contacts(?Company $company): array
+    {
+        $contacts = ['phone' => null, 'email' => null, 'website' => null];
+        if (! $company) {
             return $contacts;
         }
-
         foreach (array_keys($contacts) as $key) {
-            $value = trim((string) $this->company->{$key});
+            $value = trim((string) $company->{$key});
             $contacts[$key] = preg_match('/[\p{L}\p{N}]/u', $value) ? $value : null;
         }
 

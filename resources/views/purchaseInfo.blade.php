@@ -19,31 +19,31 @@
                   @if($count >= 1)
                     <span class="dropdown-header pdd-header">Receiving Records</span>
                     @for($i=1; $i<=$count; $i++)
-                      <a class="dropdown-item" href="{{ route('receive.print', $receiveTimes[$i-1]['receive_id']) }}" target="_blank">
+                      @if(auth()->user()->can('show', App\Models\Receive::class))<a class="dropdown-item" href="{{ route('receive.print', $receiveTimes[$i-1]['receive_id']) }}" target="_blank">
                         <i class="fas fa-file-alt"></i> {{ $receiveTimes[$i-1]['receive_no'] }}
-                      </a>
+                      </a>@endif
                     @endfor
                   @endif
                   @if($count2 >= 1)
                     <span class="dropdown-header pdd-header">Return Records</span>
                     @for($i=1; $i<=$count2; $i++)
-                      <a class="dropdown-item" href="{{ route('return.print', $returnTimes[$i-1]['return_id']) }}" target="_blank">
+                      @if(auth()->user()->can('show', App\Models\Returns::class))<a class="dropdown-item" href="{{ route('return.print', $returnTimes[$i-1]['return_id']) }}" target="_blank">
                         <i class="fas fa-file-alt"></i> {{ $returnTimes[$i-1]['return_no'] }}
-                      </a>
+                      </a>@endif
                     @endfor
                   @endif
                 </div>
               </div>
               <div class="btn-group">
-                <a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>
+                @if(auth()->user()->can('access', App\Models\Purchase::class))<a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>@endif
                 @if(!$purchase['has_received'])
                   @if(isset($process))
-                    <a href="{{ route('mprocess.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
+                    @can('edit', App\Models\Material::class)<a href="{{ route('mprocess.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>@endcan
                   @else
                     <a href="{{ route($purchase['purchase_type'] == 'material' ? 'purchase.edit' : 'productPurchase.edit', $purchase['purchase_id']) }}" class="btn btn-primary">Edit</a>
                   @endif
                 @endif
-                <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
+                @can('create', App\Models\Receive::class)<a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>@endcan
                 @include('purchasePayButton', ['vendorId' => $purchase['vendor_id'], 'vendorType' => $purchase['vendor_type'] ?? 0, 'purchaseId' => $purchase['purchase_id']])
               </div>
             </div>
@@ -285,7 +285,7 @@
                               <td>{{$loop->index + 1}}</td>
                               <td>{{number_format($item->credit)}}</td>
                               <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
-                              <td><a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a></td>
+                              <td>@if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif</td>
                             </tr>
                             @php $total2 += $item->credit ; @endphp
                           @endforeach
@@ -306,7 +306,7 @@
                     @for($i=1; $i<=$count; $i++)
                       @php $loopIndex = 1; @endphp
                       <div class="tab-pane fade" id="tab-content-{{ $i }}" role="tabpanel" aria-labelledby="tab-{{ $i }}">
-                        <a href="{{ route('receive.edit', $receiveTimes[$i-1]['receive_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
+                        @can('edit', App\Models\Receive::class)<a href="{{ route('receive.edit', $receiveTimes[$i-1]['receive_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>@endcan
                         <table class="table table-sm table-striped">
                           <thead>
                             <tr>
@@ -368,7 +368,7 @@
                     @for($i=1; $i<=$count2; $i++)
                       @php $loopIndex = 1; @endphp
                       <div class="tab-pane fade" id="rtab-content-{{ $i }}" role="tabpanel" aria-labelledby="rtab-{{ $i }}">
-                        <a href="{{ route('return.edit', $returnTimes[$i-1]['return_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
+                        @can('edit', App\Models\Returns::class)<a href="{{ route('return.edit', $returnTimes[$i-1]['return_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>@endcan
                         <table class="table table-sm table-striped">
                           <thead>
                             <tr>

@@ -9,8 +9,8 @@
             <h4>Heads Table</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>
-                <a href="{{ route('head.headType') }}" class="btn btn-primary">Head Types</a>
+                @if(auth()->user()->can('create', App\Models\Head::class))<a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>@endif
+                @if(auth()->user()->can('access', App\Models\Head::class))<a href="{{ route('head.headType') }}" class="btn btn-primary">Head Types</a>@endif
               </div>
             </div>
           </div>

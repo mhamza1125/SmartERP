@@ -1172,4 +1172,32 @@ class StockBatchRepository implements GlobalInterface
     {
         return round((float) $value, 4);
     }
+
+    /**
+     * Deletes the batches made by these source documents once nothing refers to them any more
+     * (no stock line, purchase receipt, split transfer or child batch). Batches still in use stay.
+     *
+     * @return int number of batches deleted
+     */
+    public function deleteUnused(string $sourceType, array $sourceIds): int
+    {
+        if (! $sourceIds) {
+            return 0;
+        }
+        $ids = StockBatch::where('source_type', $sourceType)->whereIn('source_id', $sourceIds)->pluck('batch_id');
+        $unused = $ids->reject(fn ($batchId) => $this->batchInUse($batchId))->values();
+        if ($unused->isNotEmpty()) {
+            StockBatch::whereIn('batch_id', $unused)->delete();
+        }
+
+        return $unused->count();
+    }
+
+    public function batchInUse($batchId): bool
+    {
+        return DB::table('stock_item_batches')->where('batch_id', $batchId)->exists()
+            || DB::table('receive_materials')->where('batch_id', $batchId)->exists()
+            || DB::table('stock_batch_transfers')->where(fn ($q) => $q->where('from_batch_id', $batchId)->orWhere('to_batch_id', $batchId))->exists()
+            || DB::table('stock_batches')->where('parent_batch_id', $batchId)->exists();
+    }
 }

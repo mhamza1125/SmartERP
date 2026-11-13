@@ -85,24 +85,15 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // These are only to Show / Hide Buttons by @can Method for .blade
-        // To Restrict user access these must be used in Controller Methods
+        // The system Admin role (role id 1) passes every check. This is the only role-based rule:
+        // it keeps the Admin from being locked out (e.g. of Roles & Permissions) and covers
+        // permissions added later. Every other role is decided by the policies, i.e. by the
+        // permissions ticked for it under Settings > Roles & Permissions.
+        Gate::before(fn (User $user) => $user->isAdmin() ? true : null);
 
-        // role_id=1 is admin, role_id=2 is manager (operator equivalent)
-        Gate::define('show', function (User $user) {
-            return in_array($user->role_id, [User::ROLE_ADMIN, User::ROLE_MANAGER]);
-        });
-
-        Gate::define('create', function (User $user) {
-            return in_array($user->role_id, [User::ROLE_ADMIN, User::ROLE_MANAGER]);
-        });
-
-        Gate::define('edit', function (User $user) {
-            return $user->role_id === User::ROLE_ADMIN;
-        });
-
-        Gate::define('delete', function (User $user) {
-            return $user->role_id === User::ROLE_ADMIN;
-        });
+        // Every check goes through the model policies above (permission names stored per role in
+        // permission_role, editable under Settings > Roles & Permissions). Role-based generic gates
+        // (show / create / edit / delete by role id) were removed so permissions are never
+        // decided by a hard-coded role.
     }
 }

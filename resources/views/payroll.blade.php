@@ -8,9 +8,9 @@
           <div class="card-header">
             <h4>Payroll History</h4>
             <div class="card-header-action">
-              <a href="{{ route('payroll.create') }}" class="btn btn-primary">
+              @if(auth()->user()->can('payroll_create', App\Models\User::class))<a href="{{ route('payroll.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add Payroll
-              </a>
+              </a>@endif
             </div>
           </div>
           <div class="card-body">
@@ -64,16 +64,17 @@
                       <td>
                         <div class="btn-group" role="group">
                           @unless($batch->legacy)
-                            <a href="{{ route('payroll.info', $batch->month) }}" class="btn btn-sm btn-info" title="View details"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('payroll.print', $batch->month) }}" class="btn btn-sm btn-outline-info" title="Print payroll" target="_blank"><i class="fas fa-print"></i></a>
+                            @if(auth()->user()->can('payroll_show', App\Models\User::class))<a href="{{ route('payroll.info', $batch->month) }}" class="btn btn-sm btn-info" title="View details"><i class="fas fa-eye"></i></a>@endif
+                            @if(auth()->user()->can('payroll_show', App\Models\User::class))<a href="{{ route('payroll.print', $batch->month) }}" class="btn btn-sm btn-outline-info" title="Print payroll" target="_blank"><i class="fas fa-print"></i></a>@endif
                           @endunless
-                          <a href="{{ route('payroll.edit', $batch->month) }}" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>
+                          @can('payroll_edit', App\Models\User::class)<a href="{{ route('payroll.edit', $batch->month) }}" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>@endcan
+@can('payroll_delete', App\Models\User::class)@include('deleteButton', ['url' => route('payroll.destroy', $batch->month), 'check' => route('payroll.deleteCheck', $batch->month), 'label' => 'Payroll '.$batch->month, 'class' => 'btn btn-sm btn-danger', 'text' => '<i class="fas fa-trash"></i>'])@endcan
                         </div>
                       </td>
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="7" class="text-center">No payroll processed yet. <a href="{{ route('payroll.create') }}">Create one now</a></td>
+                      <td colspan="7" class="text-center">No payroll processed yet. @if(auth()->user()->can('payroll_create', App\Models\User::class))<a href="{{ route('payroll.create') }}">Create one now</a>@endif</td>
                     </tr>
                   @endforelse
                 </tbody>

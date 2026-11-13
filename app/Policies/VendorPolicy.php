@@ -12,27 +12,27 @@ class VendorPolicy
 
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('vendors_access');
+        return $user->hasPermission('vendors_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('vendors_show');
+        return $user->hasPermission('vendors_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('vendors_create');
+        return $user->hasPermission('vendors_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('vendors_edit');
+        return $user->hasPermission('vendors_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('vendors_delete');
+        return $user->hasPermission('vendors_delete');
     }
 
     // ===================================
@@ -41,26 +41,26 @@ class VendorPolicy
 
     public function contractors_access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_access');
+        return $user->hasPermission('contractors_access');
     }
 
     public function contractors_show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_show');
+        return $user->hasPermission('contractors_show');
     }
 
     public function contractors_create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_create');
+        return $user->hasPermission('contractors_create');
     }
 
     public function contractors_edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_edit');
+        return $user->hasPermission('contractors_edit');
     }
 
     public function contractors_delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_delete');
+        return $user->hasPermission('contractors_delete');
     }
 }

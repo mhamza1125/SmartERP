@@ -52,7 +52,7 @@ class ProductMaterialController extends Controller
 
     public function create2($id)
     {
-        $this->authorize('create', Product::class);
+        $this->authorizeAny([['create', Product::class], ['edit', Product::class]]); // adding a product's costs / BOM: product creators and editors
         $product = $this->productRepository->get($id);
         $productType = $this->productRepository->material($id);
         $material = $this->materialRepository->getMaterial($product['material_id']);
@@ -68,6 +68,7 @@ class ProductMaterialController extends Controller
 
     public function store(ProductMaterialRequest $request)
     {
+        $this->authorizeAny([['create', Product::class], ['edit', Product::class]]); // adding a product's costs / BOM: product creators and editors
         $validatedData = $request->validated();
         if (! $request->has('quantity')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -126,6 +127,7 @@ class ProductMaterialController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Product::class);
         if (! $request->has('quantity')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }

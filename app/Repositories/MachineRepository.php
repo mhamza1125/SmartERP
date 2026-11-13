@@ -2,10 +2,15 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use App\Repositories\ImageRepository;
 use App\Models\Machine;
 
 class MachineRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Machine::join('heads', 'heads.head_id', '=', 'machines.machine_type_id')
@@ -47,7 +52,24 @@ class MachineRepository implements GlobalInterface
         $update->update($data);
     }
 
+    /**
+     * A machine can be deleted only while no material issuance was made for it.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $machine = Machine::findOrFail($id);
+        $impact = DeletionImpact::for('Machine '.$machine->machine_no);
+
+        $impact->blockIf($this->refCount('stocks', 'machine_id', $id), 'machine material issuance', null, $this->refExamples('stocks', 'machine_id', $id, 'stock_no'));
+        $impact->cascadeIf(app(ImageRepository::class)->countFor('machines', $id), 'image');
+
+        return $impact;
+    }
+
     public function delete($id)
     {
+        app(ImageRepository::class)->deleteFor('machines', $id);
+
+        return Machine::findOrFail($id)->delete();
     }
 }

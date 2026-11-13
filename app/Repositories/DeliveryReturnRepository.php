@@ -2,10 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use Illuminate\Support\Facades\DB;
+use App\Exceptions\DeletionBlockedException;
 use App\Models\DeliveryReturn;
 
 class DeliveryReturnRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return DeliveryReturn::join('deliveries', 'deliveries.delivery_id', '=', 'delivery_returns.delivery_id')
@@ -60,9 +66,47 @@ class DeliveryReturnRepository implements GlobalInterface
         return $update->delivery_return_id;
     }
 
+    /**
+     * A delivery return can be deleted only while the quantity it put back into stock is still
+     * there. Its lines and stock entry go with it.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $return = DeliveryReturn::findOrFail($id);
+        $impact = DeletionImpact::for('Delivery return '.$return->return_no);
+        $stockIds = $this->returnStockIds($id);
+
+        foreach (app(StockItemRepository::class)->stockInRemovalShortfalls($stockIds) as $shortfall) {
+            $impact->block('returned stock already used: '.$shortfall);
+        }
+        $impact->cascadeIf($this->refCount('delivery_return_items', 'delivery_return_id', $id), 'returned line');
+        $impact->note('The returned quantity leaves stock again and the delivery counts as fully delivered.');
+
+        return $impact;
+    }
+
+    /**
+     * Stock-in rows created for a delivery return (DeliveryReturnController::adjustStock).
+     */
+    private function returnStockIds($id): array
+    {
+        return DB::table('stocks')->where('table_name', 'delivery_returns')->where('source_id', $id)->pluck('stock_id')->all();
+    }
+
     public function delete($id)
     {
-        $delete = DeliveryReturn::findOrFail($id);
-        $delete->delete();
+        $return = DeliveryReturn::findOrFail($id);
+        $stockIds = $this->returnStockIds($id);
+        DB::table('stocks')->whereIn('stock_id', $stockIds)->lockForUpdate()->get();
+
+        $shortfalls = app(StockItemRepository::class)->stockInRemovalShortfalls($stockIds);
+        if ($shortfalls) {
+            throw new DeletionBlockedException('Delivery return '.$return->return_no.' cannot be deleted: '.implode('; ', $shortfalls));
+        }
+
+        app(StockRepository::class)->purge($stockIds);
+        DB::table('delivery_return_items')->where('delivery_return_id', $id)->delete();
+
+        return $return->delete();
     }
 }

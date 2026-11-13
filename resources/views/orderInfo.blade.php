@@ -32,9 +32,10 @@
                 @endif
                 <a href="{{ route('order.estimate', $order['order_id']) }}" class="btn btn-primary">Estimate</a>
                 <a href="{{ route('order.status', $order['order_id']) }}" class="btn btn-primary">Order Status</a>
-                <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>
+                @can('create', App\Models\Delivery::class)<a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>@endcan
                 <a href="{{ route('order') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('order.edit', $order['order_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Order::class)<a href="{{ route('order.edit', $order['order_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Order::class)@include('deleteButton', ['url' => route('order.destroy', $order['order_id']), 'check' => route('order.deleteCheck', $order['order_id']), 'label' => 'Order '.$order['order_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>
@@ -194,9 +195,9 @@
                           @else <span class="badge badge-secondary">Unknown</span> @endif
                         </td>
                         <td>
-                          <a href="{{ route('delivery.show', $del->delivery_id) }}" class="btn btn-sm btn-info">
+                          @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery.show', $del->delivery_id) }}" class="btn btn-sm btn-info">
                             <i class="fas fa-eye"></i> View
-                          </a>
+                          </a>@endif
                         </td>
                       </tr>
                       @endforeach
@@ -253,12 +254,15 @@
 </section>
 
 <script>
-function printProformaInvoice() {
+// format 'excel' downloads the same invoice (same options) as an editable Excel file
+function printProformaInvoice(format) {
     var bankId = document.getElementById('proformaBankSelect').value;
     var hsCode = document.getElementById('proformaHsCode').value;
     var sellingType = document.getElementById('proformaSellingType').value;
     var uom = document.getElementById('proformaUOM').value;
-    var url = "{{ route('order.proforma', $order['order_id']) }}";
+    var url = format === 'excel'
+        ? "{{ route('order.proforma.excel', $order['order_id']) }}"
+        : "{{ route('order.proforma', $order['order_id']) }}";
 
     var params = new URLSearchParams();
     if (bankId) params.append('bank_id', bankId);
@@ -270,7 +274,11 @@ function printProformaInvoice() {
         url += '?' + params.toString();
     }
 
-    window.open(url, '_blank');
+    if (format === 'excel') {
+        window.location.href = url;
+    } else {
+        window.open(url, '_blank');
+    }
     $('#proformaModal').modal('hide');
 }
 </script>
@@ -307,6 +315,9 @@ function printProformaInvoice() {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="printProformaInvoice('excel')">
+          <i class="fas fa-file-excel"></i> Export to Excel
+        </button>
         <button type="button" class="btn btn-primary" onclick="printProformaInvoice()">
           <i class="fas fa-print"></i> Print Proforma Invoice
         </button>
@@ -400,9 +411,9 @@ function printProformaInvoice() {
                       {{ \carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') ?? 'N/A' }}
                     </td>
                     <td>
-                      <a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-sm btn-info" title="View PTC Details">
+                      @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-sm btn-info" title="View PTC Details">
                         <i class="fas fa-eye"></i> View
-                      </a>
+                      </a>@endif
                     </td>
                   </tr>
                 @endforeach

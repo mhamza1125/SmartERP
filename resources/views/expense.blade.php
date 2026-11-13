@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Expense Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('transaction.addExpense') }}" class="btn btn-primary">Add Expense</a>
+              @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addExpense') }}" class="btn btn-primary">Add Expense</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -100,8 +100,8 @@
                       <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>
                       <td class="text-right">{{ number_format($balance, 2) }}</td>
                       <td>
-                        <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('transaction.editExpense', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.editExpense', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>@endif
                       </td>
                     </tr>
                     @endforeach

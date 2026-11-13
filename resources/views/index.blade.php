@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ ucfirst(auth()->user()->role->name) }} - SmartERP</title>
   <!-- General CSS Files -->
   <link rel="stylesheet" href="{{ URL::asset('assets/css/app.min.css') }}">
@@ -50,8 +51,10 @@
                 class="user-img-radious-style"> <span class="d-sm-none d-lg-inline-block"></span></a>
             <div class="dropdown-menu dropdown-menu-right pullDown">
               <div class="dropdown-title">Hello {{ auth()->user()->name }}</div>
+              @can('users_access', App\Models\User::class)
               <a href="{{ route('user') }}" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile </a>
               <div class="dropdown-divider"></div>
+              @endcan
               <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                 @csrf
                 <button type="submit" class="dropdown-item has-icon text-danger" style="background: none; border: none; cursor: pointer; width: 100%; text-align: left;">
@@ -99,6 +102,8 @@
                     {{-- Machines links --}}
                     @can('access', App\Models\Machine::class)
                         <li><a class="nav-link" href="{{ route('machine') }}">Machines</a></li>
+                    @endcan
+                    @can('access', App\Models\Stock::class)
                         <li><a class="nav-link" href="{{ route('missue') }}">Material Issuance</a></li>
                     @endcan
                 </ul>
@@ -106,31 +111,41 @@
             @endif
 
             {{-- Purchase Orders Section --}}
-            @can('access', App\Models\Purchase::class)
+            @if(auth()->user()->can('access', App\Models\Purchase::class) ||
+                auth()->user()->can('access', App\Models\Receive::class) ||
+                auth()->user()->can('access', App\Models\Returns::class))
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Purchasing</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
-                <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
-                <li><a class="nav-link" href="{{ route('return') }}">Return</a></li>
+                @can('access', App\Models\Purchase::class)
+                  <li><a class="nav-link" href="{{ route('purchase') }}">Purchase</a></li>
+                @endcan
+                @can('access', App\Models\Receive::class)
+                  <li><a class="nav-link" href="{{ route('receive') }}">Receive</a></li>
+                @endcan
+                @can('access', App\Models\Returns::class)
+                  <li><a class="nav-link" href="{{ route('return') }}">Return</a></li>
+                @endcan
               </ul>
             </li>
-            @endcan
+            @endif
 
             {{-- Customer Orders Section --}}
-            @can('access', App\Models\Order::class)
+            @if(auth()->user()->can('access', App\Models\Order::class) || auth()->user()->can('access', App\Models\Delivery::class))
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Orders / Deliveries</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
+                @can('access', App\Models\Order::class)
+                  <li><a class="nav-link" href="{{ route('order') }}">Orders</a></li>
+                @endcan
                 @can('access', App\Models\Delivery::class)
                   <li><a class="nav-link" href="{{ route('delivery') }}">Deliveries</a></li>
                 @endcan
               </ul>
             </li>
-            @endcan
+            @endif
 
             {{-- Products / Materials Section --}}
             @if(auth()->user()->can('access', App\Models\Product::class) || 
@@ -185,12 +200,14 @@
                   data-feather="briefcase"></i><span>Transactions</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
+                @can('create', App\Models\Transaction::class)
                 <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">Journal Voucher</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addExpense') }}">Add Expense</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addEPayment') }}">Pay Employee</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addVPayment') }}">Pay Vendor</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addCPayment') }}">Pay Contractor</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addOPayment') }}">Receive Order Payment</a></li>
+                @endcan
               </ul>
             </li>
             @endcan
@@ -206,7 +223,10 @@
                     @can('access', App\Models\Bank::class)
                         <li><a class="nav-link" href="{{ route('bank') }}">Bank Account</a></li>
                         {{-- <li><a class="nav-link" href="{{ route('bankBalance') }}">Bank Balance</a></li> --}}
-                        <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
+                        @can('access', App\Models\Transaction::class)
+                          {{-- the cash book lists transactions (like the bank ledgers) --}}
+                          <li><a class="nav-link" href="{{ route('cashBalance') }}">Cash Balance</a></li>
+                        @endcan
                     @endcan
 
                     {{-- Assets Section --}}
@@ -220,14 +240,17 @@
             {{-- Attendance / Payroll Section --}}
             @if (
                 auth()->user()->can('access', App\Models\Attendance::class) ||
+                auth()->user()->can('payroll_access', App\Models\User::class) ||
                 auth()->user()->can('access', App\Models\Transaction::class)
             )
             <li class="dropdown">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>HR / Payroll</span></a>
               <ul class="dropdown-menu">
-                @can('access', App\Models\Transaction::class)
+                @can('payroll_access', App\Models\User::class)
                   <li><a class="nav-link" href="{{ route('payroll.index') }}">Monthly Payroll</a></li>
+                @endcan
+                @can('access', App\Models\Transaction::class)
                   <li><a class="nav-link" href="{{ route('wages') }}">Work Wages</a></li>
                 @endcan
                 @can('access', App\Models\Attendance::class)
@@ -257,19 +280,33 @@
             @endcan
 
             {{-- Settings Section --}}
-            @can('access', App\Models\User::class)
+            @if(auth()->user()->can('access', App\Models\User::class) ||
+                auth()->user()->can('users_access', App\Models\User::class) ||
+                auth()->user()->can('roles_access', App\Models\User::class) ||
+                auth()->user()->can('access', App\Models\Head::class) ||
+                auth()->user()->can('access', App\Models\Category::class))
             <li class="dropdown mb-4">
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Settings</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('user') }}">Users</a></li>
-                <li><a class="nav-link" href="{{ route('role') }}">Roles & Permissions</a></li>
-                <li><a class="nav-link" href="{{ route('company') }}">Company</a></li>
-                <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
-                <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
+                @can('users_access', App\Models\User::class)
+                  <li><a class="nav-link" href="{{ route('user') }}">Users</a></li>
+                @endcan
+                @can('roles_access', App\Models\User::class)
+                  <li><a class="nav-link" href="{{ route('role') }}">Roles & Permissions</a></li>
+                @endcan
+                @can('access', App\Models\Settings::class)
+                  <li><a class="nav-link" href="{{ route('company') }}">Company</a></li>
+                @endcan
+                @can('access', App\Models\Head::class)
+                  <li><a class="nav-link" href="{{ route('head') }}">Heads</a></li>
+                @endcan
+                @can('access', App\Models\Category::class)
+                  <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
+                @endcan
               </ul>
             </li>
-            @endcan
+            @endif
           </ul>
         </aside>
       </div>
@@ -417,6 +454,13 @@
   <script src="{{ URL::asset('assets/js/datatable-print.js') }}?v={{ @filemtime(public_path('assets/js/datatable-print.js')) }}"></script>
   <!-- Custom JS File -->
   <script src="{{ URL::asset('assets/js/custom.js') }}?v={{ @filemtime(public_path('assets/js/custom.js')) }}"></script>
+
+  {{-- Submitted by the delete buttons (deleteButton.blade.php + custom.js) after the user confirms --}}
+  <form id="deleteRecordForm" method="POST" style="display:none">
+    @csrf
+    @method('DELETE')
+    <input type="hidden" name="confirmed" value="1">
+  </form>
 
   @stack('scripts')
 </body>

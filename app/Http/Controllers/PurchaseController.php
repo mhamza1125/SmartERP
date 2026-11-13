@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Purchase;
 use Illuminate\Http\Request;
 use App\Repositories\HeadRepository;
@@ -80,6 +81,7 @@ class PurchaseController extends Controller
 
     public function ajaxPMQty(Request $request)
     {
+        $this->authorizeAny([['create', Purchase::class], ['edit', Purchase::class]]);
         // Ajax Material Qty against Order
         $orderId = $request->input('orderId');
         $materialId = $request->input('materialId');
@@ -139,6 +141,7 @@ class PurchaseController extends Controller
 
     public function store(PurchaseRequest $request)
     {
+        $this->authorize('create', Purchase::class);
         $validatedData = $request->validated();
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -263,6 +266,7 @@ class PurchaseController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Purchase::class);
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -272,10 +276,6 @@ class PurchaseController extends Controller
         return redirect()->route('purchase.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Purchase $purchase)
-    {
-        $this->authorize('delete', Purchase::class);
-    }
 
     private function storePI($getId, $materials, $products, $stages, $prices, $quantities)
     {
@@ -304,7 +304,7 @@ class PurchaseController extends Controller
      */
     public function purchaseLedger(Request $request)
     {
-        $this->authorize('access', Purchase::class);
+        $this->authorizeAny([['access', Purchase::class], ['reports_access', User::class]]);
 
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -335,7 +335,7 @@ class PurchaseController extends Controller
      */
     public function printPurchaseLedger(Request $request)
     {
-        $this->authorize('access', Purchase::class);
+        $this->authorizeAny([['access', Purchase::class], ['reports_access', User::class]]);
 
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -356,5 +356,29 @@ class PurchaseController extends Controller
             'dfrom' => $dfrom,
             'dto' => $dto,
         ]);
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Purchase::class);
+
+        return $this->deletionCheckResponse($this->purchaseRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Purchase::class);
+
+        return $this->runDeletion(
+            $this->purchaseRepository->deletionImpact($id),
+            fn () => $this->purchaseRepository->delete($id),
+            route('purchase')
+        );
     }
 }

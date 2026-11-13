@@ -18,7 +18,7 @@
                         <div class="card-header">
                             <h4>{{ $company->name }}</h4>
                             <div class="card-header-action">
-                                <a href="{{ route('company.edit', $company->id) }}" class="btn btn-warning">Edit</a>
+                                @can('edit', App\Models\Settings::class)<a href="{{ route('company.edit', $company->id) }}" class="btn btn-warning">Edit</a>@endcan
                                 <a href="{{ route('company') }}" class="btn btn-secondary">Back</a>
                             </div>
                         </div>

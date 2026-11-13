@@ -55,7 +55,7 @@ class ProductCostController extends Controller
 
     public function create()
     {
-        $this->authorize('create', Product::class);
+        $this->authorizeAny([['create', Product::class], ['edit', Product::class]]); // adding a product's costs / BOM: product creators and editors
         $head = collect();
         $product = $this->productRepository->cost();
         $employee = $this->employeeRepository->wages();
@@ -71,6 +71,7 @@ class ProductCostController extends Controller
 
     public function store(ProductCostRequest $request)
     {
+        $this->authorizeAny([['create', Product::class], ['edit', Product::class]]); // adding a product's costs / BOM: product creators and editors
         $validatedData = $request->validated();
         if (! $request->has('amount')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -134,6 +135,7 @@ class ProductCostController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Product::class);
         if (! $request->has('amount')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }

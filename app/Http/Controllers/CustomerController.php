@@ -60,6 +60,7 @@ class CustomerController extends Controller
 
     public function store(CustomerRequest $request)
     {
+        $this->authorize('create', Customer::class);
         $validatedData = $request->validated();
         $getId = $this->customerRepository->store($validatedData);
         if ($request->hasFile('image')) {
@@ -279,6 +280,7 @@ class CustomerController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Customer::class);
         $getId = $this->customerRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -304,8 +306,28 @@ class CustomerController extends Controller
         return redirect()->route('customer.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Customer $customer)
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
         $this->authorize('delete', Customer::class);
+
+        return $this->deletionCheckResponse($this->customerRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Customer::class);
+
+        return $this->runDeletion(
+            $this->customerRepository->deletionImpact($id),
+            fn () => $this->customerRepository->delete($id),
+            route('customer')
+        );
     }
 }

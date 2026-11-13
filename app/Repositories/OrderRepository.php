@@ -2,10 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use Illuminate\Support\Facades\DB;
+use App\Models\Stock;
 use App\Models\Order;
 
 class OrderRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Order::join('customers', 'customers.customer_id', '=', 'orders.customer_id')
@@ -110,7 +116,55 @@ class OrderRepository implements GlobalInterface
         return $update->order_id;
     }
 
+    /**
+     * An order can be deleted only while no delivery, PTC / issuance, purchase, payment, packing
+     * list or issuance group refers to it. Its lines go with it; stock batches reserved for it
+     * become free stock.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $order = Order::findOrFail($id);
+        $impact = DeletionImpact::for('Order '.$order->order_no);
+        $deliveries = $this->deliveryStockIds($id);
+
+        $impact->blockIf(count($deliveries), 'delivery', 'deliveries', DB::table('deliveries')->whereIn('stock_id', $deliveries)->limit(6)->pluck('delivery_no'));
+        $production = fn ($q) => $q->where('stock_status', '!=', Stock::STATUS_DELIVERY)->where(fn ($w) => $w->whereNull('ptc_id')->orWhere('is_ptc_master', 1));
+        $impact->blockIf($this->refCount('stocks', 'order_id', $id, $production), 'PTC / issuance', 'PTCs / issuances', $this->refExamples('stocks', 'order_id', $id, 'stock_no', $production));
+        $impact->blockIf($this->refCount('purchases', 'order_id', $id), 'purchase', null, $this->refExamples('purchases', 'order_id', $id, 'purchase_no'));
+        $impact->blockIf($this->refCount('transactions', 'order_id', $id, fn ($q) => $q->where('transaction_to', 'customer')), 'customer payment');
+        $impact->blockIf($this->refCount('packing_lists', 'order_id', $id), 'packing list');
+        $impact->blockIf($this->refCount('igroups', 'order_id', $id), 'issuance group', null, $this->refExamples('igroups', 'order_id', $id, 'igroup_no'));
+
+        $impact->cascadeIf($this->refCount('order_items', 'order_id', $id), 'order line');
+        $reserved = $this->refCount('stock_batches', 'order_id', $id);
+        if ($reserved) {
+            $impact->note($reserved.' stock batch'.($reserved === 1 ? ' reserved for this order becomes' : 'es reserved for this order become').' free stock.');
+        }
+
+        return $impact;
+    }
+
+    /**
+     * Delivery stocks rows of an order: single-order deliveries, combined deliveries listing it
+     * in stock_no ("3|5"), and deliveries with a line booked to it.
+     */
+    private function deliveryStockIds($orderId): array
+    {
+        return DB::table('stocks')
+            ->where('stock_status', Stock::STATUS_DELIVERY)
+            ->where(fn ($q) => $q->where('order_id', $orderId)
+                ->orWhereRaw("FIND_IN_SET(?, REPLACE(stock_no, '|', ','))", [(string) $orderId])
+                ->orWhereExists(fn ($e) => $e->from('stock_items')->whereColumn('stock_items.stock_id', 'stocks.stock_id')->where('stock_items.order_id', $orderId)))
+            ->pluck('stock_id')
+            ->all();
+    }
+
     public function delete($id)
     {
+        $order = Order::findOrFail($id);
+        DB::table('stock_batches')->where('order_id', $id)->update(['order_id' => null, 'updated_at' => now()]);
+        DB::table('order_items')->where('order_id', $id)->delete();
+
+        return $order->delete();
     }
 }

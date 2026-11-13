@@ -13,7 +13,8 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('machine') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('machine.edit', $machine['machine_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Machine::class)<a href="{{ route('machine.edit', $machine['machine_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Machine::class)@include('deleteButton', ['url' => route('machine.destroy', $machine['machine_id']), 'check' => route('machine.deleteCheck', $machine['machine_id']), 'label' => 'Machine '.$machine['machine_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>
@@ -52,10 +53,12 @@
                         <a href="{{ URL::asset('resources/machine/'. $item->image) }}">
                           <img class="img-responsive thumbnail" src="{{ URL::asset('resources/machine/'. $item->image) }}" alt="">
                         </a>
+                        @can('edit', App\Models\Machine::class)
                         <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'machine'])}}" method="POST">
                           @csrf
                           <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                         </form>
+                        @endcan
                       </div>
                     @endforeach
                   </div>

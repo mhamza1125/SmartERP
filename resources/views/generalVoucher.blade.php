@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Journal Voucher Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('transaction.addGeneralVoucher') }}" class="btn btn-primary">Add Journal Voucher</a>
+              @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addGeneralVoucher') }}" class="btn btn-primary">Add Journal Voucher</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -21,6 +21,7 @@
                     <th>Date</th>
                     <th>Payee Type</th>
                     <th>Payee Name</th>
+                    <th>Expense Head</th>
                     <th>Amount</th>
                     <th>Action</th>
                   </tr>
@@ -59,11 +60,12 @@
                             N/A
                           @endif
                         </td>
+                        <td>{{ $item->expense_head_name ?? '-' }}</td>
                         <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
                         <td>
-                          <a href="{{ route('transaction.showGeneralVoucher', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                          <a href="{{ route('transaction.editGeneralVoucher', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                          <a href="{{ route('payment.print', $item->transaction_id) }}" class="btn btn-warning btn-sm" target="_blank">Print</a>
+                          @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showGeneralVoucher', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                          @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.editGeneralVoucher', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>@endif
+                          @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('payment.print', $item->transaction_id) }}" class="btn btn-warning btn-sm" target="_blank">Print</a>@endif
                         </td>
                       </tr>
                     @endforeach
@@ -76,6 +78,7 @@
                     <th>Date</th>
                     <th>Payee Type</th>
                     <th>Payee Name</th>
+                    <th>Expense Head</th>
                     <th>Amount</th>
                     <th>Action</th>
                   </tr>

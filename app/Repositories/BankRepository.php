@@ -2,10 +2,15 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use Illuminate\Support\Facades\DB;
 use App\Models\Bank;
 
 class BankRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Bank::select('*', 'heads.name as hname', 'vendors.fname', 'customers.fname as cname', 'banks.address as baddress')
@@ -95,5 +100,34 @@ class BankRepository implements GlobalInterface
         return $update->customer_id;
     }
 
-    public function delete($id) {}
+    /**
+     * A bank / cash account can be deleted only while no transaction or payroll uses it. The
+     * company account's own opening balance entry is deleted with it.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $bank = Bank::findOrFail($id);
+        $impact = DeletionImpact::for('Bank account '.trim($bank->account_title.' '.$bank->account));
+        $isOpening = fn ($q) => $q->where('transaction_to', 'admin')->where('transaction_type', 'openingBalance');
+
+        $impact->blockIf(
+            DB::table('transactions')
+                ->where(fn ($q) => $q->where('bank_id', $id)->orWhere('payee_bank_id', $id))
+                ->whereNot(fn ($q) => $isOpening($q)->where('bank_id', $id))
+                ->count(),
+            'transaction'
+        );
+        $impact->blockIf($this->refCount('payrolls', 'bank_id', $id), 'monthly payroll', null, $this->refExamples('payrolls', 'bank_id', $id, 'month'));
+
+        $impact->cascadeIf($this->refCount('transactions', 'bank_id', $id, $isOpening), 'opening balance entry', 'opening balance entries');
+
+        return $impact;
+    }
+
+    public function delete($id)
+    {
+        DB::table('transactions')->where('bank_id', $id)->where('transaction_to', 'admin')->where('transaction_type', 'openingBalance')->delete();
+
+        return Bank::findOrFail($id)->delete();
+    }
 }

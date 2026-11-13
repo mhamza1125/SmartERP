@@ -17,7 +17,7 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('transaction.addEPayment', ['payee_id' => $employee['employee_id']]) }}" class="btn btn-primary">Pay</a>
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addEPayment', ['payee_id' => $employee['employee_id']]) }}" class="btn btn-primary">Pay</a>@endcan
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@
                           @elseif($item->transaction_type == 'wages')
                             <div class="btn-group mt-1">
                               @if(isset($item->stock_id))
-                                <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
+                                @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
                               @endif
                               @if(isset($item->wage_details) && !empty($item->wage_details) && isset($item->stock_id))
                                 <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#wagesModal{{ $item->stock_id }}">
@@ -256,7 +256,7 @@
             </div>
             <div class="modal-footer">
               @if(isset($item->stock_id))
-                <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info">View Full Issuance</a>
+                @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info">View Full Issuance</a>@endif
               @endif
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>

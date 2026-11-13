@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Asset Ledger: {{ $assetName }}</h4>
             <div class="card-header-action">
-              <a href="{{ route('asset.add') }}?asset_name={{ urlencode($assetName) }}" class="btn btn-primary">Add Transaction</a>
+              @can('create', App\Models\Asset::class)<a href="{{ route('asset.add') }}?asset_name={{ urlencode($assetName) }}" class="btn btn-primary">Add Transaction</a>@endcan
               <a href="{{ route('asset') }}" class="btn btn-secondary">Back</a>
             </div>
           </div>
@@ -104,7 +104,7 @@
                         @endif
                       </td>
                       <td>
-                        <a href="{{ route('asset.edit', $transaction->asset_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @can('edit', App\Models\Asset::class)<a href="{{ route('asset.edit', $transaction->asset_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
                         <form action="{{ route('asset.destroy', $transaction->asset_id) }}" method="POST" style="display:inline;">
                           @csrf
                           @method('DELETE')

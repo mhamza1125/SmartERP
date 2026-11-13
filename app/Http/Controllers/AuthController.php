@@ -10,6 +10,12 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct()
+    {
+        // Creating / editing users needs a signed-in user with the Users permissions
+        $this->middleware(['auth', 'all'])->only(['store', 'update']);
+    }
+
     public function index()
     {
         if (Auth::check()) {
@@ -51,6 +57,8 @@ class AuthController extends Controller
 
     public function store(UserRequest $request)
     {
+        $this->authorize('users_create', User::class);
+        $this->guardAdminRole((int) $request->role_id);
         User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -63,7 +71,9 @@ class AuthController extends Controller
 
     public function update(UserRequest $request, $id)
     {
+        $this->authorize('users_edit', User::class);
         $user = User::findOrFail($id);
+        $this->guardAdminRole((int) $request->role_id, $user);
 
         $data = [
             'name' => $request->name,
@@ -90,5 +100,17 @@ class AuthController extends Controller
         //     $user->save();
         // }
 
+    }
+
+    /**
+     * Users permissions let a role manage accounts, but never create an administrator or change
+     * one: that would let any user manager make themselves Admin (system-level restriction).
+     */
+    private function guardAdminRole(int $roleId, ?User $target = null): void
+    {
+        if (auth()->user()->isAdmin()) {
+            return;
+        }
+        abort_if($roleId === User::ROLE_ADMIN || ($target && $target->isAdmin()), 403, 'Only an administrator can give the Admin role or change an administrator account.');
     }
 }

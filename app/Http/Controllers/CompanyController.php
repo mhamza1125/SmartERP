@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Settings;
 use App\Http\Requests\CompanyRequest;
+use App\Repositories\AttendanceRepository;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 
@@ -12,10 +13,13 @@ class CompanyController extends Controller
 {
     protected $companyRepository;
 
-    public function __construct(CompanyRepository $companyRepository)
+    protected $attendanceRepository;
+
+    public function __construct(CompanyRepository $companyRepository, AttendanceRepository $attendanceRepository)
     {
         $this->middleware(['auth', 'all']);
         $this->companyRepository = $companyRepository;
+        $this->attendanceRepository = $attendanceRepository;
     }
 
     public function index()
@@ -59,6 +63,8 @@ class CompanyController extends Controller
         $this->authorize('edit', Settings::class);
         return view('editCompany', [
             'company' => $company,
+            // Status of the attendance machine database (Settings > Company > Attendance Machine)
+            'machineDb' => $this->attendanceRepository->machineDbStatus(),
         ]);
     }
 

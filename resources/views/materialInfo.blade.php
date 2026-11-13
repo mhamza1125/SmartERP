@@ -13,7 +13,8 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('material') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('material.edit', $material['material_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Material::class)<a href="{{ route('material.edit', $material['material_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Material::class)@include('deleteButton', ['url' => route('material.destroy', $material['material_id']), 'check' => route('material.deleteCheck', $material['material_id']), 'label' => 'Material '.$material['material_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>
@@ -62,10 +63,12 @@
                         <a href="{{ URL::asset('resources/material/'. $item->image) }}">
                           <img class="img-responsive thumbnail" src="{{ URL::asset('resources/material/'. $item->image) }}" alt="">
                         </a>
+                        @can('edit', App\Models\Material::class)
                         <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'material'])}}" method="POST">
                           @csrf
                           <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                         </form>
+                        @endcan
                       </div>
                     @endforeach
                   </div>

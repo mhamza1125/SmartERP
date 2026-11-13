@@ -7,11 +7,9 @@
         <div class="card">
           <div class="card-header">
             <h4>Attendance Table</h4>
-            <div class="card-header-action">
-              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Return</a>
-            </div>
           </div>
           <div class="card-body">
+            @include('attendanceNotices')
             <div class="row">
               <div class="col-md-12">
                 <form action="{{ route('attendance.filter') }}" method="POST" class="needs-validation col-md-12" novalidate="">@csrf
@@ -23,10 +21,10 @@
                         <option value="0" selected>All</option>
                         @if($employee->count())
                           @foreach($employee as $item)
-                            @php if($item->attendance_id == $eid){
+                            @php if($item->employee_id == $eid){
                               $selectedEmployee = $item->employee_no . ' - ' . $item->name;
                             } @endphp
-                            <option value="{{$item->attendance_id}}" {{ $eid == $item->attendance_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}</option>
+                            <option value="{{$item->employee_id}}" {{ $eid == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}{{ trim((string) $item->attendance_id) === '' ? ' (no machine ID)' : ' (ID '.$item->attendance_id.')' }}</option>
                           @endforeach
                         @endif
                       </select>
@@ -57,8 +55,8 @@
                       @if(!empty($dfrom) && !empty($dto))
                         <tr>
                           <th colspan="2"><b>{{ $selectedEmployee }}</b></th>
-                          <th colspan="3"><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</th>
-                          <th colspan="3"><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</th>
+                          <th colspan="3"><b>Date From:</b> {{ formatDate($dfrom) }}</th>
+                          <th colspan="3"><b>Date To:</b> {{ formatDate($dto) }}</th>
                         </tr>
                       @endif
                       <tr>
@@ -84,7 +82,7 @@
                                 @if($holiday == '1') <td>Holiday</td>
                                 @else <td>{{ $row['ENO'] }} - {{ $row['NAME'] }}</td>@endif
                               @endif
-                              <td>{{ $row['DATE'] }}</td>
+                              <td data-order="{{ $row['DATE'] }}">{{ formatDate($row['DATE']) }}</td>
                               <td>{{ $row['CHECKIN'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKIN'])) : $row['CHECKIN'] }}</td>
                               <td>{{ $row['CHECKOUT'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKOUT'])) : $row['CHECKOUT'] }}</td>
                               <td>{{ $row['LATE_MINUTES'] }}</td>
@@ -98,7 +96,7 @@
                         @endforeach
                       @else
                         <tr>
-                          <td colspan="7">No data found</td>
+                          <td colspan="{{ $selectedEmployee == 'All Employees' ? 7 : 6 }}">{{ empty($dfrom) ? 'Choose a date range and press Filter.' : 'No attendance records found for this selection.' }}</td>
                         </tr>
                       @endif
                     </tbody>

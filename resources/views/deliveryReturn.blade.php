@@ -40,8 +40,9 @@
                       <td>{{ $return->stock_no }}</td>
                       <td>{{ $return->return_reason }}</td>
                       <td>
-                        <a href="{{ route('delivery-return.show', $return->delivery_return_id) }}" class="btn btn-sm btn-primary">View</a>
-                        <a href="{{ route('delivery-return.edit', $return->delivery_return_id) }}" class="btn btn-sm btn-warning">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery-return.show', $return->delivery_return_id) }}" class="btn btn-sm btn-primary">View</a>@endif
+                        @can('edit', App\Models\Delivery::class)<a href="{{ route('delivery-return.edit', $return->delivery_return_id) }}" class="btn btn-sm btn-warning">Edit</a>@endcan
+@can('delete', App\Models\Delivery::class)@include('deleteButton', ['url' => route('delivery-return.destroy', $return->delivery_return_id), 'check' => route('delivery-return.deleteCheck', $return->delivery_return_id), 'label' => 'Delivery return '.$return->return_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                       </td>
                     </tr>
                     @endforeach

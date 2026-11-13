@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Products Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('product.add') }}" class="btn btn-primary">Add Product</a>
+              @can('create', App\Models\Product::class)<a href="{{ route('product.add') }}" class="btn btn-primary">Add Product</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -42,9 +42,10 @@
                         @endif
                       </td>                 
                       <td>
-                        <a href="{{ route('product.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('product.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('product.ptc', $item->product_id) }}" class="btn btn-warning btn-sm">PTC</a>
+                        @if(auth()->user()->can('show', App\Models\Product::class))<a href="{{ route('product.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Product::class)<a href="{{ route('product.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Product::class)@include('deleteButton', ['url' => route('product.destroy', $item->product_id), 'check' => route('product.deleteCheck', $item->product_id), 'label' => 'Product '.$item->article_no, 'class' => 'btn btn-danger btn-sm'])@endcan
+                        @if(auth()->user()->can('show', App\Models\Product::class))<a href="{{ route('product.ptc', $item->product_id) }}" class="btn btn-warning btn-sm">PTC</a>@endif
                       </td>
                     </tr>
                     @endforeach

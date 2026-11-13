@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
 use App\Models\PackingList;
 use App\Models\PackingCarton;
 use App\Models\PackingCartonItem;
@@ -9,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class PackingListRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return PackingList::join('deliveries', 'deliveries.delivery_id', '=', 'packing_lists.delivery_id')
@@ -65,9 +69,37 @@ class PackingListRepository implements GlobalInterface
         $update->update($updateData);
     }
 
+    /**
+     * A packing list is a document only (no stock or ledger effect): its cartons go with it.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $list = PackingList::findOrFail($id);
+        $deliveryNo = DB::table('deliveries')->where('delivery_id', $list->delivery_id)->value('delivery_no');
+        $cartons = DB::table('packing_cartons')->where('packing_list_id', $id)->pluck('packing_carton_id');
+
+        return DeletionImpact::for('Packing list'.($deliveryNo ? ' of delivery '.$deliveryNo : ' #'.$id))
+            ->cascadeIf($cartons->count(), 'carton row')
+            ->cascadeIf(DB::table('packing_carton_items')->whereIn('packing_carton_id', $cartons)->count(), 'carton item');
+    }
+
     public function delete($id)
     {
-        PackingList::findOrFail($id)->delete();
+        $cartons = DB::table('packing_cartons')->where('packing_list_id', $id)->pluck('packing_carton_id');
+        DB::table('packing_carton_items')->whereIn('packing_carton_id', $cartons)->delete();
+        DB::table('packing_cartons')->where('packing_list_id', $id)->delete();
+
+        return PackingList::findOrFail($id)->delete();
+    }
+
+    /**
+     * Deletes the packing list(s) of a delivery (used when the delivery is deleted).
+     */
+    public function deleteForDelivery($deliveryId): void
+    {
+        foreach (DB::table('packing_lists')->where('delivery_id', $deliveryId)->pluck('packing_list_id') as $listId) {
+            $this->delete($listId);
+        }
     }
 
     public function getCartons($packingListId)

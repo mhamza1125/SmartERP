@@ -68,6 +68,7 @@ class EmployeeController extends Controller
 
     public function store(EmployeeRequest $request)
     {
+        $this->authorize('create', Employee::class);
         $validatedData = $request->validated();
 
         // Process JSON array fields - filter out empty entries
@@ -362,6 +363,7 @@ class EmployeeController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Employee::class);
         $updateData = $request->input();
 
         // Process JSON array fields - filter out empty entries
@@ -413,8 +415,28 @@ class EmployeeController extends Controller
         return redirect()->route('employee.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Employee $employee)
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
         $this->authorize('delete', Employee::class);
+
+        return $this->deletionCheckResponse($this->employeeRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Employee::class);
+
+        return $this->runDeletion(
+            $this->employeeRepository->deletionImpact($id),
+            fn () => $this->employeeRepository->delete($id),
+            route('employee')
+        );
     }
 }

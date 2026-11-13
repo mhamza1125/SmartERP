@@ -11,9 +11,12 @@
               <a href="{{ route('packingList.print', $packingList->order_id) }}" class="btn btn-info" target="_blank">
                 <i class="fas fa-print"></i> Print
               </a>
-              <a href="{{ route('packingList.edit', $packingList->packing_list_id) }}" class="btn btn-warning">
+              @can('edit', App\Models\Delivery::class)<a href="{{ route('packingList.edit', $packingList->packing_list_id) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Edit
-              </a>
+              </a>@endcan
+              @can('delete', App\Models\Delivery::class)
+                @include('deleteButton', ['url' => route('packingList.destroy', $packingList->packing_list_id), 'check' => route('packingList.deleteCheck', $packingList->packing_list_id), 'label' => 'this packing list', 'class' => 'btn btn-danger'])
+              @endcan
               <a href="{{ route('delivery.show', $packingList->delivery_id) }}" class="btn btn-primary">Back to Delivery</a>
             </div>
           </div>

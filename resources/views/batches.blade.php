@@ -79,9 +79,9 @@
                       </td>
                       <td>{{ number_format($batch->balance) }} {{ $batch->unit_name }}</td>
                       <td>
-                        <a href="{{ route('batch.show', $batch->batch_id) }}" class="btn btn-sm btn-info" title="Batch history">
+                        @if(auth()->user()->can('show', App\Models\StockBatch::class))<a href="{{ route('batch.show', $batch->batch_id) }}" class="btn btn-sm btn-info" title="Batch history">
                           <i class="fas fa-eye"></i>
-                        </a>
+                        </a>@endif
                       </td>
                     </tr>
                   @endforeach

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesDeletion;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
@@ -9,7 +11,26 @@ use Illuminate\Support\Facades\Validator;
 
 class Controller extends BaseController
 {
-    use AuthorizesRequests, ValidatesRequests;
+    use AuthorizesRequests, HandlesDeletion, ValidatesRequests;
+
+    /**
+     * Passes when the user may perform ANY of the given abilities, e.g.
+     * authorizeAny([['show', Stock::class], ['reports_access', User::class]]) for a report that
+     * belongs to both the Stock and the Reports menu.
+     *
+     * @param  array<int, array{0: string, 1: mixed}>  $abilities
+     */
+    protected function authorizeAny(array $abilities): void
+    {
+        $user = auth()->user();
+        foreach ($abilities as [$ability, $arguments]) {
+            if ($user && $user->can($ability, $arguments)) {
+                return;
+            }
+        }
+
+        throw new AuthorizationException('This action is unauthorized.');
+    }
 
     protected function getImage($image, $folder)
     {

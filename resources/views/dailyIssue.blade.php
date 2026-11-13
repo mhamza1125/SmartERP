@@ -72,9 +72,9 @@
                       <td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td>
                       <td>
                         <div class="btn-group">
-                          <a class="btn btn-info" href="{{ route('stock.daily.print', ['dfrom' => $dfrom, 'dto' => $dto, 'oid' => $oid, 'tid' => $tid, 'tname' => $tname]) }}" target="_blank">
+                          @if((auth()->user()->can('show', App\Models\Stock::class) || auth()->user()->can('reports_access', App\Models\User::class)))<a class="btn btn-info" href="{{ route('stock.daily.print', ['dfrom' => $dfrom, 'dto' => $dto, 'oid' => $oid, 'tid' => $tid, 'tname' => $tname]) }}" target="_blank">
                             <i class="fas fa-file-alt"></i> Daily Issuance Report
-                          </a>
+                          </a>@endif
                         </div>
                       </td>
                     </tr>

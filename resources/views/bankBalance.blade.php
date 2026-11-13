@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Bank Balance Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>
+              @can('create', App\Models\Bank::class)<a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -33,7 +33,7 @@
                       <td>{{$item->account}}</td>
                       <td>{{$item->hname}}</td>
                       <td>{{number_format($item->tdebit - $item->tcredit)}}</td>
-                      <td><a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a></td>
+                      <td>@if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a>@endif</td>
                     </tr>
                     @endforeach
                   @endif

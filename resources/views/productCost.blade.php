@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Product Cost Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('productCost.add') }}" class="btn btn-primary">Add Product Cost</a>
+              @can('create', App\Models\Product::class)<a href="{{ route('productCost.add') }}" class="btn btn-primary">Add Product Cost</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -30,8 +30,8 @@
                       <td>{{$item->article_no}}</td>
                       <td>{{$item->name}}</td>
                       <td>
-                        <a href="{{ route('productCost.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('productCost.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Product::class))<a href="{{ route('productCost.show', $item->product_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Product::class)<a href="{{ route('productCost.edit', $item->product_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
                       </td>
                     </tr>
                     @endforeach

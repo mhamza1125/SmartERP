@@ -71,26 +71,27 @@
                               {{$status}}
                             </button>
                             <div class="dropdown-menu">
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '1']) }}">Pending</a>
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '2']) }}">Dispatched</a>
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '3']) }}">Delivered</a>
-                              <a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '4']) }}">Returned</a>
+                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '1']) }}">Pending</a>@endif
+                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '2']) }}">Dispatched</a>@endif
+                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '3']) }}">Delivered</a>@endif
+                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '4']) }}">Returned</a>@endif
                             </div>
                           </div>
                       </td>
                       <td>
-                        <a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>
+                        @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>@endif
                         @if(isset($item->is_multi_order) && $item->is_multi_order)
                           @php
                             // For multi-order deliveries, we need to construct the edit URL with order IDs
                             // We'll use a placeholder for now and handle this with JavaScript or controller logic
                           @endphp
-                          <a href="{{ route('delivery.show', $item->delivery_id) }}?edit=1" class="btn btn-primary btn-sm">Edit</a>
+                          @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery.show', $item->delivery_id) }}?edit=1" class="btn btn-primary btn-sm">Edit</a>@endif
                         @else
-                          <a href="{{ route('delivery.edit', $item->delivery_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                          @can('edit', App\Models\Delivery::class)<a href="{{ route('delivery.edit', $item->delivery_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Delivery::class)@include('deleteButton', ['url' => route('delivery.destroy', $item->delivery_id), 'check' => route('delivery.deleteCheck', $item->delivery_id), 'label' => 'Delivery '.$item->delivery_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                         @endif
                         @if($item->delivery_status == 3)
-                          <a href="{{ route('delivery-return.create', $item->delivery_id) }}" class="btn btn-warning btn-sm">Return</a>
+                          @can('create', App\Models\Delivery::class)<a href="{{ route('delivery-return.create', $item->delivery_id) }}" class="btn btn-warning btn-sm">Return</a>@endcan
                         @endif
                       </td>
                     </tr>

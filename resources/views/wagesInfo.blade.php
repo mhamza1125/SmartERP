@@ -12,9 +12,9 @@
                 <a href="{{ route('wages') }}" class="btn btn-primary">Back</a>
                 {{-- Wages are paid to the worker: employee form, or contractor form for a contractor --}}
                 @if($issue['table_name'] == 'employee')
-                  <a href="{{ route('transaction.addEPayment', ['payee_id' => $issue['employee_id']]) }}" class="btn btn-primary">Pay</a>
+                  @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addEPayment', ['payee_id' => $issue['employee_id']]) }}" class="btn btn-primary">Pay</a>@endcan
                 @else
-                  <a href="{{ route('transaction.addCPayment', ['payee_id' => $issue['employee_id']]) }}" class="btn btn-primary">Pay</a>
+                  @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addCPayment', ['payee_id' => $issue['employee_id']]) }}" class="btn btn-primary">Pay</a>@endcan
                 @endif
               </div>
             </div>

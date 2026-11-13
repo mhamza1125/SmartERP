@@ -8,26 +8,26 @@ class MachinePolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('machines_access');
+        return $user->hasPermission('machines_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('machines_show');
+        return $user->hasPermission('machines_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('machines_create');
+        return $user->hasPermission('machines_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('machines_edit');
+        return $user->hasPermission('machines_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('machines_delete');
+        return $user->hasPermission('machines_delete');
     }
 }

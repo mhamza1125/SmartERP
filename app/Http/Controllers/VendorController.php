@@ -105,6 +105,7 @@ class VendorController extends Controller
 
     public function store(VendorRequest $request)
     {
+        $this->authorize((string) $request->input('vendor_type') === '1' ? 'contractors_create' : 'create', Vendor::class);
         $validatedData = $request->validated();
         $materialIds = $request->input('material_id');
         $validatedData['material_id'] = $materialIds ? implode('|', $materialIds) : '0';
@@ -450,6 +451,7 @@ class VendorController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize($this->vendorRepository->isContractor($id) ? 'contractors_edit' : 'edit', Vendor::class);
         $materialIds = $request->input('material_id');
         $materialIds = $materialIds ? implode('|', $materialIds) : '0';
         $productIds = $request->input('product_id');
@@ -482,8 +484,36 @@ class VendorController extends Controller
         return redirect()->route('vendor.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Vendor $vendor)
+
+    /**
+     * Vendors are authorized with vendors_*, contractors (vendor_type 1) with contractors_*.
+     */
+    private function authorizeVendorDelete($id): bool
     {
-        $this->authorize('delete', Vendor::class);
+        $isContractor = $this->vendorRepository->isContractor($id);
+        $this->authorize($isContractor ? 'contractors_delete' : 'delete', Vendor::class);
+
+        return $isContractor;
+    }
+
+    /**
+     * What deleting this vendor / contractor would affect (JSON for the delete button).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorizeVendorDelete($id);
+
+        return $this->deletionCheckResponse($this->vendorRepository->deletionImpact($id));
+    }
+
+    public function destroy($id)
+    {
+        $isContractor = $this->authorizeVendorDelete($id);
+
+        return $this->runDeletion(
+            $this->vendorRepository->deletionImpact($id),
+            fn () => $this->vendorRepository->delete($id),
+            route($isContractor ? 'contractor' : 'vendor')
+        );
     }
 }

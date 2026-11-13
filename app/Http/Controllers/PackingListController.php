@@ -377,4 +377,28 @@ class PackingListController extends Controller
             'cartons' => $cartons,
         ]);
     }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Delivery::class);
+
+        return $this->deletionCheckResponse($this->packingListRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Delivery::class);
+
+        return $this->runDeletion(
+            $this->packingListRepository->deletionImpact($id),
+            fn () => $this->packingListRepository->delete($id),
+            route('packingList')
+        );
+    }
 }

@@ -1358,4 +1358,111 @@ class StockItemRepository implements GlobalInterface
             ->where('material_id', '0')
             ->delete();
     }
+
+    /**
+     * Stock that would fall below zero if these stock-ins were removed (deleting a receiving,
+     * a delivery return, a purchase receipt...). Checks the same figures the stock pages show:
+     * material stock, product stock per size and stage, and the batches the lines were booked to.
+     *
+     * @param  array<int>  $stockIds  stocks rows being deleted (only their stock-in lines count)
+     * @param  array<int>  $receiveMaterialIds  purchase receipt lines being deleted
+     * @return array<int, string>  one message per shortfall; empty = safe
+     */
+    public function stockInRemovalShortfalls(array $stockIds, array $receiveMaterialIds = []): array
+    {
+        $materials = [];   // material_id => qty removed
+        $products = [];    // "pt|stage" => qty removed
+        $batches = [];     // "batch|stage" => qty removed
+
+        if ($stockIds) {
+            $lines = DB::table('stock_items')
+                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+                ->whereIn('stock_items.stock_id', $stockIds)
+                ->where('stocks.stock_type', 1)
+                ->where('stock_items.ptc_virtual', 0)
+                ->select('stock_items.stock_item_id', 'stock_items.product_type_id', 'stock_items.material_id', 'stock_items.component_product_type_id', 'stock_items.stage_id', 'stock_items.quantity')
+                ->get();
+            foreach ($lines as $line) {
+                if ((int) $line->material_id === 0 || $line->component_product_type_id !== null) {
+                    $key = ($line->component_product_type_id ?? $line->product_type_id).'|'.(int) $line->stage_id;
+                    $products[$key] = ($products[$key] ?? 0) + (float) $line->quantity;
+                } else {
+                    $materials[$line->material_id] = ($materials[$line->material_id] ?? 0) + (float) $line->quantity;
+                }
+            }
+            $allocations = DB::table('stock_item_batches')
+                ->join('stock_items', 'stock_items.stock_item_id', '=', 'stock_item_batches.stock_item_id')
+                ->whereIn('stock_item_batches.stock_item_id', $lines->pluck('stock_item_id'))
+                ->select('stock_item_batches.batch_id', 'stock_items.stage_id', 'stock_item_batches.quantity')
+                ->get();
+            foreach ($allocations as $allocation) {
+                $key = $allocation->batch_id.'|'.(int) $allocation->stage_id;
+                $batches[$key] = ($batches[$key] ?? 0) + (float) $allocation->quantity;
+            }
+        }
+
+        if ($receiveMaterialIds) {
+            $returned = DB::table('return_materials')->select('receive_material_id')->selectRaw('SUM(quantity) as quantity')->groupBy('receive_material_id');
+            $receipts = DB::table('receive_materials')
+                ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+                ->leftJoinSub($returned, 'returned', 'returned.receive_material_id', '=', 'receive_materials.receive_material_id')
+                ->whereIn('receive_materials.receive_material_id', $receiveMaterialIds)
+                ->select('purchase_items.material_id', 'purchase_items.product_type_id', 'purchase_items.product_stage_id', 'receive_materials.batch_id')
+                ->selectRaw('receive_materials.approved_qty - IFNULL(returned.quantity, 0) as quantity')
+                ->get();
+            foreach ($receipts as $receipt) {
+                $quantity = (float) $receipt->quantity;
+                if ((int) $receipt->material_id === 0) {
+                    $key = $receipt->product_type_id.'|'.(int) $receipt->product_stage_id;
+                    $products[$key] = ($products[$key] ?? 0) + $quantity;
+                    if ($receipt->batch_id) {
+                        $batchKey = $receipt->batch_id.'|'.(int) $receipt->product_stage_id;
+                        $batches[$batchKey] = ($batches[$batchKey] ?? 0) + $quantity;
+                    }
+                } else {
+                    $materials[$receipt->material_id] = ($materials[$receipt->material_id] ?? 0) + $quantity;
+                }
+            }
+        }
+
+        $shortfalls = [];
+        $epsilon = 0.0001;
+
+        foreach ($materials as $materialId => $removed) {
+            $current = $this->materialStock((int) $materialId);
+            if ($removed > 0 && $current - $removed < -$epsilon) {
+                $name = DB::table('materials')->where('material_id', $materialId)->value('name') ?? "Material {$materialId}";
+                $shortfalls[] = "{$name}: ".$this->qtyText($removed).' would be removed but only '.$this->qtyText($current).' is in stock';
+            }
+        }
+
+        if ($products) {
+            $stock = $this->pStockForProductTypes(array_map(fn ($key) => (int) explode('|', $key)[0], array_keys($products)));
+            foreach ($products as $key => $removed) {
+                [$productTypeId, $stageId] = array_map('intval', explode('|', $key));
+                $row = collect($stock->get($productTypeId, []))->first(fn ($r) => (int) $r->stage_id === $stageId);
+                $current = $row ? (float) $row->stockIn - (float) $row->stockOut : 0.0;
+                if ($removed > 0 && $current - $removed < -$epsilon) {
+                    $shortfalls[] = $this->stockBatchRepository->productLabel($productTypeId, $stageId).': '.$this->qtyText($removed).' would be removed but only '.$this->qtyText($current).' is in stock';
+                }
+            }
+        }
+
+        foreach ($batches as $key => $removed) {
+            [$batchId, $stageId] = array_map('intval', explode('|', $key));
+            $row = $this->stockBatchRepository->balanceQuery(['batch_id' => $batchId, 'stage_id' => $stageId])->first();
+            $current = $row ? (float) $row->balance : 0.0;
+            if ($removed > 0 && $current - $removed < -$epsilon) {
+                $batchNo = DB::table('stock_batches')->where('batch_id', $batchId)->value('batch_no');
+                $shortfalls[] = "Batch {$batchNo}: ".$this->qtyText($current).' left but '.$this->qtyText($removed).' would be removed (part of it was already issued or delivered)';
+            }
+        }
+
+        return array_values(array_unique($shortfalls));
+    }
+
+    private function qtyText(float $quantity): string
+    {
+        return rtrim(rtrim(number_format($quantity, 2, '.', ','), '0'), '.');
+    }
 }

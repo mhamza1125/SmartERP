@@ -271,7 +271,7 @@
                   <tbody>
                     @foreach($productBatches as $batch)
                       <tr>
-                        <td><a href="{{ route('batch.show', $batch->batch_id) }}">{{ $batch->batch_no }}</a></td>
+                        <td>@if(auth()->user()->can('show', App\Models\StockBatch::class))<a href="{{ route('batch.show', $batch->batch_id) }}">{{ $batch->batch_no }}</a>@endif</td>
                         <td>{{ $sourceLabels[$batch->source_type] ?? $batch->source_type }}</td>
                         <td>
                           @if($batch->order_id)

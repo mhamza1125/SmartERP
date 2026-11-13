@@ -13,7 +13,8 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('missue') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('mstock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Stock::class)<a href="{{ route('mstock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $issue['stock_id']), 'check' => route('stock.deleteCheck', $issue['stock_id']), 'label' => 'Machine issuance '.$issue['stock_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>
@@ -51,10 +52,12 @@
                         <a href="{{ URL::asset('resources/issuance/'. $item->image) }}">
                           <img class="img-responsive thumbnail" src="{{ URL::asset('resources/issuance/'. $item->image) }}" alt="">
                         </a>
+                        @can('edit', App\Models\Stock::class)
                         <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'issuance'])}}" method="POST">
                           @csrf
                           <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                         </form>
+                        @endcan
                       </div>
                     @endforeach
                   </div>

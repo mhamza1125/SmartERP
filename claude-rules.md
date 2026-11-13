@@ -127,3 +127,7 @@ Add domain-specific methods beyond these five as needed in each concrete reposit
 - Don't hardcode company name, currency symbol, or logo path — read from `Company` model or config
 - A vendor payment is either linked to a purchase (`order_id` = purchase_id) or a General Payment (`order_id` = 0); both post the same ledger/cash entries
 - Don't use the ordered qty for stock updates — always use the **approved qty** from the receive record
+- Deleting: implement `deletionImpact($id)` (blockers / cascades) + `delete($id)` in the repository and use `deletionCheckResponse()` / `runDeletion()` in the controller; never cascade-delete another document's history, refuse instead (see claude-memory.md "Deletion")
+- Every action button in a view goes inside `@can(ability, Model::class)` matching the controller's `authorize()`; every controller action (including store / update / AJAX) authorizes
+- Keep a space between Blade directives (`@endcan @endif`); `@endcan@endif` is not compiled
+- New permission: add it via migration (grant Admin), list it in `App\Support\PermissionCatalog`, check it in a policy; never check role ids outside AuthServiceProvider's Gate::before

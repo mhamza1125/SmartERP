@@ -2,11 +2,18 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use Illuminate\Support\Facades\DB;
+use App\Exceptions\DeletionBlockedException;
+use App\Models\StockBatch;
 use App\Models\Receive;
 use Carbon\Carbon;
 
 class ReceiveRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Receive::join('purchases', 'purchases.purchase_id', '=', 'receives.purchase_id')
@@ -69,7 +76,41 @@ class ReceiveRepository implements GlobalInterface
         return $update->receive_id;
     }
 
+    /**
+     * A receiving can be deleted only while nothing was returned against it and its approved
+     * quantity is still in stock (not issued, delivered or used since).
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $receive = Receive::findOrFail($id);
+        $impact = DeletionImpact::for('Receiving '.$receive->receive_no);
+        $lineIds = DB::table('receive_materials')->where('receive_id', $id)->pluck('receive_material_id')->all();
+
+        $impact->blockIf($this->refCount('returns', 'receive_id', $id), 'purchase return', null, $this->refExamples('returns', 'receive_id', $id, 'return_no'));
+        foreach (app(StockItemRepository::class)->stockInRemovalShortfalls([], $lineIds) as $shortfall) {
+            $impact->block('stock already used: '.$shortfall);
+        }
+
+        $impact->cascadeIf(count($lineIds), 'received line');
+        $impact->note('The approved quantity leaves stock and the vendor ledger no longer shows this receiving.');
+
+        return $impact;
+    }
+
     public function delete($id)
     {
+        $receive = Receive::findOrFail($id);
+        $lines = DB::table('receive_materials')->where('receive_id', $id)->lockForUpdate()->get(['receive_material_id', 'purchase_item_id']);
+
+        // Checked again under lock: stock may have been used since the user confirmed
+        $shortfalls = app(StockItemRepository::class)->stockInRemovalShortfalls([], $lines->pluck('receive_material_id')->all());
+        if ($shortfalls) {
+            throw new DeletionBlockedException('Receiving '.$receive->receive_no.' cannot be deleted: '.implode('; ', $shortfalls));
+        }
+
+        DB::table('receive_materials')->where('receive_id', $id)->delete();
+        app(StockBatchRepository::class)->deleteUnused(StockBatch::SOURCE_PURCHASE, $lines->pluck('purchase_item_id')->unique()->all());
+
+        return $receive->delete();
     }
 }

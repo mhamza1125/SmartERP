@@ -23,7 +23,8 @@
               </div>
               <div class="btn-group">
                 <a href="{{ route('product') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Product::class)<a href="{{ route('product.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Product::class)@include('deleteButton', ['url' => route('product.destroy', $product['product_id']), 'check' => route('product.deleteCheck', $product['product_id']), 'label' => 'Product '.$product['article_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>
@@ -185,10 +186,12 @@
                             <a href="{{ URL::asset('resources/product/'. $item->image) }}">
                               <img class="img-responsive thumbnail" src="{{ URL::asset('resources/product/'. $item->image) }}" alt="">
                             </a>
+                            @can('edit', App\Models\Product::class)
                             <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'product'])}}" method="POST">
                               @csrf
                               <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                             </form>
+                            @endcan
                           </div>
                         @endforeach
                       </div>
@@ -211,10 +214,12 @@
                                     <a href="{{ asset('resources/product_file/' . $item->image) }}" target="_blank" class="btn btn-info">View</a>
                                   </div>
                                   <div class="col-md-6">
+                                    @can('edit', App\Models\Product::class)
                                     <form action="{{ route('image.delete', ['id' => $item->image_id, 'dir' => 'product_file']) }}" method="POST">
                                       @csrf
                                       <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
                                     </form>
+                                    @endcan
                                   </div>
                                 </div>
                               </div>
@@ -233,7 +238,7 @@
                       @if(!$countMaterial > 0)
                         <div class="col-md-12">
                           <h5 class="mt-2">Product Material
-                            <a href="{{ route('productMaterial.add', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Add</a>
+                            @canany(['create', 'edit'], App\Models\Product::class)<a href="{{ route('productMaterial.add', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Add</a>@endcanany
                           </h5>
                         </div>
                       @endif
@@ -257,7 +262,7 @@
                                 @foreach($totalMaterial as $item)
                                   @if(($totalMaterial[$i-1]['product_type_id'] ?? null) === $item->product_type_id)
                                   <h5 class="mt-2">Product Packing
-                                    <a href="{{ route('productMaterial.edit', $item->product_type_id) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Edit</a>
+                                    @can('edit', App\Models\Product::class)<a href="{{ route('productMaterial.edit', $item->product_type_id) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Edit</a>@endcan
                                   </h5>
                                   <table class="table table-sm">
                                     <tbody>
@@ -367,7 +372,7 @@
                     <div class="row">
                       <div class="col-md-12">
                         <h5 class="mt-2">Product Costing
-                          <a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Add/Edit</a>
+                          @can('edit', App\Models\Product::class)<a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary float-right rounded-pill" target="_blank">Add/Edit</a>@endcan
                         </h5>
                         <table class="table table-sm table-striped">
                           <thead>

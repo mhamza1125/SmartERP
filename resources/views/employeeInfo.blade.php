@@ -13,8 +13,9 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('employee') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('employee.detail', $employee['employee_id']) }}" class="btn btn-primary">Ledger</a>
+                @can('edit', App\Models\Employee::class)<a href="{{ route('employee.edit', $employee['employee_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Employee::class)@include('deleteButton', ['url' => route('employee.destroy', $employee['employee_id']), 'check' => route('employee.deleteCheck', $employee['employee_id']), 'label' => 'Employee '.$employee['employee_no'], 'class' => 'btn btn-danger'])@endcan
+                @if(auth()->user()->can('show', App\Models\Employee::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('employee.detail', $employee['employee_id']) }}" class="btn btn-primary">Ledger</a>@endif
               </div>
             </div>
           </div>
@@ -183,10 +184,12 @@
                     <a href="{{ URL::asset('resources/employee/'. $item->image) }}">
                       <img class="img-responsive thumbnail" src="{{ URL::asset('resources/employee/'. $item->image) }}" alt="">
                     </a>
+                    @can('edit', App\Models\Employee::class)
                     <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'employee'])}}" method="POST">
                       @csrf
                       <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                     </form>
+                    @endcan
                   </div>
                 @endforeach
               </div>

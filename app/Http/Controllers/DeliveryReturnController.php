@@ -389,4 +389,28 @@ class DeliveryReturnController extends Controller
             return [];
         }
     }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Delivery::class);
+
+        return $this->deletionCheckResponse($this->deliveryReturnRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Delivery::class);
+
+        return $this->runDeletion(
+            $this->deliveryReturnRepository->deletionImpact($id),
+            fn () => $this->deliveryReturnRepository->delete($id),
+            route('delivery-return')
+        );
+    }
 }

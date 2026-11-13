@@ -40,14 +40,34 @@ class ImageController extends Controller
     {
     }
 
+    /**
+     * Images / files belong to a record of another module: deleting one needs edit permission on
+     * that module. The file location comes from the image row, never from the URL.
+     */
+    private const OWNER_POLICIES = [
+        'customers' => \App\Models\Customer::class,
+        'employees' => \App\Models\Employee::class,
+        'vendors' => \App\Models\Vendor::class,
+        'materials' => \App\Models\Material::class,
+        'machines' => \App\Models\Machine::class,
+        'products' => \App\Models\Product::class,
+        'stocks' => \App\Models\Stock::class,
+        'transactions' => \App\Models\Transaction::class,
+    ];
+
     public function destroy(Image $id, $dir)
     {
-        $this->imageRepository->delete($id->image_id);
-        unlink('resources/'.$dir.'/'.$id->image);
-        if (strpos($dir, 'file')) {
-            return back()->with('success', 'File Deleted Successfully');
+        $model = self::OWNER_POLICIES[$id->table_name] ?? null;
+        abort_if($model === null, 403);
+        if ($id->table_name === 'vendors' && (string) \App\Models\Vendor::where('vendor_id', $id->table_id)->value('vendor_type') === '1') {
+            $this->authorize('contractors_edit', $model);
         } else {
-            return back()->with('success', 'Image Deleted Successfully');
+            $this->authorize('edit', $model);
         }
+
+        $isFile = ! empty($id->file_type);
+        $this->imageRepository->deleteWithFile($id);
+
+        return back()->with('success', $isFile ? 'File Deleted Successfully' : 'Image Deleted Successfully');
     }
 }

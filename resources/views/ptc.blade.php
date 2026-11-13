@@ -8,9 +8,11 @@
           <div class="card-header">
             <h4>Process Travel Cards (PTC)</h4>
             <div class="card-header-action">
+              @can('create', App\Models\Stock::class)
               <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createPtcModal">
                 <i class="fas fa-plus"></i> Create PTC
               </button>
+              @endcan
             </div>
           </div>
           <div class="card-body">
@@ -59,9 +61,10 @@
                         @endif
                       </td>
                       <td>
-                        <a href="{{ route('ptc.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
+                        @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('ptc.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $item->stock_id), 'check' => route('stock.deleteCheck', $item->stock_id), 'label' => 'PTC '.$item->stock_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                         {{-- @if($item->stock_status == 6)
-                          <a href="{{ route('ptc.move.form', $item->stock_id) }}" class="btn btn-success btn-sm">Move Stage</a>
+                          @if(auth()->user()->can('edit', App\Models\Stock::class))<a href="{{ route('ptc.move.form', $item->stock_id) }}" class="btn btn-success btn-sm">Move Stage</a>@endif
                         @endif --}}
                       </td>
                     </tr>

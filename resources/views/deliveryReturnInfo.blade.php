@@ -13,7 +13,8 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('delivery-return') }}" class="btn btn-primary">Back to Returns</a>
-                <a href="{{ route('delivery-return.edit', $return->delivery_return_id) }}" class="btn btn-warning">Edit</a>
+                @can('edit', App\Models\Delivery::class)<a href="{{ route('delivery-return.edit', $return->delivery_return_id) }}" class="btn btn-warning">Edit</a>@endcan
+@can('delete', App\Models\Delivery::class)@include('deleteButton', ['url' => route('delivery-return.destroy', $return->delivery_return_id), 'check' => route('delivery-return.deleteCheck', $return->delivery_return_id), 'label' => 'Delivery return '.$return->return_no, 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>

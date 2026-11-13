@@ -13,8 +13,9 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('receive') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('receive.edit', $receive['receive_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('return.add', $receive['receive_id']) }}" class="btn btn-primary">Return</a>
+                @can('edit', App\Models\Receive::class)<a href="{{ route('receive.edit', $receive['receive_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Receive::class)@include('deleteButton', ['url' => route('receive.destroy', $receive['receive_id']), 'check' => route('receive.deleteCheck', $receive['receive_id']), 'label' => 'Receiving '.$receive['receive_no'], 'class' => 'btn btn-danger'])@endcan
+                @can('create', App\Models\Returns::class)<a href="{{ route('return.add', $receive['receive_id']) }}" class="btn btn-primary">Return</a>@endcan
                 @include('purchasePayButton', ['vendorId' => $receive['vendor_id'], 'vendorType' => $receive['vendor_type'] ?? 0, 'purchaseId' => $receive['purchase_id']])
               </div>
             </div>

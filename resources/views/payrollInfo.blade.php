@@ -16,7 +16,7 @@
               <a href="{{ route('payroll.print', $payroll->month) }}" class="btn btn-info" target="_blank"><i class="fas fa-print"></i> Print Payroll</a>
               <a href="{{ route('payroll.vouchers', $payroll->month) }}" class="btn btn-primary" target="_blank" title="Payment voucher of every salary paid this month"><i class="fas fa-file-invoice-dollar"></i> Print All Payment Vouchers</a>
               <a href="{{ route('payroll.slips', $payroll->month) }}" class="btn btn-primary" target="_blank" title="Salary slip of every employee this month"><i class="fas fa-file-alt"></i> Print All Salary Slips</a>
-              <a href="{{ route('payroll.edit', $payroll->month) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
+              @can('payroll_edit', App\Models\User::class)<a href="{{ route('payroll.edit', $payroll->month) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>@endcan
               <a href="{{ route('payroll.index') }}" class="btn btn-secondary">Back</a>
             </div>
           </div>
@@ -94,9 +94,9 @@
                           <i class="fas fa-print"></i> Slip
                         </a>
                         @if($item->salary_transaction_id)
-                          <a href="{{ route('payment.print', $item->salary_transaction_id) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Print payment voucher">
+                          @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('payment.print', $item->salary_transaction_id) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Print payment voucher">
                             <i class="fas fa-print"></i> Voucher
-                          </a>
+                          </a>@endif
                         @endif
                       </td>
                     </tr>

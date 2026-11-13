@@ -8,26 +8,26 @@ class DeliveryPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('deliveries_access');
+        return $user->hasPermission('deliveries_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('deliveries_show');
+        return $user->hasPermission('deliveries_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('deliveries_create');
+        return $user->hasPermission('deliveries_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('deliveries_edit');
+        return $user->hasPermission('deliveries_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('deliveries_delete');
+        return $user->hasPermission('deliveries_delete');
     }
 }

@@ -53,9 +53,9 @@
                       <td><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</td>
                       <td><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</td>
                       <td>
-                        <a class="btn btn-info" href="{{ route('material.detail.print', ['dfrom' => $dfrom, 'dto' => $dto, 'material_id' => $mid]) }}" target="_blank">
+                        @if((auth()->user()->can('show', App\Models\Material::class) || auth()->user()->can('reports_access', App\Models\User::class)))<a class="btn btn-info" href="{{ route('material.detail.print', ['dfrom' => $dfrom, 'dto' => $dto, 'material_id' => $mid]) }}" target="_blank">
                           <i class="fas fa-file-alt"></i> Print
-                        </a>
+                        </a>@endif
                       </td>
                     </tr>
                   </tbody>
@@ -93,7 +93,7 @@
                             <td></td>
                             {{-- <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
-                              <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>
+                              @if(auth()->user()->can('show', App\Models\Receive::class))<a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>@endif
                             </td>
                           @elseif(isset($item->purchase_id) && isset($item->return_material_id))
                             <td>Return</td>
@@ -101,7 +101,7 @@
                             <td></td>
                             {{-- <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
-                              <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
+                              @if(auth()->user()->can('show', App\Models\Returns::class))<a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>@endif
                             </td>
                           @elseif(isset($item->stock_type) && $item->stock_type == 1)
                             <td>Receive Issuance</td>
@@ -109,7 +109,7 @@
                             <td></td>
                             {{-- <td>{{(new DateTisme($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
-                              <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
+                              @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
                             </td>
                           @elseif(isset($item->stock_type) && $item->stock_type == 2)
                             <td>Issuance</td> 
@@ -117,7 +117,7 @@
                             <td>{{$item->quantity}} {{$item->uname}}</td>
                             {{-- <td>{{(new DateTime($item->timestamp))->format('Y-m-d')}}</td> --}}
                             <td>
-                              <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
+                              @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
                             </td>
                           @endif
                         </tr>

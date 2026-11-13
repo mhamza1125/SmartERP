@@ -91,7 +91,27 @@ class HeadController extends Controller
     {
     }
 
-    public function destroy(Head $head)
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
+        $this->authorize('delete', Head::class);
+
+        return $this->deletionCheckResponse($this->headRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Head::class);
+
+        return $this->runDeletion(
+            $this->headRepository->deletionImpact($id),
+            fn () => $this->headRepository->delete($id),
+            route('head')
+        );
     }
 }

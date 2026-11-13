@@ -9,7 +9,7 @@
             <h4>Heads Table</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>
+                @can('create', App\Models\Head::class)<a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>@endcan
                 <a href="{{ route('head.headType') }}" class="btn btn-primary">Head Types</a>
               </div>
             </div>
@@ -57,7 +57,8 @@
                             @endif
                           </td>
                           <td>
-                            <button type="button" {{($item->action == 1)? 'disabled':''}} class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->head_id}}">Edit</button>
+                            @can('edit', App\Models\Head::class)<button type="button" {{($item->action == 1)? 'disabled':''}} class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->head_id}}">Edit</button>@endcan
+@if($item->action != 1)@can('delete', App\Models\Head::class)@include('deleteButton', ['url' => route('head.destroy', $item->head_id), 'check' => route('head.deleteCheck', $item->head_id), 'label' => 'Head '.$item->name, 'class' => 'btn btn-danger btn-sm'])@endcan @endif
                           </td>
                         </tr>
                         @endforeach
@@ -99,7 +100,8 @@
                             @endif
                           </td>
                           <td>
-                            <button type="button" {{($item->action == 1)? 'disabled':''}} class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->head_id}}">Edit</button>
+                            @can('edit', App\Models\Head::class)<button type="button" {{($item->action == 1)? 'disabled':''}} class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->head_id}}">Edit</button>@endcan
+@if($item->action != 1)@can('delete', App\Models\Head::class)@include('deleteButton', ['url' => route('head.destroy', $item->head_id), 'check' => route('head.deleteCheck', $item->head_id), 'label' => 'Head '.$item->name, 'class' => 'btn btn-danger btn-sm'])@endcan @endif
                           </td>
                         </tr>
                         @endforeach

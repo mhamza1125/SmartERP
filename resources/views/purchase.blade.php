@@ -9,8 +9,8 @@
             <h4>Purchase Table</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Material Purchase</a>
-                <a href="{{ route('productPurchase.add') }}" class="btn btn-primary">Add Product Purchase</a>
+                @can('create', App\Models\Purchase::class)<a href="{{ route('purchase.add') }}" class="btn btn-primary">Add Material Purchase</a>@endcan
+                @can('create', App\Models\Purchase::class)<a href="{{ route('productPurchase.add') }}" class="btn btn-primary">Add Product Purchase</a>@endcan
               </div>
             </div>
           </div>
@@ -44,11 +44,12 @@
                         <span class="badge badge-danger">To Receive</span> @endif
                       </td>
                       <td>
-                        <a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
+                        @if(auth()->user()->can('show', App\Models\Purchase::class))<a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>@endif
                         @if(!$item->has_received)
-                          <a href="{{ route($item->purchase_type == 'material' ? 'purchase.edit' : 'productPurchase.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                          @can('edit', App\Models\Purchase::class)<a href="{{ route($item->purchase_type == 'material' ? 'purchase.edit' : 'productPurchase.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Purchase::class)@include('deleteButton', ['url' => route('purchase.destroy', $item->purchase_id), 'check' => route('purchase.deleteCheck', $item->purchase_id), 'label' => 'Purchase '.$item->purchase_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                         @endif
-                        <a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Receive</a>
+                        @can('create', App\Models\Receive::class)<a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Receive</a>@endcan
                       </td>
                     </tr>
                     @endforeach

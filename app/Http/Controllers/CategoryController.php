@@ -58,7 +58,27 @@ class CategoryController extends Controller
     {
     }
 
-    public function destroy(Category $category)
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
+        $this->authorize('delete', Category::class);
+
+        return $this->deletionCheckResponse($this->categoryRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Category::class);
+
+        return $this->runDeletion(
+            $this->categoryRepository->deletionImpact($id),
+            fn () => $this->categoryRepository->delete($id),
+            route('category')
+        );
     }
 }

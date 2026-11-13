@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Process Travel Card Details</h4>
             <div class="card-header-action">
-              @if($ptc->stock_status == 6)
+              @if($ptc->stock_status == 6 && auth()->user()->can('edit', App\Models\Stock::class))
                 <div class="dropdown d-inline mr-2">
                   <button class="btn btn-success dropdown-toggle" type="button" data-toggle="dropdown">
                     <i class="fas fa-tasks"></i> Actions
@@ -173,9 +173,9 @@
               <div class="ptc-section-title">
                 <h6><i class="fas fa-arrow-circle-right text-success"></i> Issuance Records <small class="text-muted">latest first</small></h6>
                 @if($isOpen)
-                  <a href="{{ route('ptc.issue.form', $ptc->stock_id) }}" class="btn btn-sm btn-primary">
+                  @if(auth()->user()->can('edit', App\Models\Stock::class))<a href="{{ route('ptc.issue.form', $ptc->stock_id) }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-plus"></i> New Issuance
-                  </a>
+                  </a>@endif
                 @endif
               </div>
               <div class="table-responsive">
@@ -235,11 +235,11 @@
                               </button>
                             @endif
                             @if($isOpen && ($balance['can_receive'] ?? false))
-                              <a href="{{ route('ptc.receive.issuance', [$ptc->stock_id, $issuance->stock_id]) }}" class="btn btn-sm btn-primary" title="Add receiving">
+                              @if(auth()->user()->can('edit', App\Models\Stock::class))<a href="{{ route('ptc.receive.issuance', [$ptc->stock_id, $issuance->stock_id]) }}" class="btn btn-sm btn-primary" title="Add receiving">
                                 <i class="fas fa-plus"></i> Receive
-                              </a>
+                              </a>@endif
                             @endif
-                            @if(!$isReceived)
+                            @if(!$isReceived && auth()->user()->can('edit', App\Models\Stock::class))
                               {{-- Edit only for issuances that have NOT been received yet --}}
                               <a href="{{ $issuance->is_ptc_master == 1 ? route('ptc.edit', $issuance->stock_id) : route('ptc.issue.edit', [$ptc->stock_id, $issuance->stock_id]) }}" class="btn btn-sm btn-outline-warning" title="Edit">
                                 <i class="fas fa-edit"></i> Edit
@@ -295,13 +295,15 @@
                           @if($vs->available > 0)
                             <div class="ptc-actions">
                               @if($isOpen && $canTransfer)
-                                <a href="{{ route('ptc.issue.form', ['id' => $ptc->stock_id, 'source' => 'ptc', 'stage' => $vs->stage_id]) }}" class="btn btn-sm btn-primary">
+                                @if(auth()->user()->can('edit', App\Models\Stock::class))<a href="{{ route('ptc.issue.form', ['id' => $ptc->stock_id, 'source' => 'ptc', 'stage' => $vs->stage_id]) }}" class="btn btn-sm btn-primary">
                                   <i class="fas fa-arrow-right"></i> Transfer to Stage
-                                </a>
+                                </a>@endif
                               @endif
+                              @can('edit', App\Models\Stock::class)
                               <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#releaseModal{{ $vs->product_type_id }}_{{ $vs->stage_id }}">
                                 <i class="fas fa-warehouse"></i> Release to Stock
                               </button>
+                              @endcan
                             </div>
                           @endif
                         </td>

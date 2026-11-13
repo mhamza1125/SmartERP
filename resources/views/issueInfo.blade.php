@@ -28,9 +28,10 @@
               <div class="btn-group">
                 <a href="{{ route('issue') }}" class="btn btn-primary">Back</a>
                 @if(!$issue['has_received'])
-                  <a href="{{ route('stock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
+                  @can('edit', App\Models\Stock::class)<a href="{{ route('stock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $issue['stock_id']), 'check' => route('stock.deleteCheck', $issue['stock_id']), 'label' => 'Issuance '.$issue['stock_no'], 'class' => 'btn btn-danger'])@endcan
                 @endif
-                <a href="{{ route('rstock.add', $issue['stock_id']) }}" class="btn btn-primary">Receive</a>
+                @can('create', App\Models\Stock::class)<a href="{{ route('rstock.add', $issue['stock_id']) }}" class="btn btn-primary">Receive</a>@endcan
               </div>
             </div>
           </div>
@@ -129,7 +130,7 @@
   
                   {{-- Receive All --}}
                   <div class="tab-pane fade" id="receive" role="tabpanel" aria-labelledby="receive-tab"> 
-                    @if($count == 1) <a href="{{ route('rstock.edit', $totalTimes[0]['stock_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a> @endif
+                    @if($count == 1) @can('edit', App\Models\Stock::class)<a href="{{ route('rstock.edit', $totalTimes[0]['stock_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>@endcan @endif
                     <table class="table table-sm table-striped">
                       <thead>
                         <tr>
@@ -177,7 +178,7 @@
                     @for($i=1; $i<=$count; $i++)  
                       @php $loopIndex = 1; @endphp
                       <div class="tab-pane fade" id="tab-content-{{ $i }}" role="tabpanel" aria-labelledby="tab-{{ $i }}">
-                        <a href="{{ route('rstock.edit', $totalTimes[$i-1]['stock_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>
+                        @can('edit', App\Models\Stock::class)<a href="{{ route('rstock.edit', $totalTimes[$i-1]['stock_id'] )}}" class="btn btn-primary rounded-pill pbtn" target="_blank">Edit</a>@endcan
                         <table class="table table-sm table-striped">
                           <thead>
                             <tr>

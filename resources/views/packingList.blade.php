@@ -30,9 +30,12 @@
                     <td>{{ $packingList->fname }} {{ $packingList->lname }}</td>
                     <td>{{ \Carbon\Carbon::parse($packingList->created_at)->format('d-m-Y') }}</td>
                     <td>
-                      <a href="{{ route('packingList.show', $packingList->packing_list_id) }}" class="btn btn-sm btn-info">
+                      @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('packingList.show', $packingList->packing_list_id) }}" class="btn btn-sm btn-info">
                         <i class="fas fa-eye"></i> View
-                      </a>
+                      </a>@endif
+                      @can('delete', App\Models\Delivery::class)
+                        @include('deleteButton', ['url' => route('packingList.destroy', $packingList->packing_list_id), 'check' => route('packingList.deleteCheck', $packingList->packing_list_id), 'label' => 'this packing list'])
+                      @endcan
                     </td>
                   </tr>
                   @endforeach

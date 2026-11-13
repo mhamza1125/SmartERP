@@ -2,11 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use App\Repositories\ImageRepository;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
 
 class VendorRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         $vendors = Vendor::select('vendors.*')
@@ -171,7 +176,44 @@ class VendorRepository implements GlobalInterface
         return $update->vendor_id;
     }
 
+    /**
+     * Contractors are vendors rows with vendor_type 1.
+     */
+    public function isContractor($id): bool
+    {
+        return (string) Vendor::findOrFail($id)->vendor_type === '1';
+    }
+
+    /**
+     * Vendors and contractors (vendor_type 1) can be deleted only while nothing uses them;
+     * their own opening balance entry and images are deleted with them.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $vendor = Vendor::findOrFail($id);
+        $party = (string) $vendor->vendor_type === '1' ? 'contractor' : 'vendor';
+        $impact = DeletionImpact::for(ucfirst($party).' '.$vendor->vendor_no.' ('.$vendor->name.')');
+        $vendorStock = fn ($q) => $q->where('table_name', 'vendor');
+        $ledger = fn ($q) => $q->whereIn('transaction_to', ['vendor', 'contractor'])->where('transaction_type', '!=', 'openingBalance');
+        $opening = fn ($q) => $q->whereIn('transaction_to', ['vendor', 'contractor'])->where('transaction_type', 'openingBalance');
+
+        $impact->blockIf($this->refCount('purchases', 'vendor_id', $id), 'purchase', null, $this->refExamples('purchases', 'vendor_id', $id, 'purchase_no'));
+        $impact->blockIf($this->refCount('materials', 'vendor_id', $id), 'material (default vendor)', 'materials (default vendor)', $this->refExamples('materials', 'vendor_id', $id, 'name'));
+        $impact->blockIf($this->refCount('stocks', 'employee_id', $id, $vendorStock), 'issuance / receiving / PTC record', 'issuance / receiving / PTC records', $this->refExamples('stocks', 'employee_id', $id, 'stock_no', $vendorStock));
+        $impact->blockIf($this->refCount('transactions', 'payee_id', $id, $ledger), 'ledger transaction (payment / journal voucher)', 'ledger transactions (payments / journal vouchers)');
+        $impact->blockIf($this->refCount('banks', 'banker_id', $id, fn ($q) => $q->whereIn('bank_holder', ['vendor', 'contractor'])), 'bank account');
+
+        $impact->cascadeIf($this->refCount('transactions', 'payee_id', $id, $opening), 'opening balance entry', 'opening balance entries');
+        $impact->cascadeIf(app(ImageRepository::class)->countFor('vendors', $id), 'image');
+
+        return $impact;
+    }
+
     public function delete($id)
     {
+        DB::table('transactions')->whereIn('transaction_to', ['vendor', 'contractor'])->where('transaction_type', 'openingBalance')->where('payee_id', $id)->delete();
+        app(ImageRepository::class)->deleteFor('vendors', $id);
+
+        return Vendor::findOrFail($id)->delete();
     }
 }

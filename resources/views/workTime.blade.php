@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Work Time Table</h4>
             <div class="card-header-action">
-              <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add Work Time</button>
+              @can('create', App\Models\Attendance::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add Work Time</button>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -37,7 +37,8 @@
                       <td>{{date('h:i A', strtotime($item['time_to']))}}</td>
                       <td>{{$item->grace_time}} Mins</td>
                       <td style="max-width:200px">{{$item->description}}</td>
-                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->work_time_id}}">Edit</button></td>
+                      <td>@can('edit', App\Models\Attendance::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->work_time_id}}">Edit</button>@endcan
+@can('delete', App\Models\Attendance::class)@include('deleteButton', ['url' => route('work.destroy', ['type' => 'time', 'id' => $item->work_time_id]), 'label' => 'these work hours'])@endcan</td>
                     </tr>
                     @endforeach
                   @endif

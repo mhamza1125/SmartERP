@@ -2,10 +2,15 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use Illuminate\Support\Facades\DB;
 use App\Models\Delivery;
 
 class DeliveryRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         $deliveries = Delivery::where('stocks.stock_status', '3') // Delivery
@@ -75,7 +80,39 @@ class DeliveryRepository implements GlobalInterface
         return $update->delivery_id;
     }
 
-    public function delete($id) {}
+    /**
+     * A delivery can be deleted only while no delivery return was made against it. Its lines
+     * (and their batch allocations), packing list, vehicles / boxes and delivery expense entries
+     * go with it; the delivered quantity goes back into stock.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $delivery = Delivery::findOrFail($id);
+        $impact = DeletionImpact::for('Delivery '.($delivery->delivery_no ?: '#'.$id));
+
+        $impact->blockIf($this->refCount('delivery_returns', 'delivery_id', $id), 'delivery return', null, $this->refExamples('delivery_returns', 'delivery_id', $id, 'return_no'));
+
+        $impact->cascadeIf($this->refCount('stock_items', 'stock_id', $delivery->stock_id), 'delivered line');
+        $impact->cascadeIf($this->refCount('packing_lists', 'delivery_id', $id), 'packing list');
+        $impact->cascadeIf($this->refCount('delivery_boxes', 'delivery_id', $id), 'vehicle / box entry', 'vehicle / box entries');
+        $impact->cascadeIf($this->refCount('transactions', 'order_id', $id, fn ($q) => $q->where('transaction_type', 'deliveryExpense')), 'delivery expense entry', 'delivery expense entries');
+        $impact->note('The delivered quantity goes back into stock (to the batches it came from) and leaves the customer ledger.');
+        $impact->note('The order status is not changed; update it on the order if needed.');
+
+        return $impact;
+    }
+
+    public function delete($id)
+    {
+        $delivery = Delivery::findOrFail($id);
+
+        app(PackingListRepository::class)->deleteForDelivery($id);
+        DB::table('delivery_boxes')->where('delivery_id', $id)->delete();
+        DB::table('transactions')->where('transaction_type', 'deliveryExpense')->where('order_id', $id)->delete();
+        $delivery->delete();
+
+        return app(StockRepository::class)->purge([$delivery->stock_id]);
+    }
 
     /**
      * Freight charges are never negative; blank means none.

@@ -13,7 +13,7 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('ePayment') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('transaction.editEPayment', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
+                @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.editEPayment', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>@endif
               </div>
             </div>
           </div>
@@ -66,10 +66,12 @@
                         <a href="{{ URL::asset('resources/transaction/'. $item->image) }}">
                           <img class="img-responsive thumbnail" src="{{ URL::asset('resources/transaction/'. $item->image) }}" alt="">
                         </a>
+                        @can('edit', App\Models\Transaction::class)
                         <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'transaction'])}}" method="POST">
                           @csrf
                           <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                         </form>
+                        @endcan
                       </div>
                     @endforeach
                   </div>

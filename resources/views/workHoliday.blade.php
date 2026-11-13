@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Work Holiday Table</h4>
             <div class="card-header-action">
-              <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add Holidays</button>
+              @can('create', App\Models\Attendance::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add Holidays</button>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -31,7 +31,8 @@
                       <td>{{ formatDate($item->date_from) }}</td>
                       <td>{{ formatDate($item->date_to) }}</td>
                       <td style="max-width:200px">{{$item->description}}</td>
-                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->work_holiday_id}}">Edit</button></td>
+                      <td>@can('edit', App\Models\Attendance::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->work_holiday_id}}">Edit</button>@endcan
+@can('delete', App\Models\Attendance::class)@include('deleteButton', ['url' => route('work.destroy', ['type' => 'holiday', 'id' => $item->work_holiday_id]), 'label' => 'this non working day'])@endcan</td>
                     </tr>
                     @endforeach
                   @endif

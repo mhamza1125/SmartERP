@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Machine Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('machine.add') }}" class="btn btn-primary">Add Machine</a>
+              @can('create', App\Models\Machine::class)<a href="{{ route('machine.add') }}" class="btn btn-primary">Add Machine</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -32,8 +32,9 @@
                       <td>{{$item->hname}}</td>
                       <td>{{$item->name ? $item->employee_no .' - '. $item->name : 'Not Asigned'}}</td>
                       <td>
-                        <a href="{{ route('machine.show', $item->machine_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('machine.edit', $item->machine_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Machine::class))<a href="{{ route('machine.show', $item->machine_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Machine::class)<a href="{{ route('machine.edit', $item->machine_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Machine::class)@include('deleteButton', ['url' => route('machine.destroy', $item->machine_id), 'check' => route('machine.deleteCheck', $item->machine_id), 'label' => 'Machine '.$item->machine_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                       </td>
                     </tr>
                     @endforeach

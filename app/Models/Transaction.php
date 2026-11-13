@@ -29,6 +29,7 @@ class Transaction extends Model
         'advance_type',
         'payee_id',
         'payee_bank_id',
+        'expense_head_id',
         'bank_id',
         'transfer_pair_id',
         'transaction_image',

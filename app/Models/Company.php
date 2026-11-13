@@ -32,6 +32,7 @@ class Company extends Model
         'overtime_multiplier',
         'late_multiplier',
         'work_hours_per_day',
+        'attendance_db_path',
         'created_by',
         'updated_at',
     ];

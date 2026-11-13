@@ -3,6 +3,7 @@
 <section class="section">
   <!-- Dashboard Cards -->
   <div class="row">
+        @can('access', App\Models\Order::class)
     <!-- Card 1: Orders in Progress -->
     <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
       <div class="card">
@@ -26,7 +27,9 @@
         </div>
       </div>
     </div>
+    @endcan
 
+    @can('access', App\Models\Stock::class)
     <!-- Card 2: Running PTCs -->
     <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
       <div class="card">
@@ -50,7 +53,9 @@
         </div>
       </div>
     </div>
+    @endcan
 
+    @can('access', App\Models\Transaction::class)
     <!-- Card 3: Expense This Month -->
     <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
       <div class="card">
@@ -74,7 +79,9 @@
         </div>
       </div>
     </div>
+    @endcan
 
+    @can('stocks_access', App\Models\Stock::class)
     <!-- Card 4: Low Stock Alerts -->
     <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
       <div class="card">
@@ -98,10 +105,10 @@
         </div>
       </div>
     </div>
-
-
+    @endcan
   </div>
 
+  @can('access', App\Models\Stock::class)
   <!-- Running PTCs Table -->
   <div class="row mt-4">
     <div class="col-12">
@@ -152,7 +159,9 @@
       </div>
     </div>
   </div>
+  @endcan
 
+  @can('access', App\Models\Order::class)
   <!-- Orders in Progress Table -->
   <div class="row mt-4">
     <div class="col-12">
@@ -203,5 +212,6 @@
       </div>
     </div>
   </div>
+  @endcan
 </section>
 @endsection

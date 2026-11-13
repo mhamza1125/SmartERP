@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {
@@ -36,6 +37,8 @@ class TransactionRequest extends FormRequest
             'fees_expenses' => 'nullable|numeric|min:0',
             'payee_id' => '',
             'payee_bank_id' => '',
+            // Optional Expense Head on a Journal Voucher (heads of type 7 = Expenses)
+            'expense_head_id' => ['nullable', 'integer', Rule::exists('heads', 'head_id')->where('head_type_id', 7)],
             'payee_type' => '',
             'voucher_type' => '',
             'description' => '',

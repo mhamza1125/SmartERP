@@ -9,8 +9,8 @@
             <h4>Cash Balance Table</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>
-                <a href="{{ route('transaction.addTransfer') }}" class="btn btn-success">Bank/Cash Transfer</a>
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>@endcan
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addTransfer') }}" class="btn btn-success">Bank/Cash Transfer</a>@endcan
               </div>
             </div>
           </div>

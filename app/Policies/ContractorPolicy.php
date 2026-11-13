@@ -8,26 +8,26 @@ class ContractorPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_access');
+        return $user->hasPermission('contractors_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_show');
+        return $user->hasPermission('contractors_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_create');
+        return $user->hasPermission('contractors_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_edit');
+        return $user->hasPermission('contractors_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('contractors_delete');
+        return $user->hasPermission('contractors_delete');
     }
 }

@@ -13,7 +13,8 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('return') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('return.edit', $return['return_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Returns::class)<a href="{{ route('return.edit', $return['return_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Returns::class)@include('deleteButton', ['url' => route('return.destroy', $return['return_id']), 'check' => route('return.deleteCheck', $return['return_id']), 'label' => 'Purchase return '.$return['return_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>

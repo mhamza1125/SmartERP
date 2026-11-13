@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Employee Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('employee.add') }}" class="btn btn-primary">Add Employee</a>
+              @can('create', App\Models\Employee::class)<a href="{{ route('employee.add') }}" class="btn btn-primary">Add Employee</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -51,9 +51,10 @@
                         <span class="badge badge-danger">Inactive</span> @endif
                       </td>                       
                       <td>
-                        <a href="{{ route('employee.show', $item->employee_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('employee.edit', $item->employee_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('employee.detail', $item->employee_id) }}" class="btn btn-success btn-sm">Ledger</a>
+                        @if(auth()->user()->can('show', App\Models\Employee::class))<a href="{{ route('employee.show', $item->employee_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Employee::class)<a href="{{ route('employee.edit', $item->employee_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Employee::class)@include('deleteButton', ['url' => route('employee.destroy', $item->employee_id), 'check' => route('employee.deleteCheck', $item->employee_id), 'label' => 'Employee '.$item->employee_no, 'class' => 'btn btn-danger btn-sm'])@endcan
+                        @if(auth()->user()->can('show', App\Models\Employee::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('employee.detail', $item->employee_id) }}" class="btn btn-success btn-sm">Ledger</a>@endif
                       </td>
                     </tr>
                     @endforeach

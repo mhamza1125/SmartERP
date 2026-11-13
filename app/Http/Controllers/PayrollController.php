@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Http\Requests\PayrollRequest;
 use App\Models\Transaction;
 use App\Repositories\BankRepository;
@@ -27,7 +28,7 @@ class PayrollController extends Controller
     /** Payroll months, newest first. */
     public function index()
     {
-        $this->authorize('access', Transaction::class);
+        $this->authorize('payroll_access', User::class);
 
         return view('payroll', [
             'payrollBatches' => $this->payrollRepository->all(),
@@ -37,7 +38,7 @@ class PayrollController extends Controller
     /** New payroll sheet for a month (a month that already has one opens its edit sheet). */
     public function create(Request $request)
     {
-        $this->authorize('create', Transaction::class);
+        $this->authorize('payroll_create', User::class);
 
         $month = $this->monthOrNull($request->query('month', Carbon::now()->format('Y-m'))) ?? Carbon::now()->format('Y-m');
         if ($this->payrollRepository->get($month)) {
@@ -50,7 +51,7 @@ class PayrollController extends Controller
 
     public function store(PayrollRequest $request)
     {
-        $this->authorize('create', Transaction::class);
+        $this->authorize('payroll_create', User::class);
         $data = $request->payroll();
         $this->payrollRepository->store($data);
 
@@ -61,7 +62,7 @@ class PayrollController extends Controller
     /** Edit sheet of a month's payroll (also opens months processed before breakdowns existed). */
     public function edit($month)
     {
-        $this->authorize('edit', Transaction::class);
+        $this->authorize('payroll_edit', User::class);
         if (! $this->monthOrNull($month)) {
             return redirect()->route('payroll.index')->with('error', 'Invalid month format');
         }
@@ -71,7 +72,7 @@ class PayrollController extends Controller
 
     public function update(PayrollRequest $request, $month)
     {
-        $this->authorize('edit', Transaction::class);
+        $this->authorize('payroll_edit', User::class);
         if (! $this->monthOrNull($month)) {
             return redirect()->route('payroll.index')->with('error', 'Invalid month format');
         }
@@ -85,7 +86,7 @@ class PayrollController extends Controller
     /** Saved payroll of a month with every employee's breakdown. */
     public function info($month)
     {
-        $this->authorize('access', Transaction::class);
+        $this->authorize('payroll_show', User::class);
         $payroll = $this->monthOrNull($month) ? $this->payrollRepository->get($month) : null;
         if (! $payroll) {
             return redirect()->route('payroll.edit', $month)
@@ -102,7 +103,7 @@ class PayrollController extends Controller
     /** Printed payroll sheet of a month. */
     public function printMonth($month)
     {
-        $this->authorize('access', Transaction::class);
+        $this->authorize('payroll_show', User::class);
         $payroll = $this->monthOrNull($month) ? $this->payrollRepository->get($month) : null;
         if (! $payroll) {
             return redirect()->route('payroll.index')->with('error', 'No payroll breakdown saved for this month.');
@@ -118,7 +119,7 @@ class PayrollController extends Controller
     /** Printed salary slip of one employee. */
     public function printSlip($payrollItemId)
     {
-        $this->authorize('access', Transaction::class);
+        $this->authorize('payroll_show', User::class);
         $item = $this->payrollRepository->item((int) $payrollItemId);
         if (! $item) {
             return redirect()->route('payroll.index')->with('error', 'Salary record not found.');
@@ -133,7 +134,7 @@ class PayrollController extends Controller
     /** Every salary slip of a month in one print (the same slip template, two per A4 sheet). */
     public function printSlips($month)
     {
-        $this->authorize('access', Transaction::class);
+        $this->authorize('payroll_show', User::class);
         $items = $this->monthOrNull($month) ? $this->payrollRepository->items($month) : collect();
         if ($items->isEmpty()) {
             return redirect()->route('payroll.index')->with('error', 'No salary records saved for this month.');
@@ -158,7 +159,7 @@ class PayrollController extends Controller
      */
     public function printVouchers($month)
     {
-        $this->authorize('show', Transaction::class);
+        $this->authorize('payroll_show', User::class);
         $transactionIds = ($this->monthOrNull($month) ? $this->payrollRepository->items($month) : collect())
             ->pluck('salary_transaction_id')->filter()->values();
         if ($transactionIds->isEmpty()) {
@@ -179,6 +180,7 @@ class PayrollController extends Controller
     /** Balance of a bank (or cash, id 0), for the "insufficient balance" check before saving. */
     public function getBankBalance($bankId)
     {
+        $this->authorizeAny([['payroll_create', User::class], ['payroll_edit', User::class]]);
         if ((string) $bankId === '0') {
             $balance = $this->transactionRepository->cashBalance();
         } else {
@@ -227,5 +229,25 @@ class PayrollController extends Controller
     private function monthLabel(string $month): string
     {
         return Carbon::createFromFormat('Y-m', $month)->format('F Y');
+    }
+
+    /** What deleting a month's payroll would affect (JSON for the delete button). */
+    public function deleteCheck(string $month)
+    {
+        $this->authorize('payroll_delete', User::class);
+
+        return $this->deletionCheckResponse($this->payrollRepository->deletionImpact($month));
+    }
+
+    /** Deletes a month's payroll with the transactions it posted. */
+    public function destroy(string $month)
+    {
+        $this->authorize('payroll_delete', User::class);
+
+        return $this->runDeletion(
+            $this->payrollRepository->deletionImpact($month),
+            fn () => $this->payrollRepository->delete($month),
+            route('payroll.index')
+        );
     }
 }

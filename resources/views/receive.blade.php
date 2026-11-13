@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Receive Purchase Table</h4>
             <div class="card-header-action">
-              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Receive</a>
+              @can('create', App\Models\Receive::class)<a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Receive</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -48,15 +48,16 @@
                             {{$status}}
                           </button>
                           <div class="dropdown-menu">
-                            <a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '0']) }}">Pending</a>
-                            <a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '1']) }}">Checked</a>
+                            @if(auth()->user()->can('edit', App\Models\Receive::class))<a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '0']) }}">Pending</a>@endif
+                            @if(auth()->user()->can('edit', App\Models\Receive::class))<a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '1']) }}">Checked</a>@endif
                           </div>
                         </div>
                       </td> --}}
                       <td>
-                        <a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('receive.edit', $item->receive_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('return.add', $item->receive_id) }}" class="btn btn-success btn-sm">Return</a>
+                        @if(auth()->user()->can('show', App\Models\Receive::class))<a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Receive::class)<a href="{{ route('receive.edit', $item->receive_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Receive::class)@include('deleteButton', ['url' => route('receive.destroy', $item->receive_id), 'check' => route('receive.deleteCheck', $item->receive_id), 'label' => 'Receiving '.$item->receive_no, 'class' => 'btn btn-danger btn-sm'])@endcan
+                        @can('create', App\Models\Returns::class)<a href="{{ route('return.add', $item->receive_id) }}" class="btn btn-success btn-sm">Return</a>@endcan
                       </td>
                     </tr>
                     @endforeach

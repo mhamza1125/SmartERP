@@ -8,26 +8,26 @@ class OrderPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('orders_access');
+        return $user->hasPermission('orders_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('orders_show');
+        return $user->hasPermission('orders_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('orders_create');
+        return $user->hasPermission('orders_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('orders_edit');
+        return $user->hasPermission('orders_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('orders_delete');
+        return $user->hasPermission('orders_delete');
     }
 }

@@ -2,12 +2,18 @@
 
 namespace App\Repositories;
 
+use App\Exceptions\DeletionBlockedException;
 use App\Models\Stock;
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use App\Models\StockBatch;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class StockRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Stock::all();
@@ -575,5 +581,179 @@ class StockRepository implements GlobalInterface
 
     public function delete($id)
     {
+        return $this->purge([$id]);
+    }
+
+    /**
+     * Deletes stocks rows with their lines, the lines' batch allocations and the rows' images.
+     * Callers check first that this is allowed (see the deletionImpact() methods).
+     */
+    public function purge(array $stockIds): int
+    {
+        $stockIds = array_values(array_filter(array_map('intval', $stockIds)));
+        if (! $stockIds) {
+            return 0;
+        }
+        if (in_array(1, $stockIds, true)) {
+            // stocks row 1 holds the opening stock of every product and material
+            throw new DeletionBlockedException('The opening stock record cannot be deleted.');
+        }
+        $lineIds = DB::table('stock_items')->whereIn('stock_id', $stockIds)->pluck('stock_item_id');
+        DB::table('stock_item_batches')->whereIn('stock_item_id', $lineIds)->delete();
+        DB::table('stock_items')->whereIn('stock_id', $stockIds)->delete();
+        app(ImageRepository::class)->deleteFor('stocks', $stockIds);
+
+        return DB::table('stocks')->whereIn('stock_id', $stockIds)->delete();
+    }
+
+    /**
+     * What kind of stock document a stocks row is, for deletion:
+     * issuance | receiving | machine | ptc, or null when it is deleted elsewhere / never
+     * (deliveries, delivery returns, PTC issuances / receipts / releases, material processing, opening stock).
+     */
+    public function documentKind(Stock $stock): ?string
+    {
+        if ((int) $stock->stock_id === 1 || in_array($stock->table_name, ['delivery', 'delivery_returns', 'mprocess', 'openingStock', 'ptc_release'], true)
+            || (int) $stock->stock_status === Stock::STATUS_DELIVERY) {
+            return null;
+        }
+        if ((int) $stock->is_ptc_master === 1) {
+            return 'ptc';
+        }
+        if (! empty($stock->ptc_id)) {
+            return null;
+        }
+        if ((int) $stock->machine_id > 0 || (int) $stock->stock_status === Stock::STATUS_MACHINE_MATERIAL) {
+            return 'machine';
+        }
+
+        return (int) $stock->stock_type === 1 ? 'receiving' : 'issuance';
+    }
+
+    /**
+     * Stock rows of a PTC: the master (its first issuance) and every later issuance.
+     */
+    private function ptcIssuanceIds(Stock $master): array
+    {
+        return Stock::where('ptc_id', $master->stock_id)->where('stock_type', 2)->pluck('stock_id')
+            ->push($master->stock_id)->unique()->values()->all();
+    }
+
+    public function deletionImpact($id): DeletionImpact
+    {
+        $stock = Stock::findOrFail($id);
+        $kind = $this->documentKind($stock);
+
+        switch ($kind) {
+            case 'ptc':
+                $impact = DeletionImpact::for('PTC '.$stock->stock_no);
+                $impact->blockIf(Stock::where('ptc_id', $id)->where('stock_type', 1)->where(fn ($q) => $q->whereNull('table_name')->orWhere('table_name', '!=', 'ptc_release'))->count(), 'receiving on this PTC', 'receivings on this PTC');
+                $impact->blockIf(Stock::where('ptc_id', $id)->where('table_name', 'ptc_release')->count(), 'release to general stock', 'releases to general stock');
+                $issuances = $this->ptcIssuanceIds($stock);
+                $impact->cascadeIf(count($issuances), 'issuance (including I001)', 'issuances (including I001)');
+                $impact->cascadeIf($this->refCount('stock_items', 'stock_id', $issuances), 'issued line');
+                $impact->note('Everything issued on this PTC goes back into general stock (to the batches it came from).');
+                break;
+
+            case 'machine':
+                $impact = DeletionImpact::for('Machine material issuance '.$stock->stock_no);
+                $impact->cascadeIf($this->refCount('stock_items', 'stock_id', $id), 'issued line');
+                $impact->note('The issued material goes back into stock.');
+                break;
+
+            case 'issuance':
+                $impact = DeletionImpact::for('Issuance '.$stock->stock_no);
+                $impact->blockIf($this->refCount('stocks', 'issue_id', $id, fn ($q) => $q->where('stock_type', 1)), 'receiving', null, $this->refExamples('stocks', 'issue_id', $id, 'stock_no', fn ($q) => $q->where('stock_type', 1)));
+                $impact->cascadeIf($this->refCount('stock_items', 'stock_id', $id), 'issued line');
+                $impact->cascadeIf(app(ImageRepository::class)->countFor('stocks', $id), 'image');
+                $impact->note('The issued quantity goes back into stock and its wages leave the contractor / employee wages.');
+                break;
+
+            case 'receiving':
+                $impact = DeletionImpact::for('Receiving '.$stock->stock_no);
+                foreach (app(StockItemRepository::class)->stockInRemovalShortfalls([$id]) as $shortfall) {
+                    $impact->block('received stock already used: '.$shortfall);
+                }
+                $impact->cascadeIf($this->refCount('stock_items', 'stock_id', $id), 'received line');
+                $impact->cascadeIf(app(ImageRepository::class)->countFor('stocks', $id), 'image');
+                $impact->note('The received quantity leaves stock; the issuance\'s received status is updated.');
+                break;
+
+            default:
+                $impact = DeletionImpact::for('Stock record '.$stock->stock_no)
+                    ->block('this kind of record is deleted from its own page (delivery, delivery return, PTC or material processing)');
+        }
+
+        return $impact;
+    }
+
+    /**
+     * Deletes an issuance, receiving, machine issuance or whole PTC (see deletionImpact()).
+     *
+     * @return string the kind of document deleted
+     */
+    public function deleteDocument($id): string
+    {
+        $stock = Stock::where('stock_id', $id)->lockForUpdate()->firstOrFail();
+        $kind = $this->documentKind($stock);
+        $batches = app(StockBatchRepository::class);
+
+        switch ($kind) {
+            case 'ptc':
+                if (Stock::where('ptc_id', $id)->where('stock_type', 1)->exists()) {
+                    throw new DeletionBlockedException('PTC '.$stock->stock_no.' has receivings or releases and cannot be deleted.');
+                }
+                $issuances = $this->ptcIssuanceIds($stock);
+                $this->purge($issuances);
+                $batches->deleteUnused(StockBatch::SOURCE_PTC, [$id]);
+                break;
+
+            case 'machine':
+                $this->purge([$id]);
+                break;
+
+            case 'issuance':
+                if (Stock::where('issue_id', $id)->where('stock_type', 1)->exists()) {
+                    throw new DeletionBlockedException('Issuance '.$stock->stock_no.' has receivings and cannot be deleted.');
+                }
+                $this->purge([$id]);
+                $batches->deleteUnused(StockBatch::SOURCE_ISSUANCE, [$id]);
+                break;
+
+            case 'receiving':
+                $shortfalls = app(StockItemRepository::class)->stockInRemovalShortfalls([$id]);
+                if ($shortfalls) {
+                    throw new DeletionBlockedException('Receiving '.$stock->stock_no.' cannot be deleted: '.implode('; ', $shortfalls));
+                }
+                $this->purge([$id]);
+                if ($stock->issue_id) {
+                    $batches->deleteUnused(StockBatch::SOURCE_ISSUANCE, [$stock->issue_id]);
+                    $this->refreshIssuanceStatus($stock->issue_id);
+                }
+                break;
+
+            default:
+                throw new DeletionBlockedException('This stock record cannot be deleted here.');
+        }
+
+        return $kind;
+    }
+
+    /**
+     * After a receiving is deleted: no receivings left = Not Received; a "Completely Received"
+     * issuance that still has some receivings becomes "Partially Received".
+     */
+    private function refreshIssuanceStatus($issuanceId): void
+    {
+        $issuance = Stock::find($issuanceId);
+        if (! $issuance) {
+            return;
+        }
+        $left = Stock::where('issue_id', $issuanceId)->where('stock_type', 1)->count();
+        if ($left === 0) {
+            $issuance->update(['stock_status' => Stock::STATUS_NOT_RECEIVED]);
+        } elseif ((int) $issuance->stock_status === Stock::STATUS_COMPLETELY_RECEIVED) {
+            $issuance->update(['stock_status' => Stock::STATUS_PARTIALLY_RECEIVED]);
+        }
     }
 }

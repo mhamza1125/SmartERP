@@ -13,8 +13,9 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('vendor') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('vendor.edit', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('vendor.detail', $vendor['vendor_id']) }}" class="btn btn-primary">Ledger</a>
+                @can('edit', App\Models\Vendor::class)<a href="{{ route('vendor.edit', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Vendor::class)@include('deleteButton', ['url' => route('vendor.destroy', $vendor['vendor_id']), 'check' => route('vendor.deleteCheck', $vendor['vendor_id']), 'label' => 'Vendor '.$vendor['vendor_no'], 'class' => 'btn btn-danger'])@endcan
+                @if(auth()->user()->can('show', App\Models\Vendor::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('vendor.detail', $vendor['vendor_id']) }}" class="btn btn-primary">Ledger</a>@endif
               </div>
             </div>
           </div>
@@ -126,10 +127,12 @@
                     <a href="{{ URL::asset('resources/vendor/'. $item->image) }}">
                       <img class="img-responsive thumbnail" src="{{ URL::asset('resources/vendor/'. $item->image) }}" alt="">
                     </a>
+                    @can('edit', App\Models\Vendor::class)
                     <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'vendor'])}}" method="POST">
                       @csrf
                       <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                     </form>
+                    @endcan
                   </div>
                 @endforeach
               </div>

@@ -12,16 +12,16 @@ class StockBatchPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('stocks_access');
+        return $user->hasPermission('stocks_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('stocks_show');
+        return $user->hasPermission('stocks_show');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('stocks_edit');
+        return $user->hasPermission('stocks_edit');
     }
 }

@@ -9,6 +9,7 @@
             <h4>Attendance Summary</h4>
           </div>
           <div class="card-body">
+            @include('attendanceNotices')
             <div class="row">
               <div class="col-md-12">
                 <form action="{{ route('attendance.summary') }}" method="POST" class="needs-validation col-md-12" novalidate="">@csrf
@@ -37,8 +38,8 @@
                   @if(!empty($dfrom) && !empty($dto))
                     <tr>
                       <th colspan="2"></th>
-                      <th colspan="2"><b>Date From:</b> {{date("d-m-Y", strtotime($dfrom))}}</th>
-                      <th colspan="4"><b>Date To:</b> {{date("d-m-Y", strtotime($dto))}}</th>
+                      <th colspan="2"><b>Date From:</b> {{ formatDate($dfrom) }}</th>
+                      <th colspan="4"><b>Date To:</b> {{ formatDate($dto) }}</th>
                     </tr>
                   @endif
                   <tr>

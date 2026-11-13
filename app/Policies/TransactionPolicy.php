@@ -8,26 +8,26 @@ class TransactionPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('transactions_access');
+        return $user->hasPermission('transactions_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('transactions_show');
+        return $user->hasPermission('transactions_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('transactions_create');
+        return $user->hasPermission('transactions_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('transactions_edit');
+        return $user->hasPermission('transactions_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('transactions_delete');
+        return $user->hasPermission('transactions_delete');
     }
 }

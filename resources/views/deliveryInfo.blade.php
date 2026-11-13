@@ -33,18 +33,19 @@
                     <i class="fas fa-box"></i> View Packing List
                   </a>
                 @else
-                  <a href="{{ route('packingList.create', $deliveryId) }}" class="btn btn-success">
+                  @can('create', App\Models\Delivery::class)<a href="{{ route('packingList.create', $deliveryId) }}" class="btn btn-success">
                     <i class="fas fa-box"></i> Create Packing List
-                  </a>
+                  </a>@endcan
                 @endif
                 <a href="{{ route('delivery') }}" class="btn btn-primary">Back</a>
                 @if(isset($isMultiOrder) && $isMultiOrder && isset($relatedOrders) && count($relatedOrders) > 1)
                   @php
                     $orderIds = collect($relatedOrders)->pluck('order_id')->implode(',');
                   @endphp
-                  <a href="{{ route('delivery.add') }}?customer_id={{ $customerId }}&order_ids={{ $orderIds }}&edit_delivery_id={{ $deliveryId }}" class="btn btn-light">Edit</a>
+                  @can('edit', App\Models\Delivery::class)<a href="{{ route('delivery.add') }}?customer_id={{ $customerId }}&order_ids={{ $orderIds }}&edit_delivery_id={{ $deliveryId }}" class="btn btn-light">Edit</a>@endcan
                 @else
-                  <a href="{{ route('delivery.edit', $deliveryId) }}" class="btn btn-primary">Edit</a>
+                  @can('edit', App\Models\Delivery::class)<a href="{{ route('delivery.edit', $deliveryId) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Delivery::class)@include('deleteButton', ['url' => route('delivery.destroy', $deliveryId), 'check' => route('delivery.deleteCheck', $deliveryId), 'label' => 'this delivery', 'class' => 'btn btn-danger'])@endcan
                 @endif
               </div>
             </div>
@@ -639,6 +640,9 @@ function generateInvoicePrintDocument(content, title, company) {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="printCommercialInvoice('excel')">
+          <i class="fas fa-file-excel"></i> Export to Excel
+        </button>
         <button type="button" class="btn btn-primary" onclick="printCommercialInvoice()">
           <i class="fas fa-print"></i> Print Commercial Invoice
         </button>
@@ -648,7 +652,8 @@ function generateInvoicePrintDocument(content, title, company) {
 </div>
 
 <script>
-function printCommercialInvoice() {
+// format 'excel' downloads the same invoice (same options) as an editable Excel file
+function printCommercialInvoice(format) {
     const hsCode = document.getElementById('hsCode').value;
     const sellingType = document.getElementById('sellingType').value;
     const uom = document.getElementById('uom').value;
@@ -663,7 +668,9 @@ function printCommercialInvoice() {
         return;
     }
 
-    let url = '{{ route("delivery.commercial", $deliveryId) }}';
+    let url = format === 'excel'
+        ? '{{ route("delivery.commercial.excel", $deliveryId) }}'
+        : '{{ route("delivery.commercial", $deliveryId) }}';
 
     // Add parameters to URL
     const params = new URLSearchParams();
@@ -679,7 +686,11 @@ function printCommercialInvoice() {
         url += '?' + params.toString();
     }
 
-    window.open(url, '_blank');
+    if (format === 'excel') {
+        window.location.href = url;
+    } else {
+        window.open(url, '_blank');
+    }
     $('#commercialInvoiceModal').modal('hide');
 }
 </script>

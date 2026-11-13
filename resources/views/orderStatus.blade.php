@@ -13,7 +13,7 @@
                   <i class="fas fa-file-alt"></i> Production Order
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>
+                @can('create', App\Models\Delivery::class)<a href="{{ route('delivery.add', $order['order_id']) }}" class="btn btn-primary">Deliver</a>@endcan
               </div>
             </div>
           </div>
@@ -161,9 +161,9 @@
                           <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#orderStageModal{{ $item->product_type_id }}" title="View Stages">
                             <i class="fas fa-layer-group"></i>
                           </button>
-                          <a href="{{ route('product.ptc', $item->product_id) }}" class="btn btn-sm btn-warning" title="Print PTC" target="_blank">
+                          @if(auth()->user()->can('show', App\Models\Product::class))<a href="{{ route('product.ptc', $item->product_id) }}" class="btn btn-sm btn-warning" title="Print PTC" target="_blank">
                             <i class="fas fa-file-alt"></i>
-                          </a>
+                          </a>@endif
                         </td>
                       </tr>
                       @endforeach

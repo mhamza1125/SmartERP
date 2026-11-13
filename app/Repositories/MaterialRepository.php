@@ -2,11 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use App\Repositories\ImageRepository;
 use App\Models\Material;
 use Illuminate\Support\Facades\DB;
 
 class MaterialRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Material::join('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
@@ -210,7 +215,35 @@ class MaterialRepository implements GlobalInterface
         return $update->material_id;
     }
 
+    /**
+     * A material can be deleted only while no purchase, stock movement, product BOM, vendor or
+     * material processing uses it. Its opening stock line (if any) and images go with it.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $material = Material::findOrFail($id);
+        $impact = DeletionImpact::for('Material '.$material->material_no.' ('.$material->name.')');
+        $movements = fn ($q) => $q->where('stock_id', '!=', 1);
+
+        $impact->blockIf($this->refCount('purchase_items', 'material_id', $id), 'purchase line', null, DB::table('purchase_items')->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')->where('purchase_items.material_id', $id)->limit(6)->pluck('purchases.purchase_no'));
+        $impact->blockIf($this->refCount('stock_items', 'material_id', $id, $movements), 'stock movement (issuance / receiving / PTC)', 'stock movements (issuances / receivings / PTCs)');
+        $impact->blockIf($this->refCount('product_materials', 'material_id', $id), 'product bill of materials line', 'product bill of materials lines');
+        $impact->blockIf($this->refCount('products', 'material_id', $id), 'product', null, $this->refExamples('products', 'material_id', $id, 'article_no'));
+        $impact->blockIf($this->refCount('vendors', 'material_id', $id), 'vendor', null, $this->refExamples('vendors', 'material_id', $id, 'name'));
+        $impact->blockIf($this->refCount('igroup_items', 'material_id', $id), 'issuance group line');
+        $impact->blockIf($this->refCount('mprocess', 'before_mid', $id), 'material processing record');
+
+        $impact->cascadeIf($this->refCount('stock_items', 'material_id', $id, fn ($q) => $q->where('stock_id', 1)), 'opening stock line');
+        $impact->cascadeIf(app(ImageRepository::class)->countFor('materials', $id), 'image');
+
+        return $impact;
+    }
+
     public function delete($id)
     {
+        DB::table('stock_items')->where('stock_id', 1)->where('material_id', $id)->delete();
+        app(ImageRepository::class)->deleteFor('materials', $id);
+
+        return Material::findOrFail($id)->delete();
     }
 }

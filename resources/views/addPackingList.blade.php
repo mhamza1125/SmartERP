@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Create Packing List</h4>
             <div class="card-header-action">
-              <a href="{{ route('delivery.show', $deliveryId) }}" class="btn btn-primary">Back</a>
+              @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery.show', $deliveryId) }}" class="btn btn-primary">Back</a>@endif
             </div>
           </div>
           <div class="card-body">
@@ -91,7 +91,7 @@
                   <button type="submit" class="btn btn-success">
                     <i class="fas fa-save"></i> Save Packing List
                   </button>
-                  <a href="{{ route('delivery.show', $deliveryId) }}" class="btn btn-secondary">Cancel</a>
+                  @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery.show', $deliveryId) }}" class="btn btn-secondary">Cancel</a>@endif
                 </div>
               </div>
             </form>

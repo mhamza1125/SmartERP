@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Validation\Rule;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Head;
 use App\Models\Transaction;
@@ -372,6 +373,7 @@ class TransactionController extends Controller
         $customer = $this->customerRepository->all();
 
         return view('addGeneralVoucher', [
+            'expenseHeads' => $this->headRepository->get('7'),
             'vendor' => $vendor,
             'contractor' => $contractor,
             'employee' => $employee,
@@ -381,6 +383,7 @@ class TransactionController extends Controller
 
     public function ajaxBank(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $table = $request->input('table');
         $tableId = $request->input('tableId');
         $bank = $this->bankRepository->getBank($table, $tableId);
@@ -390,6 +393,7 @@ class TransactionController extends Controller
 
     public function ajaxBalance(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $table = $request->input('table');
         $tableId = $request->input('tableId');
 
@@ -476,6 +480,7 @@ class TransactionController extends Controller
      */
     public function ajaxLoan(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $party = $request->input('party');
         $partyId = (int) $request->input('partyId');
         if (! in_array($party, ['employee', 'vendor', 'contractor'], true) || $partyId < 1) {
@@ -514,6 +519,7 @@ class TransactionController extends Controller
 
     public function ajaxOrder(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $customerId = $request->input('customerId');
         $order = $this->orderRepository->getOrder($customerId);
 
@@ -522,6 +528,7 @@ class TransactionController extends Controller
 
     public function ajaxPurchase(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $tableId = $request->input('vendorId');
         // error_log("Vendor ID: " . $tableId);
         $purchase = $this->purchaseRepository->getPurchase($tableId);
@@ -531,6 +538,7 @@ class TransactionController extends Controller
 
     public function ajaxPayee(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $type = $request->input('type');
         $payees = [];
 
@@ -573,6 +581,7 @@ class TransactionController extends Controller
 
     public function ajaxGetCustomerCurrency(Request $request)
     {
+        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $customerId = $request->input('customer_id');
 
         if (!$customerId) {
@@ -599,6 +608,7 @@ class TransactionController extends Controller
 
     public function store(TransactionRequest $request)
     {
+        $this->authorize('create', Transaction::class);
         $validatedData = $request->validated();
         // Loan type (temporary advance / fixed loan) only on employee Give / Receive Loan entries
         $isEmployeeLoan = ($validatedData['transaction_to'] ?? '') === 'employee' && in_array($validatedData['transaction_type'], ['advance', 'receiveAdvance'], true);
@@ -621,6 +631,10 @@ class TransactionController extends Controller
         elseif ($request->has('brs_type') && $request->input('brs_type') == 1) {
             $validatedData['credit'] = null;
         }
+
+        // Expense Head is an optional label of Journal Vouchers only (no effect on debit / credit)
+        $validatedData['expense_head_id'] = $validatedData['transaction_type'] === 'generalVoucher'
+            ? ($validatedData['expense_head_id'] ?? null) : null;
 
         // For generalVoucher: handle debit/credit based on voucher type and payee type
         if ($validatedData['transaction_to'] == 'generalVoucher') {
@@ -1061,6 +1075,7 @@ class TransactionController extends Controller
         $customer = $this->customerRepository->all();
 
         return view('editGeneralVoucher', [
+            'expenseHeads' => $this->headRepository->get('7'),
             'transaction' => $id,
             'vendor' => $vendor,
             'contractor' => $contractor,
@@ -1133,6 +1148,14 @@ class TransactionController extends Controller
         // For BRS type 1: keep debit as debit (cash inflow increases balance)
         elseif ($request->has('brs_type') && $request->input('brs_type') == 1) {
             $request->merge(['credit' => null]);
+        }
+
+        // Optional Expense Head: Journal Vouchers only, and it must be an expense head
+        if ($request->input('transaction_type') === 'generalVoucher') {
+            $request->validate(['expense_head_id' => ['nullable', 'integer', Rule::exists('heads', 'head_id')->where('head_type_id', 7)]]);
+            $request->merge(['expense_head_id' => $request->input('expense_head_id') ?: null]);
+        } else {
+            $request->request->remove('expense_head_id');
         }
 
         // For generalVoucher: handle debit/credit based on payee type
@@ -1324,10 +1347,6 @@ class TransactionController extends Controller
         return redirect()->route('transaction.showTransfer', $id)->with('success', 'Transfer Updated Successfully');
     }
 
-    public function destroy(product $product)
-    {
-        $this->authorize('delete', Transaction::class);
-    }
 
     /**
      * Get transaction data by type
@@ -1573,4 +1592,27 @@ class TransactionController extends Controller
         }
     }
 
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Transaction::class);
+
+        return $this->deletionCheckResponse($this->transactionRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Transaction::class);
+
+        return $this->runDeletion(
+            $this->transactionRepository->deletionImpact($id),
+            fn () => $this->transactionRepository->delete($id),
+            route('transaction')
+        );
+    }
 }

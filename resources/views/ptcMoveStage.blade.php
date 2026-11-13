@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Move PTC to Next Stage</h4>
             <div class="card-header-action">
-              <a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-primary">Back</a>
+              @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-primary">Back</a>@endif
             </div>
           </div>
           <div class="card-body">

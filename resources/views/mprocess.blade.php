@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Material Processing Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('mprocess.add') }}" class="btn btn-primary">Add Processing</a>
+              @can('create', App\Models\Material::class)<a href="{{ route('mprocess.add') }}" class="btn btn-primary">Add Processing</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -39,9 +39,10 @@
                         <span class="badge badge-danger">To Receive</span> @endif
                       </td>
                       <td>
-                        <a href="{{ route('mprocess.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
-                        @if(!$item->has_received) <a href="{{ route('mprocess.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a> @endif
-                        <a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Receive</a>
+                        @if(auth()->user()->can('show', App\Models\Material::class))<a href="{{ route('mprocess.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @if(!$item->has_received) @can('edit', App\Models\Material::class)<a href="{{ route('mprocess.edit', $item->purchase_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Material::class)@include('deleteButton', ['url' => route('mprocess.destroy', $item->purchase_id), 'check' => route('mprocess.deleteCheck', $item->purchase_id), 'label' => 'Material processing '.$item->purchase_no, 'class' => 'btn btn-danger btn-sm'])@endcan @endif
+                        @can('create', App\Models\Receive::class)<a href="{{ route('receive.add', $item->purchase_id) }}" class="btn btn-success btn-sm">Receive</a>@endcan
                       </td>
                     </tr>
                     @endforeach

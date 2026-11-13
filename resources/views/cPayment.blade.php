@@ -9,7 +9,7 @@
             {{-- Vendor / Contractor Payment Table --}}
             <h4>Contractor Payment Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('transaction.addCPayment') }}" class="btn btn-primary">Add Payment</a>
+              @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addCPayment') }}" class="btn btn-primary">Add Payment</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -90,8 +90,8 @@
                           <td>{{ $details[$item->transaction_id]->summary ?? '' }}</td>
                           <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
                           <td>
-                            <a href="{{ route('transaction.showCPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            <a href="{{ route('transaction.editCPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                            @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showCPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                            @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.editCPayment', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>@endif
                           </td>
                         </tr>
                       @endunless

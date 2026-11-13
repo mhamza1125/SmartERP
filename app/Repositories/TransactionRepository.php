@@ -2,12 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
 use App\Models\Transaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class TransactionRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Transaction::select(
@@ -196,6 +200,9 @@ class TransactionRepository implements GlobalInterface
                 $join->on('transactions.payee_id', '=', 'customers.customer_id')
                     ->where('transactions.transaction_to', '=', 'customer');
             })
+            // Optional Expense Head (a sub-select so no joined column is overwritten)
+            ->select('*')
+            ->selectSub(DB::table('heads')->select('name')->whereColumn('heads.head_id', 'transactions.expense_head_id')->limit(1), 'expense_head_name')
             ->orderBy('transactions.created_at', 'desc')
             ->get();
     }
@@ -443,7 +450,8 @@ class TransactionRepository implements GlobalInterface
                 $join->on('transactions.payee_id', '=', 'customers.customer_id')
                     ->where('transactions.transaction_to', '=', 'customer');
             })
-            ->select('transactions.*', 'vendors.vendor_no', 'vendors.fname as vendor_name', 'employees.employee_no', 'employees.name as employee_name', 'customers.customer_no', 'customers.fname as customer_name', 'bhead.name as bname', 'banks.account', 'banks.account_title')
+            ->leftJoin('heads as ehead', 'ehead.head_id', '=', 'transactions.expense_head_id')
+            ->select('transactions.*', 'vendors.vendor_no', 'vendors.fname as vendor_name', 'employees.employee_no', 'employees.name as employee_name', 'customers.customer_no', 'customers.fname as customer_name', 'bhead.name as bname', 'banks.account', 'banks.account_title', 'ehead.name as expense_head_name')
             ->first();
     }
 
@@ -994,7 +1002,78 @@ class TransactionRepository implements GlobalInterface
         }
     }
 
-    public function delete($id) {}
+    /**
+     * Transactions that are part of another record are refused (payroll postings, automatic bank
+     * charges, delivery expenses): they are removed with that record. A transfer is deleted with
+     * its paired entry, an order payment with its bank charges, and a loan only while the loan
+     * repaid so far stays covered.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $transaction = Transaction::findOrFail($id);
+        $type = $transaction->transaction_type;
+        $impact = DeletionImpact::for(transactionLabel($type).' #'.$id);
+
+        $payroll = DB::table('payroll_items')->join('payrolls', 'payrolls.payroll_id', '=', 'payroll_items.payroll_id')
+            ->where(fn ($q) => $q->where('salary_transaction_id', $id)->orWhere('temp_deduction_transaction_id', $id)->orWhere('fixed_deduction_transaction_id', $id))
+            ->value('payrolls.month');
+        if ($payroll) {
+            return $impact->block('it was posted by the monthly payroll of '.$payroll.' (edit or delete that payroll instead)');
+        }
+        if ($type === 'bankCharges' && $transaction->order_id) {
+            return $impact->block('it was created with order payment #'.$transaction->order_id.' (edit or delete that payment instead)');
+        }
+        if ($type === 'deliveryExpense') {
+            return $impact->block('it is an expense of a delivery (edit or delete that delivery instead)');
+        }
+
+        if ($type === 'advance' && in_array($transaction->transaction_to, ['employee', 'vendor', 'contractor'], true)) {
+            $kind = $transaction->transaction_to === 'employee' ? ($transaction->advance_type ?: Transaction::ADVANCE_FIXED) : 'loan';
+            $left = $this->loanSummary($transaction->transaction_to, (int) $transaction->payee_id, (int) $id)[$kind] ?? null;
+            if ($left && $left['repaid'] - $left['given'] > 0.005) {
+                $impact->block('loan repayments of '.number_format($left['repaid'], 2).' would exceed the loans given ('.number_format($left['given'], 2).'); delete the repayments first');
+            }
+        }
+
+        $impact->cascadeIf(count($this->linkedIds($transaction)), 'linked entry (other side of the transfer / bank charges)', 'linked entries (other side of the transfer / bank charges)');
+        $impact->cascadeIf(app(ImageRepository::class)->countFor('transactions', $id), 'attachment');
+        if ($type === 'openingBalance') {
+            $impact->note('This changes the opening balance of the account / party ledger.');
+        } else {
+            $impact->note('Cash / bank balances and ledgers are recalculated without this entry.');
+        }
+
+        return $impact;
+    }
+
+    /**
+     * Entries that only exist together with this one: the other half of a transfer and the bank
+     * charges booked with an order payment.
+     */
+    private function linkedIds(Transaction $transaction): array
+    {
+        $ids = [];
+        if ($transaction->transfer_pair_id) {
+            $ids[] = (int) $transaction->transfer_pair_id;
+        }
+        $ids = array_merge($ids, Transaction::where('transfer_pair_id', $transaction->transaction_id)->pluck('transaction_id')->all());
+        if ($transaction->transaction_type === 'orderPayment') {
+            $ids = array_merge($ids, Transaction::where('transaction_type', 'bankCharges')->where('order_id', $transaction->transaction_id)->pluck('transaction_id')->all());
+        }
+
+        return array_values(array_diff(array_unique(array_map('intval', $ids)), [(int) $transaction->transaction_id]));
+    }
+
+    public function delete($id)
+    {
+        $transaction = Transaction::findOrFail($id);
+        $ids = array_merge([(int) $id], $this->linkedIds($transaction));
+        foreach ($ids as $transactionId) {
+            app(ImageRepository::class)->deleteFor('transactions', $transactionId);
+        }
+
+        return Transaction::whereIn('transaction_id', $ids)->delete();
+    }
 
     /**
      * Total freight charged on a customer's deliveries (stock_status 3), narrowed by $filter.
@@ -1110,6 +1189,7 @@ class TransactionRepository implements GlobalInterface
         $deliveries = DB::table('deliveries')
             ->whereIn('delivery_id', $rows->where('transaction_type', 'deliveryExpense')->pluck('order_id')->filter())
             ->pluck('delivery_no', 'delivery_id');
+        $expenseHeads = DB::table('heads')->whereIn('head_id', $rows->pluck('expense_head_id')->filter())->pluck('name', 'head_id');
 
         // "Cash" for bank_id 0, otherwise "Bank name - Account title - A/C number"
         $account = function ($bankId) use ($banks) {
@@ -1122,7 +1202,7 @@ class TransactionRepository implements GlobalInterface
         };
         $amount = fn ($value) => $value !== null && (float) $value != 0 ? number_format((float) $value, 2) : null;
 
-        return $rows->map(function ($row) use ($all, $account, $amount, $vendors, $employees, $customers, $heads, $purchases, $orders, $deliveries) {
+        return $rows->map(function ($row) use ($all, $account, $amount, $vendors, $employees, $customers, $heads, $purchases, $orders, $deliveries, $expenseHeads) {
             [$note, $cheque] = $this->splitCheque($row->description);
             $type = self::TYPE_LABELS[$row->transaction_type] ?? ucfirst((string) $row->transaction_type);
             // Employee loans carry their kind: a temporary advance against salary or a fixed (instalment) loan
@@ -1182,6 +1262,10 @@ class TransactionRepository implements GlobalInterface
                     // Vendor payment not linked to a purchase
                     $details['Payment For'] = 'General Payment';
                     $parts[] = 'General Payment';
+                }
+                if ($row->transaction_type === 'generalVoucher' && ! empty($row->expense_head_id) && $expenseHeads->get($row->expense_head_id)) {
+                    $details['Expense Head'] = $expenseHeads->get($row->expense_head_id);
+                    $parts[] = 'Expense head: '.$expenseHeads->get($row->expense_head_id);
                 }
                 if ($row->transaction_to === 'customer' && ($order = $orders->get($row->order_id))) {
                     $details['Order No'] = $order->order_no;

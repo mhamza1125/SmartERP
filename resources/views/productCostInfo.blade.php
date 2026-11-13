@@ -13,7 +13,7 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('productCost') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Product::class)<a href="{{ route('productCost.edit', $product['product_id']) }}" class="btn btn-primary">Edit</a>@endcan
               </div>
             </div>
           </div>

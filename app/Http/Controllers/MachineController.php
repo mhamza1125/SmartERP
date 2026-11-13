@@ -59,6 +59,7 @@ class MachineController extends Controller
 
     public function store(MachineRequest $request)
     {
+        $this->authorize('create', Machine::class);
         $validatedData = $request->validated();
         $getId = $this->machineRepository->store($validatedData);
         if ($request->hasFile('image')) {
@@ -113,6 +114,7 @@ class MachineController extends Controller
     
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Machine::class);
         $this->machineRepository->update($id, $request->input());
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
@@ -123,8 +125,28 @@ class MachineController extends Controller
         return redirect()->route('machine.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Head $head)
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
         $this->authorize('delete', Machine::class);
+
+        return $this->deletionCheckResponse($this->machineRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Machine::class);
+
+        return $this->runDeletion(
+            $this->machineRepository->deletionImpact($id),
+            fn () => $this->machineRepository->delete($id),
+            route('machine')
+        );
     }
 }

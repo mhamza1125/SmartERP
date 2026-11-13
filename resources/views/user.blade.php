@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Users Table</h4>
             <div class="card-header-action">
-              <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add User</button>
+              @can('users_create', App\Models\User::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalAdd">Add User</button>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -31,7 +31,8 @@
                       <td>{{$item->name}}</td>
                       <td>{{$item->email}}</td>
                       <td>{{$item->role->name}}</td>
-                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->id}}">Edit</button></td>
+                      <td>@if(auth()->user()->can('users_edit', App\Models\User::class) && ($item->role_id != App\Models\User::ROLE_ADMIN || auth()->user()->isAdmin()))<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->id}}">Edit</button>@endif
+@if($item->id !== auth()->id())@can('users_delete', App\Models\User::class)@include('deleteButton', ['url' => route('user.destroy', $item->id), 'check' => route('user.deleteCheck', $item->id), 'label' => 'User '.$item->name, 'class' => 'btn btn-danger btn-sm'])@endcan @endif</td>
                     </tr>
                     @endforeach
                   @endif
@@ -96,7 +97,7 @@
                 <select class="form-control" name="role_id" required>
                   <option value="" selected>Select User Role</option>
                   @foreach($roles as $role)
-                    <option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>
+                    @if($role->id != App\Models\User::ROLE_ADMIN || auth()->user()->isAdmin())<option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>@endif
                   @endforeach
                 </select>
               </div>
@@ -156,7 +157,7 @@
                       <select class="form-control" name="role_id" required>
                         <option value="" selected>Select User Role</option>
                         @foreach($roles as $role)
-                          <option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>
+                          @if($role->id != App\Models\User::ROLE_ADMIN || auth()->user()->isAdmin())<option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>@endif
                         @endforeach
                       </select>
                     {{-- @else

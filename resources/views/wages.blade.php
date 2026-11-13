@@ -9,8 +9,8 @@
             <h4>Wages - Employee / Contractor</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('transaction.addEPayment') }}" class="btn btn-primary">Pay Employee</a>
-                <a href="{{ route('transaction.addCPayment') }}" class="btn btn-primary">Pay Contractor</a>
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addEPayment') }}" class="btn btn-primary">Pay Employee</a>@endcan
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addCPayment') }}" class="btn btn-primary">Pay Contractor</a>@endcan
               </div>
             </div>
           </div>
@@ -46,7 +46,7 @@
                           <td>{{$item->employee_no}} - {{$item->name}}</td>
                           <td>{{ number_format($item->total_wages - $item->wagesDebit) }}</td>
                           <td>{{ number_format($item->obCredit + $item->obDebit + $item->advanceDebit - $item->radvanceCredit) }}</td>
-                          <td><a href="{{ route('wages.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a></td>     
+                          <td>@if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('wages.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif</td>     
                         </tr>
                         @endforeach
                       @endif
@@ -84,7 +84,7 @@
                           <td>{{$item->vendor_no}} - {{$item->fname}}</td>
                           <td>{{ number_format($item->total_wages - $item->wagesDebit) }}</td>
                           <td>{{ number_format($item->obCredit + $item->obDebit + $item->advanceDebit - $item->radvanceCredit) }}</td>
-                          <td><a href="{{ route('wages.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a></td>            
+                          <td>@if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('wages.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif</td>            
                         </tr>
                         @endforeach
                       @endif

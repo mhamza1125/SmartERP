@@ -60,6 +60,8 @@ Route::get('/admin', [AdminController::class, 'index'])->name('admin');
 Route::get('/user', [AdminController::class, 'user'])->name('user');
 Route::post('/user', [AuthController::class, 'store'])->name('user.store');
 Route::post('/user/{id}', [AuthController::class, 'update'])->name('user.update');
+Route::get('/user/{id}/delete-check', [AdminController::class, 'userDeleteCheck'])->name('user.deleteCheck');
+Route::delete('/user/{id}', [AdminController::class, 'userDestroy'])->name('user.destroy');
 Route::post('/image/{id}/{dir}', [ImageController::class, 'destroy'])->name('image.delete');
 
 // Roles & Permissions
@@ -68,6 +70,8 @@ Route::get('/addRole', [AdminController::class, 'create'])->name('role.add');
 Route::post('/role', [AdminController::class, 'store'])->name('role.store');
 Route::get('/editRole/{id}', [AdminController::class, 'edit'])->name('role.edit');
 Route::post('/role/{id}', [AdminController::class, 'update'])->name('role.update');
+Route::get('/role/{id}/delete-check', [AdminController::class, 'roleDeleteCheck'])->name('role.deleteCheck');
+Route::delete('/role/{id}', [AdminController::class, 'roleDestroy'])->name('role.destroy');
 
 // Attendance
 Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
@@ -79,6 +83,7 @@ Route::get('/workTime', [AttendanceController::class, 'workTime'])->name('workTi
 Route::get('/workHoliday', [AttendanceController::class, 'workHoliday'])->name('workHoliday');
 Route::post('/work', [AttendanceController::class, 'store'])->name('work.store');
 Route::post('/work/{id}', [AttendanceController::class, 'update'])->name('work.update');
+Route::delete('/work/{type}/{id}', [AttendanceController::class, 'destroy'])->whereIn('type', ['time', 'holiday'])->name('work.destroy');
 
 // Head
 Route::get('/head', [HeadController::class, 'index'])->name('head');
@@ -86,12 +91,16 @@ Route::get('/headType', [HeadController::class, 'headType'])->name('head.headTyp
 Route::get('/addHead', [HeadController::class, 'create'])->name('head.add');
 Route::post('/head', [HeadController::class, 'store'])->name('head.store');
 Route::post('/head/{id}', [HeadController::class, 'update'])->name('head.update');
+Route::get('/head/{id}/delete-check', [HeadController::class, 'deleteCheck'])->name('head.deleteCheck');
+Route::delete('/head/{id}', [HeadController::class, 'destroy'])->name('head.destroy');
 
 // Category
 Route::get('/category', [CategoryController::class, 'index'])->name('category');
 Route::get('/addCategory', [CategoryController::class, 'create'])->name('category.add');
 Route::post('/category', [CategoryController::class, 'store'])->name('category.store');
 Route::post('/category/{id}', [CategoryController::class, 'update'])->name('category.update');
+Route::get('/category/{id}/delete-check', [CategoryController::class, 'deleteCheck'])->name('category.deleteCheck');
+Route::delete('/category/{id}', [CategoryController::class, 'destroy'])->name('category.destroy');
 
 // Customer
 Route::get('/customer', [CustomerController::class, 'index'])->name('customer');
@@ -100,6 +109,8 @@ Route::post('/customer', [CustomerController::class, 'store'])->name('customer.s
 Route::get('/customer/{id}', [CustomerController::class, 'show'])->name('customer.show');
 Route::get('/editCustomer/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
 Route::post('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
+Route::get('/customer/{id}/delete-check', [CustomerController::class, 'deleteCheck'])->name('customer.deleteCheck');
+Route::delete('/customer/{id}', [CustomerController::class, 'destroy'])->name('customer.destroy');
 Route::get('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.detail');
 Route::post('/cLedger/{id}', [CustomerController::class, 'detail'])->name('customer.filter');
 
@@ -110,6 +121,8 @@ Route::post('/employee', [EmployeeController::class, 'store'])->name('employee.s
 Route::get('/employee/{id}', [EmployeeController::class, 'show'])->name('employee.show');
 Route::get('/editEmployee/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
 Route::post('/employee/{id}', [EmployeeController::class, 'update'])->name('employee.update');
+Route::get('/employee/{id}/delete-check', [EmployeeController::class, 'deleteCheck'])->name('employee.deleteCheck');
+Route::delete('/employee/{id}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
 Route::get('/eLedger/{id}', [EmployeeController::class, 'detail'])->name('employee.detail');
 Route::post('/eLedger/{id}', [EmployeeController::class, 'detail'])->name('employee.filter');
 
@@ -125,6 +138,8 @@ Route::get('/payroll/{month}/print', [PayrollController::class, 'printMonth'])->
 Route::get('/payroll/slip/{item}', [PayrollController::class, 'printSlip'])->name('payroll.slip');
 Route::get('/payroll/{month}/slips', [PayrollController::class, 'printSlips'])->name('payroll.slips');
 Route::get('/payroll/{month}/vouchers', [PayrollController::class, 'printVouchers'])->name('payroll.vouchers');
+Route::get('/payroll/{month}/delete-check', [PayrollController::class, 'deleteCheck'])->name('payroll.deleteCheck');
+Route::delete('/payroll/{month}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
 
 // Vendor
 // Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
@@ -138,6 +153,8 @@ Route::get('/contractor/{id}', [VendorController::class, 'show2'])->name('vendor
 Route::get('/editVendor/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
 Route::get('/editContractor/{id}', [VendorController::class, 'edit2'])->name('vendor.edit2');
 Route::post('/vendor/{id}', [VendorController::class, 'update'])->name('vendor.update');
+Route::get('/vendor/{id}/delete-check', [VendorController::class, 'deleteCheck'])->name('vendor.deleteCheck');
+Route::delete('/vendor/{id}', [VendorController::class, 'destroy'])->name('vendor.destroy');
 Route::get('/vLedger/{id}', [VendorController::class, 'detail'])->name('vendor.detail');
 Route::post('/vLedger/{id}', [VendorController::class, 'detail'])->name('vendor.filter');
 
@@ -148,6 +165,8 @@ Route::post('/material', [MaterialController::class, 'store'])->name('material.s
 Route::get('/material/{id}', [MaterialController::class, 'show'])->name('material.show');
 Route::get('/editMaterial/{id}', [MaterialController::class, 'edit'])->name('material.edit');
 Route::post('/material/{id}', [MaterialController::class, 'update'])->name('material.update');
+Route::get('/material/{id}/delete-check', [MaterialController::class, 'deleteCheck'])->name('material.deleteCheck');
+Route::delete('/material/{id}', [MaterialController::class, 'destroy'])->name('material.destroy');
 Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
 Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
 Route::get('/materialDetail/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
@@ -159,6 +178,8 @@ Route::post('/machine', [MachineController::class, 'store'])->name('machine.stor
 Route::get('/machine/{id}', [MachineController::class, 'show'])->name('machine.show');
 Route::get('/editMachine/{id}', [MachineController::class, 'edit'])->name('machine.edit');
 Route::post('/machine/{id}', [MachineController::class, 'update'])->name('machine.update');
+Route::get('/machine/{id}/delete-check', [MachineController::class, 'deleteCheck'])->name('machine.deleteCheck');
+Route::delete('/machine/{id}', [MachineController::class, 'destroy'])->name('machine.destroy');
 
 // Product
 Route::get('/product', [ProductController::class, 'index'])->name('product');
@@ -168,6 +189,8 @@ Route::post('/product/size', [ProductController::class, 'storeSize'])->name('pro
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
 Route::get('/editProduct/{id}', [ProductController::class, 'edit'])->name('product.edit');
 Route::post('/product/{id}', [ProductController::class, 'update'])->name('product.update');
+Route::get('/product/{id}/delete-check', [ProductController::class, 'deleteCheck'])->name('product.deleteCheck');
+Route::delete('/product/{id}', [ProductController::class, 'destroy'])->name('product.destroy');
 Route::get('/product/{id}/ptc', [ProductController::class, 'printPTC'])->name('product.ptc');
 
 // Order
@@ -180,6 +203,8 @@ Route::get('/orderStatus/{id}', [OrderController::class, 'status'])->name('order
 Route::get('/editOrder/{id}', [OrderController::class, 'edit'])->name('order.edit');
 Route::post('/order/{id}', [OrderController::class, 'update'])->name('order.update');
 Route::post('/orderStatus/{id}', [OrderController::class, 'updateStatus'])->name('order.updateStatus');
+Route::get('/order/{id}/delete-check', [OrderController::class, 'deleteCheck'])->name('order.deleteCheck');
+Route::delete('/order/{id}', [OrderController::class, 'destroy'])->name('order.destroy');
 Route::post('/generateJobNumber', [OrderController::class, 'generateJobNumberAjax'])->name('generateJobNumber');
 
 // Delivery
@@ -191,6 +216,8 @@ Route::get('/delivery/{id}', [DeliveryController::class, 'show'])->name('deliver
 Route::get('/editDelivery/{id}', [DeliveryController::class, 'edit'])->name('delivery.edit');
 Route::post('/delivery/{id}', [DeliveryController::class, 'update'])->name('delivery.update');
 Route::get('/deliveryStatus/{id}/{status}', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
+Route::get('/delivery/{id}/delete-check', [DeliveryController::class, 'deleteCheck'])->name('delivery.deleteCheck');
+Route::delete('/delivery/{id}', [DeliveryController::class, 'destroy'])->name('delivery.destroy');
 
 // AJAX Routes for Multi-Order Delivery
 Route::middleware(['web', 'auth'])->group(function () {
@@ -205,6 +232,8 @@ Route::get('/packingList/{id}', [PackingListController::class, 'show'])->name('p
 Route::get('/packingList/{order_id}/print', [PackingListController::class, 'printPackingList'])->name('packingList.print');
 Route::get('/editPackingList/{id}', [PackingListController::class, 'edit'])->name('packingList.edit');
 Route::post('/packingList/{id}', [PackingListController::class, 'update'])->name('packingList.update');
+Route::get('/packingList/{id}/delete-check', [PackingListController::class, 'deleteCheck'])->name('packingList.deleteCheck');
+Route::delete('/packingList/{id}', [PackingListController::class, 'destroy'])->name('packingList.destroy');
 
 // Product Material
 Route::get('/productMaterial', [ProductMaterialController::class, 'index'])->name('productMaterial');
@@ -223,6 +252,8 @@ Route::post('/mprocess', [MProcessController::class, 'store'])->name('mprocess.s
 Route::get('/mprocess/{id}', [MProcessController::class, 'show'])->name('mprocess.show');
 Route::get('/editMProcess/{id}', [MProcessController::class, 'edit'])->name('mprocess.edit');
 Route::post('/mprocess/{id}', [MProcessController::class, 'update'])->name('mprocess.update');
+Route::get('/mprocess/{id}/delete-check', [MProcessController::class, 'deleteCheck'])->name('mprocess.deleteCheck');
+Route::delete('/mprocess/{id}', [MProcessController::class, 'destroy'])->name('mprocess.destroy');
 
 // Purchase
 Route::get('/purchase', [PurchaseController::class, 'index'])->name('purchase');
@@ -231,6 +262,8 @@ Route::post('/purchase', [PurchaseController::class, 'store'])->name('purchase.s
 Route::get('/purchase/{id}', [PurchaseController::class, 'show'])->name('purchase.show');
 Route::get('/editPurchase/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
 Route::post('/purchase/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
+Route::get('/purchase/{id}/delete-check', [PurchaseController::class, 'deleteCheck'])->name('purchase.deleteCheck');
+Route::delete('/purchase/{id}', [PurchaseController::class, 'destroy'])->name('purchase.destroy');
 Route::get('/ajaxPMQty', [PurchaseController::class, 'ajaxPMQty'])->name('ajaxPMQty'); //Material Qty
 Route::get('/ajaxOrderPurchaseItems', [PurchaseController::class, 'ajaxOrderPurchaseItems'])->name('ajaxOrderPurchaseItems'); //Items allowed for an order purchase
 Route::get('/addProductPurchase', [PurchaseController::class, 'create2'])->name('productPurchase.add');
@@ -247,6 +280,8 @@ Route::get('/receive/{id}', [ReceiveController::class, 'show'])->name('receive.s
 Route::get('/editReceive/{id}', [ReceiveController::class, 'edit'])->name('receive.edit');
 Route::post('/receive/{id}', [ReceiveController::class, 'update'])->name('receive.update');
 Route::get('/receiveStatus/{id}/{status}', [ReceiveController::class, 'updateStatus'])->name('receive.updateStatus');
+Route::get('/receive/{id}/delete-check', [ReceiveController::class, 'deleteCheck'])->name('receive.deleteCheck');
+Route::delete('/receive/{id}', [ReceiveController::class, 'destroy'])->name('receive.destroy');
 
 // Purchase Return
 Route::get('/return', [ReturnController::class, 'index'])->name('return');
@@ -256,6 +291,8 @@ Route::post('/return', [ReturnController::class, 'store'])->name('return.store')
 Route::get('/return/{id}', [ReturnController::class, 'show'])->name('return.show');
 Route::get('/editReturn/{id}', [ReturnController::class, 'edit'])->name('return.edit');
 Route::post('/return/{id}', [ReturnController::class, 'update'])->name('return.update');
+Route::get('/return/{id}/delete-check', [ReturnController::class, 'deleteCheck'])->name('return.deleteCheck');
+Route::delete('/return/{id}', [ReturnController::class, 'destroy'])->name('return.destroy');
 
 // Issuance Group
 Route::get('/igroup', [IGroupController::class, 'index'])->name('igroup');
@@ -287,6 +324,9 @@ Route::post('/issue', [StockController::class, 'store'])->name('stock.store');
 Route::get('/issue/{id}', [StockController::class, 'show'])->name('stock.show');
 Route::get('/editIssue/{id}', [StockController::class, 'edit'])->name('stock.edit');
 Route::post('/issue/{id}', [StockController::class, 'update'])->name('stock.update');
+// Delete an issuance, receiving, machine material issuance or a whole PTC
+Route::get('/stock-record/{id}/delete-check', [StockController::class, 'deleteCheck'])->name('stock.deleteCheck');
+Route::delete('/stock-record/{id}', [StockController::class, 'destroy'])->name('stock.destroy');
 Route::get('/ajaxPM', [StockController::class, 'ajaxPM'])->name('ajaxPM'); //Product Material
 Route::get('/ajaxPT', [StockController::class, 'ajaxPT'])->name('ajaxPT'); //Product Type
 Route::get('/ajaxPTStock', [StockController::class, 'ajaxPTStock'])->name('ajaxPTStock'); //Product Type with Stock
@@ -366,6 +406,8 @@ Route::get('/ajaxBalance', [TransactionController::class, 'ajaxBalance'])->name(
 Route::post('/transaction', [TransactionController::class, 'store'])->name('transaction.store');
 Route::get('/transaction/{id}', [TransactionController::class, 'show'])->name('transaction.show');
 Route::post('/transaction/{id}', [TransactionController::class, 'update'])->name('transaction.update');
+Route::get('/transaction/{id}/delete-check', [TransactionController::class, 'deleteCheck'])->name('transaction.deleteCheck');
+Route::delete('/transaction/{id}', [TransactionController::class, 'destroy'])->name('transaction.destroy');
 // Transaction Employee
 Route::get('/ePayment', [TransactionController::class, 'ePayment'])->name('ePayment');
 Route::post('/ePayment', [TransactionController::class, 'ePayment'])->name('ePayment.filter');
@@ -431,9 +473,11 @@ Route::get('/reports/product-stock-ledger', [ReportController::class, 'productSt
 Route::get('/order/print/{id}', [OrderController::class, 'printOrder'])->name('order.print');
 Route::get('/order/production/{id}', [OrderController::class, 'printProduction'])->name('order.production');
 Route::get('/order/proforma/{id}', [OrderController::class, 'printProforma'])->name('order.proforma');
+Route::get('/order/proforma/{id}/excel', [OrderController::class, 'exportProforma'])->name('order.proforma.excel');
 Route::get('/payment/print/{id}', [TransactionController::class, 'printPayment'])->name('payment.print');
 Route::get('/delivery/print/{id}', [DeliveryController::class, 'printDelivery'])->name('delivery.print');
 Route::get('/delivery/commercial/{id}', [DeliveryController::class, 'printCommercial'])->name('delivery.commercial');
+Route::get('/delivery/commercial/{id}/excel', [DeliveryController::class, 'exportCommercial'])->name('delivery.commercial.excel');
 Route::get('/product/print/{id}', [ProductController::class, 'printProduct'])->name('product.print');
 Route::get('/issuance/print/{id}', [StockController::class, 'printIssuance'])->name('issuance.print');
 Route::get('/receive-issuance/print/{id}', [StockController::class, 'printReceiveIssuance'])->name('receive-issuance.print');
@@ -465,6 +509,8 @@ Route::post('/bank', [BankController::class, 'store'])->name('bank.store');
 Route::get('/bank/{id}', [BankController::class, 'show'])->name('bank.show');
 Route::get('/editBank/{id}', [BankController::class, 'edit'])->name('bank.edit');
 Route::post('/bank/{id}', [BankController::class, 'update'])->name('bank.update');
+Route::get('/bank/{id}/delete-check', [BankController::class, 'deleteCheck'])->name('bank.deleteCheck');
+Route::delete('/bank/{id}', [BankController::class, 'destroy'])->name('bank.destroy');
 
 // Delivery Returns
 Route::get('/delivery-return', [DeliveryReturnController::class, 'index'])->name('delivery-return');
@@ -473,6 +519,8 @@ Route::post('/delivery-return', [DeliveryReturnController::class, 'store'])->nam
 Route::get('/delivery-return/{id}', [DeliveryReturnController::class, 'show'])->name('delivery-return.show');
 Route::get('/delivery-return/{id}/edit', [DeliveryReturnController::class, 'edit'])->name('delivery-return.edit');
 Route::post('/delivery-return/{id}', [DeliveryReturnController::class, 'update'])->name('delivery-return.update');
+Route::get('/delivery-return/{id}/delete-check', [DeliveryReturnController::class, 'deleteCheck'])->name('delivery-return.deleteCheck');
+Route::delete('/delivery-return/{id}', [DeliveryReturnController::class, 'destroy'])->name('delivery-return.destroy');
 Route::get('/delivery-return/print/{id}', [DeliveryReturnController::class, 'printDeliveryReturn'])->name('delivery-return.print');
 
 // Assets

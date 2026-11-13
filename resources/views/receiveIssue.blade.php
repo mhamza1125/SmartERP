@@ -72,8 +72,9 @@
                       <td>{{$item->articles}}</td>
                       <td>{{ $item->table_name === 'employee' ? $item->employee_no . ' - ' . $item->name : $item->vendor_no . ' - ' . $item->fname }}</td>
                       <td>
-                        <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('rstock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Stock::class)<a href="{{ route('rstock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $item->stock_id), 'check' => route('stock.deleteCheck', $item->stock_id), 'label' => 'Receiving '.$item->stock_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                       </td>
                     </tr>
                     @endforeach

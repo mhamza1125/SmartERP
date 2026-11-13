@@ -92,6 +92,7 @@ class ProductController extends Controller
 
     public function store(ProductRequest $request)
     {
+        $this->authorize('create', Product::class);
         $validatedData = $request->validated();
         $materialIds = $request->input('material_id');
         $validatedData['material_id'] = $materialIds ? implode('|', $materialIds) : '0';
@@ -313,6 +314,7 @@ class ProductController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Product::class);
         $materialIds = $request->input('material_id');
         $this->productMaterialRepository->updateMaterial($id, $materialIds);
         $materialIds = $materialIds ? implode('|', $materialIds) : '0';
@@ -399,10 +401,6 @@ class ProductController extends Controller
         }
     }
 
-    public function destroy(product $product)
-    {
-        $this->authorize('delete', Product::class);
-    }
 
     /**
      * Returns the stock_id to use for opening stock entries.
@@ -439,5 +437,29 @@ class ProductController extends Controller
             'created_at'   => now(),
             'updated_at'   => now(),
         ]);
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Product::class);
+
+        return $this->deletionCheckResponse($this->productRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Product::class);
+
+        return $this->runDeletion(
+            $this->productRepository->deletionImpact($id),
+            fn () => $this->productRepository->delete($id),
+            route('product')
+        );
     }
 }

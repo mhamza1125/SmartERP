@@ -3695,3 +3695,70 @@ $(document).ready(function () {
     }
 });
 // End - PTC (Process Travel Card) Script
+
+// ---------------------------------------------------------------------------------------------
+// Delete buttons (resources/views/deleteButton.blade.php)
+// 1. asks the server what the delete affects (data-check -> { blockers, cascades, notes })
+// 2. blocked: explains which records still use it; otherwise asks to confirm, listing what is
+//    deleted with it
+// 3. confirmed: submits #deleteRecordForm (DELETE + CSRF + confirmed=1) to data-url
+// The server checks everything again, so this is only the user-facing part.
+// ---------------------------------------------------------------------------------------------
+(function ($) {
+    function listHtml(title, items, css) {
+        if (!items || !items.length) return '';
+        var html = '<div class="text-left mt-2"><b>' + title + '</b><ul class="mb-1 ' + (css || '') + '">';
+        $.each(items, function (i, item) { html += '<li>' + $('<div>').text(item).html() + '</li>'; });
+        return html + '</ul></div>';
+    }
+
+    function showDialog(label, data) {
+        var box = document.createElement('div');
+        box.style.fontSize = '14px';
+        if (data && data.can_delete === false) {
+            box.innerHTML = '<div class="text-left">' + $('<div>').text(label).html() + ' cannot be deleted while other records use it.</div>'
+                + listHtml('Used by:', data.blockers, 'text-danger')
+                + '<div class="text-left text-muted small">Delete or change those records first.</div>';
+            return swal({ title: 'Cannot delete', content: box, icon: 'error', buttons: 'OK' }).then(function () { return false; });
+        }
+        box.innerHTML = '<div class="text-left">Delete <b>' + $('<div>').text(label).html() + '</b>? This cannot be undone.</div>'
+            + listHtml('These will also be deleted:', data ? data.cascades : [], 'text-danger')
+            + listHtml('Please note:', data ? data.notes : [], 'text-muted');
+        return swal({
+            title: 'Are you sure?',
+            content: box,
+            icon: 'warning',
+            buttons: ['Cancel', 'Yes, delete'],
+            dangerMode: true
+        });
+    }
+
+    $(document).on('click', '.js-delete-record', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var url = $btn.data('url');
+        var check = $btn.data('check');
+        var label = $btn.data('label') || 'this record';
+        if (!url || $btn.prop('disabled')) return;
+
+        var ask = function (data) {
+            showDialog(label, data).then(function (ok) {
+                if (!ok) return;
+                var $form = $('#deleteRecordForm');
+                $form.attr('action', url);
+                $form.trigger('submit');
+            });
+        };
+
+        if (!check) { ask(null); return; }
+        $btn.prop('disabled', true);
+        $.ajax({ url: check, dataType: 'json', headers: { 'Accept': 'application/json' } })
+            .done(function (res) { ask(res && res.data ? res.data : null); })
+            .fail(function (xhr) {
+                var msg = xhr.status === 403 ? 'You do not have permission to delete this record.'
+                    : (xhr.status === 404 ? 'This record no longer exists.' : 'Could not check this record. Please try again.');
+                if (typeof iziToast !== 'undefined') iziToast.error({ title: 'Error!', message: msg, position: 'topRight' });
+            })
+            .always(function () { $btn.prop('disabled', false); });
+    });
+})(jQuery);

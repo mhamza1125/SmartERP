@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Vendor Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('vendor.add') }}" class="btn btn-primary">Add Vendor</a>
+              @can('create', App\Models\Vendor::class)<a href="{{ route('vendor.add') }}" class="btn btn-primary">Add Vendor</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -38,9 +38,10 @@
                         <span class="badge badge-success">Active</span> @else 
                         <span class="badge badge-danger">Inactive</span> @endif</td>  --}}
                       <td>
-                        <a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Ledger</a>
+                        @if(auth()->user()->can('show', App\Models\Vendor::class))<a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Vendor::class)<a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Vendor::class)@include('deleteButton', ['url' => route('vendor.destroy', $item->vendor_id), 'check' => route('vendor.deleteCheck', $item->vendor_id), 'label' => 'Vendor '.$item->vendor_no, 'class' => 'btn btn-danger btn-sm'])@endcan
+                        @if(auth()->user()->can('show', App\Models\Vendor::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('vendor.detail', $item->vendor_id) }}" class="btn btn-success btn-sm">Ledger</a>@endif
                       </td>
                     </tr>
                     @endforeach

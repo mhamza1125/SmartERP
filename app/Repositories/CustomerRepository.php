@@ -2,12 +2,17 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use App\Repositories\ImageRepository;
 use Carbon\Carbon;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
 
 class CustomerRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Customer::leftJoin('heads as currency', 'currency.head_id', '=', 'customers.currency_id')
@@ -55,5 +60,33 @@ class CustomerRepository implements GlobalInterface
         return $update->customer_id;
     }
 
-    public function delete($id){}
+    /**
+     * A customer can be deleted only while no order or ledger entry uses it; its own opening
+     * balance entry and images are deleted with it.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $customer = Customer::findOrFail($id);
+        $impact = DeletionImpact::for('Customer '.$customer->customer_no.' ('.trim($customer->fname.' '.$customer->lname).')');
+
+        $impact->blockIf($this->refCount('orders', 'customer_id', $id), 'order', null, $this->refExamples('orders', 'customer_id', $id, 'order_no'));
+        $impact->blockIf(
+            $this->refCount('transactions', 'payee_id', $id, fn ($q) => $q->where('transaction_to', 'customer')->where('transaction_type', '!=', 'openingBalance')),
+            'ledger transaction (payment / journal voucher)', 'ledger transactions (payments / journal vouchers)'
+        );
+        $impact->blockIf($this->refCount('banks', 'banker_id', $id, fn ($q) => $q->where('bank_holder', 'customer')), 'bank account');
+
+        $impact->cascadeIf($this->refCount('transactions', 'payee_id', $id, fn ($q) => $q->where('transaction_to', 'customer')->where('transaction_type', 'openingBalance')), 'opening balance entry', 'opening balance entries');
+        $impact->cascadeIf(app(ImageRepository::class)->countFor('customers', $id), 'image');
+
+        return $impact;
+    }
+
+    public function delete($id)
+    {
+        DB::table('transactions')->where('transaction_to', 'customer')->where('transaction_type', 'openingBalance')->where('payee_id', $id)->delete();
+        app(ImageRepository::class)->deleteFor('customers', $id);
+
+        return Customer::findOrFail($id)->delete();
+    }
 }

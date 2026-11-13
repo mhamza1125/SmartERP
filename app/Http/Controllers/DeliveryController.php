@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\InvoiceSpreadsheet;
+use App\Support\InvoiceTotals;
 use App\Models\Order;
 use App\Models\Delivery;
 use Illuminate\Http\Request;
@@ -241,6 +243,7 @@ class DeliveryController extends Controller
 
     public function store(DeliveryRequest $request)
     {
+        $this->authorize('create', Delivery::class);
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -432,7 +435,27 @@ class DeliveryController extends Controller
     public function printCommercial(CommercialInvoiceRequest $request, $id)
     {
         $this->authorize('show', Delivery::class);
-        $options = $request->validated();
+
+        return view('print.delivery-commercial', $this->commercialInvoiceData($id, $request->validated()));
+    }
+
+    /**
+     * The same commercial invoice as an editable Excel workbook (same options as the print).
+     */
+    public function exportCommercial(CommercialInvoiceRequest $request, $id)
+    {
+        $this->authorize('show', Delivery::class);
+        $data = $this->commercialInvoiceData($id, $request->validated());
+        $name = 'Commercial_Invoice_'.preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) ($data['delivery']['delivery_no'] ?? $id)).'.xlsx';
+
+        return InvoiceSpreadsheet::download(InvoiceSpreadsheet::commercial($data), $name);
+    }
+
+    /**
+     * Everything the commercial invoice shows (print and Excel), for one delivery.
+     */
+    private function commercialInvoiceData($id, array $options): array
+    {
         $delivery = $this->deliveryRepository->get($id);
         $deliveryItem = $this->stockItemRepository->delivery($id);
         $company = $this->companyRepository->first();
@@ -493,7 +516,8 @@ class DeliveryController extends Controller
             $deliveryItem->pluck('line_order_id')->push($delivery['order_id'] ?? null)
         );
 
-        return view('print.delivery-commercial', [
+        return [
+            'totals' => InvoiceTotals::commercial($deliveryItem, $delivery, $sellingType, $paymentPercent, $isMultiOrder, $relatedOrders),
             'orderDescriptions' => $orderDescriptions,
             'delivery' => $delivery,
             'deliveryItem' => $deliveryItem,
@@ -509,7 +533,7 @@ class DeliveryController extends Controller
             'packingList' => $packingList,
             'isMultiOrder' => $isMultiOrder,
             'relatedOrders' => $relatedOrders,
-        ]);
+        ];
     }
 
     private function isMultiOrderDelivery($delivery)
@@ -627,6 +651,7 @@ class DeliveryController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Delivery::class);
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -754,16 +779,13 @@ class DeliveryController extends Controller
 
     public function updateStatus($id, $status)
     {
+        $this->authorize('edit', Delivery::class);
         $deliveryStatus = ['delivery_status' => $status];
         $this->deliveryRepository->update($id, $deliveryStatus);
 
         return redirect()->route('delivery')->with('success', 'Status Updated Successfully');
     }
 
-    public function destroy(Purchase $purchase)
-    {
-        $this->authorize('delete', Delivery::class);
-    }
 
     private function storeSI($getId, $ptids, $mids, $quantities, $stages, array $lineOrders = [])
     {
@@ -835,6 +857,7 @@ class DeliveryController extends Controller
      */
     public function getCustomerAddress($customerId)
     {
+        $this->authorizeAny([['create', Delivery::class], ['edit', Delivery::class]]);
         try {
             $customer = $this->customerRepository->get($customerId);
             if ($customer && isset($customer['address'])) {
@@ -851,6 +874,7 @@ class DeliveryController extends Controller
      */
     public function getCustomerOrders($customerId)
     {
+        $this->authorizeAny([['create', Delivery::class], ['edit', Delivery::class]]);
         try {
             // Get non-completed/non-delivered orders for the customer
             $orders = $this->orderRepository->getCustomerOrders($customerId);
@@ -859,5 +883,29 @@ class DeliveryController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to load customer orders'], 500);
         }
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Delivery::class);
+
+        return $this->deletionCheckResponse($this->deliveryRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Delivery::class);
+
+        return $this->runDeletion(
+            $this->deliveryRepository->deletionImpact($id),
+            fn () => $this->deliveryRepository->delete($id),
+            route('delivery')
+        );
     }
 }

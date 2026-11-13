@@ -171,9 +171,6 @@ class ReturnController extends Controller
         return redirect()->route('return.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(ReturnMaterial $return)
-    {
-    }
 
     private function storeRM($getId, $rids, $quantities, $remarks)
     {
@@ -229,5 +226,29 @@ class ReturnController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Returns::class);
+
+        return $this->deletionCheckResponse($this->returnRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Returns::class);
+
+        return $this->runDeletion(
+            $this->returnRepository->deletionImpact($id),
+            fn () => $this->returnRepository->delete($id),
+            route('return')
+        );
     }
 }

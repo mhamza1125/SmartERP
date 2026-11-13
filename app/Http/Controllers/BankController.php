@@ -79,6 +79,7 @@ class BankController extends Controller
 
     public function store(BankRequest $request)
     {
+        $this->authorize('create', Bank::class);
         $validatedData = $request->validated();
         $getId = $this->bankRepository->store($validatedData);
         if ($validatedData['credit'] > 0 && isset($getId)) {
@@ -109,13 +110,34 @@ class BankController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Bank::class);
         $getId = $this->bankRepository->update($id, $request->input());
 
         return redirect()->route('bank')->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(product $product)
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
         $this->authorize('delete', Bank::class);
+
+        return $this->deletionCheckResponse($this->bankRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Bank::class);
+
+        return $this->runDeletion(
+            $this->bankRepository->deletionImpact($id),
+            fn () => $this->bankRepository->delete($id),
+            route('bank')
+        );
     }
 }

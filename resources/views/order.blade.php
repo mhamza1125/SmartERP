@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Order Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('order.add') }}" class="btn btn-primary">Add Order</a>
+              @can('create', App\Models\Order::class)<a href="{{ route('order.add') }}" class="btn btn-primary">Add Order</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -47,6 +47,9 @@
                           $statusLabel = \App\Models\Order::STATUS_LABELS[$item->order_status] ?? 'Unknown';
                           $statusClass = [1 => 'btn-secondary', 2 => 'btn-success', 3 => 'btn-info', 4 => 'btn-primary', 5 => 'btn-danger'][$item->order_status] ?? 'btn-danger';
                         @endphp
+                        @cannot('edit', App\Models\Order::class)
+                          <span class="badge {{ str_replace('btn-', 'badge-', $statusClass) }}">{{ $statusLabel }}</span>
+                        @else
                         <div class="btn-group">
                             <button class="btn {{ $statusClass }} btn-sm dropdown-toggle" type="button" data-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" title="Change status">
                               {{ $statusLabel }}
@@ -62,11 +65,13 @@
                               @endforeach
                             </form>
                           </div>
+                        @endcannot
                       </td>
                       <td>
-                        <a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>
+                        @if(auth()->user()->can('show', App\Models\Order::class))<a href="{{ route('order.show', $item->order_id) }}" class="btn btn-info btn-sm">View</a>@endif
                         @if(\App\Models\Order::isEditableStatus($item->order_status))
-                          <a href="{{ route('order.edit', $item->order_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                          @can('edit', App\Models\Order::class)<a href="{{ route('order.edit', $item->order_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Order::class)@include('deleteButton', ['url' => route('order.destroy', $item->order_id), 'check' => route('order.deleteCheck', $item->order_id), 'label' => 'Order '.$item->order_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                         @else
                           <button class="btn btn-secondary btn-sm" disabled title="Cannot edit Dispatched, Delivered, or Cancelled orders">Edit</button>
                         @endif

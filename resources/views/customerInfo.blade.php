@@ -13,8 +13,9 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('customer') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('customer.edit', $customer['customer_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('customer.detail', $customer['customer_id']) }}" class="btn btn-primary">Ledger</a>
+                @can('edit', App\Models\Customer::class)<a href="{{ route('customer.edit', $customer['customer_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Customer::class)@include('deleteButton', ['url' => route('customer.destroy', $customer['customer_id']), 'check' => route('customer.deleteCheck', $customer['customer_id']), 'label' => 'Customer '.$customer['customer_no'], 'class' => 'btn btn-danger'])@endcan
+                @if(auth()->user()->can('show', App\Models\Customer::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('customer.detail', $customer['customer_id']) }}" class="btn btn-primary">Ledger</a>@endif
               </div>
             </div>
           </div>
@@ -56,10 +57,12 @@
                     <a href="{{ URL::asset('resources/customer/'. $item->image) }}">
                       <img class="img-responsive thumbnail" src="{{ URL::asset('resources/customer/'. $item->image) }}" alt="">
                     </a>
+                    @can('edit', App\Models\Customer::class)
                     <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'customer'])}}" method="POST">
                       @csrf
                       <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                     </form>
+                    @endcan
                   </div>
                 @endforeach
               </div>

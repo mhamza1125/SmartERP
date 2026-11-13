@@ -107,6 +107,37 @@
                                     </div>
                                 </div>
 
+                                <h6 class="mt-3">Attendance Machine</h6>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label>Attendance Database File <small class="text-muted">(ATT2000.mdb)</small></label>
+                                            <input type="text" class="form-control" name="attendance_db_path" maxlength="500"
+                                                   value="{{ old('attendance_db_path', $company->attendance_db_path) }}"
+                                                   placeholder="{{ config('attendance.default_path') }}">
+                                            <small class="form-text text-muted">
+                                                Full path of the attendance machine's database on the server, e.g. <code>D:\ZKTeco\att2000.mdb</code>,
+                                                or a path inside this application, e.g. <code>{{ config('attendance.default_path') }}</code>.
+                                                Leave empty to use the default ({{ config('attendance.default_path') }}). Only .mdb / .accdb files are accepted.
+                                            </small>
+                                            @error('attendance_db_path')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Current File</label>
+                                            @if($machineDb['ok'])
+                                                <div class="text-success"><i class="fas fa-check-circle"></i> Found and readable</div>
+                                            @else
+                                                <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{ $machineDb['message'] }}</div>
+                                            @endif
+                                            <small class="form-text text-muted text-break">{{ $machineDb['path'] }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">

@@ -19,4 +19,5 @@
 @endphp
 @if($viewRoute)
   <a href="{{ route($viewRoute, $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+@can('delete', App\Models\Transaction::class)@include('deleteButton', ['url' => route('transaction.destroy', $item->transaction_id), 'check' => route('transaction.deleteCheck', $item->transaction_id), 'label' => transactionLabel($item->transaction_type).' #'.$item->transaction_id, 'class' => 'btn btn-danger btn-sm'])@endcan
 @endif

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProformaInvoiceRequest;
+use App\Exports\InvoiceSpreadsheet;
+use App\Support\InvoiceTotals;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
@@ -96,6 +99,7 @@ class OrderController extends Controller
 
     public function store(OrderRequest $request)
     {
+        $this->authorize('create', Order::class);
         $validatedData = $request->validated();
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -287,30 +291,46 @@ class OrderController extends Controller
     /**
      * Print proforma invoice
      */
-    public function printProforma($id)
+    public function printProforma(ProformaInvoiceRequest $request, $id)
     {
         $this->authorize('show', Order::class);
+
+        return view('print.order-proforma', $this->proformaData($id, $request->validated()));
+    }
+
+    /**
+     * The same proforma invoice as an editable Excel workbook (same options as the print).
+     */
+    public function exportProforma(ProformaInvoiceRequest $request, $id)
+    {
+        $this->authorize('show', Order::class);
+        $data = $this->proformaData($id, $request->validated());
+        $name = 'Proforma_Invoice_'.preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) ($data['order']['order_no'] ?? $id)).'.xlsx';
+
+        return InvoiceSpreadsheet::download(InvoiceSpreadsheet::proforma($data), $name);
+    }
+
+    /**
+     * Everything the proforma invoice shows (print and Excel), for one order.
+     */
+    private function proformaData($id, array $options): array
+    {
         $order = $this->orderRepository->get($id);
+        abort_if(! $order, 404);
         $orderItem = $this->orderItemRepository->get($id);
-        $company = $this->companyRepository->first();
+        $sellingType = $options['selling_type'] ?? null;
 
-        // Bank account picked in the proforma modal (optional)
-        $bankDetails = $this->bankRepository->printDetails(request()->input('bank_id'));
-
-        // Get optional parameters
-        $hsCode = request()->input('hs_code');
-        $sellingType = request()->input('selling_type');
-        $uom = request()->input('uom');
-
-        return view('print.order-proforma', [
+        return [
             'order' => $order,
             'orderItem' => $orderItem,
-            'bankDetails' => $bankDetails,
-            'company' => $company,
-            'hsCode' => $hsCode,
+            // Bank account picked in the proforma modal (optional)
+            'bankDetails' => $this->bankRepository->printDetails($options['bank_id'] ?? null),
+            'company' => $this->companyRepository->first(),
+            'hsCode' => $options['hs_code'] ?? null,
             'sellingType' => $sellingType,
-            'uom' => $uom,
-        ]);
+            'uom' => $options['uom'] ?? null,
+            'totals' => InvoiceTotals::proforma($orderItem, $sellingType),
+        ];
     }
 
     private function getPackingList($orderId)
@@ -476,6 +496,7 @@ class OrderController extends Controller
 
     public function generateJobNumberAjax(Request $request)
     {
+        $this->authorizeAny([['create', Order::class], ['edit', Order::class]]);
         try {
             $customerId = $request->input('customer_id');
             $jobNumber = $this->generateJobNumber($customerId);
@@ -515,9 +536,6 @@ class OrderController extends Controller
         return redirect()->route('order')->with('success', $message);
     }
 
-    public function destroy(Purchase $purchase)
-    {
-    }
 
     private function storeOI($getId, $products, $stages, $prices, $quantities)
     {
@@ -536,5 +554,29 @@ class OrderController extends Controller
             ];
             $this->orderItemRepository->store($orderItem);
         }
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Order::class);
+
+        return $this->deletionCheckResponse($this->orderRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Order::class);
+
+        return $this->runDeletion(
+            $this->orderRepository->deletionImpact($id),
+            fn () => $this->orderRepository->delete($id),
+            route('order')
+        );
     }
 }

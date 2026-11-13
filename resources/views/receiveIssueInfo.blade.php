@@ -13,7 +13,8 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ route('receiveIssue') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('rstock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>
+                @can('edit', App\Models\Stock::class)<a href="{{ route('rstock.edit', $issue['stock_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $issue['stock_id']), 'check' => route('stock.deleteCheck', $issue['stock_id']), 'label' => 'Receiving '.$issue['stock_no'], 'class' => 'btn btn-danger'])@endcan
               </div>
             </div>
           </div>

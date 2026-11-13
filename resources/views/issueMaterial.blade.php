@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Issuance Material Material Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('mstock.add') }}" class="btn btn-primary">Add Issue</a>
+              @can('create', App\Models\Stock::class)<a href="{{ route('mstock.add') }}" class="btn btn-primary">Add Issue</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -34,8 +34,9 @@
                       <td>{{$item->hname}}</td>
                       <td>{{$item->employee_no}} - {{$item->name}}</td>
                       <td>
-                        <a href="{{ route('mstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('mstock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('mstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Stock::class)<a href="{{ route('mstock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $item->stock_id), 'check' => route('stock.deleteCheck', $item->stock_id), 'label' => 'Machine issuance '.$item->stock_no, 'class' => 'btn btn-danger btn-sm'])@endcan
                       </td>
                     </tr>
                     @endforeach

@@ -12,19 +12,13 @@ class HeadPolicy
      */
     private function allowed(User $user, string $action): bool
     {
-        return $user->role_id === 1
-            || $user->hasPermission('heads_'.$action)
+        return $user->hasPermission('heads_'.$action)
             || $user->hasPermission('settings_'.$action);
     }
 
     public function access(User $user): bool
     {
         return $this->allowed($user, 'access');
-    }
-
-    public function show(User $user): bool
-    {
-        return $this->allowed($user, 'show');
     }
 
     public function create(User $user): bool

@@ -47,6 +47,7 @@ class AdminController extends Controller
         $role = $this->adminRepository->role();
 
         return view('role', [
+            'summaries' => $this->adminRepository->roleSummaries(),
             'role' => $role,
         ]);
     }
@@ -81,17 +82,60 @@ class AdminController extends Controller
             ->toArray();
 
         return view('editRole', [
+            'isSystemAdminRole' => $this->adminRepository->isSystemAdminRole($id->id),
             'role' => $id,
             'groupedPermissions' => $groupedPermissions,
             'rolePermissionIds' => $rolePermissionIds,
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(RoleRequest $request, $id)
     {
         $this->authorize('roles_edit', User::class);
-        $this->adminRepository->update($id, $request->input());
+        $this->adminRepository->update($id, $request->validated());
 
         return redirect()->route('role.edit', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    /**
+     * What deleting this user would affect (JSON for the delete button).
+     */
+    public function userDeleteCheck($id)
+    {
+        $this->authorize('users_delete', User::class);
+
+        return $this->deletionCheckResponse($this->userRepository->deletionImpact($id));
+    }
+
+    public function userDestroy($id)
+    {
+        $this->authorize('users_delete', User::class);
+
+        return $this->runDeletion(
+            $this->userRepository->deletionImpact($id),
+            fn () => $this->userRepository->delete($id),
+            route('user')
+        );
+    }
+
+    /**
+     * What deleting this role would affect (JSON for the delete button).
+     */
+    public function roleDeleteCheck($id)
+    {
+        $this->authorize('roles_delete', User::class);
+
+        return $this->deletionCheckResponse($this->adminRepository->deletionImpact($id));
+    }
+
+    public function roleDestroy($id)
+    {
+        $this->authorize('roles_delete', User::class);
+
+        return $this->runDeletion(
+            $this->adminRepository->deletionImpact($id),
+            fn () => $this->adminRepository->delete($id),
+            route('role')
+        );
     }
 }

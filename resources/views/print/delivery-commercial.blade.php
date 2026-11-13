@@ -14,29 +14,20 @@
 
 @section('content')
 @php
-    $totalQuantity = $deliveryItem->sum('quantity');
-    $itemsTotal = $deliveryItem->sum(fn ($item) => $item->quantity * ($item->price ?? 0));
-    $freightCharges = (float) ($delivery['freight_charges'] ?? 0);
-    $grandTotal = $itemsTotal + $freightCharges;
-    $currencyName = $deliveryItem->first()->cname ?? 'PKR';
-    $totalLabel = !empty($sellingType) ? 'Total ' . $sellingType . ' Amount:' : 'Grand Total:';
+    // All figures come from App\Support\InvoiceTotals::commercial() (the Excel export uses the same).
+    // Partial payment: the invoice still shows the full value of the goods, plus the share requested now.
+    [
+        'totalQuantity' => $totalQuantity, 'itemsTotal' => $itemsTotal, 'freightCharges' => $freightCharges,
+        'grandTotal' => $grandTotal, 'currencyName' => $currencyName, 'totalLabel' => $totalLabel,
+        'isPartialPayment' => $isPartialPayment, 'percentLabel' => $percentLabel, 'amountDue' => $amountDue,
+        'paymentTerms' => $paymentTerms,
+    ] = $totals;
 
     // FI No is resolved by the controller: modal value, else the delivery's, else Settings > Company
     $fiNo = $fiNo ?? null;
 
-    // Partial payment: the invoice still shows the full value of the goods, plus the share requested now
-    $paymentPercent = (float) ($paymentPercent ?? 100);
-    $isPartialPayment = $paymentPercent < 100;
-    $percentLabel = rtrim(rtrim(number_format($paymentPercent, 2), '0'), '.') . '%';
-    $amountDue = round($grandTotal * $paymentPercent / 100, 2);
-
     // Combined invoice for several orders: an Order column identifies each line's order
     $showLineOrders = !empty($showLineOrders);
-
-    // Payment terms of the order(s) this delivery is for
-    $paymentTerms = (!empty($isMultiOrder) && !empty($relatedOrders))
-        ? collect($relatedOrders)->map(fn ($order) => trim((string) ((array) $order)['payment_terms']))->filter()->unique()->implode('; ')
-        : trim((string) ($delivery['payment_terms'] ?? ''));
 @endphp
 
 {{-- Invoice details --}}
@@ -153,7 +144,7 @@
                 <td class="text-center">{{ $item->hname ?? 'N/A' }}</td>
                 <td class="num">{{ number_format($item->quantity) }}</td>
                 <td class="num">{{ number_format($item->price ?? 0, 2) }}</td>
-                <td class="num">{{ number_format($item->quantity * ($item->price ?? 0), 2) }}</td>
+                <td class="num">{{ number_format(\App\Support\InvoiceTotals::lineTotal($item), 2) }}</td>
             </tr>
             @endforeach
         </tbody>

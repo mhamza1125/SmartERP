@@ -2,12 +2,17 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use App\Models\StockBatch;
 use App\Models\Purchase;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function __construct(protected StockBatchRepository $stockBatchRepository) {}
 
     public function all()
@@ -125,5 +130,47 @@ class PurchaseRepository implements GlobalInterface
         return $update->purchase_id;
     }
 
-    public function delete($id) {}
+    /**
+     * A purchase (or material processing order) can be deleted only while nothing was received
+     * against it and no vendor payment is linked to it. Its lines go with it; for material
+     * processing, the material sent out comes back into stock.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $purchase = Purchase::findOrFail($id);
+        $impact = DeletionImpact::for('Purchase '.$purchase->purchase_no);
+        $itemIds = DB::table('purchase_items')->where('purchase_id', $id)->pluck('purchase_item_id')->all();
+
+        $impact->blockIf($this->refCount('receives', 'purchase_id', $id), 'receiving', null, $this->refExamples('receives', 'purchase_id', $id, 'receive_no'));
+        $impact->blockIf(
+            $this->refCount('transactions', 'order_id', $id, fn ($q) => $q->where('transaction_to', 'vendor')->where('transaction_type', 'payment')),
+            'vendor payment'
+        );
+
+        $impact->cascadeIf(count($itemIds), 'purchase line');
+        $processed = $this->refCount('mprocess', 'purchase_id', $id);
+        if ($processed) {
+            $impact->cascadeIf($processed, 'material processing line');
+            $impact->note('The material sent out for processing is returned to material stock.');
+        }
+
+        return $impact;
+    }
+
+    public function delete($id)
+    {
+        $purchase = Purchase::findOrFail($id);
+        $itemIds = DB::table('purchase_items')->where('purchase_id', $id)->pluck('purchase_item_id')->all();
+
+        // Material processing: the raw material stock-out rows created for each line
+        $processStockIds = DB::table('mprocess')->join('stock_items', 'stock_items.stock_item_id', '=', 'mprocess.stock_item_id')
+            ->where('mprocess.purchase_id', $id)->where('stock_items.stock_id', '>', 1)->pluck('stock_items.stock_id')->unique()->all();
+        DB::table('mprocess')->where('purchase_id', $id)->delete();
+        app(StockRepository::class)->purge($processStockIds);
+
+        DB::table('purchase_items')->where('purchase_id', $id)->delete();
+        app(StockBatchRepository::class)->deleteUnused(StockBatch::SOURCE_PURCHASE, $itemIds);
+
+        return $purchase->delete();
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Http\Requests\MaterialRequest;
 use App\Models\Material;
 use App\Repositories\HeadRepository;
@@ -66,6 +67,7 @@ class MaterialController extends Controller
 
     public function store(MaterialRequest $request)
     {
+        $this->authorize('create', Material::class);
         $validatedData = $request->validated();
         $getId = $this->materialRepository->store($validatedData);
         $stockItem = [ // Opening Stock
@@ -137,7 +139,7 @@ class MaterialController extends Controller
 
     public function detail(Request $request)
     {
-        $this->authorize('show', Material::class);
+        $this->authorizeAny([['show', Material::class], ['reports_access', User::class]]);
         // Materail Ledger
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -163,7 +165,7 @@ class MaterialController extends Controller
      */
     public function printMaterialDetail(Request $request)
     {
-        $this->authorize('show', Material::class);
+        $this->authorizeAny([['show', Material::class], ['reports_access', User::class]]);
         // Material Ledger
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -186,6 +188,7 @@ class MaterialController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Material::class);
         $getId = $this->materialRepository->update($id, $request->input());
         $stockItem = [ // Opening Stock
             'stock_id' => '1',
@@ -206,8 +209,28 @@ class MaterialController extends Controller
         return redirect()->route('material.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Material $material)
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
     {
         $this->authorize('delete', Material::class);
+
+        return $this->deletionCheckResponse($this->materialRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Material::class);
+
+        return $this->runDeletion(
+            $this->materialRepository->deletionImpact($id),
+            fn () => $this->materialRepository->delete($id),
+            route('material')
+        );
     }
 }

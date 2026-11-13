@@ -51,6 +51,7 @@ class IGroupController extends Controller
 
     public function index()
     {
+        $this->authorize('access', Stock::class);
         $igroup = $this->igroupRepository->all();
 
         return view('igroup', [
@@ -60,6 +61,7 @@ class IGroupController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Stock::class);
         $order = $this->orderRepository->active();
         $product = $this->productRepository->activeTypes();
 
@@ -71,6 +73,7 @@ class IGroupController extends Controller
 
     public function store(IGroupRequest $request)
     {
+        $this->authorize('create', Stock::class);
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -87,6 +90,7 @@ class IGroupController extends Controller
 
     public function show($id)
     {
+        $this->authorize('show', Stock::class);
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
         $igroup = $this->igroupRepository->get($id);
@@ -105,6 +109,7 @@ class IGroupController extends Controller
      */
     public function printIGroup($id)
     {
+        $this->authorize('show', Stock::class);
         $stock = $this->stockItemRepository->stock();
         $pstock = $this->stockItemRepository->pStock();
         $igroup = $this->igroupRepository->get($id);
@@ -120,6 +125,7 @@ class IGroupController extends Controller
 
     public function edit(IGroup $id)
     {
+        $this->authorize('edit', Stock::class);
         $order = $this->orderRepository->active();
         $igroup = $this->igroupRepository->get($id);
         $product = $this->productRepository->activeTypes();
@@ -135,6 +141,7 @@ class IGroupController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Stock::class);
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }

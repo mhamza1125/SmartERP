@@ -9,10 +9,10 @@
             <h4>Purchase Ledger</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a class="btn btn-info" href="{{ route('purchase.ledger.print') }}{{ !empty($dfrom) && !empty($dto) ? '?dfrom=' . $dfrom . '&dto=' . $dto : '' }}" target="_blank">
+                @if((auth()->user()->can('access', App\Models\Purchase::class) || auth()->user()->can('reports_access', App\Models\User::class)))<a class="btn btn-info" href="{{ route('purchase.ledger.print') }}{{ !empty($dfrom) && !empty($dto) ? '?dfrom=' . $dfrom . '&dto=' . $dto : '' }}" target="_blank">
                   <i class="fas fa-file-alt"></i> Print
-                </a>
-                <a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>
+                </a>@endif
+                @if(auth()->user()->can('access', App\Models\Purchase::class))<a href="{{ route('purchase') }}" class="btn btn-primary">Back</a>@endif
               </div>
             </div>
           </div>
@@ -133,11 +133,11 @@
                         <td class="text-right">{{ number_format($balance, 2) }}</td>
                         <td>
                           @if(isset($item->purchase_id))
-                            <a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
+                            @if(auth()->user()->can('show', App\Models\Purchase::class))<a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>@endif
                           @elseif(isset($item->return_id))
-                            <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
+                            @if(auth()->user()->can('show', App\Models\Returns::class))<a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>@endif
                           @elseif(isset($item->transaction_id))
-                            <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                            @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
                           @endif
                         </td>
                       </tr>

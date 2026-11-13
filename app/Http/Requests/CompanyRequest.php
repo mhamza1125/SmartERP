@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Repositories\AttendanceRepository;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class CompanyRequest extends FormRequest
 {
@@ -31,6 +33,8 @@ class CompanyRequest extends FormRequest
             'overtime_multiplier' => 'nullable|numeric|min:0|max:10',
             'late_multiplier' => 'nullable|numeric|min:0|max:10',
             'work_hours_per_day' => 'nullable|numeric|min:1|max:24',
+            // Attendance machine database (ATT2000.mdb); checked in withValidator()
+            'attendance_db_path' => 'nullable|string|max:500',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
@@ -44,5 +48,22 @@ class CompanyRequest extends FormRequest
             'footer_text' => 'nullable|string',
             'statement_of_origin' => 'nullable|string',
         ];
+    }
+
+    /**
+     * The attendance database must be an existing, readable .mdb / .accdb file in an allowed folder.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $path = trim((string) $this->input('attendance_db_path'));
+            if ($path === '' || $validator->errors()->has('attendance_db_path')) {
+                return;
+            }
+            $problem = app(AttendanceRepository::class)->machineDbProblem($path);
+            if ($problem !== null) {
+                $validator->errors()->add('attendance_db_path', $problem);
+            }
+        });
     }
 }

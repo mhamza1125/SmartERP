@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Issuance Groups Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('igroup.add') }}" class="btn btn-primary">Add Group</a>
+              @can('create', App\Models\Stock::class)<a href="{{ route('igroup.add') }}" class="btn btn-primary">Add Group</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -40,8 +40,8 @@
                       </td>  
                       {{-- <td>{{$item->job_no}}</td> --}}
                       <td>
-                        <a href="{{ route('igroup.show', $item->igroup_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('igroup.edit', $item->igroup_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('igroup.show', $item->igroup_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Stock::class)<a href="{{ route('igroup.edit', $item->igroup_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
                       </td>
                     </tr>
                     @endforeach

@@ -8,26 +8,26 @@ class ReceivePolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('receives_access');
+        return $user->hasPermission('receives_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('receives_show');
+        return $user->hasPermission('receives_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('receives_create');
+        return $user->hasPermission('receives_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('receives_edit');
+        return $user->hasPermission('receives_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('receives_delete');
+        return $user->hasPermission('receives_delete');
     }
 }

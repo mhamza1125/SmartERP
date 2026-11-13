@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Customer Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('customer.add') }}" class="btn btn-primary">Add Customer</a>
+              @can('create', App\Models\Customer::class)<a href="{{ route('customer.add') }}" class="btn btn-primary">Add Customer</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -30,9 +30,10 @@
                       <td>{{$item->customer_no}}</td>
                       <td>{{$item->fname}} {{$item->lname}}</td>
                       <td>
-                        <a href="{{ route('customer.show', $item->customer_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('customer.edit', $item->customer_id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ route('customer.detail', $item->customer_id) }}" class="btn btn-success btn-sm">Ledger</a>
+                        @if(auth()->user()->can('show', App\Models\Customer::class))<a href="{{ route('customer.show', $item->customer_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Customer::class)<a href="{{ route('customer.edit', $item->customer_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Customer::class)@include('deleteButton', ['url' => route('customer.destroy', $item->customer_id), 'check' => route('customer.deleteCheck', $item->customer_id), 'label' => 'Customer '.$item->customer_no, 'class' => 'btn btn-danger btn-sm'])@endcan
+                        @if(auth()->user()->can('show', App\Models\Customer::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('customer.detail', $item->customer_id) }}" class="btn btn-success btn-sm">Ledger</a>@endif
                       </td>
                     </tr>
                     @endforeach

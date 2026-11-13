@@ -9,8 +9,8 @@
             <h4>Bank Management</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>
-                <a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>
+                @can('create', App\Models\Bank::class)<a href="{{ route('bank.add') }}" class="btn btn-primary">Add Bank</a>@endcan
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addBRS') }}" class="btn btn-primary">Balance Adjustment</a>@endcan
               </div>
             </div>
           </div>
@@ -55,9 +55,10 @@
                       <td>{{ $ownAccount ? number_format($balanceRow ? $balanceRow->tdebit - $balanceRow->tcredit : 0) : '-' }}</td>
                       <td class="text-nowrap">
                         @if($ownAccount)
-                          <a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a>
+                          @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a>@endif
                         @endif
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->bank_id}}">Edit</button>
+                        @can('edit', App\Models\Bank::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->bank_id}}">Edit</button>@endcan
+@can('delete', App\Models\Bank::class)@include('deleteButton', ['url' => route('bank.destroy', $item->bank_id), 'check' => route('bank.deleteCheck', $item->bank_id), 'label' => 'Bank account '.$item->account_title, 'class' => 'btn btn-danger btn-sm'])@endcan
                       </td>
                     </tr>
                   @endforeach

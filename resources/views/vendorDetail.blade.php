@@ -17,12 +17,14 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
+                @can('create', App\Models\Transaction::class)
                 <a href="{{ $vendor['vendor_type'] == 0 
                         ? route('transaction.addVPayment', ['payee_id' => $vendor['vendor_id']])
                         : route('transaction.addCPayment', ['payee_id' => $vendor['vendor_id']]) }}"
                   class="btn btn-primary">
                     Pay
                 </a>
+                @endcan
 
               </div>
             </div>
@@ -141,7 +143,7 @@
                             @elseif($item->transaction_type == 'wages')
                                 <div class="btn-group mt-1">
                                   @if(isset($item->stock_id))
-                                    <a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
+                                    @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('rstock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
                                   @endif
                                   @if(isset($item->wage_details) && !empty($item->wage_details) && isset($item->stock_id))
                                     <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#wagesModal{{ $item->stock_id }}">
@@ -150,12 +152,12 @@
                                   @endif
                                 </div>
                             @else
-                              <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
+                              @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
                             @endif
                           @elseif(isset($item->return_no))
-                          <a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>
+                          @if(auth()->user()->can('show', App\Models\Returns::class))<a href="{{ route('return.show', $item->return_id) }}" class="btn btn-info btn-sm">View</a>@endif
                           @elseif(isset($item->purchase_no))
-                          <a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>
+                          @if(auth()->user()->can('show', App\Models\Purchase::class))<a href="{{ route('purchase.show', $item->purchase_id) }}" class="btn btn-info btn-sm">View</a>@endif
                           @endif
                         </td>
                       </tr>
@@ -245,7 +247,7 @@
             </div>
             <div class="modal-footer">
               @if(isset($item->stock_id))
-                <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info">View Full Issuance</a>
+                @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info">View Full Issuance</a>@endif
               @endif
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>

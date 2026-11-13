@@ -42,13 +42,27 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * Permission names of the user's role, loaded once per request (listing pages check
+     * permissions for every row). Each new request reads them again, so changes made under
+     * Settings > Roles & Permissions apply on the user's next page load.
+     */
+    private ?array $permissionNames = null;
+
+    private ?int $permissionNamesRoleId = null;
+
     public function hasPermission(string $permissionName): bool
     {
-        return \DB::table('permissions')
-            ->join('permission_role', 'permissions.id', '=', 'permission_role.permission_id')
-            ->where('permission_role.role_id', $this->role_id)
-            ->where('permissions.name', $permissionName)
-            ->exists();
+        if ($this->permissionNames === null || $this->permissionNamesRoleId !== $this->role_id) {
+            $this->permissionNames = array_flip(\DB::table('permissions')
+                ->join('permission_role', 'permissions.id', '=', 'permission_role.permission_id')
+                ->where('permission_role.role_id', $this->role_id)
+                ->pluck('permissions.name')
+                ->all());
+            $this->permissionNamesRoleId = $this->role_id;
+        }
+
+        return isset($this->permissionNames[$permissionName]);
     }
 
 

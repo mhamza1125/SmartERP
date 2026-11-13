@@ -88,7 +88,7 @@
               </div>
               <p class="text-muted small mb-3">
                 Hourly wage = gross salary / total working days / hours per day. Defaults come from
-                <a href="{{ route('company') }}">Settings &gt; Company</a>. Temporary advances and the open fixed loan are filled in
+                @if(auth()->user()->can('access', App\Models\Settings::class))<a href="{{ route('company') }}">Settings &gt; Company</a>@endif. Temporary advances and the open fixed loan are filled in
                 from the employee's Give Loan entries. The Loan amount is read-only (it always comes from those records);
                 every other value can be changed.
               </p>

@@ -8,8 +8,8 @@
           <div class="card-header">
             <h4>Product Material Table</h4>
             <div class="card-header-action">
-              <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Product Material</a>
-              {{-- <a href="{{ route('productMaterial.add') }}" class="btn btn-primary">Add Product Material</a> --}}
+              @canany(['create', 'edit'], App\Models\Product::class)<a href="#" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Add Product Material</a>@endcanany
+              {{-- @if((auth()->user()->can('create', App\Models\Product::class) || auth()->user()->can('edit', App\Models\Product::class)))<a href="{{ route('productMaterial.add') }}" class="btn btn-primary">Add Product Material</a>@endif --}}
             </div>
           </div>
           <div class="card-body">
@@ -31,8 +31,8 @@
                       <td>{{$item->article_no}} - Size {{$item->hname}}</td>
                       <td>{{$item->name}}</td>
                       <td>
-                        <a href="{{ route('productMaterial.show', $item->product_type_id) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ route('productMaterial.edit', $item->product_type_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                        @if(auth()->user()->can('show', App\Models\Product::class))<a href="{{ route('productMaterial.show', $item->product_type_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @can('edit', App\Models\Product::class)<a href="{{ route('productMaterial.edit', $item->product_type_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
                       </td>
                     </tr>
                     @endforeach

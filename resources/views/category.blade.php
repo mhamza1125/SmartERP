@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Category Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('category.add') }}" class="btn btn-primary">Add Category</a>
+              @can('create', App\Models\Category::class)<a href="{{ route('category.add') }}" class="btn btn-primary">Add Category</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -27,7 +27,8 @@
                     <tr>
                       <td>{{$loop->index + 1}}</td>
                       <td>{{$item->name}}</td>
-                      <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->category_id}}">Edit</button></td>
+                      <td>@can('edit', App\Models\Category::class)<button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->category_id}}">Edit</button>@endcan
+@can('delete', App\Models\Category::class)@include('deleteButton', ['url' => route('category.destroy', $item->category_id), 'check' => route('category.deleteCheck', $item->category_id), 'label' => 'Category '.$item->name, 'class' => 'btn btn-danger btn-sm'])@endcan</td>
                     </tr>
                     @endforeach
                   @endif

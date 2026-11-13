@@ -17,7 +17,7 @@
                   <i class="fas fa-file-alt"></i> Print
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('transaction.addOPayment', ['payee_id' => $customer['customer_id']]) }}" class="btn btn-primary">Receive</a>
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addOPayment', ['payee_id' => $customer['customer_id']]) }}" class="btn btn-primary">Receive</a>@endcan
               </div>
             </div>
           </div>
@@ -172,7 +172,7 @@
                               <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
                             @endif
                           @elseif(isset($item->stock_no))
-                          <a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>
+                          @if(auth()->user()->can('show', App\Models\Delivery::class))<a href="{{ route('delivery.show', $item->delivery_id) }}" class="btn btn-info btn-sm">View</a>@endif
                           @endif
                         </td>
                       </tr>

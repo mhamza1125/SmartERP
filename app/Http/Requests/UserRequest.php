@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UserRequest extends FormRequest
 {
@@ -21,24 +22,14 @@ class UserRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
+        $id = $this->route('id'); // set when updating
+
+        return [
             'name' => 'required|max:255|string',
-            'email' => 'required|max:255|email',
-            'role_id' => 'required|string|max:255',
+            'email' => ['required', 'max:255', 'email', Rule::unique('users', 'email')->ignore($id)],
+            'role_id' => 'required|integer|exists:roles,id',
+            // New users need a password; on update it is changed only when filled in
+            'password' => $id ? 'nullable|string|min:6|confirmed' : 'required|string|min:6|confirmed',
         ];
-
-        // If it's a store request, add password validation
-        if ($this->isMethod('post')) {
-            $rules['password'] = 'confirmed'; // required|confirmed
-        }
-
-        // If it's an update request, add email uniqueness validation
-        if ($this->isMethod('put') || $this->isMethod('patch')) {
-            $rules['email'] .= '|unique:users,email,'.$this->route('id');
-            // Add conditional password validation
-            $rules['password'] = 'sometimes|required|confirmed';
-        }
-
-        return $rules;
     }
 }

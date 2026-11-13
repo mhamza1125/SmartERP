@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Heads Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>
+              @can('create', App\Models\Head::class)<a href="{{ route('head.add') }}" class="btn btn-primary">Add Head</a>@endcan
             </div>
           </div>
           <div class="card-body">

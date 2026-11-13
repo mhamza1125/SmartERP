@@ -8,7 +8,7 @@
           <div class="card-header">
             <h4>Assets</h4>
             <div class="card-header-action">
-              <a href="{{ route('asset.add') }}" class="btn btn-primary">Add Asset</a>
+              @can('create', App\Models\Asset::class)<a href="{{ route('asset.add') }}" class="btn btn-primary">Add Asset</a>@endcan
             </div>
           </div>
           <div class="card-body">
@@ -51,7 +51,7 @@
                       </td>
                       <td>{{ \Carbon\Carbon::parse($item->last_transaction_date)->format('d-m-Y') ?? 'N/A' }}</td>
                       <td>
-                        <a href="{{ route('asset.show', $item->asset_name) }}" class="btn btn-info btn-sm">View Ledger</a>
+                        @if(auth()->user()->can('show', App\Models\Asset::class))<a href="{{ route('asset.show', $item->asset_name) }}" class="btn btn-info btn-sm">View Ledger</a>@endif
                       </td>
                     </tr>
                   @empty

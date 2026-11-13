@@ -14,10 +14,11 @@
 
 @section('content')
 @php
-    $totalQuantity = $orderItem->sum('quantity');
-    $totalOriginal = $orderItem->sum(fn ($item) => $item->quantity * ($item->price ?? 0));
-    $currencyName = $orderItem->first()->cname ?? 'PKR';
-    $totalLabel = !empty($sellingType) ? 'Total ' . $sellingType . ' Amount:' : 'Grand Total:';
+    // All figures come from App\Support\InvoiceTotals::proforma() (the Excel export uses the same)
+    [
+        'totalQuantity' => $totalQuantity, 'grandTotal' => $totalOriginal,
+        'currencyName' => $currencyName, 'totalLabel' => $totalLabel,
+    ] = $totals;
 @endphp
 
 {{-- Proforma invoice details --}}
@@ -109,7 +110,7 @@
                 <td class="text-center">{{ $item->name }}</td>
                 <td class="num">{{ number_format($item->quantity) }}</td>
                 <td class="num">{{ number_format($item->price ?? 0, 2) }}</td>
-                <td class="num">{{ number_format($item->quantity * ($item->price ?? 0), 2) }}</td>
+                <td class="num">{{ number_format(\App\Support\InvoiceTotals::lineTotal($item), 2) }}</td>
             </tr>
             @endforeach
         </tbody>

@@ -6,7 +6,7 @@ Manufacturing/trading ERP built on Laravel 10 + Blade for a single company. Hand
 ---
 
 ## Tech Stack
-- **Backend:** Laravel 10.10, PHP 8.1+, MySQL (`smarterp` DB, localhost)
+- **Backend:** Laravel 10.10, PHP 8.1+, MySQL (`smarterp_erp` DB per .env, localhost; an older `smarterp` DB also exists)
 - **Auth:** Session-based; Sanctum for API; full RBAC via Role/Permission models + Policies
 - **Frontend:** Blade + jQuery/vanilla JS; Bootstrap, DataTables, ApexCharts, AmCharts, CKEditor
 - **Build:** Vite 5 (laravel-vite-plugin), Axios
@@ -302,6 +302,37 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Line price = `order_items` of `COALESCE(stock_items.order_id, stocks.order_id)` in `StockItemRepository::delivery()` (also returns `line_order_no`) and in customer ledger (`TransactionRepository::cDetail/cDetailFilter`). Invoice shows an Order No column when lines span >1 order
 - Legacy multi-order lines with NULL order_id show on the first order's row in the edit form and take that order on save
 
+## Deletion (2026-11-15)
+- Every module deletes through one flow: `GET {module}/{id}/delete-check` (JSON) -> confirmation dialog -> `DELETE {module}/{id}` with `confirmed=1`. Routes are named `{module}.deleteCheck` / `{module}.destroy` (stock documents: `stock.deleteCheck` / `stock.destroy` on `/stock-record/{id}`; users / roles: `user.*`, `role.*`; payroll by month; work hours: `work.destroy` `/work/{time|holiday}/{id}`)
+- Repository `deletionImpact($id): App\Support\DeletionImpact` lists **blockers** (other records that use it: delete is refused) and **cascades** (its own rows deleted with it: items, images, its opening balance entry, linked transfer half...). `delete($id)` performs it. Controllers: `$this->authorize('delete', ...)` then `deletionCheckResponse()` / `runDeletion()` (trait `HandlesDeletion` on the base Controller: refuses when blocked or not confirmed, wraps the delete in a DB transaction, writes an activity-log entry `log_name=delete`)
+- Rule of thumb: master data (customers, vendors, products, heads...) is deletable only while nothing references it; documents take their own lines with them but are refused while a later document depends on them (order -> deliveries / PTCs / purchases / payments; delivery -> returns; purchase -> receivings / payments; receiving -> returns; issuance -> receivings; PTC -> receivings / releases)
+- Stock-ins (receivings, delivery returns, issuance receivings) are refused when removing them would make material, product (per size + stage) or batch stock negative: `StockItemRepository::stockInRemovalShortfalls($stockIds, $receiveMaterialIds)`, checked again inside the delete (throws `DeletionBlockedException`, rolled back)
+- Helpers: `StockRepository::purge($stockIds)` (lines + batch allocations + images + rows; refuses stocks row 1 = opening stock), `StockBatchRepository::deleteUnused($sourceType, $sourceIds)`, `ImageRepository::deleteFor($table, $ids)`, trait `Repositories\Concerns\ChecksReferences` (`refCount`, `refExamples`)
+- Never deletable: stocks row 1, system heads (`heads.action = 1` and `HeadRepository::SYSTEM_HEAD_IDS` 39, 40, 61, 96, 101, 105, 585, 814), the Admin role, your own user, the last admin, a user who created delivery returns / packing lists (their `created_by` FKs are ON DELETE CASCADE), payroll-posted transactions, automatic bank charges and delivery expenses (deleted with their parent)
+- UI: `@include('deleteButton', ['url' => ..., 'check' => ..., 'label' => ...])` inside `@can('delete', Model::class)`; `custom.js` handles `.js-delete-record` with SweetAlert and submits `#deleteRecordForm` (index.blade.php)
+
+## Permissions (audited 2026-11-16)
+- Only policies decide. The single role rule: `Gate::before` in AuthServiceProvider lets the system Admin role (id 1) pass everything; policies themselves have no role checks. The Admin role is locked to all permissions in the role editor
+- 114 permissions, `{module}_{action}`, actions access (list + menu) / show (view, print, export) / create / edit / delete. Labels, sections and descriptions: `App\Support\PermissionCatalog` (also used by the role editor partial `rolePermissions.blade.php` and the roles list summary)
+- Dependency rule applied on every role save (`AdminRepository::syncPermissions` -> `PermissionCatalog::normalize`): any permission of a module adds its `_access`; `_edit` adds `_show`. The editor ticks them live. Migration 2026_11_16_000001 applied it to existing roles and removed 11 dead permissions (stocks_create/delete, reports_show/create/edit/delete, attendance_show, heads_show, categories_show, users_show, roles_show)
+- Cross-module needs: party ledgers (customer / vendor / contractor / employee) need the party's View AND transactions_show; Cash Balance and bank ledgers need transactions; prints / Excel exports need the module's show
+- Views: every link / action is wrapped in the check of its target route (`@can` or `@if(auth()->user()->can(...))`); `tests/Feature/RoleLinkCrawlTest.php` crawls the app as each real role and fails on any visible link answering 403 / 500
+- Only an administrator can give the Admin role, edit or delete an administrator account (AuthController::guardAdminRole, UserRepository::deletionImpact)
+- Known limitation: FormRequest validation runs before the controller's authorize(), so an unauthorized request with invalid input gets a validation redirect instead of 403 (nothing is saved either way)
+
+## Attendance machine (2026-11-15)
+- ATT2000.mdb read via PDO ODBC (Microsoft Access driver) in `AttendanceRepository::machinePunches()`. Path = `company.attendance_db_path` (Settings > Company > Attendance Machine), default `config('attendance.default_path')` = `public/resources/att2000.mdb`; relative paths are under the project root. Must be an existing readable .mdb / .accdb; optional allow-list `ATTENDANCE_DB_ALLOWED_DIRS` (";"-separated) in .env
+- Employee `attendance_id` = the device's machine number = `USERINFO.Badgenumber` (joined to `CHECKINOUT.USERID`), compared without leading zeros
+- Day pairing: first punch = check-in, last punch = check-out (CHECKTYPE is unreliable: staff press IN in the evening); punches within 120 s count once; a lone punch is in or out by CHECKTYPE. Late time only on days with both punches (existing rule). Employees without a machine number and numbers shared by several employees are listed as warnings; the employee filter uses employee_id
+- Only salaried employees (employee_type_id 39), as before
+
+## Journal Voucher Expense Head (2026-11-15)
+- `transactions.expense_head_id` (nullable FK to heads, SET NULL), only on journal vouchers, must be a head of type 7 (Expenses). A label only: never changes debit / credit / cc_amount / ledger_flag. Shown on the JV listing, detail page and voucher narration (`describe()` details 'Expense Head')
+
+## Invoice Excel export (2026-11-15)
+- `delivery.commercial.excel` / `order.proforma.excel` (same query options as the prints), buttons in the commercial / proforma modals. Built by `App\Exports\InvoiceSpreadsheet` (phpoffice/phpspreadsheet) from the same data method the print uses (`DeliveryController::commercialInvoiceData`, `OrderController::proformaData`)
+- All invoice figures come from `App\Support\InvoiceTotals` (print views destructure `$totals`); the workbook uses live formulas (line = QTY x Price, sums, grand total, payment due) whose values equal those figures
+
 ---
 
 ## Key DB Tables
@@ -326,7 +357,7 @@ images, sessions, cache, jobs
 
 ## Dev Environment
 - **URL:** http://05_smarterp.test (XAMPP local)
-- **DB:** MySQL, database `smarterp`
+- **DB:** MySQL, database `smarterp_erp` (DB_DATABASE in .env)
 - **Debug:** Enabled (local)
 - **Timezone:** UTC
 - **Git:** `main` is stable; use feature branches for changes

@@ -8,26 +8,26 @@ class ReturnPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('returns_access');
+        return $user->hasPermission('returns_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('returns_show');
+        return $user->hasPermission('returns_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('returns_create');
+        return $user->hasPermission('returns_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('returns_edit');
+        return $user->hasPermission('returns_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('returns_delete');
+        return $user->hasPermission('returns_delete');
     }
 }

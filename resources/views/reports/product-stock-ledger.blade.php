@@ -8,9 +8,9 @@
         <div class="card-header">
           <h4>Product Stock Ledger Report</h4>
           <div class="card-header-action">
-            <a href="{{ route('reports.product.stock.ledger') }}" class="btn btn-primary">
+            @if(auth()->user()->can('reports_access', App\Models\User::class))<a href="{{ route('reports.product.stock.ledger') }}" class="btn btn-primary">
               <i class="fas fa-redo"></i> Reset
-            </a>
+            </a>@endif
           </div>
         </div>
         <div class="card-body">

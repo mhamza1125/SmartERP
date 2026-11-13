@@ -9,8 +9,8 @@
             <h4>Issuance Table</h4>
             <div class="card-header-action">
               <div class="btn-group">
-                <a href="{{ route('stock.add') }}" class="btn btn-primary">Add Issuance</a>
-                <a href="{{ route('stock.gadd') }}" class="btn btn-primary">Add Group Issuance</a>
+                @can('create', App\Models\Stock::class)<a href="{{ route('stock.add') }}" class="btn btn-primary">Add Issuance</a>@endcan
+                @can('create', App\Models\Stock::class)<a href="{{ route('stock.gadd') }}" class="btn btn-primary">Add Group Issuance</a>@endcan
               </div>
             </div>
           </div>
@@ -51,9 +51,10 @@
                         @endif
                       </td>                  
                       <td>
-                        <a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>
-                        @if(!$item->stock_status) <a href="{{ route('stock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a> @endif
-                        <a href="{{ route('rstock.add', $item->stock_id) }}" class="btn btn-success btn-sm">Receive</a>
+                        @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('stock.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                        @if(!$item->stock_status) @can('edit', App\Models\Stock::class)<a href="{{ route('stock.edit', $item->stock_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+@can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $item->stock_id), 'check' => route('stock.deleteCheck', $item->stock_id), 'label' => 'Issuance '.$item->stock_no, 'class' => 'btn btn-danger btn-sm'])@endcan @endif
+                        @can('create', App\Models\Stock::class)<a href="{{ route('rstock.add', $item->stock_id) }}" class="btn btn-success btn-sm">Receive</a>@endcan
                       </td>
                     </tr>
                     @endforeach

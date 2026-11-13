@@ -138,6 +138,24 @@ class PayrollRepository implements GlobalInterface
         return $this->store(array_merge($data, ['month' => $month]));
     }
 
+    /**
+     * A month's payroll takes its employee lines and the salary / loan deduction transactions it
+     * posted with it (the same entries a re-save replaces).
+     */
+    public function deletionImpact($month): \App\Support\DeletionImpact
+    {
+        $payroll = Payroll::where('month', $month)->firstOrFail();
+        $items = DB::table('payroll_items')->where('payroll_id', $payroll->payroll_id);
+        $postings = (clone $items)->get(['salary_transaction_id', 'temp_deduction_transaction_id', 'fixed_deduction_transaction_id'])
+            ->flatMap(fn ($row) => [$row->salary_transaction_id, $row->temp_deduction_transaction_id, $row->fixed_deduction_transaction_id])
+            ->filter()->unique();
+
+        return \App\Support\DeletionImpact::for('Payroll '.$month)
+            ->cascadeIf((clone $items)->count(), 'employee line')
+            ->cascadeIf($postings->count(), 'posted transaction (salary / loan deduction)', 'posted transactions (salaries / loan deductions)')
+            ->note('Salaries leave the cash / bank book and loan deductions are undone, so outstanding loans go back up.');
+    }
+
     /** Remove a month's payroll and the transactions it posted. */
     public function delete($month)
     {

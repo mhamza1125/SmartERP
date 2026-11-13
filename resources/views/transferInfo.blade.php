@@ -17,7 +17,7 @@
                   <i class="fas fa-print"></i> Print
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('transaction.editTransfer', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>
+                @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.editTransfer', $transaction['transaction_id']) }}" class="btn btn-primary">Edit</a>@endif
               </div>
             </div>
           </div>

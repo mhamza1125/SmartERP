@@ -142,6 +142,18 @@
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Expense Head <small class="text-muted">(optional)</small></label>
+                    <select class="form-control select2" name="expense_head_id">
+                      <option value="">None</option>
+                      @foreach($expenseHeads as $head)
+                        <option value="{{ $head->head_id }}" {{ (string) old('expense_head_id', $transaction->expense_head_id) === (string) $head->head_id ? 'selected' : '' }}>{{ $head->name }}</option>
+                      @endforeach
+                    </select>
+                    <small class="form-text text-muted">Links this voucher to an expense head for reference; the amount is posted exactly as without it.</small>
+                  </div>
+                </div>
                 </div>
               </div>
               <div class="row">

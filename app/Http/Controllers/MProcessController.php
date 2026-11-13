@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Material;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Purchase;
 use App\Models\Stock;
@@ -71,6 +72,7 @@ class MProcessController extends Controller
 
     public function index()
     {
+        $this->authorize('access', Material::class);
         $purchase = $this->purchaseRepository->mprocess();
 
         return view('mprocess', [
@@ -80,6 +82,7 @@ class MProcessController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Material::class);
         $order = $this->orderRepository->active();
         // $vendor = $this->vendorRepository->all();
         $vendor = $this->vendorRepository->vendor();
@@ -98,6 +101,7 @@ class MProcessController extends Controller
 
     public function store(PurchaseRequest $request)
     {
+        $this->authorize('create', Material::class);
         $validatedData = $request->validated();
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -110,6 +114,7 @@ class MProcessController extends Controller
 
     public function show($id)
     {
+        $this->authorize('show', Material::class);
         $purchase = $this->purchaseRepository->get($id);
         $purchaseItem = $this->mprocessRepository->get($id);
         $receiveSum = $this->receiveMaterialRepository->rSum($id);
@@ -139,6 +144,7 @@ class MProcessController extends Controller
      */
     public function printMProcess($id)
     {
+        $this->authorize('show', Material::class);
         $purchase = $this->purchaseRepository->get($id);
         $purchaseItem = $this->mprocessRepository->get($id);
         $receiveSum = $this->receiveMaterialRepository->rSum($id);
@@ -164,6 +170,7 @@ class MProcessController extends Controller
 
     public function edit(Purchase $id)
     {
+        $this->authorize('edit', Material::class);
         $order = $this->orderRepository->active();
         $vendor = $this->vendorRepository->all();
         $material = $this->materialRepository->all();
@@ -182,6 +189,7 @@ class MProcessController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Material::class);
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -192,9 +200,6 @@ class MProcessController extends Controller
         return redirect()->route('mprocess.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Purchase $purchase)
-    {
-    }
 
     private function storeAll($getId, $validatedData)
     {
@@ -266,5 +271,29 @@ class MProcessController extends Controller
                 // 'stock_id' => '0', 'issue_id' => NULL, 'issue_for' => '0', 'stock_no' => 'I24000000', 'order_id' => '0', 'machine_id' => NULL, 'table_name' => 'mprocess', 'employee_id' => '0', 'stock_type' => '2', 'stock_date' => '2024-06-01', 'stock_status' => '5', 'description' => '',
             ];
         }
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Material::class);
+
+        return $this->deletionCheckResponse($this->purchaseRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Material::class);
+
+        return $this->runDeletion(
+            $this->purchaseRepository->deletionImpact($id),
+            fn () => $this->purchaseRepository->delete($id),
+            route('mprocess')
+        );
     }
 }

@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Product;
+use App\Models\Order;
+use App\Models\Delivery;
+use App\Models\Purchase;
 use App\Models\Stock;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -194,6 +199,7 @@ class StockController extends Controller
 
     public function ajaxPM(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         try {
             // Ajax Product Material
             $productId = $request->input('productId');
@@ -256,6 +262,7 @@ class StockController extends Controller
 
     public function ajaxPT(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Product Type
         $orderId = $request->input('orderId');
         $orderItem = $this->orderItemRepository->get($orderId);
@@ -265,6 +272,7 @@ class StockController extends Controller
 
     public function ajaxPTStock(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Product Type - All products with stock (for issuance forms)
         $pstock = $this->stockItemRepository->pStock();
 
@@ -285,6 +293,7 @@ class StockController extends Controller
 
     public function getAllProducts(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax All Product Types - For Default Production
         $products = DB::table('product_types')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
@@ -305,6 +314,7 @@ class StockController extends Controller
 
     public function ajaxIG(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Issuance Group
         $orderId = $request->input('orderId');
         // $orderId = '16';
@@ -315,6 +325,7 @@ class StockController extends Controller
 
     public function ajaxPS(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Product Stage
         $productId = $request->input('productId');
         $pstage = $this->headRepository->getStageAjax($productId);
@@ -324,6 +335,7 @@ class StockController extends Controller
 
     public function ajaxPC(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Product Cost
         $productId = $request->input('productId');
         $productCost = $this->productCostRepository->pcost($productId);
@@ -333,6 +345,7 @@ class StockController extends Controller
 
     public function ajaxMQty(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Material Qty Against Order
         $orderId = $request->input('orderId');
         $materialId = $request->input('materialId');
@@ -343,6 +356,7 @@ class StockController extends Controller
 
     public function ajaxAMQty(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Material Qty Against Article
         $orderId = $request->input('orderId');
         $productId = $request->input('productId');
@@ -354,6 +368,7 @@ class StockController extends Controller
 
     public function ajaxATMQty(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         // Ajax Material Qty Against Article Type
         $orderId = $request->input('orderId');
         $productId = $request->input('productId');
@@ -369,7 +384,7 @@ class StockController extends Controller
 
     public function issue()
     {
-        $this->authorize('show', Stock::class);
+        $this->authorize('access', Stock::class);
 
         // All Issuance
         $issue = $this->stockRepository->issue();
@@ -381,7 +396,7 @@ class StockController extends Controller
 
     public function issue2()
     {
-        $this->authorize('show', Stock::class);
+        $this->authorize('access', Stock::class);
         // All Issuance
         $issue = $this->stockRepository->issueMaterial();
 
@@ -465,6 +480,7 @@ class StockController extends Controller
 
     public function store(StockRequest $request)
     {
+        $this->authorize('create', Stock::class);
         // Store Issuance
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
@@ -507,6 +523,7 @@ class StockController extends Controller
 
     public function gstore(StockRequest $request)
     {
+        $this->authorize('create', Stock::class);
         // Store IGroup Issuance
         $validatedData = $request->validated();
         if (array_sum($request->input('quantity', [])) == 0) {
@@ -568,7 +585,7 @@ class StockController extends Controller
 
     public function dailyIssue(Request $request)
     {
-        $this->authorize('show', Stock::class);
+        $this->authorizeAny([['show', Stock::class], ['reports_access', User::class]]);
         // Daily / Filtered Issuance
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -611,7 +628,7 @@ class StockController extends Controller
      */
     public function printDailyIssue(Request $request)
     {
-        $this->authorize('show', Stock::class);
+        $this->authorizeAny([['show', Stock::class], ['reports_access', User::class]]);
         // Daily / Filtered Issuance
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -647,7 +664,7 @@ class StockController extends Controller
 
     public function dailyReceive(Request $request)
     {
-        $this->authorize('show', Stock::class);
+        $this->authorizeAny([['show', Stock::class], ['reports_access', User::class]]);
         // Daily / Filtered Issuance
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -681,7 +698,7 @@ class StockController extends Controller
      */
     public function printDailyReceive(Request $request)
     {
-        $this->authorize('show', Stock::class);
+        $this->authorizeAny([['show', Stock::class], ['reports_access', User::class]]);
         // Daily / Filtered Receiving
         $dfrom = $request->input('dfrom');
         $dto = $request->input('dto');
@@ -755,6 +772,7 @@ class StockController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('edit', Stock::class);
         // Update Issuance
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
@@ -792,7 +810,7 @@ class StockController extends Controller
 
     public function rIssue()
     {
-        $this->authorize('create', Stock::class);
+        $this->authorize('access', Stock::class);
         // All Receive Issuance
         $head = $this->headRepository->get('12');
         $receive = $this->stockRepository->receive();
@@ -946,10 +964,6 @@ class StockController extends Controller
         ]);
     }
 
-    public function destroy(Stock $stock)
-    {
-        $this->authorize('delete', Stock::class);
-    }
 
     private function storeSI($getId, $ptids, $mids, $quantities, $stages, $works, $componentIds, $all)
     {
@@ -1010,7 +1024,7 @@ class StockController extends Controller
      */
     public function ptcList()
     {
-        $this->authorize('show', Stock::class);
+        $this->authorize('access', Stock::class);
 
         $ptcList = Stock::where('is_ptc_master', 1)
             ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id')
@@ -2588,6 +2602,7 @@ class StockController extends Controller
 
     public function ptcMoveStage(Request $request, $id)
     {
+        $this->authorize('edit', Stock::class);
         return $this->ptcMoveStageForm($id);
     }
 
@@ -2596,6 +2611,7 @@ class StockController extends Controller
      */
     public function ajaxPtcProducts(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         $orderId = $request->get('order_id');
 
         if ($orderId && $orderId != '0') {
@@ -2638,6 +2654,7 @@ class StockController extends Controller
      */
     public function ajaxPtcStages(Request $request)
     {
+        $this->authorizeAny([['access', Stock::class], ['stocks_access', Stock::class], ['access', Purchase::class], ['access', Delivery::class], ['access', Order::class], ['access', Product::class]]);
         $productTypeId = $request->get('product_type_id');
 
         if (!$productTypeId) {
@@ -2647,5 +2664,36 @@ class StockController extends Controller
         $stages = $this->headRepository->getStageAjax($productTypeId);
 
         return response()->json(['data' => $stages]);
+    }
+
+    /**
+     * What deleting an issuance, receiving, machine issuance or PTC would affect (JSON).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Stock::class);
+
+        return $this->deletionCheckResponse($this->stockRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes an issuance, receiving, machine material issuance or a whole PTC (no receivings yet).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Stock::class);
+        $stock = Stock::findOrFail($id);
+        $listing = match ($this->stockRepository->documentKind($stock)) {
+            'ptc' => route('ptc'),
+            'machine' => route('missue'),
+            'receiving' => route('receiveIssue'),
+            default => route('issue'),
+        };
+
+        return $this->runDeletion(
+            $this->stockRepository->deletionImpact($id),
+            fn () => $this->stockRepository->deleteDocument($id),
+            $listing
+        );
     }
 }

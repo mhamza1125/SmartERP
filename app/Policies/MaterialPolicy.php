@@ -8,26 +8,26 @@ class MaterialPolicy
 {
     public function access(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('materials_access');
+        return $user->hasPermission('materials_access');
     }
 
     public function show(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('materials_show');
+        return $user->hasPermission('materials_show');
     }
 
     public function create(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('materials_create');
+        return $user->hasPermission('materials_create');
     }
 
     public function edit(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('materials_edit');
+        return $user->hasPermission('materials_edit');
     }
 
     public function delete(User $user): bool
     {
-        return $user->role_id === 1 || $user->hasPermission('materials_delete');
+        return $user->hasPermission('materials_delete');
     }
 }

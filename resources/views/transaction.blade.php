@@ -14,7 +14,7 @@
                 <a href="{{ route('vPayment') }}" class="btn btn-primary">Vendor</a>
                 <a href="{{ route('cPayment') }}" class="btn btn-primary">Contractor</a>
                 <a href="{{ route('oPayment') }}" class="btn btn-primary">Customer</a>
-                <a href="{{ route('transaction.addTransfer') }}" class="btn btn-success">Bank/Cash Transfer</a>
+                @can('create', App\Models\Transaction::class)<a href="{{ route('transaction.addTransfer') }}" class="btn btn-success">Bank/Cash Transfer</a>@endcan
               </div>
             </div>
           </div>

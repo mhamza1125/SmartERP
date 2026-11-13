@@ -2,11 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Support\DeletionImpact;
+use App\Repositories\Concerns\ChecksReferences;
+use Illuminate\Support\Facades\DB;
 use App\Models\Returns;
 use Carbon\Carbon;
 
 class ReturnRepository implements GlobalInterface
 {
+    use ChecksReferences;
+
     public function all()
     {
         return Returns::join('receives', 'receives.receive_id', '=', 'returns.receive_id')
@@ -61,7 +66,23 @@ class ReturnRepository implements GlobalInterface
         return $update->return_id;
     }
 
+    /**
+     * A purchase return has no dependents: deleting it puts the returned quantity back in stock
+     * and back on the vendor ledger.
+     */
+    public function deletionImpact($id): DeletionImpact
+    {
+        $return = Returns::findOrFail($id);
+
+        return DeletionImpact::for('Purchase return '.$return->return_no)
+            ->cascadeIf($this->refCount('return_materials', 'return_id', $id), 'returned line')
+            ->note('The returned quantity is added back to stock.');
+    }
+
     public function delete($id)
     {
+        DB::table('return_materials')->where('return_id', $id)->delete();
+
+        return Returns::findOrFail($id)->delete();
     }
 }

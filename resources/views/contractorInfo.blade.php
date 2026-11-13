@@ -12,9 +12,10 @@
                 <a class="btn btn-info" href="{{ route('contractor.print', $vendor['vendor_id']) }}" target="_blank">
                   <i class="fas fa-file-alt"></i> Print
                 </a>
-                <a href="{{ route('vendor') }}" class="btn btn-primary">Back</a>
-                <a href="{{ route('vendor.edit2', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>
-                <a href="{{ route('vendor.detail', $vendor['vendor_id']) }}" class="btn btn-primary">Ledger</a>
+                @if(auth()->user()->can('access', App\Models\Vendor::class))<a href="{{ route('vendor') }}" class="btn btn-primary">Back</a>@endif
+                @can('contractors_edit', App\Models\Vendor::class)<a href="{{ route('vendor.edit2', $vendor['vendor_id']) }}" class="btn btn-primary">Edit</a>@endcan
+@can('contractors_delete', App\Models\Vendor::class)@include('deleteButton', ['url' => route('vendor.destroy', $vendor['vendor_id']), 'check' => route('vendor.deleteCheck', $vendor['vendor_id']), 'label' => 'Contractor '.$vendor['vendor_no'], 'class' => 'btn btn-danger'])@endcan
+                @if(auth()->user()->can('contractors_show', App\Models\Vendor::class) && auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('vendor.detail', $vendor['vendor_id']) }}" class="btn btn-primary">Ledger</a>@endif
               </div>
             </div>
           </div>
@@ -53,10 +54,12 @@
                     <a href="{{ URL::asset('resources/vendor/'. $item->image) }}">
                       <img class="img-responsive thumbnail" src="{{ URL::asset('resources/vendor/'. $item->image) }}" alt="">
                     </a>
+                    @can('contractors_edit', App\Models\Vendor::class)
                     <form action="{{route('image.delete', ['id' => $item->image_id, 'dir' => 'vendor'])}}" method="POST">
                       @csrf
                       <button type="submit" class="btn btn-danger delbtn"><i class="fa fa-trash"></i></button>
                     </form>
+                    @endcan
                   </div>
                 @endforeach
               </div>

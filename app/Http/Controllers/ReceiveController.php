@@ -163,9 +163,6 @@ class ReceiveController extends Controller
         return redirect()->route('receive')->with('success', 'Status Updated Successfully');
     }
 
-    public function destroy(ReceiveMaterial $receive)
-    {
-    }
 
     private function storeRM($getId, $pids, $quantities, $inspections, $idates, $pending, $approved, $rejected)
     {
@@ -188,5 +185,29 @@ class ReceiveController extends Controller
             ];
             $this->receiveMaterialRepository->store($receiveMaterial);
         }
+    }
+
+    /**
+     * What deleting this record would affect (JSON for the delete button's confirmation).
+     */
+    public function deleteCheck($id)
+    {
+        $this->authorize('delete', Receive::class);
+
+        return $this->deletionCheckResponse($this->receiveRepository->deletionImpact($id));
+    }
+
+    /**
+     * Deletes the record (refused while other records depend on it; see deletionImpact()).
+     */
+    public function destroy($id)
+    {
+        $this->authorize('delete', Receive::class);
+
+        return $this->runDeletion(
+            $this->receiveRepository->deletionImpact($id),
+            fn () => $this->receiveRepository->delete($id),
+            route('receive')
+        );
     }
 }
