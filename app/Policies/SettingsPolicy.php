@@ -30,4 +30,13 @@ class SettingsPolicy
     {
         return $user->hasPermission('settings_delete');
     }
+
+    /**
+     * TEMPORARY (Reset Test Data): no permission grants it, so only the Admin role passes
+     * (through Gate::before in AuthServiceProvider). Remove with DataResetController.
+     */
+    public function resetData(User $user): bool
+    {
+        return false;
+    }
 }

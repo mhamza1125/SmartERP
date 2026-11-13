@@ -48,6 +48,10 @@ Route::group(['middleware' => 'auth'], function () {
         'middleware' => ['auth', 'is_admin'],
     ], function () {
         // Add Routes Here
+
+        // TEMPORARY one-time cleanup (Settings > Reset Test Data) - remove after use
+        Route::get('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'index'])->name('data-reset.index');
+        Route::post('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'run'])->name('data-reset.run');
     });
 });
 

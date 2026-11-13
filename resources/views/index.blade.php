@@ -304,6 +304,10 @@
                 @can('access', App\Models\Category::class)
                   <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 @endcan
+                {{-- TEMPORARY one-time cleanup - remove with DataResetController --}}
+                @can('resetData', App\Models\Settings::class)
+                  <li><a class="nav-link text-danger" href="{{ route('data-reset.index') }}">Reset Test Data</a></li>
+                @endcan
               </ul>
             </li>
             @endif
