@@ -123,6 +123,8 @@ Route::put('/payroll/{month}', [PayrollController::class, 'update'])->name('payr
 Route::get('/payroll/bank-balance/{bankId}', [PayrollController::class, 'getBankBalance'])->name('payroll.bankBalance');
 Route::get('/payroll/{month}/print', [PayrollController::class, 'printMonth'])->name('payroll.print');
 Route::get('/payroll/slip/{item}', [PayrollController::class, 'printSlip'])->name('payroll.slip');
+Route::get('/payroll/{month}/slips', [PayrollController::class, 'printSlips'])->name('payroll.slips');
+Route::get('/payroll/{month}/vouchers', [PayrollController::class, 'printVouchers'])->name('payroll.vouchers');
 
 // Vendor
 // Route::get('/vendor', [VendorController::class, 'index'])->name('vendor');
@@ -376,7 +378,8 @@ Route::post('/vPayment', [TransactionController::class, 'vPayment'])->name('vPay
 Route::get('/cPayment', [TransactionController::class, 'cPayment'])->name('cPayment');
 Route::post('/cPayment', [TransactionController::class, 'cPayment'])->name('cPayment.filter');
 Route::get('/ajaxPurchase', [TransactionController::class, 'ajaxPurchase'])->name('ajaxPurchase'); //Purchases
-Route::get('/ajaxPayee', [TransactionController::class, 'ajaxPayee'])->name('ajaxPayee'); //Payees for General Voucher
+Route::get('/ajaxPayee', [TransactionController::class, 'ajaxPayee'])->name('ajaxPayee'); //Payees for Journal Voucher
+Route::get('/ajaxLoan', [TransactionController::class, 'ajaxLoan'])->name('ajaxLoan'); // outstanding loans of a party
 Route::get('/vPayment/{id}', [TransactionController::class, 'showVPayment'])->name('transaction.showVPayment');
 Route::get('/cPayment/{id}', [TransactionController::class, 'showCPayment'])->name('transaction.showCPayment');
 Route::get('/addVPayment', [TransactionController::class, 'createVPayment'])->name('transaction.addVPayment');
@@ -389,7 +392,7 @@ Route::post('/expense', [TransactionController::class, 'expense'])->name('expens
 Route::get('/addExpense', [TransactionController::class, 'createExpense'])->name('transaction.addExpense');
 Route::get('/expense/{id}', [TransactionController::class, 'showExpense'])->name('transaction.showExpense');
 Route::get('/editExpense/{id}', [TransactionController::class, 'editExpense'])->name('transaction.editExpense');
-// Transaction General Voucher
+// Transaction Journal Voucher (stored as generalVoucher)
 Route::get('/generalVoucher', [TransactionController::class, 'generalVoucher'])->name('generalVoucher');
 Route::get('/addGeneralVoucher', [TransactionController::class, 'createGeneralVoucher'])->name('transaction.addGeneralVoucher');
 Route::get('/generalVoucher/{id}', [TransactionController::class, 'showGeneralVoucher'])->name('transaction.showGeneralVoucher');

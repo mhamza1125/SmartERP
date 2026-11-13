@@ -29,7 +29,7 @@
                       <option value="" selected disabled>Select Customer</option>
                       @if($customer->count())
                         @foreach($customer as $item)
-                          <option value="{{$item->customer_id}}" {{ old('customer_id') == $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}} [{{$item->currency_name}}]</option>
+                          <option value="{{$item->customer_id}}" {{ (string) old('payee_id', request('payee_id')) === (string) $item->customer_id ? 'selected' : '' }}>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}} [{{$item->currency_name}}]</option>
                         @endforeach
                       @endif
                     </select>
@@ -68,6 +68,13 @@
                     </div>
                     <div class="valid-feedback" id="fileSuccess">Good job!</div>
                     <div class="invalid-feedback" id="fileError"></div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Transaction Date</label>
+                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
+                    <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
               </div>
@@ -134,15 +141,6 @@
                 </div>
               </div>
 
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Transaction Date</label>
-                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{old('transaction_date')}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-              </div>
               <div class="row">
                 <div class="col-md-12">
                   <div class="alert alert-info">

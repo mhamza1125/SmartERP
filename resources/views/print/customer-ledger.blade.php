@@ -150,7 +150,8 @@
                             -
                         @endif
                     </td>
-                    <td>{{ $notes[$rowKey] ?? (isset($transaction->transaction_type) ? ucfirst($transaction->transaction_type) : 'Delivery ' . ($transaction->stock_no ?? '')) }}</td>
+                    <td>{{ $notes[$rowKey] ?? (isset($transaction->transaction_type) ? transactionLabel($transaction->transaction_type) : 'Delivery ' . ($transaction->stock_no ?? '')) }}</td>
+                    @php $sumDebit = ($sumDebit ?? 0) + $displayDebit; $sumCredit = ($sumCredit ?? 0) + $displayCredit; @endphp
                     <td class="text-right amount">{{ $displayDebit > 0 ? number_format($displayDebit, 2) : '-' }}</td>
                     <td class="text-right amount">{{ $displayCredit > 0 ? number_format($displayCredit, 2) : '-' }}</td>
                     <td class="text-right amount">{{ number_format($runningBalance, 2) }}</td>
@@ -159,44 +160,14 @@
         </tbody>
         <tfoot>
             <tr style="font-weight: bold; background-color: #f5f5f5;">
-                <td colspan="3" class="text-right">Closing Balance:</td>
-                <td class="text-right amount">{{ number_format($detail->sum('debit') ?? 0, 2) }}</td>
-                <td class="text-right amount">{{ number_format($detail->sum('credit') ?? 0, 2) }}</td>
+                <td colspan="3" class="text-right">Total / Closing Balance:</td>
+                <td class="text-right amount">{{ number_format($sumDebit ?? 0, 2) }}</td>
+                <td class="text-right amount">{{ number_format($sumCredit ?? 0, 2) }}</td>
                 <td class="text-right amount">{{ number_format($balance ?? 0, 2) }}</td>
             </tr>
         </tfoot>
     </table>
 </div>
 @endif
-
-{{-- Summary Section --}}
-<div class="totals-section avoid-break">
-    <div class="total-row">
-        <span>Total Sales:</span>
-        <span class="amount">{{ number_format($detail->sum('debit') ?? 0, 2) }}</span>
-    </div>
-    <div class="total-row">
-        <span>Total Payments:</span>
-        <span class="amount">{{ number_format($detail->sum('credit') ?? 0, 2) }}</span>
-    </div>
-    <div class="total-row grand-total">
-        <span>Current Balance:</span>
-        <span class="amount">{{ number_format($balance ?? 0, 2) }}</span>
-    </div>
-</div>
-
-{{-- Balance Status --}}
-<div class="info-section avoid-break">
-    <h3>Account Status</h3>
-    <div style="padding: 10px; border: 1px solid #333; background-color: {{ $balance > 0 ? '#d4edda' : ($balance < 0 ? '#f8d7da' : '#f9f9f9') }};">
-        @if($balance > 0)
-            <strong>Credit Balance:</strong> Customer owes company {{ number_format(abs($balance), 2) }}
-        @elseif($balance < 0)
-            <strong>Debit Balance:</strong> Company owes customer {{ number_format(abs($balance), 2) }}
-        @else
-            <strong>Balanced Account:</strong> No outstanding amount
-        @endif
-    </div>
-</div>
 
 @endsection

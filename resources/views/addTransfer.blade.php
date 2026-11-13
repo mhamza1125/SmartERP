@@ -65,7 +65,7 @@
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Check Number (Optional)</label>
+                    <label>Cheque Number (Optional)</label>
                     <input type="text" class="form-control" name="check_no" value="{{ old('check_no') }}">
                   </div>
                 </div>

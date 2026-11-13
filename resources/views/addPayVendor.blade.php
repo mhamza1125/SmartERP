@@ -28,7 +28,7 @@
                       <option value="" selected disabled>Select Vendor</option>
                       @if($vendor->count())
                         @foreach($vendor as $item)
-                          <option value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
+                          <option value="{{$item->vendor_id}}" {{ (string) old('payee_id', request('payee_id')) === (string) $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
                         @endforeach
                       @endif
                     </select>
@@ -51,13 +51,14 @@
 
                 <div class="col-md-6" id="display1">
                   <div class="form-group">
-                    <label>Purchases / Processing</label>
+                    <label>Payment For</label>
                     <select class="form-control select2" name="order_id" id="order_id">
-                      <option value="" disabled>Select Purchase / Processing</option>
-                      {{-- Ajax Orders --}}
+                      <option value="" disabled>Select a Purchase or General Payment</option>
+                      {{-- Ajax: the vendor's purchases, plus General Payment (not linked to a purchase) --}}
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Purchase / Processing</div>
+                    <div class="invalid-feedback">Select a purchase, or General Payment</div>
+                    <small class="form-text text-muted">Choose General Payment for a payment that is not for a specific purchase.</small>
                   </div>
                 </div>
                 <div class="col-md-6" id="display2">
@@ -139,6 +140,8 @@
                   </div>
                 </div>
               </div>
+              {{-- Outstanding loans of the selected payee; repayment share on Receive Loan --}}
+              @include('loanSummary', ['party' => 'vendor', 'amountField' => 'debit'])
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
                   <button class="btn btn-primary" type="submit">Submit</button>
@@ -179,6 +182,8 @@
   var isPayVendorPage = true;
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
   var ajaxPurchaseUrl = "{{ route('ajaxPurchase') }}";
+  // Purchase to preselect once the vendor's purchases load (Pay from a purchase / receive page)
+  var selectedPurchaseId = @json((string) old('order_id', request('purchase_id', '')));
   var ajaxBalanceUrl = "{{ route('ajaxBalance') }}";
 
   $(document).ready(function() {

@@ -16,12 +16,13 @@
           <div class="card-body">
             <form action="{{ route('transaction.update', $transaction['transaction_id']) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
+              <input type="hidden" name="transaction_to" required value="employee" id="transaction_to">
+              <input type="hidden" name="debit" required value="0">
+              <input type="hidden" name="payee_bank_id" required value="0">
+              {{-- Row 1: who and what. Payment Type takes the half on its own, or shares it with Loan Type --}}
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <input type="hidden" name="transaction_to" required value="employee" id="transaction_to">
-                    <input type="hidden" name="debit" required value="0">
-                    <input type="hidden" name="payee_bank_id" required value="0">
                     <label>Employee</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Employee</option>
@@ -35,18 +36,30 @@
                     <div class="invalid-feedback">Select Employee</div>
                   </div>
                 </div>
-                {{-- <div class="col-md-6">
+                <div class="col-md-6 js-payment-type">
                   <div class="form-group">
-                    <label>Receiver Cash / Bank (if any)</label>
-                    <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
-                      <option value="0" selected>Cash Payment</option>
-                      //Ajax Options 
+                    <label>Payment Type</label>
+                    <select class="form-control" name="transaction_type" required>
+                      <option value="wages" {{ $transaction['transaction_type'] == 'wages' ? 'selected' : '' }}>Wages</option>
+                      <option value="payment" {{ $transaction['transaction_type'] == 'payment' ? 'selected' : '' }}>General Payment</option>
+                      <option value="advance" {{ $transaction['transaction_type'] == 'advance' ? 'selected' : '' }}>Give Loan</option>
+                      <option value="receiveAdvance" {{ $transaction['transaction_type'] == 'receiveAdvance' ? 'selected' : '' }}>Receive Loan</option>
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Cash / Bank</div>
                   </div>
-                </div> --}}
+                </div>
+                <div class="col-md-3 js-advance-type">
+                  <div class="form-group">
+                    <label>Loan Type</label>
+                    @php $advanceType = old('advance_type', $transaction['advance_type'] ?? 'fixed'); @endphp
+                    <select class="form-control" name="advance_type">
+                      <option value="temporary" {{ $advanceType === 'temporary' ? 'selected' : '' }}>Temporary advance (this month's payroll)</option>
+                      <option value="fixed" {{ $advanceType === 'fixed' ? 'selected' : '' }}>Fixed loan (monthly instalments)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
+              {{-- Row 2: how much, from where, when --}}
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
@@ -65,42 +78,12 @@
                 </div>
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Payment Type</label>
-                    <select class="form-control" name="transaction_type" required>
-                      <option value="wages" {{ $transaction['transaction_type'] == 'wages' ? 'selected' : '' }}>Wages</option>
-                      <option value="advance" {{ $transaction['transaction_type'] == 'advance' ? 'selected' : '' }}>Give Loan</option>
-                      <option value="receiveAdvance" {{ $transaction['transaction_type'] == 'receiveAdvance' ? 'selected' : '' }}>Receive Loan</option>
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                <div class="col-md-3 js-advance-type">
-                  <div class="form-group">
-                    <label>Loan Type</label>
-                    @php $advanceType = old('advance_type', $transaction['advance_type'] ?? 'fixed'); @endphp
-                    <select class="form-control" name="advance_type">
-                      <option value="temporary" {{ $advanceType === 'temporary' ? 'selected' : '' }}>Temporary advance (deducted in this month's payroll)</option>
-                      <option value="fixed" {{ $advanceType === 'fixed' ? 'selected' : '' }}>Fixed loan (repaid in monthly instalments)</option>
-                    </select>
-                  </div>
-                </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
                     <label>Pay Date</label>
                     <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Outstanding Balance</label>
-                    <input type="text" class="form-control" id="outstanding_balance" readonly placeholder="Loading balance...">
-                    <small class="form-text text-muted">Positive amount = We owe employee</small>
-                  </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Payment Amount</label>
                     <input type="number" min="0" class="form-control" name="credit" required value="{{ $transaction['credit'] ?? $transaction['debit'] }}">
@@ -109,7 +92,15 @@
                   </div>
                 </div>
               </div>
+              {{-- Row 3: balance and attachments --}}
               <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Outstanding Balance</label>
+                    <input type="text" class="form-control" id="outstanding_balance" readonly placeholder="Loading balance...">
+                    <small class="form-text text-muted">Positive amount = We owe employee</small>
+                  </div>
+                </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>File / Images</label>
@@ -130,6 +121,8 @@
                   </div>
                 </div>
               </div>
+              {{-- Outstanding loans of the selected payee; repayment share on Receive Loan --}}
+              @include('loanSummary', ['party' => 'employee', 'amountField' => 'credit', 'excludeId' => $transaction['transaction_id']])
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
                   <button class="btn btn-primary" type="submit">Submit</button>
@@ -201,10 +194,14 @@
   document.addEventListener('DOMContentLoaded', function () {
     var type = document.querySelector('select[name="transaction_type"]');
     var box = document.querySelector('.js-advance-type');
+    var typeCol = document.querySelector('.js-payment-type');
     function toggle() {
       var loan = type.value === 'advance' || type.value === 'receiveAdvance';
       box.style.display = loan ? '' : 'none';
       box.querySelector('select').disabled = !loan;
+      // Payment Type fills the half next to Employee, or shares it with Loan Type
+      typeCol.classList.toggle('col-md-6', !loan);
+      typeCol.classList.toggle('col-md-3', loan);
     }
     type.addEventListener('change', toggle);
     toggle();

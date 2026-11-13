@@ -1,5 +1,9 @@
 @extends('index')
 @section('content')
+<style>
+  /* Ledger description: main line with smaller details below, kept to a readable width */
+  .ledger-desc { max-width: 380px; min-width: 220px; white-space: normal; }
+</style>
 <section class="section">
   <div class="section-body">
     <div class="row">
@@ -14,8 +18,8 @@
                 </a>
                 <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
                 <a href="{{ $vendor['vendor_type'] == 0 
-                        ? route('transaction.addVPayment') 
-                        : route('transaction.addCPayment') }}" 
+                        ? route('transaction.addVPayment', ['payee_id' => $vendor['vendor_id']])
+                        : route('transaction.addCPayment', ['payee_id' => $vendor['vendor_id']]) }}"
                   class="btn btn-primary">
                     Pay
                 </a>
@@ -76,7 +80,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @php $index = 1; $ledgerBalance = $balance; $balance = $oBalance; @endphp
+                    @php $index = 1; $balance = $oBalance; @endphp
                     @if($oBalance != 0)
                       <tr>
                         <td>{{$index++}}</td>
@@ -116,16 +120,17 @@
                             -
                           @endif
                         </td>
-                        <td>
+                        <td class="ledger-desc">
                           @if(!empty($notes[$rowKey]))
-                            {{ $notes[$rowKey] }}
+                            @include('ledgerDescription', ['text' => $notes[$rowKey]])
                           @else
-                          @if(isset($item->transaction_type)) {{ucfirst($item->transaction_type)}}
+                          @if(isset($item->transaction_type)) {{transactionLabel($item->transaction_type)}}
                           @elseif(isset($item->return_no)) Return - ({{$item->return_no}})
                           @elseif(isset($item->purchase_no)) Purchase - ({{$item->purchase_no}})
                           @else Unknown Type @endif
                           @endif
                         </td>
+                        @php $sumDebit = ($sumDebit ?? 0) + $displayDebit; $sumCredit = ($sumCredit ?? 0) + $displayCredit; @endphp
                         <td>{{ $displayDebit > 0 ? number_format($displayDebit) : '' }}</td>
                         <td>{{ $displayCredit > 0 ? number_format($displayCredit) : '' }}</td>
                         <td>{{number_format($balance)}}</td>
@@ -170,39 +175,14 @@
                     @endif
                   </tbody>
                   <tfoot>
-                    <tr>
-                      <th>Sr.</th>
-                      <th>Date</th>
-                      <th>Reference</th>
-                      <th>Description</th>
-                      <th>Debit</th>
-                      <th>Credit</th>
-                      <th>Balance</th>
-                      <th>Action</th>
+                    <tr class="font-weight-bold">
+                      <th colspan="4" class="text-right">Total</th>
+                      <th>{{ number_format($sumDebit ?? 0) }}</th>
+                      <th>{{ number_format($sumCredit ?? 0) }}</th>
+                      <th colspan="2"></th>
                     </tr>
                   </tfoot>
                 </table>
-                <div class="row mt-3">
-                  <div class="col-md-6">
-                    <div class="p-3 border rounded" style="background-color: {{ $ledgerBalance > 0 ? '#d4edda' : ($ledgerBalance < 0 ? '#f8d7da' : '#f9f9f9') }};">
-                      <h6 class="mb-1">Account Status</h6>
-                      @if($ledgerBalance > 0)
-                        <strong>Credit Balance:</strong> Company owes {{ $vendor['vendor_type'] == 0 ? 'vendor' : 'contractor' }} {{ number_format(abs($ledgerBalance), 2) }}
-                      @elseif($ledgerBalance < 0)
-                        <strong>Debit Balance:</strong> {{ $vendor['vendor_type'] == 0 ? 'Vendor' : 'Contractor' }} owes company {{ number_format(abs($ledgerBalance), 2) }}
-                      @else
-                        <strong>Balanced Account:</strong> No outstanding amount
-                      @endif
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <table class="table table-sm mb-0">
-                      <tr><td>Total Purchases:</td><td class="text-right">{{ number_format($detail->sum('debit') ?? 0, 2) }}</td></tr>
-                      <tr><td>Total Payments:</td><td class="text-right">{{ number_format($detail->sum('credit') ?? 0, 2) }}</td></tr>
-                      <tr class="font-weight-bold"><td>Current Balance:</td><td class="text-right">{{ number_format($ledgerBalance ?? 0, 2) }}</td></tr>
-                    </table>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

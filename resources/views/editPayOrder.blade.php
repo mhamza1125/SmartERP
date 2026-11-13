@@ -70,6 +70,13 @@
                     <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Transaction Date</label>
+                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
               </div>
 
               <h6>Amount Added To</h6>
@@ -134,15 +141,6 @@
                 </div>
               </div>
 
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Transaction Date</label>
-                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-              </div>
 
               <div class="row">
                 <div class="col-md-12">

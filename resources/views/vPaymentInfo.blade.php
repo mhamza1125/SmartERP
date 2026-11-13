@@ -51,9 +51,11 @@
                   <tbody>
                     <tr><td><b>Vendor:</b> {{$transaction['vendor_no']}} - {{$transaction['fname']}}</td></tr>
                     <tr><td><b>Pay Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
-                    {{-- <tr><td><b>Payment Type:</b> {{ucfirst($transaction['transaction_type'])}}</td></tr> --}}
+                    {{-- <tr><td><b>Payment Type:</b> {{transactionLabel($transaction['transaction_type'])}}</td></tr> --}}
                     @if($transaction['purchase_no'])<tr>
                       <td><b>Purchase No:</b> {{$transaction['purchase_no']}}</td>
+                    </tr>@elseif($transaction['transaction_type'] === 'payment')<tr>
+                      <td><b>Payment For:</b> General Payment (not for a purchase)</td>
                     </tr>@endif
                   </tbody>
                 </table>

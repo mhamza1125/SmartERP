@@ -14,19 +14,22 @@
             <h4>Payroll - {{ $monthLabel }}</h4>
             <div class="card-header-action">
               <a href="{{ route('payroll.print', $payroll->month) }}" class="btn btn-info" target="_blank"><i class="fas fa-print"></i> Print Payroll</a>
+              <a href="{{ route('payroll.vouchers', $payroll->month) }}" class="btn btn-primary" target="_blank" title="Payment voucher of every salary paid this month"><i class="fas fa-file-invoice-dollar"></i> Print All Payment Vouchers</a>
+              <a href="{{ route('payroll.slips', $payroll->month) }}" class="btn btn-primary" target="_blank" title="Salary slip of every employee this month"><i class="fas fa-file-alt"></i> Print All Salary Slips</a>
               <a href="{{ route('payroll.edit', $payroll->month) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
               <a href="{{ route('payroll.index') }}" class="btn btn-secondary">Back</a>
             </div>
           </div>
           <div class="card-body payroll-sheet">
             <div class="ptc-page">
-              <div class="ptc-facts">
+              {{-- Two rows, same order as the payroll sheet header: period, then rates and totals --}}
+              <div class="ptc-facts ptc-facts--4">
                 <div><span class="ptc-fact-label">Total Working Days</span><span class="ptc-fact-value">{{ $num($payroll->total_working_days) }}</span></div>
                 <div><span class="ptc-fact-label">Hours / Day</span><span class="ptc-fact-value">{{ $num($payroll->hours_per_day) }}</span></div>
-                <div><span class="ptc-fact-label">Overtime Rate</span><span class="ptc-fact-value">{{ $num($payroll->overtime_multiplier) }}x hourly wage</span></div>
-                <div><span class="ptc-fact-label">Late Deduction</span><span class="ptc-fact-value">{{ $num($payroll->late_multiplier) }}x hourly wage</span></div>
                 <div><span class="ptc-fact-label">Payment Date</span><span class="ptc-fact-value">{{ formatDate($payroll->payment_date) }}</span></div>
                 <div><span class="ptc-fact-label">Paid From</span><span class="ptc-fact-value">{{ $accountName }}</span></div>
+                <div><span class="ptc-fact-label">Overtime Rate</span><span class="ptc-fact-value">{{ $num($payroll->overtime_multiplier) }}x hourly wage</span></div>
+                <div><span class="ptc-fact-label">Late Deduction</span><span class="ptc-fact-value">{{ $num($payroll->late_multiplier) }}x hourly wage</span></div>
                 <div><span class="ptc-fact-label">Employees</span><span class="ptc-fact-value">{{ $items->count() }}</span></div>
                 <div><span class="ptc-fact-label">Total Payable</span><span class="ptc-fact-value">{{ number_format($items->sum('net_salary'), 2) }}</span></div>
               </div>
@@ -90,6 +93,11 @@
                         <a href="{{ route('payroll.slip', $item->payroll_item_id) }}" target="_blank" class="btn btn-sm btn-outline-info" title="Print salary slip">
                           <i class="fas fa-print"></i> Slip
                         </a>
+                        @if($item->salary_transaction_id)
+                          <a href="{{ route('payment.print', $item->salary_transaction_id) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Print payment voucher">
+                            <i class="fas fa-print"></i> Voucher
+                          </a>
+                        @endif
                       </td>
                     </tr>
                   @empty

@@ -86,7 +86,7 @@
                           <td>SSL-{{ date('Y') }}-{{ str_pad($item->transaction_id, 4, '0', STR_PAD_LEFT) }}</td>
                           <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                           <td>{{$item->vendor_no}} - {{$item->fname}}</td>
-                          <td>{{ $details[$item->transaction_id]->type ?? ucfirst($item->transaction_type) }}</td>
+                          <td>{{ $details[$item->transaction_id]->type ?? transactionLabel($item->transaction_type) }}</td>
                           <td>{{ $details[$item->transaction_id]->summary ?? '' }}</td>
                           <td>{{number_format($item->debit ? $item->debit : $item->credit)}}</td>
                           <td>

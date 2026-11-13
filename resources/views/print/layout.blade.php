@@ -71,7 +71,7 @@
 
         .doc-header__title-main {
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 900; /* print page titles: heaviest weight */
             color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -429,7 +429,7 @@
 
         .doc-title-label {
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 900;
             color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 0.06em;
@@ -478,7 +478,7 @@
         .document-title {
             text-align: center;
             font-size: 15px;
-            font-weight: 700;
+            font-weight: 900;
             margin-bottom: 14px;
             text-transform: uppercase;
             color: var(--accent);

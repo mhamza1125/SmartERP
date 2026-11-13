@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>General Voucher Info</h4>
+            <h4>Journal Voucher Info</h4>
             <div class="card-header-action">
               <div class="btn-group">
                 <a class="btn btn-info" href="{{ route('payment.print', $transaction['transaction_id']) }}" target="_blank">
@@ -61,7 +61,7 @@
                       @elseif($transaction['transaction_to'] == 'customer')
                         Customer
                       @else
-                        {{ ucfirst($transaction['transaction_to']) }}
+                        {{ transactionLabel($transaction['transaction_to']) }}
                       @endif
                     </td></tr>
                     <tr><td><b>Payee Name:</b> 

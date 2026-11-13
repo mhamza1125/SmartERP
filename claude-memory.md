@@ -237,8 +237,15 @@ STATUS_PTC_CLOSED          = 9   (PTC closed early, before its end stage)
 - `payee_id` + `payee_bank_id`: recipient; `bank_id`: source bank
 - `transfer_pair_id`: links two transaction records for bank transfers
 
+### Transaction display & loans (2026-11-14)
+- "General Voucher" is shown as **Journal Voucher** everywhere; the stored value stays `generalVoucher` (routes/views keep their names). Show type / party values with `transactionLabel($value)` (helpers.php, uses `TransactionRepository::TYPE_LABELS`), never `ucfirst()`
+- View buttons in Transactions / Cash Book / Bank Ledger come from the `transactionViewButton` partial (one transaction_to -> show-route map; `admin` = bank opening balance -> BRS page). BRS and Transfer view pages share `transactionVoucherInfo`
+- Loans: `TransactionRepository::loanSummary($party, $id, $excludeId)` = Give Loan (advance, credit) minus Receive Loan (receiveAdvance, debit, payroll deductions included); employees split fixed (NULL = fixed) / temporary. `ajaxLoan` + `loanSummary` partial on the Pay Employee/Vendor/Contractor add/edit forms; Receive Loan is capped at the outstanding loan (`loanRepaymentError`)
+- Receive Loan amount: employee form posts it as credit, vendor/contractor forms as debit - store()/update() take whichever is set (vendor/contractor repayments used to be saved as 0)
+- Batch half-page prints: `print.layout-voucher` with `sheetOnly` renders one sheet; `print.voucher-batch` + `$sheets` prints many (payroll "Print All Payment Vouchers" / "Print All Salary Slips")
+
 ### Vendor Payments
-Only created against purchases — not standalone transactions.
+Linked to a purchase (`order_id` = purchase_id) or a General Payment (`order_id` = 0, chosen on the Pay Vendor form; changed 2026-11-14 at the user's request). Same debit/credit handling either way; `describe()` labels it "General Payment".
 
 ### Payroll (reworked 2026-11-13)
 - `payrolls` (one per month Y-m: total_working_days, hours_per_day, overtime_multiplier, late_multiplier, payment_date, bank_id) + `payroll_items` (per employee: designation, gross, working/actual days, salary_for_days, overtime hours/rate/amount, late_minutes/deduction, temp_advance, fixed_advance, fixed_advance_deduction, remaining_fixed_advance, net_salary, ids of the 3 posted transactions). All logic in `PayrollRepository` (calculate / sheet / store)

@@ -51,7 +51,7 @@
                   <tbody>
                     <tr><td><b>Employee:</b> {{$transaction['employee_no']}} - {{$transaction['name']}}</td></tr>
                     <tr><td><b>Pay Date:</b> {{\Carbon\Carbon::parse($transaction['transaction_date'])->format('d-m-Y')}}</td></tr>
-                    <tr><td><b>Payment Type:</b> {{ucfirst($transaction['transaction_type'])}}</td></tr>
+                    <tr><td><b>Payment Type:</b> {{transactionLabel($transaction['transaction_type'])}}</td></tr>
                   </tbody>
                 </table>
               </div>

@@ -95,7 +95,7 @@
             '  padding-bottom: 6px; border-bottom: 3px solid ' + ACCENT + '; margin-bottom: 10px; }',
             '.dtp-header__logo { height: 64px; max-width: 100%; width: auto; object-fit: contain; display: block; }',
             '.dtp-header__title { text-align: center; min-width: 0; }',
-            '.dtp-header__title-main { font-size: 13px; font-weight: 700; color: ' + ACCENT + '; text-transform: uppercase; letter-spacing: 0.05em;',
+            '.dtp-header__title-main { font-size: 13px; font-weight: 900; color: ' + ACCENT + '; text-transform: uppercase; letter-spacing: 0.05em;',
             '  line-height: 1.2; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }',
             '.dtp-header__title-sub { font-family: ' + MONO + '; font-size: 9.5px; color: ' + MUTED + '; margin-top: 2px; }',
             '.dtp-header__contacts { justify-self: end; text-align: right; font-size: 9px; line-height: 1.5; min-width: 0; overflow-wrap: anywhere; }',

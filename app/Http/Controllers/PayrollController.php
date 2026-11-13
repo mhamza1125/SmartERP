@@ -130,6 +130,52 @@ class PayrollController extends Controller
         ]);
     }
 
+    /** Every salary slip of a month in one print (the same slip template, two per A4 sheet). */
+    public function printSlips($month)
+    {
+        $this->authorize('access', Transaction::class);
+        $items = $this->monthOrNull($month) ? $this->payrollRepository->items($month) : collect();
+        if ($items->isEmpty()) {
+            return redirect()->route('payroll.index')->with('error', 'No salary records saved for this month.');
+        }
+
+        $sheets = $items->map(function ($row) {
+            $item = $this->payrollRepository->item((int) $row->payroll_item_id);
+
+            return view('print.payroll-slip', [
+                'item' => $item,
+                'accountName' => $this->accountName($item->bank_id),
+                'sheetOnly' => true,
+            ])->render();
+        });
+
+        return view('print.voucher-batch', ['sheets' => $sheets, 'batchTitle' => 'Salary_Slips_'.$month]);
+    }
+
+    /**
+     * Payment voucher of every employee's salary payment of a month in one print: the same
+     * voucher template and data as Transactions / Cash Book / Bank Ledger (print.payment).
+     */
+    public function printVouchers($month)
+    {
+        $this->authorize('show', Transaction::class);
+        $transactionIds = ($this->monthOrNull($month) ? $this->payrollRepository->items($month) : collect())
+            ->pluck('salary_transaction_id')->filter()->values();
+        if ($transactionIds->isEmpty()) {
+            return redirect()->route('payroll.index')->with('error', 'No salary payments saved for this month.');
+        }
+
+        $info = $this->transactionRepository->describe($transactionIds);
+        $sheets = $transactionIds->map(fn ($id) => view('print.payment', [
+            'transaction' => $this->transactionRepository->getEPayment($id),
+            'voucherNumber' => 'SLE-'.date('Y').'-'.str_pad($id, 4, '0', STR_PAD_LEFT),
+            'info' => $info->get($id),
+            'sheetOnly' => true,
+        ])->render());
+
+        return view('print.voucher-batch', ['sheets' => $sheets, 'batchTitle' => 'Payment_Vouchers_'.$month]);
+    }
+
     /** Balance of a bank (or cash, id 0), for the "insufficient balance" check before saving. */
     public function getBankBalance($bankId)
     {

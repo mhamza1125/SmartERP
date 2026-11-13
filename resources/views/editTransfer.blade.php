@@ -65,8 +65,8 @@
               <div class="row">
                 <div class="col-md-3">
                   <div class="form-group">
-                    <label>Check Number (Optional)</label>
-                    <input type="text" class="form-control" name="check_no" value="{{ old('check_no') }}">
+                    <label>Cheque Number (Optional)</label>
+                    <input type="text" class="form-control" name="check_no" value="{{ old('check_no', $chequeNo) }}">
                   </div>
                 </div>
               </div>
@@ -74,7 +74,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Description/Notes</label>
-                    <textarea class="summernote" name="description">{{$transaction->description}}</textarea>
+                    <textarea class="summernote" name="description">{{ old('description', $note) }}</textarea>
                   </div>
                 </div>
               </div>

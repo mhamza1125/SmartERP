@@ -17,12 +17,12 @@
           <div class="card-body">
             <form action="{{ route('transaction.update', $transaction['transaction_id']) }}" method="POST" class="needs-validation" novalidate="" enctype="multipart/form-data">
               @csrf
+              <input type="hidden" name="transaction_to" required value="contractor" id="transaction_to">
+              <input type="hidden" name="credit" required value="0">
+              <input type="hidden" name="payee_bank_id" required value="0">
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <input type="hidden" name="transaction_to" required value="contractor" id="transaction_to">
-                    <input type="hidden" name="credit" required value="0">
-                    <input type="hidden" name="payee_bank_id" required value="0">
                     <label>Contractor</label>
                     <select class="form-control select2" name="payee_id" required id="payee_id">
                       <option value="" selected disabled>Select Contractor</option>
@@ -33,14 +33,15 @@
                       @endif
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Vendor / Contractor</div>
+                    <div class="invalid-feedback">Select Contractor</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Payment Type</label>
-                    <select class="form-control" name="transaction_type" required id="transaction_type">
+                    <select class="form-control" name="transaction_type" required>
                       <option value="wages" {{ $transaction['transaction_type'] == 'wages' ? 'selected' : '' }}>Wages</option>
+                      <option value="payment" {{ $transaction['transaction_type'] == 'payment' ? 'selected' : '' }}>General Payment</option>
                       <option value="advance" {{ $transaction['transaction_type'] == 'advance' ? 'selected' : '' }}>Give Loan</option>
                       <option value="receiveAdvance" {{ $transaction['transaction_type'] == 'receiveAdvance' ? 'selected' : '' }}>Receive Loan</option>
                     </select>
@@ -49,34 +50,6 @@
                 </div>
               </div>
               <div class="row">
-                {{-- <div class="col-md-6" id="display1">
-                  <div class="form-group">
-                    <label>Purchases / Processing</label>
-                    <select class="form-control select2" name="order_id" id="order_id">
-                      <option value="" disabled>Select Purchase / Processing</option>
-                      {{-- Ajax Orders // That's commented
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Purchase / Processing</div>
-                  </div>
-                </div>
-                <div class="col-md-6" id="display2">
-                  <div class="form-group">
-                    <label>Purchases</label>
-                    <input type="text" readonly class="form-control" value="Not for Purchase / Processing">
-                  </div>
-                </div> --}}
-                {{-- <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Receiver Cash / Bank (if any)</label>
-                    <select class="form-control select2" name="payee_bank_id" id="payee_bank_id" required>
-                      <option value="0" selected>Cash Payment</option>
-                      //Ajax Options 
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Cash / Bank</div>
-                  </div>
-                </div> --}}
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Payee Cash / Bank (if any)</label>
@@ -92,18 +65,24 @@
                     <div class="invalid-feedback">Select Cash / Bank</div>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-3">
                   <div class="form-group">
-                    <label>Amount</label>
-
+                    <label>Pay Date</label>
+                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
+                    <div class="valid-feedback">Good job!</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>Payment Amount</label>
                     <input type="number" min="0" class="form-control" name="debit" required value="{{$transaction['debit'] ?? $transaction['credit']}}">
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Enter Amount</div>
                   </div>
                 </div>
-                <div class="col-md-4">
+              </div>
+              <div class="row">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>File / Images</label>
                     <div class="custom-file">
@@ -114,22 +93,15 @@
                     <div class="invalid-feedback" id="fileError"></div>
                   </div>
                 </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label>Pay Date</label>
-                    <input type="text" class="form-control datepicker" name="transaction_date" required value="{{$transaction['transaction_date']}}">
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Description</label>
                     <textarea class="form-control" name="description">{{$transaction['description']}}</textarea>
                   </div>
                 </div>
               </div>
+              {{-- Outstanding loans of the selected payee; repayment share on Receive Loan --}}
+              @include('loanSummary', ['party' => 'contractor', 'amountField' => 'debit', 'excludeId' => $transaction['transaction_id']])
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
                   <button class="btn btn-primary" type="submit">Submit</button>

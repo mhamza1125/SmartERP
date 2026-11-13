@@ -470,6 +470,48 @@ class TransactionController extends Controller
         }
     }
 
+    /**
+     * Loans of an employee / vendor / contractor for the payment forms: given, repaid and
+     * outstanding per kind (employees: fixed loan and temporary advance).
+     */
+    public function ajaxLoan(Request $request)
+    {
+        $party = $request->input('party');
+        $partyId = (int) $request->input('partyId');
+        if (! in_array($party, ['employee', 'vendor', 'contractor'], true) || $partyId < 1) {
+            return response()->json(['loans' => []]);
+        }
+
+        return response()->json([
+            'loans' => $this->transactionRepository->loanSummary($party, $partyId, (int) $request->input('exclude') ?: null),
+        ]);
+    }
+
+    /**
+     * A loan repayment (Receive Loan) cannot be more than the loan still outstanding
+     * (employees: of the chosen loan type), so a loan is never repaid twice.
+     */
+    private function loanRepaymentError(array $data, ?int $excludeTransactionId = null): ?string
+    {
+        $party = $data['transaction_to'] ?? null;
+        if (! in_array($party, ['employee', 'vendor', 'contractor'], true) || empty($data['payee_id'])) {
+            return null;
+        }
+
+        $loans = $this->transactionRepository->loanSummary($party, (int) $data['payee_id'], $excludeTransactionId);
+        $kind = $party === 'employee' ? ($data['advance_type'] ?? Transaction::ADVANCE_FIXED) : 'loan';
+        $outstanding = $loans[$kind]['outstanding'] ?? 0;
+        $amount = (float) ($data['debit'] ?? 0);
+
+        if ($amount > $outstanding + 0.001) {
+            $label = $party === 'employee' ? ($kind === Transaction::ADVANCE_TEMPORARY ? 'temporary advance' : 'fixed loan') : 'loan';
+
+            return 'Cannot receive '.number_format($amount, 2).' - the outstanding '.$label.' is only '.number_format($outstanding, 2).'.';
+        }
+
+        return null;
+    }
+
     public function ajaxOrder(Request $request)
     {
         $customerId = $request->input('customerId');
@@ -561,10 +603,14 @@ class TransactionController extends Controller
         // Loan type (temporary advance / fixed loan) only on employee Give / Receive Loan entries
         $isEmployeeLoan = ($validatedData['transaction_to'] ?? '') === 'employee' && in_array($validatedData['transaction_type'], ['advance', 'receiveAdvance'], true);
         $validatedData['advance_type'] = $isEmployeeLoan ? ($validatedData['advance_type'] ?? Transaction::ADVANCE_FIXED) : null;
-        // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
+        // For receiveAdvance: the amount is a cash inflow, stored in debit. The employee form posts
+        // it as credit, the vendor / contractor forms as debit (with credit 0): take whichever holds it.
         if ($validatedData['transaction_type'] == 'receiveAdvance') {
-            $validatedData['debit'] = $validatedData['credit'];
+            $validatedData['debit'] = (float) ($validatedData['credit'] ?? 0) ?: (float) ($validatedData['debit'] ?? 0);
             $validatedData['credit'] = null;
+            if ($error = $this->loanRepaymentError($validatedData)) {
+                return redirect()->back()->with('fails', $error)->withInput();
+            }
         }
         // For BRS type 2: swap debit to credit (cash outflow for BRS correction)
         elseif ($request->has('brs_type') && $request->input('brs_type') == 2) {
@@ -582,7 +628,7 @@ class TransactionController extends Controller
             $payeeType = $request->input('payee_type');
             $allowedPayeeTypes = ['vendor', 'contractor', 'employee', 'customer'];
             if (!in_array($payeeType, $allowedPayeeTypes)) {
-                return redirect()->back()->with('fails', 'Invalid payee type for general voucher')->withInput();
+                return redirect()->back()->with('fails', 'Invalid payee type for journal voucher')->withInput();
             }
             $validatedData['transaction_to'] = $payeeType; // Set to 'vendor', 'contractor', 'employee', or 'customer'
 
@@ -636,6 +682,11 @@ class TransactionController extends Controller
                 $validatedData['debit'] = $amount;
                 $validatedData['credit'] = null;
             }
+        }
+
+        // Vendor payment: linked to a purchase, or a General Payment (order_id 0, no purchase)
+        if ($validatedData['transaction_to'] === 'vendor' && $validatedData['transaction_type'] === 'payment' && empty($validatedData['order_id'])) {
+            $validatedData['order_id'] = 0;
         }
 
         // For vendor and contractor payments: swap debit to credit for Cashbook posting (cash outflow)
@@ -769,7 +820,7 @@ class TransactionController extends Controller
         // Build description with check number if provided
         $fullDescription = $description;
         if ($checkNo) {
-            $fullDescription = ($description ? $description . ' - ' : '') . 'Check No: ' . $checkNo;
+            $fullDescription = ($description ? $description . ' - ' : '') . 'Cheque No: ' . trim($checkNo);
         }
 
         // Create first transaction: Cash going out (Credit entry)
@@ -888,6 +939,9 @@ class TransactionController extends Controller
     {
         $this->authorize('show', Transaction::class);
         $transaction = $this->transactionRepository->getBRS($id);
+        if (! $transaction || ! in_array($transaction->transaction_to, ['brs', 'admin'], true)) {
+            return redirect()->route('transaction')->with('fails', 'Balance adjustment not found.');
+        }
 
         return view('brsInfo', [
             'transaction' => $transaction,
@@ -898,6 +952,9 @@ class TransactionController extends Controller
     {
         $this->authorize('show', Transaction::class);
         $transaction = $this->transactionRepository->getTransfer($id);
+        if (! $transaction || $transaction->transaction_to !== 'transfer') {
+            return redirect()->route('transaction')->with('fails', 'Transfer not found.');
+        }
 
         return view('transferInfo', [
             'transaction' => $transaction,
@@ -1041,8 +1098,13 @@ class TransactionController extends Controller
         $this->authorize('edit', Transaction::class);
         $bank = $this->bankRepository->self();
 
+        // The cheque number is kept at the end of the description: show it in its own field
+        [$note, $chequeNo] = $this->transactionRepository->splitCheque($id->description);
+
         return view('editTransfer', [
             'transaction' => $id,
+            'note' => $note,
+            'chequeNo' => $chequeNo,
             'bank' => $bank,
         ]);
     }
@@ -1056,9 +1118,13 @@ class TransactionController extends Controller
         $request->merge(['advance_type' => $isEmployeeLoan && in_array($request->input('advance_type'), [Transaction::ADVANCE_TEMPORARY, Transaction::ADVANCE_FIXED], true)
             ? $request->input('advance_type') : ($isEmployeeLoan ? Transaction::ADVANCE_FIXED : null)]);
 
-        // For receiveAdvance: swap credit to debit (cash inflow from advance payment)
+        // For receiveAdvance: the amount is a cash inflow, stored in debit (employee form posts it as
+        // credit, vendor / contractor forms as debit)
         if ($request->input('transaction_type') == 'receiveAdvance') {
-            $request->merge(['debit' => $request->input('credit'), 'credit' => null]);
+            $request->merge(['debit' => (float) $request->input('credit', 0) ?: (float) $request->input('debit', 0), 'credit' => null]);
+            if ($error = $this->loanRepaymentError($request->input(), (int) $id)) {
+                return redirect()->back()->with('fails', $error)->withInput();
+            }
         }
         // For BRS type 2: swap debit to credit (cash outflow for BRS correction)
         elseif ($request->has('brs_type') && $request->input('brs_type') == 2) {
@@ -1113,6 +1179,11 @@ class TransactionController extends Controller
                 // Expense reversal: store as debit (cash inflow)
                 $request->merge(['debit' => $amount, 'credit' => null]);
             }
+        }
+
+        // Vendor payment: linked to a purchase, or a General Payment (order_id 0, no purchase)
+        if ($request->input('transaction_to') === 'vendor' && $request->input('transaction_type') === 'payment' && empty($request->input('order_id'))) {
+            $request->merge(['order_id' => 0]);
         }
 
         // For vendor and contractor payments: swap debit to credit for Cashbook posting (cash outflow)
@@ -1205,7 +1276,7 @@ class TransactionController extends Controller
         // Build description with check number if provided
         $fullDescription = $description;
         if ($checkNo) {
-            $fullDescription = ($description ? $description . ' - ' : '') . 'Cheque No: ' . $checkNo;
+            $fullDescription = ($description ? $description . ' - ' : '') . 'Cheque No: ' . trim($checkNo);
         }
 
         // Update the original transaction (outflow)

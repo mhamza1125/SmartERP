@@ -71,7 +71,7 @@ class PurchaseRepository implements GlobalInterface
         return Purchase::where('purchase_id', $id)
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->join('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
-            ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1', 'vendors.vendor_no')
+            ->select('purchases.*', 'orders.job_no', 'vendors.fname', 'vendors.address', 'vendors.phone1', 'vendors.vendor_no', 'vendors.vendor_type')
             ->first();
 
         // Checking If it is received or not (Don't know why it's removed by Augmnt)

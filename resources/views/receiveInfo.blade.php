@@ -15,6 +15,7 @@
                 <a href="{{ route('receive') }}" class="btn btn-primary">Back</a>
                 <a href="{{ route('receive.edit', $receive['receive_id']) }}" class="btn btn-primary">Edit</a>
                 <a href="{{ route('return.add', $receive['receive_id']) }}" class="btn btn-primary">Return</a>
+                @include('purchasePayButton', ['vendorId' => $receive['vendor_id'], 'vendorType' => $receive['vendor_type'] ?? 0, 'purchaseId' => $receive['purchase_id']])
               </div>
             </div>
           </div>

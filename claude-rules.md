@@ -125,5 +125,5 @@ Add domain-specific methods beyond these five as needed in each concrete reposit
 - Don't create new helper files without adding them to `composer.json` `autoload.files`
 - Don't use `Session::put()` for flash data — use `->with()` on redirects
 - Don't hardcode company name, currency symbol, or logo path — read from `Company` model or config
-- Don't create vendor payments as standalone transactions — they must be linked to a purchase
+- A vendor payment is either linked to a purchase (`order_id` = purchase_id) or a General Payment (`order_id` = 0); both post the same ledger/cash entries
 - Don't use the ordered qty for stock updates — always use the **approved qty** from the receive record

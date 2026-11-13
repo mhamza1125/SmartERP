@@ -85,23 +85,13 @@
                     <tr>
                       <td>{{$index++}}</td>
                       <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
-                      <td>{{ucfirst($item->transaction_to)}}</td>
-                      <td>{{ucfirst($item->transaction_type)}}</td>
+                      <td>{{transactionLabel($item->transaction_to)}}</td>
+                      <td>{{transactionLabel($item->transaction_type)}}</td>
                       <td>{{isset($displayDebit) ? number_format($displayDebit) : ''}} ({{$displayDC}})</td>
                       <td>{{isset($displayCredit) ? number_format($displayCredit) : ''}}</td>
                       <td>{{number_format($balance)}}</td>
                       <td>
-                        @if($item->transaction_to == 'employee')
-                          <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                        @elseif($item->transaction_to == 'vendor')
-                          <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                        @elseif($item->transaction_to == 'expense')
-                          <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                          @elseif($item->transaction_to == 'customer')
-                          <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                        @else
-                          <a href="{{ route('transaction.showBRS', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                        @endif
+                        @include('transactionViewButton')
                       </td>
                     </tr>
                     @endforeach

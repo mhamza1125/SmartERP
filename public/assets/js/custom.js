@@ -3462,12 +3462,19 @@ $(document).ready(function () {
                 dataType: "json",
                 success: function (response) {
                     var purchaseSelect = $('#order_id');
-                    purchaseSelect.empty().append('<option value="" selected disabled>Select Purchase</option>');
+                    purchaseSelect.empty().append('<option value="" selected disabled>Select a Purchase or General Payment</option>');
+                    // A payment does not have to be for a purchase
+                    purchaseSelect.append(new Option('General Payment (not for a purchase)', '0'));
                     // Populate options dynamically based on the response
                     $.each(response.data, function (index, item) {
                         var optionText = item.purchase_no + (item.job_no ? ' - ' + item.job_no : ' - Default Purchase');
                         purchaseSelect.append(new Option(optionText, item.purchase_id));
                     });
+                    // Edit form: keep the purchase (or General Payment) the payment was saved with
+                    if (typeof selectedPurchaseId !== 'undefined' && selectedPurchaseId !== ''
+                        && purchaseSelect.find('option[value="' + selectedPurchaseId + '"]').length) {
+                        purchaseSelect.val(selectedPurchaseId);
+                    }
                     purchaseSelect.trigger('change');
                 },
             });
@@ -3505,7 +3512,7 @@ $(document).ready(function () {
 });
 // End - Pay Order Payment Script
 
-// Start - General Voucher Script
+// Start - Journal Voucher Script (stored as generalVoucher)
 $(document).ready(function () {
     if (typeof isGeneralVoucherPage !== 'undefined') {
         function togglePayeeSections() {
@@ -3571,7 +3578,7 @@ $(document).ready(function () {
         });
     }
 });
-// End - General Voucher Script
+// End - Journal Voucher Script
 
 // Start - PTC (Process Travel Card) Script
 $(document).ready(function () {

@@ -118,3 +118,16 @@ if (! function_exists('printLogoUrl')) {
         return asset('assets/print-logo.png');
     }
 }
+
+if (! function_exists('transactionLabel')) {
+    /**
+     * Display name of a transactions.transaction_type or transaction_to value
+     * ("generalVoucher" -> "Journal Voucher", "advance" -> "Loan Given", "vendor" -> "Vendor").
+     */
+    function transactionLabel(?string $value): string
+    {
+        $labels = \App\Repositories\TransactionRepository::TYPE_LABELS + ['admin' => 'Opening Balance'];
+
+        return $labels[$value] ?? ucfirst((string) $value);
+    }
+}

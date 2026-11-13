@@ -51,13 +51,14 @@
 
                 <div class="col-md-6" id="display1">
                   <div class="form-group">
-                    <label>Purchases / Processing</label>
+                    <label>Payment For</label>
                     <select class="form-control select2" name="order_id" id="order_id">
-                      <option value="" disabled>Select Purchase / Processing</option>
-                      {{-- Ajax Orders --}}
+                      <option value="" disabled>Select a Purchase or General Payment</option>
+                      {{-- Ajax: the vendor's purchases, plus General Payment (not linked to a purchase) --}}
                     </select>
                     <div class="valid-feedback">Good job!</div>
-                    <div class="invalid-feedback">Select Purchase / Processing</div>
+                    <div class="invalid-feedback">Select a purchase, or General Payment</div>
+                    <small class="form-text text-muted">Choose General Payment for a payment that is not for a specific purchase.</small>
                   </div>
                 </div>
                 <div class="col-md-6" id="display2">
@@ -131,6 +132,8 @@
                   </div>
                 </div>
               </div>
+              {{-- Outstanding loans of the selected payee; repayment share on Receive Loan --}}
+              @include('loanSummary', ['party' => 'vendor', 'amountField' => 'debit', 'excludeId' => $transaction['transaction_id']])
               <div class="form-group row mb-4">
                 <div class="col-md-12 text-right">
                   <button class="btn btn-primary" type="submit">Submit</button>
@@ -170,5 +173,7 @@
   var isPayVendorPage = false;
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
   var ajaxPurchaseUrl = "{{ route('ajaxPurchase') }}";
+  // Purchase this payment is for (0 = General Payment), re-selected when the vendor's purchases load
+  var selectedPurchaseId = @json((string) ($transaction['order_id'] ?? ''));
 </script>
 @endsection

@@ -44,7 +44,7 @@
                   @endif
                 @endif
                 <a href="{{ route('receive.add', $purchase['purchase_id']) }}" class="btn btn-primary">Receive</a>
-                <a href="{{ route('transaction.addVPayment') }}" class="btn btn-primary">Pay</a>
+                @include('purchasePayButton', ['vendorId' => $purchase['vendor_id'], 'vendorType' => $purchase['vendor_type'] ?? 0, 'purchaseId' => $purchase['purchase_id']])
               </div>
             </div>
           </div>

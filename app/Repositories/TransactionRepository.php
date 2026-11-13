@@ -426,7 +426,7 @@ class TransactionRepository implements GlobalInterface
             ->first();
     }
 
-    public function getGeneralVoucher($id) // General Voucher
+    public function getGeneralVoucher($id) // Journal Voucher (stored as generalVoucher)
     {
         return Transaction::where('transaction_id', $id)
             ->leftJoin('banks', 'banks.bank_id', '=', 'transactions.bank_id')
@@ -1012,6 +1012,45 @@ class TransactionRepository implements GlobalInterface
         return (float) $query->sum('deliveries.freight_charges');
     }
 
+    /**
+     * Loans of one party (employee / vendor / contractor), from the Give Loan (advance, amount
+     * in credit) and Receive Loan (receiveAdvance, amount in debit) entries - payroll loan
+     * deductions are Receive Loan entries too, so they count as repaid.
+     *
+     * Employees have two kinds: "fixed" (instalment loan; older entries without a type count as
+     * fixed, as in payroll) and "temporary" (advance against salary). Vendors and contractors
+     * have one kind, "loan".
+     *
+     * @return array<string, array{given: float, repaid: float, outstanding: float}>
+     */
+    public function loanSummary(string $party, int $partyId, ?int $excludeTransactionId = null): array
+    {
+        $kind = $party === 'employee'
+            ? "COALESCE(advance_type, '".Transaction::ADVANCE_FIXED."')"
+            : "'loan'";
+
+        $rows = Transaction::where('transaction_to', $party)
+            ->where('payee_id', $partyId)
+            ->whereIn('transaction_type', ['advance', 'receiveAdvance'])
+            ->when($excludeTransactionId, fn ($query) => $query->where('transaction_id', '!=', $excludeTransactionId))
+            ->selectRaw("{$kind} as kind")
+            ->selectRaw("COALESCE(SUM(CASE WHEN transaction_type = 'advance' THEN credit ELSE 0 END), 0) as given")
+            ->selectRaw("COALESCE(SUM(CASE WHEN transaction_type = 'receiveAdvance' THEN debit ELSE 0 END), 0) as repaid")
+            ->groupByRaw($kind)
+            ->get();
+
+        $kinds = $party === 'employee' ? [Transaction::ADVANCE_FIXED, Transaction::ADVANCE_TEMPORARY] : ['loan'];
+        $summary = [];
+        foreach ($kinds as $name) {
+            $row = $rows->firstWhere('kind', $name);
+            $given = round((float) ($row->given ?? 0), 2);
+            $repaid = round((float) ($row->repaid ?? 0), 2);
+            $summary[$name] = ['given' => $given, 'repaid' => $repaid, 'outstanding' => max(0, round($given - $repaid, 2))];
+        }
+
+        return $summary;
+    }
+
     /** Display names of transaction_type values */
     public const TYPE_LABELS = [
         'payment' => 'Payment',
@@ -1026,7 +1065,7 @@ class TransactionRepository implements GlobalInterface
         'deliveryExpense' => 'Delivery Expense',
         'transfer' => 'Bank / Cash Transfer',
         'brs' => 'Balance Adjustment',
-        'generalVoucher' => 'General Voucher',
+        'generalVoucher' => 'Journal Voucher',
     ];
 
     /**
@@ -1139,6 +1178,10 @@ class TransactionRepository implements GlobalInterface
                 if (in_array($row->transaction_to, ['vendor', 'contractor'], true) && $purchases->get($row->order_id)) {
                     $details['Purchase No'] = $purchases->get($row->order_id);
                     $parts[] = 'Purchase '.$purchases->get($row->order_id);
+                } elseif ($row->transaction_to === 'vendor' && $row->transaction_type === 'payment') {
+                    // Vendor payment not linked to a purchase
+                    $details['Payment For'] = 'General Payment';
+                    $parts[] = 'General Payment';
                 }
                 if ($row->transaction_to === 'customer' && ($order = $orders->get($row->order_id))) {
                     $details['Order No'] = $order->order_no;
@@ -1188,9 +1231,16 @@ class TransactionRepository implements GlobalInterface
      *
      * @return array{0: ?string, 1: ?string}
      */
-    private function splitCheque(?string $description): array
+    public function splitCheque(?string $description): array
     {
         $text = trim(strip_tags((string) $description));
+        // Written by the transfer form at the end: "note - Cheque No: <cheque>". The cheque number is
+        // everything after the label (it may contain spaces), so it is never split into the note.
+        if (preg_match('/^(.*?)\s*-?\s*\b(?:check|cheque)\s+no\s*:\s*(.+)$/is', $text, $match)) {
+            $note = trim($match[1], " -\t\n");
+
+            return [$note !== '' ? $note : null, trim($match[2])];
+        }
         if (preg_match('/\s*-?\s*\b(?:check|cheque|chq)\b\s*(?:no\.?|number|#)?\s*[:#]?\s*([A-Za-z0-9\-\/]+)/i', $text, $match)) {
             $text = trim(str_replace($match[0], '', $text), " -\t\n");
 

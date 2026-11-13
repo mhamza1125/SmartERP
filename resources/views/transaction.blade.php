@@ -73,30 +73,16 @@
                           <td>{{\Carbon\Carbon::parse($item->transaction_date)->format('d-m-Y')}}</td>
                           @php $info = $details[$item->transaction_id] ?? null; @endphp
                           {{-- Printed / exported as one line saying what the transaction was about --}}
-                          <td data-export="{{ $info->narration ?? ucfirst($item->transaction_to) }}">
-                            {{ucfirst($item->transaction_to)}}
+                          <td data-export="{{ $info->narration ?? transactionLabel($item->transaction_to) }}">
+                            {{transactionLabel($item->transaction_to)}}
                             @if($info && $info->party) <br>{{ $info->party }} @endif
                             @if($info && $info->summary) <br><small class="text-muted">{{ $info->summary }}</small> @endif
                           </td>
-                          <td>{{ $info->type ?? ucfirst($item->transaction_type) }}</td>
+                          <td>{{ $info->type ?? transactionLabel($item->transaction_type) }}</td>
                           <td>{{isset($item->debit) ? number_format($item->debit) : ''}}</td>
                           <td>{{isset($item->credit) ? number_format($item->credit) : ''}}</td>
                           <td>
-                            @if($item->transaction_to == 'employee')
-                              <a href="{{ route('transaction.showEPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            @elseif($item->transaction_to == 'vendor')
-                              <a href="{{ route('transaction.showVPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            @elseif($item->transaction_to == 'contractor')
-                              <a href="{{ route('transaction.showCPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            @elseif($item->transaction_to == 'expense')
-                              <a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            @elseif($item->transaction_to == 'customer')
-                              <a href="{{ route('transaction.showOPayment', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            @elseif($item->transaction_to == 'brs')
-                              <a href="{{ route('transaction.showBRS', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>
-                            @else
-                              <a href="#" class="btn btn-info btn-sm">None</a>
-                            @endif
+                            @include('transactionViewButton')
                           </td>
                         </tr>
                       @endunless

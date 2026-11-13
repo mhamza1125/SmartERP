@@ -6,9 +6,9 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>General Voucher Table</h4>
+            <h4>Journal Voucher Table</h4>
             <div class="card-header-action">
-              <a href="{{ route('transaction.addGeneralVoucher') }}" class="btn btn-primary">Add General Voucher</a>
+              <a href="{{ route('transaction.addGeneralVoucher') }}" class="btn btn-primary">Add Journal Voucher</a>
             </div>
           </div>
           <div class="card-body">
@@ -43,7 +43,7 @@
                           @elseif($item->transaction_to == 'customer')
                             Customer
                           @else
-                            {{ ucfirst($item->transaction_to) }}
+                            {{ transactionLabel($item->transaction_to) }}
                           @endif
                         </td>
                         <td>

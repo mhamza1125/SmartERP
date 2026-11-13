@@ -1,3 +1,7 @@
+{{-- sheetOnly: output just this document's half-page sheet, for printing several together --}}
+@if(!empty($sheetOnly))
+@include('print.partials.voucher-sheet')
+@else
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,7 +76,7 @@
 
         .doc-header__title-main {
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 900; /* print page titles: heaviest weight */
             color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -136,7 +140,7 @@
         .document-title {
             text-align: center;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 900;
             margin-bottom: 8px;
             text-transform: uppercase;
             color: var(--accent);
@@ -539,23 +543,15 @@
 <body>
     <button onclick="window.print()" class="print-button no-print">Print</button>
 
-    <div class="half-sheet">
-    <header class="doc-header">
-        @include('print.header')
-    </header>
-
-    <table class="page-frame">
-        <thead><tr><td><div class="page-frame__header-space"></div></td></tr></thead>
-        <tbody><tr><td>
-            <main class="doc-body">
-                <div class="voucher-container">
-                    @yield('content')
-                </div>
-            </main>
-        </td></tr></tbody>
-        <tfoot><tr><td><div class="page-frame__footer-space"></div></td></tr></tfoot>
-    </table>
-    </div>
+    {{-- $sheets: several documents printed together (e.g. all payment vouchers of a payroll),
+         each rendered with sheetOnly; two half-page sheets per A4 page --}}
+    @if(isset($sheets))
+        @foreach($sheets as $sheet)
+            {!! $sheet !!}
+        @endforeach
+    @else
+        @include('print.partials.voucher-sheet')
+    @endif
 
 
     <script>
@@ -630,3 +626,4 @@
     @stack('scripts')
 </body>
 </html>
+@endif

@@ -17,7 +17,8 @@
     unset($details['Description']);
 
     $isExpense = ($transaction['transaction_to'] ?? '') === 'expense';
-    $docTitle = $isTransfer ? 'Transfer Voucher' : ($isAdjustment ? 'Adjustment Voucher' : ($isReceipt ? 'Receipt Voucher' : ($isExpense ? 'Expense Voucher' : 'Payment Voucher')));
+    $isJournal = $type === 'generalVoucher'; // stored as generalVoucher, shown as Journal Voucher
+    $docTitle = $isTransfer ? 'Transfer Voucher' : ($isAdjustment ? 'Adjustment Voucher' : ($isJournal ? 'Journal Voucher' : ($isReceipt ? 'Receipt Voucher' : ($isExpense ? 'Expense Voucher' : 'Payment Voucher'))));
 
     // Double entry lines: [account, debit, credit]
     if ($isTransfer) {
@@ -105,7 +106,7 @@
 
 <div class="totals-section avoid-break">
     <div class="total-row grand-total">
-        <span>{{ $isReceipt ? 'Amount Received' : ($isTransfer ? 'Amount Transferred' : ($isAdjustment ? 'Adjustment Amount' : 'Amount Paid')) }}</span>
+        <span>{{ $isReceipt ? 'Amount Received' : ($isTransfer ? 'Amount Transferred' : ($isAdjustment ? 'Adjustment Amount' : ($isJournal ? 'Voucher Amount' : 'Amount Paid'))) }}</span>
         <span class="amount">{{ number_format($amount, 2) }}</span>
     </div>
 </div>

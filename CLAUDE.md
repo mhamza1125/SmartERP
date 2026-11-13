@@ -115,7 +115,7 @@ All routes in `routes/web.php`, grouped by module with `Route::prefix()`. Named 
 ### Critical Business Rules
 
 - **Approved qty, not ordered qty** — stock is updated using approved qty from the receive record
-- **Vendor payments** — must be linked to a purchase; never created as standalone transactions
+- **Vendor payments** — linked to a purchase (`order_id` = purchase_id), or a **General Payment** (`order_id` = 0) when not for a specific purchase (user decision 2026-11-14)
 - **Job number format** — `{customer_no}/J{YY}-{NNN}` (e.g., `CU0001/J25-001`)
 - **Delivery number format** — `SLE-D001-26`
 - **Stock statuses** — defined as constants on the `Stock` model (0–7); see `claude-memory.md` for the full table

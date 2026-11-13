@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="{{ URL::asset('assets/css/components.css') }}">
   
   <!-- Custom style CSS -->
-  <link rel="stylesheet" href="{{ URL::asset('assets/css/custom.css') }}">
+  <link rel="stylesheet" href="{{ URL::asset('assets/css/custom.css') }}?v={{ @filemtime(public_path('assets/css/custom.css')) }}">
   <link rel='shortcut icon' type='image/x-icon' href='{{ URL::asset('assets/img/favicon.ico') }}' />
   {{-- Custom JS --}}
   {{-- Base URL and print settings for page scripts (the app may run under a sub-folder, e.g. /ERP/public) --}}
@@ -185,7 +185,7 @@
                   data-feather="briefcase"></i><span>Transactions</span></a>
               <ul class="dropdown-menu">
                 <li><a class="nav-link" href="{{ route('transaction') }}">All Transaction </a></li>
-                <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">General Voucher</a></li>
+                <li><a class="nav-link" href="{{ route('transaction.addGeneralVoucher') }}">Journal Voucher</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addExpense') }}">Add Expense</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addEPayment') }}">Pay Employee</a></li>
                 <li><a class="nav-link" href="{{ route('transaction.addVPayment') }}">Pay Vendor</a></li>

@@ -60,6 +60,11 @@
                          value="{{ old('hours_per_day', $num($period['hours_per_day'])) }}" required>
                 </div>
                 <div class="form-group">
+                  <label>Payment Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" name="payment_date"
+                         value="{{ old('payment_date', $payroll?->payment_date ?? date('Y-m-d')) }}" required>
+                </div>
+                <div class="form-group">
                   <label>Overtime Rate <small class="text-muted">x hourly wage</small></label>
                   <input type="number" step="0.05" min="0" max="10" class="form-control js-period" name="overtime_multiplier" id="overtime_multiplier"
                          value="{{ old('overtime_multiplier', $num($period['overtime_multiplier'])) }}" required>
@@ -68,11 +73,6 @@
                   <label>Late Deduction <small class="text-muted">x hourly wage</small></label>
                   <input type="number" step="0.05" min="0" max="10" class="form-control js-period" name="late_multiplier" id="late_multiplier"
                          value="{{ old('late_multiplier', $num($period['late_multiplier'])) }}" required>
-                </div>
-                <div class="form-group">
-                  <label>Payment Date <span class="text-danger">*</span></label>
-                  <input type="date" class="form-control" name="payment_date"
-                         value="{{ old('payment_date', $payroll?->payment_date ?? date('Y-m-d')) }}" required>
                 </div>
                 <div class="form-group payroll-header__wide">
                   <label>Pay From (Bank / Cash) <span class="text-danger">*</span></label>
@@ -148,7 +148,8 @@
                         <td class="num js-late-amount"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="temp" name="employees[{{ $id }}][temp_advance]" value="{{ $field('temp_advance', $num($row->temp_advance)) }}"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="loan" name="employees[{{ $id }}][fixed_advance]" value="{{ $num($row->fixed_advance) }}" readonly tabindex="-1" title="Open loan from the employee's Give Loan / repayment records"></td>
-                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="instalment" name="employees[{{ $id }}][fixed_advance_deduction]" value="{{ $field('fixed_advance_deduction', $num($row->fixed_advance_deduction)) }}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="instalment" name="employees[{{ $id }}][fixed_advance_deduction]" value="{{ $field('fixed_advance_deduction', $num($row->fixed_advance_deduction)) }}">
+                          <small class="d-block text-muted text-nowrap js-instalment-ratio" title="Deduction as a share of the outstanding loan and of gross salary"></small></td>
                         <td class="num js-remaining"></td>
                         <td class="num js-net font-weight-bold"></td>
                       </tr>
@@ -226,6 +227,16 @@
         row.querySelector('.js-ot-amount').textContent = money(otAmount);
         row.querySelector('.js-late-amount').textContent = money(lateAmount);
         row.querySelector('.js-remaining').textContent = money(round2(loan - instalment));
+        // Deduction ratio: share of the outstanding loan and of gross salary (capped at the loan)
+        var ratio = row.querySelector('.js-instalment-ratio');
+        if (ratio) {
+          var entered = input('instalment');
+          ratio.textContent = loan > 0
+            ? (instalment / loan * 100).toFixed(1) + '% of loan' + (gross > 0 ? ' · ' + (instalment / gross * 100).toFixed(1) + '% of salary' : '')
+            : (entered > 0 ? 'No open loan' : '');
+          ratio.classList.toggle('text-danger', entered > loan + 0.001);
+          ratio.classList.toggle('text-muted', entered <= loan + 0.001);
+        }
         var netCell = row.querySelector('.js-net');
         netCell.textContent = money(net);
         netCell.classList.toggle('text-danger', net < 0);

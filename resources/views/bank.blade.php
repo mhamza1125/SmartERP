@@ -15,121 +15,54 @@
             </div>
           </div>
           <div class="card-body">
-            <!-- Tab Navigation -->
-            <ul class="nav nav-tabs" id="bankTabs" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="accounts-tab" data-toggle="tab" href="#accounts" role="tab" aria-controls="accounts" aria-selected="true">
-                  <i class="fas fa-university"></i> Bank Accounts
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="balances-tab" data-toggle="tab" href="#balances" role="tab" aria-controls="balances" aria-selected="false">
-                  <i class="fas fa-chart-line"></i> Bank Balances & Ledger
-                </a>
-              </li>
-            </ul>
-
-            <!-- Tab Content -->
-            <div class="tab-content" id="bankTabsContent">
-              <!-- Bank Accounts Tab -->
-              <div class="tab-pane fade show active" id="accounts" role="tabpanel" aria-labelledby="accounts-tab">
-                <div class="mt-3">
-                  <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
-                      <thead>
-                        <tr>
-                          <th>Sr.</th>
-                          <th>Bank Holder</th>
-                          <th>Account Title</th>
-                          <th>Account No</th>
-                          <th>Bank Type</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @if($bank->count())
-                          @foreach($bank as $item)
-                          <tr>
-                            <td>{{$loop->index + 1}}</td>
-                            <td>
-                              @if($item->bank_holder == 'employee')
-                                {{$item->employee_no}} - {{$item->name}}
-                              @elseif($item->bank_holder == 'vendor')
-                                {{$item->vendor_no}} - {{$item->fname}}
-                              @elseif($item->bank_holder == 'contractor')
-                                {{$item->vendor_no}} - {{$item->fname}}
-                              @elseif($item->bank_holder == 'customer')
-                                {{$item->customer_no}} - {{$item->cname}} {{$item->lname}}
-                              @else
-                                Admin / Self
-                              @endif
-                            </td>
-                            <td>{{$item->account_title}}</td>
-                            <td>{{$item->account}}</td>
-                            <td>{{$item->hname}}</td>
-                            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->bank_id}}">Edit</button></td>
-                          </tr>
-                          @endforeach
+            {{-- One list: account details, balance and ledger (own accounts) and edit --}}
+            @php $balances = isset($bankBalance) ? $bankBalance->keyBy('bank_id') : collect(); @endphp
+            <div class="table-responsive">
+              <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
+                <thead>
+                  <tr>
+                    <th>Sr.</th>
+                    <th>Bank Holder</th>
+                    <th>Account Title</th>
+                    <th>Account No</th>
+                    <th>Bank Type</th>
+                    <th>Balance</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($bank as $item)
+                    @php
+                      $balanceRow = $balances->get($item->bank_id);
+                      $ownAccount = $balanceRow || (string) ($item->banker_id ?? '') === '0'; // company's own account
+                    @endphp
+                    <tr>
+                      <td>{{$loop->index + 1}}</td>
+                      <td>
+                        @if($item->bank_holder == 'employee')
+                          {{$item->employee_no}} - {{$item->name}}
+                        @elseif($item->bank_holder == 'vendor' || $item->bank_holder == 'contractor')
+                          {{$item->vendor_no}} - {{$item->fname}}
+                        @elseif($item->bank_holder == 'customer')
+                          {{$item->customer_no}} - {{$item->cname}} {{$item->lname}}
+                        @else
+                          Admin / Self
                         @endif
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <th>Sr.</th>
-                          <th>Bank Holder</th>
-                          <th>Account Title</th>
-                          <th>Account No</th>
-                          <th>Bank Type</th>
-                          <th>Action</th>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Bank Balances Tab -->
-              <div class="tab-pane fade" id="balances" role="tabpanel" aria-labelledby="balances-tab">
-                <div class="mt-3">
-                  <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="tableExportBalance" style="width:100%;">
-                      <thead>
-                        <tr>
-                          <th>Sr.</th>
-                          <th>Account Title</th>
-                          <th>Account No</th>
-                          <th>Bank Type</th>
-                          <th>Amount</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @if(isset($bankBalance) && $bankBalance->count())
-                          @foreach($bankBalance as $item)
-                          <tr>
-                            <td>{{$loop->index + 1}}</td>
-                            <td>{{$item->account_title}}</td>
-                            <td>{{$item->account}}</td>
-                            <td>{{$item->hname}}</td>
-                            <td>{{number_format($item->tdebit - $item->tcredit)}}</td>
-                            <td><a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a></td>
-                          </tr>
-                          @endforeach
+                      </td>
+                      <td>{{$item->account_title}}</td>
+                      <td>{{$item->account}}</td>
+                      <td>{{$item->hname}}</td>
+                      <td>{{ $ownAccount ? number_format($balanceRow ? $balanceRow->tdebit - $balanceRow->tcredit : 0) : '-' }}</td>
+                      <td class="text-nowrap">
+                        @if($ownAccount)
+                          <a href="{{ route('transaction.showBBalance', $item->bank_id) }}" class="btn btn-success btn-sm">Ledger</a>
                         @endif
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <th>Sr.</th>
-                          <th>Account Title</th>
-                          <th>Account No</th>
-                          <th>Bank Type</th>
-                          <th>Amount</th>
-                          <th>Action</th>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              </div>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal{{$item->bank_id}}">Edit</button>
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -141,7 +74,7 @@
   @foreach($bank as $item)
     <div class="modal fade" id="exampleModal{{$item->bank_id}}" tabindex="-1" role="dialog" aria-labelledby="formModal"
       aria-hidden="true">
-      <div class="modal-dialog" role="document">
+      <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="formModal">Edit Bank Info</h5>
@@ -152,56 +85,59 @@
           <div class="modal-body">
             <form action="{{ route('bank.update', $item->bank_id) }}" method="POST" class="needs-validation" novalidate=""> @csrf
               <div class="card-body">
-                <div class="form-group">
-                  <label>Bank Types</label><br>
-                  <select class="form-control select2" name="head_id" required>
-                    <option value="" selected disabled>Select Bank Type</option>
-                    @if($head->count())
-                      @foreach($head as $item2)
-                        <option value="{{$item2->head_id}}" {{ $item->head_id == $item2->head_id ? 'selected' : '' }}>{{$item2->name}}</option>
-                      @endforeach
-                    @endif
-                  </select>
-                  <div class="valid-feedback">Good job!</div>
-                  <div class="invalid-feedback">Select Bank Type</div>
-                </div>
-                <div class="form-group">
-                  <label>Bank Title</label>
-                  <input type="text" class="form-control" name="account_title" value="{{$item->account_title}}" required>
-                  <div class="valid-feedback">Good job!</div>
-                  <div class="invalid-feedback">Enter Account Title</div>
-                </div>
-                <div class="form-group">
-                  <label>Bank Account</label>
-                  <input type="text" class="form-control" name="account" required value="{{$item->account}}">
-                  <div class="valid-feedback">Good job!</div>
-                  <div class="invalid-feedback">Enter Account No</div>
-                </div>
-                <div class="form-group">
-                  <label>IBAN</label>
-                  <input type="text" class="form-control" name="iban" placeholder="International Bank Account Number" value="{{$item->iban ?? ''}}">
-                  <div class="valid-feedback">Good job!</div>
-                </div>
                 <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Bank Type</label>
+                      <select class="form-control select2" name="head_id" required style="width:100%;">
+                        <option value="" selected disabled>Select Bank Type</option>
+                        @if($head->count())
+                          @foreach($head as $item2)
+                            <option value="{{$item2->head_id}}" {{ $item->head_id == $item2->head_id ? 'selected' : '' }}>{{$item2->name}}</option>
+                          @endforeach
+                        @endif
+                      </select>
+                      <div class="invalid-feedback">Select Bank Type</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Bank Title</label>
+                      <input type="text" class="form-control" name="account_title" value="{{$item->account_title}}" required>
+                      <div class="invalid-feedback">Enter Account Title</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>Bank Account</label>
+                      <input type="text" class="form-control" name="account" required value="{{$item->account}}">
+                      <div class="invalid-feedback">Enter Account No</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>IBAN</label>
+                      <input type="text" class="form-control" name="iban" placeholder="International Bank Account Number" value="{{$item->iban ?? ''}}">
+                    </div>
+                  </div>
                   <div class="col-md-6">
                     <div class="form-group">
                       <label>Branch Code</label>
                       <input type="text" class="form-control" name="branch_code" placeholder="Branch Code" value="{{$item->branch_code ?? ''}}">
-                      <div class="valid-feedback">Good job!</div>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="form-group">
                       <label>SWIFT Code</label>
                       <input type="text" class="form-control" name="swift_code" placeholder="SWIFT/BIC Code" value="{{$item->swift_code ?? ''}}">
-                      <div class="valid-feedback">Good job!</div>
                     </div>
                   </div>
-                </div>
-                <div class="form-group">
-                  <label>Bank Address</label>
-                  <textarea class="form-control" name="address" rows="3" placeholder="Bank Address">{{$item->baddress ?? ''}}</textarea>
-                  <div class="valid-feedback">Good job!</div>
+                  <div class="col-md-12">
+                    <div class="form-group">
+                      <label>Bank Address</label>
+                      <textarea class="form-control" name="address" rows="2" placeholder="Bank Address">{{$item->baddress ?? ''}}</textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="card-footer text-right">
