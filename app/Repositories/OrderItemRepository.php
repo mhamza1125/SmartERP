@@ -50,6 +50,29 @@ class OrderItemRepository implements GlobalInterface
             ->get();
     }
 
+    /**
+     * Sale price history of a product (all sizes) from customer orders,
+     * newest first. Cancelled orders are left out.
+     */
+    public function productPriceHistory($productId)
+    {
+        return OrderItem::join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
+            ->where('product_types.product_id', $productId)
+            ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
+            ->where('orders.order_status', '!=', \App\Models\Order::STATUS_CANCELLED)
+            ->leftJoin('customers', 'customers.customer_id', '=', 'orders.customer_id')
+            ->leftJoin('heads as size', 'size.head_id', '=', 'product_types.size_id')
+            ->select(
+                'order_items.order_id', 'order_items.quantity', 'order_items.price', 'order_items.total',
+                'orders.order_no', 'orders.job_no', 'orders.order_date', 'orders.order_status',
+                'customers.customer_no', 'customers.fname', 'customers.lname',
+                'size.name as size_name'
+            )
+            ->orderBy('orders.order_date', 'desc')
+            ->orderBy('order_items.order_item_id', 'desc')
+            ->get();
+    }
+
     public function estimate($id) // Required Material Against Order
     {
         return OrderItem::where('order_id', $id)

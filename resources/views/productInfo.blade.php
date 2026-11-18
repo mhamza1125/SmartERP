@@ -41,6 +41,9 @@
                   <li class="nav-item">
                     <a class="nav-link" id="product-costing-tab" data-toggle="tab" href="#productCosting" role="tab" aria-controls="productCosting" aria-selected="false">Costing / Wages</a>
                   </li>
+                  <li class="nav-item">
+                    <a class="nav-link" id="price-history-tab" data-toggle="tab" href="#priceHistory" role="tab" aria-controls="priceHistory" aria-selected="false">Price History</a>
+                  </li>
                 </ul>
                 
                 <div class="tab-content" id="productInfoTabContent">
@@ -406,6 +409,89 @@
                         </table>
                       </div>
                     </div>
+                  </div>
+
+                  {{-- Price History --}}
+                  <div class="tab-pane fade" id="priceHistory" role="tabpanel" aria-labelledby="price-history-tab">
+                    <h5 class="mt-2">Sale Price History (Customer Orders)</h5>
+                    @if($salePriceHistory->count())
+                      <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                          <thead>
+                            <tr>
+                              <th>Sr.</th>
+                              <th>Date</th>
+                              <th>Order No</th>
+                              <th>Job No</th>
+                              <th>Customer</th>
+                              <th>Size</th>
+                              <th>Status</th>
+                              <th class="text-right">QTY</th>
+                              <th class="text-right">Price</th>
+                              <th class="text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($salePriceHistory as $item)
+                              <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ formatDate($item->order_date) }}</td>
+                                <td><a href="{{ route('order.show', $item->order_id) }}" target="_blank">{{ $item->order_no }}</a></td>
+                                <td>{{ $item->job_no ?? '-' }}</td>
+                                <td>{{ $item->customer_no }}{{ $item->fname ? ' - '.trim($item->fname.' '.$item->lname) : '' }}</td>
+                                <td>{{ $item->size_name }}</td>
+                                <td>{{ \App\Models\Order::STATUS_LABELS[$item->order_status] ?? '-' }}</td>
+                                <td class="text-right">{{ number_format($item->quantity) }}</td>
+                                <td class="text-right">{{ number_format($item->price, 2) }}</td>
+                                <td class="text-right">{{ number_format($item->total, 2) }}</td>
+                              </tr>
+                            @endforeach
+                          </tbody>
+                        </table>
+                      </div>
+                    @else
+                      <blockquote> No Sale Price History </blockquote>
+                    @endif
+
+                    <h5 class="mt-4">Purchase Price History (Vendor Purchases)</h5>
+                    @if($purchasePriceHistory->count())
+                      <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                          <thead>
+                            <tr>
+                              <th>Sr.</th>
+                              <th>Date</th>
+                              <th>Purchase No</th>
+                              <th>Job No</th>
+                              <th>Vendor</th>
+                              <th>Size</th>
+                              <th>Stage</th>
+                              <th class="text-right">QTY</th>
+                              <th class="text-right">Price</th>
+                              <th class="text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($purchasePriceHistory as $item)
+                              <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ formatDate($item->purchase_date) }}</td>
+                                <td><a href="{{ route('purchase.show', $item->purchase_id) }}" target="_blank">{{ $item->purchase_no }}</a></td>
+                                <td>{{ $item->job_no ?? '-' }}</td>
+                                <td>{{ $item->vendor_no }}{{ $item->fname ? ' - '.$item->fname : '' }}</td>
+                                <td>{{ $item->size_name }}</td>
+                                <td>{{ $item->stage_name ?? '-' }}</td>
+                                <td class="text-right">{{ number_format($item->quantity) }}</td>
+                                <td class="text-right">{{ number_format($item->price, 2) }}</td>
+                                <td class="text-right">{{ number_format($item->total, 2) }}</td>
+                              </tr>
+                            @endforeach
+                          </tbody>
+                        </table>
+                      </div>
+                    @else
+                      <blockquote> No Purchase Price History </blockquote>
+                    @endif
                   </div>
                 </div>
               </div>

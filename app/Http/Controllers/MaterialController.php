@@ -8,6 +8,7 @@ use App\Models\Material;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\MaterialRepository;
+use App\Repositories\PurchaseItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\VendorRepository;
 use Illuminate\Http\Request;
@@ -89,7 +90,7 @@ class MaterialController extends Controller
         return redirect()->route('material.show', $getId)->with('success', 'Record Inserted Successfully');
     }
 
-    public function show($id)
+    public function show($id, PurchaseItemRepository $purchaseItemRepository)
     {
         $this->authorize('show', Material::class);
         $material = $this->materialRepository->get($id);
@@ -100,6 +101,7 @@ class MaterialController extends Controller
             'image' => $image,
             // Same figure as the material print and the /stock/material page
             'currentStock' => $this->stockItemRepository->materialStock((int) $id),
+            'priceHistory' => $purchaseItemRepository->materialPriceHistory($id),
         ]);
     }
 

@@ -55,6 +55,48 @@
             </div>
             <div class="row">
               <div class="col-md-12">
+                <h5>Price History</h5>
+                @if($priceHistory->count())
+                  <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                      <thead>
+                        <tr>
+                          <th>Sr.</th>
+                          <th>Date</th>
+                          <th>Purchase No</th>
+                          <th>Job No</th>
+                          <th>Vendor</th>
+                          <th class="text-right">QTY</th>
+                          <th class="text-right">Price</th>
+                          <th class="text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach($priceHistory as $item)
+                          <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ formatDate($item->purchase_date) }}</td>
+                            <td>
+                              <a href="{{ $item->is_process ? route('mprocess.show', $item->purchase_id) : route('purchase.show', $item->purchase_id) }}" target="_blank">{{ $item->purchase_no }}</a>
+                              @if($item->is_process) <span class="badge badge-info">Processing</span> @endif
+                            </td>
+                            <td>{{ $item->job_no ?? '-' }}</td>
+                            <td>{{ $item->vendor_no }}{{ $item->fname ? ' - '.$item->fname : '' }}</td>
+                            <td class="text-right">{{ number_format($item->quantity, 2) }} {{ $material['uname'] }}</td>
+                            <td class="text-right">{{ number_format($item->price, 2) }}</td>
+                            <td class="text-right">{{ number_format($item->total, 2) }}</td>
+                          </tr>
+                        @endforeach
+                      </tbody>
+                    </table>
+                  </div>
+                @else
+                  <blockquote> No Price History </blockquote>
+                @endif
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
                 @if($image->count())
                   <h5>Images</h5>
                   <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

@@ -36,6 +36,52 @@ class PurchaseItemRepository implements GlobalInterface
             ->get();
     }
 
+    /**
+     * Price history of a material: every purchase / processing line for it,
+     * newest first. is_process = 1 when the line belongs to a material process.
+     */
+    public function materialPriceHistory($materialId)
+    {
+        return PurchaseItem::where('purchase_items.material_id', $materialId)
+            ->whereNull('purchase_items.product_stage_id')
+            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+            ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+            ->leftJoin('mprocess', 'mprocess.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+            ->select(
+                'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
+                'purchases.purchase_no', 'purchases.purchase_date', 'orders.job_no',
+                'vendors.vendor_no', 'vendors.fname',
+                DB::raw('CASE WHEN mprocess.purchase_item_id IS NOT NULL THEN 1 ELSE 0 END AS is_process')
+            )
+            ->orderBy('purchases.purchase_date', 'desc')
+            ->orderBy('purchase_items.purchase_item_id', 'desc')
+            ->get();
+    }
+
+    /**
+     * Purchase price history of a product (all sizes / stages), newest first.
+     */
+    public function productPriceHistory($productId)
+    {
+        return PurchaseItem::join('product_types', 'product_types.product_type_id', '=', 'purchase_items.product_type_id')
+            ->where('product_types.product_id', $productId)
+            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+            ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+            ->leftJoin('heads as size', 'size.head_id', '=', 'product_types.size_id')
+            ->leftJoin('heads as stage', 'stage.head_id', '=', 'purchase_items.product_stage_id')
+            ->select(
+                'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
+                'purchases.purchase_no', 'purchases.purchase_date', 'orders.job_no',
+                'vendors.vendor_no', 'vendors.fname',
+                'size.name as size_name', 'stage.name as stage_name'
+            )
+            ->orderBy('purchases.purchase_date', 'desc')
+            ->orderBy('purchase_items.purchase_item_id', 'desc')
+            ->get();
+    }
+
     public function receive($id)
     {
         // Receive Purchase Items
