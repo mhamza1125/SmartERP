@@ -63,6 +63,7 @@
                         <tr>
                           <th>Sr.</th>
                           <th>Date</th>
+                          <th>Source</th>
                           <th>Purchase No</th>
                           <th>Job No</th>
                           <th>Vendor</th>
@@ -72,19 +73,32 @@
                         </tr>
                       </thead>
                       <tbody>
+                        @php
+                          $sourceLabels = [
+                            'opening' => ['Opening Price', 'secondary'],
+                            'edit' => ['Price Edited', 'warning'],
+                            'purchase' => ['Purchase', 'success'],
+                            'process' => ['Processing', 'info'],
+                          ];
+                        @endphp
                         @foreach($priceHistory as $item)
+                          @php [$sourceLabel, $sourceClass] = $sourceLabels[$item->source] ?? [ucfirst($item->source), 'light']; @endphp
                           <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ formatDate($item->purchase_date) }}</td>
+                            <td>{{ formatDate($item->date) }}</td>
+                            <td><span class="badge badge-{{ $sourceClass }}">{{ $sourceLabel }}</span></td>
                             <td>
-                              <a href="{{ $item->is_process ? route('mprocess.show', $item->purchase_id) : route('purchase.show', $item->purchase_id) }}" target="_blank">{{ $item->purchase_no }}</a>
-                              @if($item->is_process) <span class="badge badge-info">Processing</span> @endif
+                              @if($item->purchase_id)
+                                <a href="{{ $item->source === 'process' ? route('mprocess.show', $item->purchase_id) : route('purchase.show', $item->purchase_id) }}" target="_blank">{{ $item->purchase_no }}</a>
+                              @else
+                                -
+                              @endif
                             </td>
                             <td>{{ $item->job_no ?? '-' }}</td>
                             <td>{{ $item->vendor_no }}{{ $item->fname ? ' - '.$item->fname : '' }}</td>
-                            <td class="text-right">{{ number_format($item->quantity, 2) }} {{ $material['uname'] }}</td>
+                            <td class="text-right">{{ $item->quantity !== null ? number_format($item->quantity, 2).' '.$material['uname'] : '-' }}</td>
                             <td class="text-right">{{ number_format($item->price, 2) }}</td>
-                            <td class="text-right">{{ number_format($item->total, 2) }}</td>
+                            <td class="text-right">{{ $item->total !== null ? number_format($item->total, 2) : '-' }}</td>
                           </tr>
                         @endforeach
                       </tbody>

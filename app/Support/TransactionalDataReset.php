@@ -40,6 +40,7 @@ class TransactionalDataReset
         'product_materials' => 'Product bill of materials',
         'product_costs' => 'Product cost settings',
         'materials' => 'Materials',
+        'material_price_logs' => 'Material price changes (opening / edits)',
         'machines' => 'Machines',
         'heads' => 'Heads',
         'head_types' => 'Head types',

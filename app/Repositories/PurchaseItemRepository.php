@@ -42,15 +42,15 @@ class PurchaseItemRepository implements GlobalInterface
      */
     public function materialPriceHistory($materialId)
     {
+        // Product lines carry no material_id; processing lines store product_stage_id = 0
         return PurchaseItem::where('purchase_items.material_id', $materialId)
-            ->whereNull('purchase_items.product_stage_id')
             ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
             ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->leftJoin('mprocess', 'mprocess.purchase_item_id', '=', 'purchase_items.purchase_item_id')
             ->select(
                 'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
-                'purchases.purchase_no', 'purchases.purchase_date', 'orders.job_no',
+                'purchase_items.created_at', 'purchases.purchase_no', 'purchases.purchase_date', 'orders.job_no',
                 'vendors.vendor_no', 'vendors.fname',
                 DB::raw('CASE WHEN mprocess.purchase_item_id IS NOT NULL THEN 1 ELSE 0 END AS is_process')
             )

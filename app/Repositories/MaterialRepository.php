@@ -6,6 +6,7 @@ use App\Support\DeletionImpact;
 use App\Repositories\Concerns\ChecksReferences;
 use App\Repositories\ImageRepository;
 use App\Models\Material;
+use App\Models\MaterialPriceLog;
 use Illuminate\Support\Facades\DB;
 
 class MaterialRepository implements GlobalInterface
@@ -203,8 +204,86 @@ class MaterialRepository implements GlobalInterface
     {
         $data['created_by'] = auth()->id();
         $store = Material::create($data);
+        $this->logPrice($store->material_id, $store->cprice, $store->vendor_id, MaterialPriceLog::SOURCE_OPENING);
 
         return $store->material_id;
+    }
+
+    /**
+     * Edit Material form: saves the material and logs the price when its price or
+     * vendor changed. Purchases and processing update cprice through update() and are
+     * not logged, since their price already lives on the purchase line.
+     */
+    public function updateFromForm($id, array $data)
+    {
+        $material = Material::findOrFail($id);
+        $oldPrice = (float) $material->cprice;
+        $oldVendor = (int) $material->vendor_id;
+        $material->update($data);
+
+        if ((float) $material->cprice !== $oldPrice || (int) $material->vendor_id !== $oldVendor) {
+            $this->logPrice($material->material_id, $material->cprice, $material->vendor_id, MaterialPriceLog::SOURCE_EDIT);
+        }
+
+        return $material->material_id;
+    }
+
+    /**
+     * Full price timeline of a material, newest first: opening price and Edit Material
+     * changes (material_price_logs) merged with purchase / processing lines.
+     * Each row has: date, source (opening|edit|purchase|process), price, vendor_no, fname,
+     * and for purchase rows purchase_id, purchase_no, job_no, quantity, total.
+     */
+    public function priceHistory($id)
+    {
+        $logs = MaterialPriceLog::where('material_price_logs.material_id', $id)
+            ->leftJoin('vendors', 'vendors.vendor_id', '=', 'material_price_logs.vendor_id')
+            ->select('material_price_logs.*', 'vendors.vendor_no', 'vendors.fname')
+            ->get()
+            ->map(fn ($row) => (object) [
+                'date' => $row->created_at,
+                'stamp' => (string) $row->created_at,
+                'source' => $row->source,
+                'price' => $row->price,
+                'vendor_no' => $row->vendor_no,
+                'fname' => $row->fname,
+                'purchase_id' => null,
+                'purchase_no' => null,
+                'job_no' => null,
+                'quantity' => null,
+                'total' => null,
+            ]);
+
+        $purchases = app(PurchaseItemRepository::class)->materialPriceHistory($id)
+            ->map(fn ($row) => (object) [
+                'date' => $row->purchase_date,
+                'stamp' => (string) $row->created_at,
+                'source' => $row->is_process ? 'process' : 'purchase',
+                'price' => $row->price,
+                'vendor_no' => $row->vendor_no,
+                'fname' => $row->fname,
+                'purchase_id' => $row->purchase_id,
+                'purchase_no' => $row->purchase_no,
+                'job_no' => $row->job_no,
+                'quantity' => $row->quantity,
+                'total' => $row->total,
+            ]);
+
+        // Newest first: by document date, then by when the row was saved
+        return $logs->concat($purchases)
+            ->sortByDesc(fn ($row) => \Carbon\Carbon::parse($row->date)->format('Y-m-d').' '.$row->stamp)
+            ->values();
+    }
+
+    public function logPrice($materialId, $price, $vendorId, string $source)
+    {
+        MaterialPriceLog::create([
+            'material_id' => $materialId,
+            'vendor_id' => $vendorId,
+            'price' => $price ?? 0,
+            'source' => $source,
+            'created_by' => auth()->id(),
+        ]);
     }
 
     public function update($id, array $data)
@@ -242,6 +321,7 @@ class MaterialRepository implements GlobalInterface
     public function delete($id)
     {
         DB::table('stock_items')->where('stock_id', 1)->where('material_id', $id)->delete();
+        MaterialPriceLog::where('material_id', $id)->delete();
         app(ImageRepository::class)->deleteFor('materials', $id);
 
         return Material::findOrFail($id)->delete();
