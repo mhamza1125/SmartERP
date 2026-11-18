@@ -7,10 +7,7 @@ use App\Models\Attendance;
 use App\Repositories\AttendanceRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\TransactionRepository;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 class AttendanceController extends Controller
 {
@@ -170,8 +167,8 @@ class AttendanceController extends Controller
 
         // Late time and overtime in hours (2 decimals), as entered on the payroll sheet
         foreach ($summary as &$employeeSummary) {
-            $employeeSummary['TOTAL_LATE'] = $this->hours($employeeSummary['TOTAL_LATE_MINUTES']);
-            $employeeSummary['TOTAL_OVERTIME'] = $this->hours($employeeSummary['TOTAL_OVERTIME_MINUTES']);
+            $employeeSummary['TOTAL_LATE'] = $this->attendanceRepository->hours($employeeSummary['TOTAL_LATE_MINUTES']);
+            $employeeSummary['TOTAL_OVERTIME'] = $this->attendanceRepository->hours($employeeSummary['TOTAL_OVERTIME_MINUTES']);
             unset($employeeSummary['TOTAL_LATE_MINUTES'], $employeeSummary['TOTAL_OVERTIME_MINUTES']);
         }
 
@@ -179,251 +176,18 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Daily attendance rows of salaried employees for a date range, read from the attendance
-     * machine database configured in Settings > Company.
+     * Daily attendance rows of salaried employees (all, or one) for a date range; the
+     * calculation lives in AttendanceRepository::dailyAttendance() (also used by the payroll).
      *
      * @return array{rows: array, warnings: array<int, string>, error: ?string}
      */
     private function attendance(int $employeeId, string $dfrom, string $dto): array
     {
-        $warnings = [];
-
         $employees = $this->employeeRepository->salary()
             ->when($employeeId > 0, fn ($list) => $list->where('employee_id', $employeeId))
             ->sortBy('employee_no')
             ->values();
 
-        // Employees without a machine number cannot be matched with the device
-        $unmapped = $employees->filter(fn ($e) => trim((string) $e->attendance_id) === '');
-        if ($unmapped->isNotEmpty()) {
-            $warnings[] = 'No Attendance No (machine ID) is set for: '
-                .$unmapped->map(fn ($e) => $e->employee_no.' - '.$e->name)->implode(', ')
-                .'. Add it on the employee\'s edit page to show their attendance.';
-        }
-        $mapped = $employees->reject(fn ($e) => trim((string) $e->attendance_id) === '')->values();
-
-        // One machine number entered on several employees: every one of them gets the same punches
-        $duplicates = $mapped->groupBy(fn ($e) => $this->attendanceRepository->normalizeBadge($e->attendance_id))
-            ->filter(fn ($group) => $group->count() > 1);
-        foreach ($duplicates as $badge => $group) {
-            $warnings[] = 'Attendance No '.$badge.' is entered on more than one employee ('
-                .$group->map(fn ($e) => $e->employee_no.' - '.$e->name)->implode(', ')
-                .'). Each machine ID should belong to one employee.';
-        }
-
-        if ($mapped->isEmpty()) {
-            return ['rows' => [], 'warnings' => $warnings, 'error' => null];
-        }
-
-        try {
-            $badges = $mapped->map(fn ($e) => (string) $e->attendance_id)->all();
-            $punches = $this->attendanceRepository->machinePunches($dfrom, $dto, $badges);
-        } catch (RuntimeException $e) {
-            return ['rows' => [], 'warnings' => $warnings, 'error' => $e->getMessage()];
-        }
-
-        $rows = $this->processAttendanceData($punches, $mapped, $dfrom, $dto, $warnings);
-
-        return ['rows' => $rows, 'warnings' => $warnings, 'error' => null];
-    }
-
-    /**
-     * One row per employee per day. Check-in = the day's first punch, check-out = its last punch.
-     * The device's IN / OUT key (CHECKTYPE) is not used for pairing because staff often press the
-     * wrong key (e.g. an evening punch recorded as IN); it only decides whether a lone punch is
-     * shown as a check-in or a check-out. Repeated punches within a few seconds count once.
-     *
-     * Working hours per employee: their department head's start / end time (Settings > Heads >
-     * Departments), else the day's Payroll > Work Hours. Late time = check-in after start + grace
-     * time; overtime = check-out after the end (an end at or before the start is the next day).
-     * Both only on days with a check-in and a check-out (existing rule for late time).
-     */
-    private function processAttendanceData(array $punches, $employees, string $dfrom, string $dto, array &$warnings): array
-    {
-        $rows = [];
-        $dateRange = $this->getDateRange($dfrom, $dto);
-        $holidays = $this->getHolidays($dfrom, $dto);
-        $gap = (int) config('attendance.duplicate_punch_seconds', 120);
-        $departmentHours = $this->attendanceRepository->departmentHours();
-
-        // [badge][date] => punches of that day, in time order
-        $byDay = [];
-        foreach ($punches as $punch) {
-            $byDay[$punch['badge']][substr($punch['time'], 0, 10)][] = $punch;
-        }
-
-        $missingWorkTime = [];
-
-        foreach ($dateRange as $date) {
-            $holidayDetail = $this->isHoliday($date, $holidays);
-            $isSunday = $this->isSunday($date);
-            $workTime = ($holidayDetail || $isSunday) ? null : $this->getWorkTimes($date);
-
-            foreach ($employees as $employee) {
-                $badge = $this->attendanceRepository->normalizeBadge($employee->attendance_id);
-                $base = [
-                    'USERID' => $badge,
-                    'ENO' => $employee->employee_no,
-                    'EID' => $employee->employee_id,
-                    'NAME' => $employee->name,
-                    'SALARY' => $employee->salary,
-                    'DATE' => $date,
-                    'CHECKIN' => 'N/A',
-                    'CHECKOUT' => 'N/A',
-                    'LATE_MINUTES' => 'N/A',
-                    'LATE_VALUE' => 0,
-                    'OVERTIME' => 'N/A',
-                    'OVERTIME_VALUE' => 0,
-                ];
-
-                if ($holidayDetail || $isSunday) {
-                    $rows[] = $base + ['DETAIL' => $holidayDetail ?: 'Sunday', 'HOLIDAY' => '1'];
-
-                    continue;
-                }
-
-                $dayPunches = $this->withoutRepeats($byDay[$badge][$date] ?? [], $gap);
-                if (empty($dayPunches)) {
-                    $rows[] = $base + ['DETAIL' => 'Absent', 'HOLIDAY' => '0'];
-
-                    continue;
-                }
-
-                $first = $dayPunches[0];
-                $last = $dayPunches[count($dayPunches) - 1];
-                if (count($dayPunches) >= 2) {
-                    $checkin = $first['time'];
-                    $checkout = $last['time'];
-                } elseif ($first['type'] === 'O') {
-                    $checkin = null;
-                    $checkout = $first['time'];
-                } else {
-                    $checkin = $first['time'];
-                    $checkout = null;
-                }
-
-                // Late time and overtime: only on days with both punches (existing rule)
-                $lateMinutes = 0;
-                $overtimeMinutes = 0;
-                if ($checkin && $checkout) {
-                    $department = $departmentHours->get($employee->department_id);
-                    $startTime = $department->work_start_time ?? $workTime->time_from ?? null;
-                    $endTime = $department->work_end_time ?? $workTime->time_to ?? null;
-                    if ($startTime) {
-                        // Grace time comes from Work Hours (none when only the department has hours)
-                        $start = Carbon::parse($date.' '.$startTime)->addMinutes((int) ($workTime->grace_time ?? 0));
-                        $lateMinutes = max(0, intdiv(Carbon::parse($checkin)->getTimestamp() - $start->getTimestamp(), 60));
-                    }
-                    if ($endTime) {
-                        $end = Carbon::parse($date.' '.$endTime);
-                        if ($startTime && $end->lte(Carbon::parse($date.' '.$startTime))) {
-                            $end->addDay(); // night shift ends the next day
-                        }
-                        $overtimeMinutes = max(0, intdiv(Carbon::parse($checkout)->getTimestamp() - $end->getTimestamp(), 60));
-                    }
-                    if (! $startTime || ! $endTime) {
-                        $missingWorkTime[$date] = true;
-                    }
-                }
-
-                $rows[] = array_merge($base, [
-                    'CHECKIN' => $checkin ?? 'N/A',
-                    'CHECKOUT' => $checkout ?? 'N/A',
-                    'LATE_MINUTES' => $this->hours($lateMinutes),
-                    'LATE_VALUE' => $lateMinutes,
-                    'OVERTIME' => $this->hours($overtimeMinutes),
-                    'OVERTIME_VALUE' => $overtimeMinutes,
-                    'DETAIL' => $checkin && $checkout ? 'Present' : 'Single Attendance',
-                    'HOLIDAY' => '0',
-                ]);
-            }
-        }
-
-        if ($missingWorkTime) {
-            $warnings[] = 'No Work Hours are defined for '.count($missingWorkTime).' working day(s) in this range ('
-                .collect(array_keys($missingWorkTime))->take(5)->map(fn ($d) => formatDate($d))->implode(', ')
-                .(count($missingWorkTime) > 5 ? ', ...' : '').'), so late time / overtime was not calculated for them. Add them under Payroll > Work Hours, or set the department\'s working hours under Settings > Heads > Departments.';
-        }
-
-        return $rows;
-    }
-
-    /**
-     * Drops punches made within $gap seconds of the previous kept punch (double presses).
-     */
-    private function withoutRepeats(array $punches, int $gap): array
-    {
-        usort($punches, fn ($a, $b) => strcmp($a['time'], $b['time']));
-        $kept = [];
-        $lastTs = null;
-        foreach ($punches as $punch) {
-            $ts = strtotime($punch['time']);
-            if ($lastTs !== null && $ts - $lastTs < $gap) {
-                continue;
-            }
-            $kept[] = $punch;
-            $lastTs = $ts;
-        }
-
-        return $kept;
-    }
-
-    /** Minutes shown as hours with 2 decimals (75 -> "1.25"), the unit used on the payroll sheet. */
-    private function hours($minutes): string
-    {
-        return number_format((int) $minutes / 60, 2);
-    }
-
-    private function getWorkTimes($date)
-    {
-        return DB::table('work_times')
-            ->whereDate('date_from', '<=', $date)
-            ->whereDate('date_to', '>=', $date)
-            ->orderByDesc('work_time_id')
-            ->first();
-    }
-
-    private function getHolidays($dfrom, $dto)
-    {
-        try {
-            return DB::table('work_holidays')
-                ->whereDate('date_from', '<=', $dto)
-                ->whereDate('date_to', '>=', $dfrom)
-                ->get();
-        } catch (\Exception $e) {
-            \Log::error('Error retrieving holidays: '.$e->getMessage());
-
-            return collect([]);
-        }
-    }
-
-    private function isHoliday($date, $holidays)
-    {
-        foreach ($holidays as $holiday) {
-            if ($holiday->date_from <= $date && $holiday->date_to >= $date) {
-                return $holiday->description ?: 'Holiday';
-            }
-        }
-
-        return false;
-    }
-
-    private function isSunday($date)
-    {
-        return Carbon::parse($date)->isSunday();
-    }
-
-    private function getDateRange($start, $end)
-    {
-        $dateRange = [];
-        $current = Carbon::parse($start)->startOfDay();
-        $end = Carbon::parse($end)->startOfDay();
-
-        while ($current <= $end) {
-            $dateRange[] = $current->toDateString();
-            $current->addDay();
-        }
-
-        return $dateRange;
+        return $this->attendanceRepository->dailyAttendance($employees, $dfrom, $dto);
     }
 }

@@ -209,6 +209,7 @@ class PayrollController extends Controller
             'payroll' => $sheet['payroll'],
             'period' => $sheet['period'],
             'rows' => $sheet['rows'],
+            'attendance' => $sheet['attendance'],
             'bank' => $this->bankRepository->self(),
         ];
     }

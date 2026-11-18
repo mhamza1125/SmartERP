@@ -266,8 +266,13 @@ class PayrollRepository implements GlobalInterface
     /**
      * The payroll sheet for a month: every active salary employee (plus inactive ones already in
      * this month's saved payroll) with their saved values, or (new payroll / employee not in it)
-     * defaults: full attendance, no overtime / late time, this month's temporary advances, the
-     * open fixed loan and last month's instalment.
+     * defaults: full attendance, overtime and late hours from the attendance machine (the
+     * employee's department working hours, AttendanceRepository::monthTotals; 0 when it cannot
+     * be read), this month's temporary advances, the open fixed loan and last month's instalment.
+     * Each row also carries the machine figures (attendance) so a saved sheet can be compared.
+     * Worked days, leaves and advances are never read from the machine.
+     *
+     * @return array{payroll: ?Payroll, period: array, rows: Collection, attendance: array{totals: array, warnings: array, error: ?string}}
      */
     public function sheet(string $month): array
     {
@@ -277,8 +282,12 @@ class PayrollRepository implements GlobalInterface
         $ownDeductions = $items->pluck('fixed_deduction_transaction_id')->filter()->all();
         $previous = $this->previousItems($month);
 
-        $rows = $this->employees($items->keys()->all())->map(function ($employee) use ($month, $items, $ownDeductions, $previous) {
+        $employees = $this->employees($items->keys()->all());
+        $attendance = app(AttendanceRepository::class)->monthTotals($employees, $month);
+
+        $rows = $employees->map(function ($employee) use ($month, $items, $ownDeductions, $previous, $attendance) {
             $saved = $items->get($employee->employee_id);
+            $machine = $attendance['totals'][$employee->employee_id] ?? null;
             $openLoan = $this->openFixedLoan($employee->employee_id, $ownDeductions);
             $lastInstalment = (float) ($previous[$employee->employee_id]->fixed_advance_deduction ?? 0);
 
@@ -289,15 +298,17 @@ class PayrollRepository implements GlobalInterface
                 'total_working_days' => $saved?->total_working_days,
                 'actual_working_days' => $saved?->actual_working_days,
                 'paid_leaves' => (float) ($saved->paid_leaves ?? 0),
-                'overtime_hours' => (float) ($saved->overtime_hours ?? 0),
-                'late_hours' => (float) ($saved->late_hours ?? 0),
+                'overtime_hours' => (float) ($saved->overtime_hours ?? $machine['overtime_hours'] ?? 0),
+                'late_hours' => (float) ($saved->late_hours ?? $machine['late_hours'] ?? 0),
+                // Attendance machine figures for the month (null: no attendance read for the employee)
+                'attendance' => $machine,
                 'temp_advance' => (float) ($saved->temp_advance ?? $this->temporaryAdvance($employee->employee_id, $month)),
                 'fixed_advance' => (float) ($saved->fixed_advance ?? $openLoan),
                 'fixed_advance_deduction' => (float) ($saved->fixed_advance_deduction ?? min($lastInstalment, $openLoan)),
             ];
         });
 
-        return ['payroll' => $payroll, 'period' => $period ?? array_merge(['total_working_days' => $this->defaultWorkingDays($month)], $this->settings()), 'rows' => $rows];
+        return ['payroll' => $payroll, 'period' => $period ?? array_merge(['total_working_days' => $this->defaultWorkingDays($month)], $this->settings()), 'rows' => $rows, 'attendance' => $attendance];
     }
 
     /** A saved payroll's items with employee details, in sheet order. */
@@ -339,7 +350,7 @@ class PayrollRepository implements GlobalInterface
             ->where(fn ($query) => $query->where('employee_status', self::ACTIVE_STATUS)
                 ->when($keepIds, fn ($query) => $query->orWhereIn('employee_id', $keepIds)))
             ->orderBy('name')
-            ->get(['employee_id', 'employee_no', 'name', 'designation', 'salary']);
+            ->get(['employee_id', 'employee_no', 'name', 'designation', 'salary', 'attendance_id', 'department_id']);
     }
 
     /** Temporary advances paid to an employee within the month. */

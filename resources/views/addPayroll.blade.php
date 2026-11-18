@@ -105,6 +105,30 @@
                 every other value can be changed.
               </p>
 
+              {{-- Overtime / late hours from the attendance machine (department working hours) --}}
+              @if($attendance['error'])
+                <div class="alert alert-warning">
+                  Overtime and late hours could not be read from the attendance machine: {{ $attendance['error'] }}
+                  Enter them by hand.
+                </div>
+              @else
+                <div class="alert alert-light border d-flex flex-wrap align-items-center justify-content-between">
+                  <span>
+                    <strong>Attendance:</strong> overtime and late hours for {{ $monthLabel }} come from the attendance machine,
+                    using each employee's department working hours.
+                    @if($payroll) Saved values are kept; the machine figure is shown under each box. @endif
+                  </span>
+                  @if($payroll)
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="useAttendance">Use attendance figures</button>
+                  @endif
+                </div>
+                @if($attendance['warnings'])
+                  <div class="alert alert-light border small">
+                    @foreach($attendance['warnings'] as $warning)<div>{{ $warning }}</div>@endforeach
+                  </div>
+                @endif
+              @endif
+
               <div class="table-responsive">
                 <table class="table table-sm table-hover payroll-table" id="employeeTable">
                   <thead>
@@ -155,10 +179,12 @@
                         <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="leaves" name="employees[{{ $id }}][paid_leaves]" value="{{ $field('paid_leaves', $num($row->paid_leaves)) }}" title="Paid leave days (not deducted)"></td>
                         <td class="num js-absent"></td>
                         <td class="num js-salary-days"></td>
-                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="ot" name="employees[{{ $id }}][overtime_hours]" value="{{ $field('overtime_hours', $num($row->overtime_hours)) }}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="ot" name="employees[{{ $id }}][overtime_hours]" value="{{ $field('overtime_hours', $num($row->overtime_hours)) }}" @if($row->attendance) data-machine="{{ $row->attendance['overtime_hours'] }}" @endif>
+                          @if($row->attendance)<small class="d-block text-muted text-nowrap" title="Overtime from the attendance machine">Att. {{ number_format($row->attendance['overtime_hours'], 2) }}</small>@endif</td>
                         <td class="num js-ot-rate"></td>
                         <td class="num js-ot-amount"></td>
-                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="late" name="employees[{{ $id }}][late_hours]" value="{{ $field('late_hours', $num($row->late_hours)) }}" title="Total late time this month, in hours (e.g. 1.25 = 1 h 15 min)"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="late" name="employees[{{ $id }}][late_hours]" value="{{ $field('late_hours', $num($row->late_hours)) }}" title="Total late time this month, in hours (e.g. 1.25 = 1 h 15 min)" @if($row->attendance) data-machine="{{ $row->attendance['late_hours'] }}" @endif>
+                          @if($row->attendance)<small class="d-block text-muted text-nowrap" title="Late time from the attendance machine">Att. {{ number_format($row->attendance['late_hours'], 2) }}</small>@endif</td>
                         <td class="num js-late-amount"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="temp" name="employees[{{ $id }}][temp_advance]" value="{{ $field('temp_advance', $num($row->temp_advance)) }}"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="loan" name="employees[{{ $id }}][fixed_advance]" value="{{ $num($row->fixed_advance) }}" readonly tabindex="-1" title="Open loan from the employee's Give Loan / repayment records"></td>
@@ -300,6 +326,16 @@
       document.querySelectorAll('.employee-checkbox').forEach(function (cb) { cb.checked = on; });
       recalc();
     });
+    // Saved sheet: replace overtime / late hours with the attendance machine figures
+    var useAttendance = document.getElementById('useAttendance');
+    if (useAttendance) {
+      useAttendance.addEventListener('click', function () {
+        document.querySelectorAll('[data-field="ot"][data-machine], [data-field="late"][data-machine]').forEach(function (el) {
+          el.value = el.dataset.machine;
+        });
+        recalc();
+      });
+    }
     var monthSelector = document.getElementById('monthSelector');
     if (monthSelector) {
       monthSelector.addEventListener('change', function () {
