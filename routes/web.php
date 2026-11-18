@@ -174,6 +174,9 @@ Route::delete('/material/{id}', [MaterialController::class, 'destroy'])->name('m
 Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
 Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
 Route::get('/materialDetail/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
+// Product Purchase Ledger (product purchases, returns and stock movements)
+Route::get('/productLedger', [ProductController::class, 'ledger'])->name('product.ledger');
+Route::post('/productLedger', [ProductController::class, 'ledger'])->name('product.ledger.filter');
 
 // Machine
 Route::get('/machine', [MachineController::class, 'index'])->name('machine');

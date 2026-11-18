@@ -3458,7 +3458,8 @@ $(document).ready(function () {
             $.ajax({
                 url: ajaxPurchaseUrl,
                 type: "GET",
-                data: { vendorId: vendorId },
+                // Edit form: the payment being edited does not count as paid on its voucher
+                data: { vendorId: vendorId, paymentId: (typeof editingPaymentId !== 'undefined' ? editingPaymentId : '') },
                 dataType: "json",
                 success: function (response) {
                     var purchaseSelect = $('#order_id');
@@ -3469,6 +3470,13 @@ $(document).ready(function () {
                     $.each(response.data, function (index, item) {
                         var optionText = item.purchase_no + (item.job_no ? ' - ' + item.job_no : ' - Default Purchase');
                         purchaseSelect.append(new Option(optionText, item.purchase_id));
+                    });
+                    // Journal vouchers (non-cash entries on the payable balance) to pay against;
+                    // fully paid ones are listed only when the payment being edited is for them
+                    $.each(response.vouchers || [], function (index, item) {
+                        if (item.outstanding > 0 || item.value === (typeof selectedPurchaseId !== 'undefined' ? selectedPurchaseId : '')) {
+                            purchaseSelect.append(new Option(item.label, item.value));
+                        }
                     });
                     // Edit form: keep the purchase (or General Payment) the payment was saved with
                     if (typeof selectedPurchaseId !== 'undefined' && selectedPurchaseId !== ''

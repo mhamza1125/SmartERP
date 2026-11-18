@@ -24,6 +24,9 @@ class HeadRequest extends FormRequest
         return [
             'head_type_id' => 'required',
             'name' => 'required|max:255',
+            // Department heads: working hours (late time / overtime of the department's employees)
+            'work_start_time' => 'nullable|date_format:H:i,H:i:s',
+            'work_end_time' => 'nullable|date_format:H:i,H:i:s',
         ];
     }
 }

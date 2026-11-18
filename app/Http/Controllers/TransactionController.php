@@ -532,8 +532,18 @@ class TransactionController extends Controller
         $tableId = $request->input('vendorId');
         // error_log("Vendor ID: " . $tableId);
         $purchase = $this->purchaseRepository->getPurchase($tableId);
+        // Journal vouchers on the vendor's payable balance, with what is still unpaid
+        // (the payment being edited does not count as paid)
+        $vouchers = $this->transactionRepository->vendorVouchers($tableId, $request->input('paymentId'))
+            ->map(fn ($v) => [
+                'value' => 'jv:'.$v->transaction_id,
+                'label' => 'Journal Voucher #'.$v->transaction_id.' - '.formatDate($v->transaction_date)
+                    .' - Unpaid '.number_format(max(0, $v->outstanding), 2).' of '.number_format((float) $v->amount, 2)
+                    .($v->expense_head_name ? ' ('.$v->expense_head_name.')' : ''),
+                'outstanding' => max(0, $v->outstanding),
+            ])->values();
 
-        return response()->json(['data' => $purchase]);
+        return response()->json(['data' => $purchase, 'vouchers' => $vouchers]);
     }
 
     public function ajaxPayee(Request $request)
@@ -715,6 +725,13 @@ class TransactionController extends Controller
             }
         }
 
+        // Vendor payment against a journal voucher (Payment For = "jv:{id}"): links the voucher
+        // and reports the payment under the voucher's expense head
+        $validatedData = $this->transactionRepository->linkVoucherPayment($validatedData);
+        if (is_string($validatedData)) {
+            return redirect()->back()->with('fails', $validatedData)->withInput();
+        }
+
         // For ALL customer payments: ensure amount is in debit column (cash inflow)
         // BUT NOT for general vouchers (transaction_type = 'generalVoucher')
         if ($validatedData['transaction_to'] == 'customer' &&
@@ -724,9 +741,11 @@ class TransactionController extends Controller
             $validatedData['credit'] = null;
         }
 
-        // Determine if this is a cash outflow transaction (requires balance validation)
-        $isOutflowTransaction = in_array($validatedData['transaction_to'], ['employee', 'vendor', 'contractor', 'expense']) ||
-                               ($validatedData['transaction_to'] == 'brs' && $request->has('brs_type') && $request->input('brs_type') == 2);
+        // Determine if this is a cash outflow transaction (requires balance validation).
+        // A journal voucher moves no cash / bank money, so it is never checked against a balance.
+        $isOutflowTransaction = $validatedData['transaction_type'] !== 'generalVoucher' && (
+                               in_array($validatedData['transaction_to'], ['employee', 'vendor', 'contractor', 'expense']) ||
+                               ($validatedData['transaction_to'] == 'brs' && $request->has('brs_type') && $request->input('brs_type') == 2));
 
         // Determine if this is a cash inflow transaction (no balance validation needed)
         $isInflowTransaction = ($validatedData['transaction_to'] == 'customer' && $validatedData['transaction_type'] == 'orderPayment') ||
@@ -737,7 +756,8 @@ class TransactionController extends Controller
         if ($validatedData['bank_id'] != '0') {
             // Bank account balance
             $transaction = $this->transactionRepository->bankBalance2($validatedData['bank_id']);
-            $balance = ($transaction->tcredit ?? 0) - ($transaction->tdebit ?? 0);
+            // Bank balance = debit (in) - credit (out), as on the bank ledger
+            $balance = ($transaction->tdebit ?? 0) - ($transaction->tcredit ?? 0);
         } else {
             // Cash balance
             $balance = $this->transactionRepository->cashBalance();
@@ -1219,6 +1239,13 @@ class TransactionController extends Controller
                 $request->merge(['credit' => $request->input('debit'), 'debit' => null]);
             }
         }
+
+        // Vendor payment against a journal voucher (Payment For = "jv:{id}"), as in store()
+        $linked = $this->transactionRepository->linkVoucherPayment($request->input(), (int) $id);
+        if (is_string($linked)) {
+            return redirect()->back()->with('fails', $linked)->withInput();
+        }
+        $request->merge(array_intersect_key($linked, array_flip(['voucher_id', 'order_id', 'expense_head_id'])));
 
         // For order payments: ensure debit/credit are correct for Cashbook posting (cash inflow)
         // Customer payments are cash inflows - should be in debit column

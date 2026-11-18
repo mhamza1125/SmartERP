@@ -58,7 +58,7 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select a purchase, or General Payment</div>
-                    <small class="form-text text-muted">Choose General Payment for a payment that is not for a specific purchase.</small>
+                    <small class="form-text text-muted">Choose General Payment for a payment that is not for a specific purchase, or a Journal Voucher to pay an amount it put on the vendor's balance.</small>
                   </div>
                 </div>
                 <div class="col-md-6" id="display2">

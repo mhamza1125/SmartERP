@@ -30,7 +30,7 @@ class TransactionRepository implements GlobalInterface
                 $join->on('transactions.order_id', '=', 'orders.order_id')
                     ->where('transactions.transaction_to', '=', 'customer');
             })
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
             ->orderBy('transactions.created_at', 'desc')
             ->get();
         // return Transaction::orderBy('created_at', 'desc')->get();
@@ -54,7 +54,7 @@ class TransactionRepository implements GlobalInterface
                     ->where('transactions.transaction_to', '=', 'customer');
             })
             ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
             ->orderBy('transactions.created_at', 'desc')
             ->get();
     }
@@ -163,26 +163,26 @@ class TransactionRepository implements GlobalInterface
 
     public function expense()
     {
-        return Transaction::whereIn('transaction_to', ['expense', 'bankCharges'])
-            ->join('heads', 'heads.head_id', '=', 'transactions.payee_id')
+        return $this->expenseRows()
+            ->select('transactions.*', 'heads.name')
             ->orderBy('transactions.created_at', 'desc')
             ->get();
     }
 
+    /** Same rows as expense() (bank charges included), narrowed by date and / or expense head. */
     public function expenseFilter($dfrom, $dto, $head_id)
     {
-        $query = Transaction::where('transaction_to', 'expense')
-            ->join('heads', 'heads.head_id', '=', 'transactions.payee_id');
+        $query = $this->expenseRows();
 
         if (! empty($dfrom) && ! empty($dto)) {
             $query->whereBetween('transactions.transaction_date', [$dfrom, $dto]);
         }
 
         if (! empty($head_id)) {
-            $query->where('transactions.payee_id', $head_id);
+            $query->where('heads.head_id', $head_id);
         }
 
-        return $query->orderBy('transactions.created_at', 'desc')->get();
+        return $query->select('transactions.*', 'heads.name')->orderBy('transactions.created_at', 'desc')->get();
     }
 
     public function generalVoucher()
@@ -207,6 +207,94 @@ class TransactionRepository implements GlobalInterface
             ->get();
     }
 
+    /**
+     * Journal vouchers that put an amount on a vendor's / contractor's payable balance (credit
+     * vouchers, amount in debit) with what has been paid against them (payments with voucher_id),
+     * for Pay Vendor > Payment For. $excludePaymentId leaves out the payment being edited.
+     */
+    public function vendorVouchers($vendorId, $excludePaymentId = null): Collection
+    {
+        return Transaction::where('transactions.transaction_type', 'generalVoucher')
+            ->whereIn('transactions.transaction_to', ['vendor', 'contractor'])
+            ->where('transactions.payee_id', $vendorId)
+            ->where('transactions.debit', '>', 0)
+            ->leftJoin('heads as ehead', 'ehead.head_id', '=', 'transactions.expense_head_id')
+            ->select('transactions.transaction_id', 'transactions.transaction_date', 'transactions.debit as amount',
+                'transactions.description', 'transactions.expense_head_id', 'ehead.name as expense_head_name')
+            ->selectSub(fn ($q) => $q->from('transactions as pay')
+                ->whereColumn('pay.voucher_id', 'transactions.transaction_id')
+                ->where('pay.transaction_type', 'payment')
+                ->when($excludePaymentId, fn ($q) => $q->where('pay.transaction_id', '!=', $excludePaymentId))
+                ->selectRaw('COALESCE(SUM(pay.credit), 0)'), 'paid')
+            ->orderBy('transactions.transaction_date')
+            ->get()
+            ->map(function ($voucher) {
+                $voucher->outstanding = round((float) $voucher->amount - (float) $voucher->paid, 2);
+
+                return $voucher;
+            });
+    }
+
+    /**
+     * A vendor payment made against a journal voucher: "Payment For" posts "jv:{id}". Sets
+     * voucher_id, order_id 0 (no purchase) and the voucher's expense head, so the payment is
+     * reported under that head (Expense page) when the money is actually paid.
+     * Any other payment is left unlinked (voucher_id NULL).
+     *
+     * @param  array  $data  the payment as it will be saved (amount already in credit)
+     * @return array|string the data to save, or why the payment cannot be linked
+     */
+    public function linkVoucherPayment(array $data, $paymentId = null): array|string
+    {
+        $data['voucher_id'] = null;
+        $orderId = (string) ($data['order_id'] ?? '');
+        if (! str_starts_with($orderId, 'jv:')) {
+            // A payment no longer made against a voucher is not reported under its expense head
+            if (($data['transaction_type'] ?? '') === 'payment' && in_array($data['transaction_to'] ?? '', ['vendor', 'contractor'], true)) {
+                $data['expense_head_id'] = null;
+            }
+
+            return $data;
+        }
+        if (($data['transaction_type'] ?? '') !== 'payment' || ! in_array($data['transaction_to'] ?? '', ['vendor', 'contractor'], true)) {
+            return 'Only a vendor payment can be made against a journal voucher.';
+        }
+
+        $voucherId = (int) substr($orderId, 3);
+        $voucher = $this->vendorVouchers($data['payee_id'] ?? 0, $paymentId)->firstWhere('transaction_id', $voucherId);
+        if (! $voucher) {
+            return 'The selected journal voucher does not belong to this vendor.';
+        }
+        $amount = (float) ($data['credit'] ?? 0);
+        if ($amount - $voucher->outstanding > 0.005) {
+            return 'The payment ('.number_format($amount, 2).') is more than what is still unpaid on journal voucher #'
+                .$voucherId.' ('.number_format(max(0, $voucher->outstanding), 2).').';
+        }
+
+        $data['voucher_id'] = $voucherId;
+        $data['order_id'] = 0;
+        $data['expense_head_id'] = $voucher->expense_head_id;
+
+        return $data;
+    }
+
+    /**
+     * Expense page rows: expenses and bank charges, plus vendor / contractor payments made against
+     * a journal voucher that has an expense head (reported under that head when paid).
+     * The head joined is the expense's own head (payee_id) or the payment's expense_head_id.
+     */
+    private function expenseRows()
+    {
+        return Transaction::where(function ($q) {
+            $q->whereIn('transactions.transaction_to', ['expense', 'bankCharges'])
+                ->orWhere(fn ($q) => $q->whereIn('transactions.transaction_to', ['vendor', 'contractor'])
+                    ->where('transactions.transaction_type', 'payment')
+                    ->whereNotNull('transactions.voucher_id')
+                    ->whereNotNull('transactions.expense_head_id'));
+        })
+            ->join('heads', 'heads.head_id', '=', DB::raw("CASE WHEN transactions.transaction_to IN ('expense', 'bankCharges') THEN transactions.payee_id ELSE transactions.expense_head_id END"));
+    }
+
     public function delivery($id)
     {
         // Delivery Expense
@@ -225,99 +313,57 @@ class TransactionRepository implements GlobalInterface
     {
         return Transaction::where('transactions.bank_id', '0')
             ->where('transaction_type', '!=', 'openingBalance')
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->orderBy('created_at')
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
+            ->orderBy('transaction_date')->orderBy('transaction_id')
             ->get();
     }
 
+    /**
+     * Cash book for a date range: opening = cash (debit - credit) before $dfrom, the range's
+     * entries in date order, closing = opening + the range's movements (the cash held at $dto).
+     */
     public function cashTransactionFilter($dfrom, $dto)
     {
-        // Transactions Before Date From
-        $transactionsBefore = \DB::table('transactions')
+        $cash = fn () => DB::table('transactions')
             ->where('transactions.bank_id', '0')
             ->where('transaction_type', '!=', 'openingBalance')
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->where('transaction_date', '<', $dfrom)
-            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
-            ->first();
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher');  // Journal vouchers move no cash / bank money
 
-        $totalDebitBefore = $transactionsBefore->total_debit ?? 0;
-        $totalCreditBefore = $transactionsBefore->total_credit ?? 0;
-        $openingBalance = $totalCreditBefore - $totalDebitBefore;
-
-        // Transactions Between Date From and Date To
-        $transactionsBetween = \DB::table('transactions')
-            ->where('transactions.bank_id', '0')
-            ->where('transaction_type', '!=', 'openingBalance')
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->whereBetween('transaction_date', [$dfrom, $dto])
-            ->orderBy('created_at')
-            ->get();
-
-        // Transactions After Date To
-        $transactionsAfter = \DB::table('transactions')
-            ->where('transactions.bank_id', '0')
-            ->where('transaction_type', '!=', 'openingBalance')
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->where('transaction_date', '>', $dto)
-            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
-            ->first();
-
-        $totalDebitAfter = $transactionsAfter->total_debit ?? 0;
-        $totalCreditAfter = $transactionsAfter->total_credit ?? 0;
-        $closingBalance = $totalCreditAfter - $totalDebitAfter;
-
-        return [
-            'transactions' => $transactionsBetween,
-            'opening_balance' => $openingBalance,
-            'closing_balance' => $closingBalance,
-        ];
+        return $this->bookForRange($cash, $dfrom, $dto);
     }
 
     public function bankTransaction($id)
     {
         return Transaction::where('transactions.bank_id', $id)
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->orderBy('created_at')
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
+            ->orderBy('transaction_date')->orderBy('transaction_id')
             ->get();
     }
 
+    /** Bank ledger for a date range: same rules as cashTransactionFilter(). */
     public function bankTransactionFilter($id, $dfrom, $dto)
     {
-        // Transactions Before Date From
-        $transactionsBefore = \DB::table('transactions')
+        $bank = fn () => DB::table('transactions')
             ->where('transactions.bank_id', $id)
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->where('transaction_date', '<', $dfrom)
-            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
-            ->first();
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher');  // Journal vouchers move no cash / bank money
 
-        $totalDebitBefore = $transactionsBefore->total_debit ?? 0;
-        $totalCreditBefore = $transactionsBefore->total_credit ?? 0;
-        $openingBalance = $totalCreditBefore - $totalDebitBefore;
+        return $this->bookForRange($bank, $dfrom, $dto);
+    }
 
-        // Transactions Between Date From and Date To
-        $transactionsBetween = \DB::table('transactions')
-            ->where('transactions.bank_id', $id)
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->whereBetween('transaction_date', [$dfrom, $dto])
-            ->orderBy('created_at')
-            ->get();
+    /**
+     * Opening balance (debit - credit before $dfrom), the range's rows in date order and the
+     * closing balance (opening + the range's debit - credit), for a cash or bank book query.
+     */
+    private function bookForRange(callable $book, $dfrom, $dto): array
+    {
+        $net = fn ($query) => (float) $query->selectRaw('COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) as net')->value('net');
 
-        // Transactions After Date To
-        $transactionsAfter = \DB::table('transactions')
-            ->where('transactions.bank_id', $id)
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
-            ->where('transaction_date', '>', $dto)
-            ->select(\DB::raw('SUM(debit) as total_debit'), \DB::raw('SUM(credit) as total_credit'))
-            ->first();
-
-        $totalDebitAfter = $transactionsAfter->total_debit ?? 0;
-        $totalCreditAfter = $transactionsAfter->total_credit ?? 0;
-        $closingBalance = $totalCreditAfter - $totalDebitAfter;
+        $openingBalance = $net($book()->where('transaction_date', '<', $dfrom));
+        $closingBalance = $openingBalance + $net($book()->whereBetween('transaction_date', [$dfrom, $dto]));
 
         return [
-            'transactions' => $transactionsBetween,
+            'transactions' => $book()->whereBetween('transaction_date', [$dfrom, $dto])
+                ->orderBy('transaction_date')->orderBy('transaction_id')->get(),
             'opening_balance' => $openingBalance,
             'closing_balance' => $closingBalance,
         ];
@@ -326,7 +372,7 @@ class TransactionRepository implements GlobalInterface
     public function cashBalance()
     {
         $transaction = Transaction::where('transactions.bank_id', '0')
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
             ->select('*',
                 DB::raw('SUM(transactions.debit) AS tdebit'),
                 DB::raw('SUM(transactions.credit) AS tcredit'))
@@ -344,7 +390,7 @@ class TransactionRepository implements GlobalInterface
         // Banks Balance All
         return DB::table('banks')->where('banks.banker_id', '0')
             ->leftJoin('transactions', 'banks.bank_id', '=', 'transactions.bank_id')
-            ->where('transactions.ledger_flag', '!=', 0)  // Exclude general vouchers
+            ->where('transactions.ledger_flag', '!=', 0)->where('transactions.transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->select('banks.*', 'heads.name as hname',
                 DB::raw('SUM(transactions.debit) AS tdebit'),
@@ -358,7 +404,7 @@ class TransactionRepository implements GlobalInterface
 
         // Dosen't show the Banks with 0 Transactions
         return Transaction::where('transactions.bank_id', '>', '0')
-            ->where('ledger_flag', '!=', 0)  // Exclude general vouchers
+            ->where('ledger_flag', '!=', 0)->where('transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
             ->join('banks', 'banks.bank_id', '=', 'transactions.bank_id')
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->select('*', 'transactions.bank_id', 'heads.name as hname',
@@ -372,7 +418,7 @@ class TransactionRepository implements GlobalInterface
     {
         return DB::table('banks')->where('banks.bank_id', $id)
             ->leftJoin('transactions', 'banks.bank_id', '=', 'transactions.bank_id')
-            ->where('transactions.ledger_flag', '!=', 0)  // Exclude general vouchers
+            ->where('transactions.ledger_flag', '!=', 0)->where('transactions.transaction_type', '!=', 'generalVoucher')  // Journal vouchers move no cash / bank money
             ->join('heads', 'heads.head_id', '=', 'banks.head_id')
             ->select('banks.*', 'heads.name as hname',
                 DB::raw('SUM(transactions.debit) AS tdebit'),
@@ -653,38 +699,10 @@ class TransactionRepository implements GlobalInterface
 
     public function cDetailFilter($id, $dfrom, $dto)
     {
-        // Customer Ledger - Before Date From (show only deliveries and transactions)
-        // For general vouchers with cc_amount, we need to handle them separately
-        $deliveriesBefore = \DB::table('stocks')
-            ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
-            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
-            ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->leftJoin('order_items', function ($join) {
-                $join->on('order_items.order_id', '=', \DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
-                    ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
-            })
-            ->where('orders.customer_id', $id)
-            ->where('stocks.stock_date', '<', $dfrom)
-            ->where('stocks.stock_status', '=', 3) // Delivery status
-            ->select(\DB::raw('COALESCE(SUM(order_items.price * stock_items.quantity), 0) as debit'))
-            ->first();
-
-        $transactionsBefore = \DB::table('transactions')
-            ->where('transactions.payee_id', $id)
-            ->where('transactions.transaction_date', '<', $dfrom)
-            ->where('transactions.transaction_to', 'customer')
-            ->select(
-                \DB::raw('SUM(transactions.debit) as debit'),
-                \DB::raw('SUM(transactions.credit) as credit')
-            )
-            ->first();
-
-        $totalDebitBefore = ($deliveriesBefore->debit ?? 0) + $this->customerFreight($id, fn ($q) => $q->where('stocks.stock_date', '<', $dfrom)) + ($transactionsBefore->debit ?? 0);
-        $totalCreditBefore = $transactionsBefore->credit ?? 0;
-        $openingBalance = $totalCreditBefore - $totalDebitBefore;
-
-        // Customer Ledger - Between Date From and Date To
-        $deliveries = \DB::table('stocks')
+        // Customer ledger for a date range. Opening / closing are the running balance of the
+        // customer ledger view (customerDetail) before $dfrom / at $dto: the same rows and the
+        // same row rule (customerLedgerAmount), so filtered and unfiltered balances agree.
+        $deliveries = fn (callable $dates) => $dates(\DB::table('stocks')
             ->select(
                 'stocks.stock_id',
                 'stocks.stock_no',
@@ -702,54 +720,52 @@ class TransactionRepository implements GlobalInterface
                     ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
             })
             ->where('orders.customer_id', $id)
-            ->whereBetween('stocks.stock_date', [$dfrom, $dto])
             ->where('stocks.stock_status', '=', 3) // Delivery status
-            ->groupBy('stocks.stock_id')
+            ->groupBy('stocks.stock_id'))
             ->get();
 
-        $transactions = \DB::table('transactions')
+        $transactions = fn (callable $dates) => $dates(\DB::table('transactions')
             ->select('transactions.*', 'transactions.created_at as timestamp')
             ->where('transactions.payee_id', $id)
-            ->where('transactions.transaction_to', 'customer')
-            ->whereBetween('transactions.transaction_date', [$dfrom, $dto])
+            ->where('transactions.transaction_to', 'customer'))
             ->get();
 
-        $transactionsBetween = $deliveries->concat($transactions)->sortBy('timestamp');
+        $before = $deliveries(fn ($q) => $q->where('stocks.stock_date', '<', $dfrom))
+            ->concat($transactions(fn ($q) => $q->where('transactions.transaction_date', '<', $dfrom)));
+        $transactionsBetween = $deliveries(fn ($q) => $q->whereBetween('stocks.stock_date', [$dfrom, $dto]))
+            ->concat($transactions(fn ($q) => $q->whereBetween('transactions.transaction_date', [$dfrom, $dto])))
+            ->sortBy('timestamp');
 
-        // Customer Ledger - After Date To (show only deliveries and transactions)
-        $deliveriesAfter = \DB::table('stocks')
-            ->join('deliveries', 'deliveries.stock_id', '=', 'stocks.stock_id')
-            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
-            ->leftJoin('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->leftJoin('order_items', function ($join) {
-                $join->on('order_items.order_id', '=', \DB::raw('COALESCE(stock_items.order_id, stocks.order_id)'))
-                    ->on('order_items.product_type_id', '=', 'stock_items.product_type_id');
-            })
-            ->where('orders.customer_id', $id)
-            ->where('stocks.stock_date', '>', $dto)
-            ->where('stocks.stock_status', '=', 3) // Delivery status
-            ->select(\DB::raw('COALESCE(SUM(order_items.price * stock_items.quantity), 0) as debit'))
-            ->first();
-
-        $transactionsAfter = \DB::table('transactions')
-            ->where('transactions.payee_id', $id)
-            ->where('transactions.transaction_date', '>', $dto)
-            ->where('transactions.transaction_to', 'customer')
-            ->select(
-                \DB::raw('SUM(transactions.debit) as debit'),
-                \DB::raw('SUM(transactions.credit) as credit')
-            )
-            ->first();
-
-        $totalDebitAfter = ($deliveriesAfter->debit ?? 0) + $this->customerFreight($id, fn ($q) => $q->where('stocks.stock_date', '>', $dto)) + ($transactionsAfter->debit ?? 0);
-        $totalCreditAfter = $transactionsAfter->credit ?? 0;
-        $closingBalance = $totalCreditAfter - $totalDebitAfter;
+        $openingBalance = $before->sum(fn ($row) => $this->customerLedgerAmount($row));
+        $closingBalance = $openingBalance + $transactionsBetween->sum(fn ($row) => $this->customerLedgerAmount($row));
 
         return [
             'transactions' => $transactionsBetween,
             'opening_balance' => $openingBalance,
             'closing_balance' => $closingBalance,
         ];
+    }
+
+    /**
+     * What one customer ledger row adds to the running balance (customerDetail.blade.php rule):
+     * a journal voucher +/- its cc_amount (credit voucher +, charge -), a payment + its customer
+     * currency amount (cc_amount, else debit), anything else (delivery, opening) - debit + credit.
+     */
+    public function customerLedgerAmount($row): float
+    {
+        $type = $row->transaction_type ?? null;
+        if ($type === 'generalVoucher' && ! empty($row->cc_amount)) {
+            if (is_null($row->credit)) {
+                return (float) $row->cc_amount;
+            }
+
+            return is_null($row->debit) ? -(float) $row->cc_amount : 0.0;
+        }
+        if ($type === 'orderPayment') {
+            return (float) (! empty($row->cc_amount) ? $row->cc_amount : ($row->debit ?? 0));
+        }
+
+        return (float) ($row->credit ?? 0) - (float) ($row->debit ?? 0);
     }
 
     public function eDetail($id)
@@ -860,7 +876,7 @@ class TransactionRepository implements GlobalInterface
             ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-            ->where('returns.created_at', '<', $dfrom)
+            ->where('returns.return_date', '<', $dfrom)
             ->first();
 
         $transactionsBefore = Transaction::where('transaction_to', 'vendor')
@@ -886,7 +902,7 @@ class TransactionRepository implements GlobalInterface
             ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
             ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->select('returns.*', 'returns.created_at as timestamp', \DB::raw('0 as debit'), \DB::raw('SUM(return_materials.quantity * purchase_items.price) as credit'))
-            ->whereBetween('returns.created_at', [$dfrom, $dto])
+            ->whereBetween('returns.return_date', [$dfrom, $dto])
             ->groupBy('returns.return_id')
             ->get();
 
@@ -1026,6 +1042,13 @@ class TransactionRepository implements GlobalInterface
         if ($type === 'deliveryExpense') {
             return $impact->block('it is an expense of a delivery (edit or delete that delivery instead)');
         }
+        if ($type === 'generalVoucher') {
+            $payments = Transaction::where('voucher_id', $id)->where('transaction_type', 'payment')->pluck('transaction_id');
+            if ($payments->isNotEmpty()) {
+                return $impact->block($payments->count().' vendor payment(s) were made against this journal voucher (#'
+                    .$payments->implode(', #').'); delete those payments first');
+            }
+        }
 
         if ($type === 'advance' && in_array($transaction->transaction_to, ['employee', 'vendor', 'contractor'], true)) {
             $kind = $transaction->transaction_to === 'employee' ? ($transaction->advance_type ?: Transaction::ADVANCE_FIXED) : 'loan';
@@ -1073,22 +1096,6 @@ class TransactionRepository implements GlobalInterface
         }
 
         return Transaction::whereIn('transaction_id', $ids)->delete();
-    }
-
-    /**
-     * Total freight charged on a customer's deliveries (stock_status 3), narrowed by $filter.
-     * Kept separate from the item sums because those are joined per stock line.
-     */
-    private function customerFreight($customerId, callable $filter): float
-    {
-        $query = \DB::table('deliveries')
-            ->join('stocks', 'stocks.stock_id', '=', 'deliveries.stock_id')
-            ->join('orders', 'orders.order_id', '=', 'stocks.order_id')
-            ->where('orders.customer_id', $customerId)
-            ->where('stocks.stock_status', '=', 3);
-        $filter($query);
-
-        return (float) $query->sum('deliveries.freight_charges');
     }
 
     /**
@@ -1258,12 +1265,17 @@ class TransactionRepository implements GlobalInterface
                 if (in_array($row->transaction_to, ['vendor', 'contractor'], true) && $purchases->get($row->order_id)) {
                     $details['Purchase No'] = $purchases->get($row->order_id);
                     $parts[] = 'Purchase '.$purchases->get($row->order_id);
+                } elseif (in_array($row->transaction_to, ['vendor', 'contractor'], true) && $row->transaction_type === 'payment' && ! empty($row->voucher_id)) {
+                    // Payment of a journal voucher (the voucher put the amount on the payable balance)
+                    $details['Payment For'] = 'Journal Voucher #'.$row->voucher_id;
+                    $parts[] = 'Against Journal Voucher #'.$row->voucher_id;
                 } elseif ($row->transaction_to === 'vendor' && $row->transaction_type === 'payment') {
                     // Vendor payment not linked to a purchase
                     $details['Payment For'] = 'General Payment';
                     $parts[] = 'General Payment';
                 }
-                if ($row->transaction_type === 'generalVoucher' && ! empty($row->expense_head_id) && $expenseHeads->get($row->expense_head_id)) {
+                // Expense head: a journal voucher's own, or the one a voucher payment is reported under
+                if (in_array($row->transaction_type, ['generalVoucher', 'payment'], true) && ! empty($row->expense_head_id) && $expenseHeads->get($row->expense_head_id)) {
                     $details['Expense Head'] = $expenseHeads->get($row->expense_head_id);
                     $parts[] = 'Expense head: '.$expenseHeads->get($row->expense_head_id);
                 }

@@ -39,7 +39,7 @@
                     <tr>
                       <th colspan="2"></th>
                       <th colspan="2"><b>Date From:</b> {{ formatDate($dfrom) }}</th>
-                      <th colspan="4"><b>Date To:</b> {{ formatDate($dto) }}</th>
+                      <th colspan="5"><b>Date To:</b> {{ formatDate($dto) }}</th>
                     </tr>
                   @endif
                   <tr>
@@ -48,7 +48,8 @@
                     <th>Monthly Salary</th>
                     <th>Salary Advance</th>
                     <th>Remaining</th>
-                    <th>Late Time</th>
+                    <th class="text-right">Late (Hours)</th>
+                    <th class="text-right">Overtime (Hours)</th>
                     <th>Absents</th>
                     <th>Single Attendance</th>
                   </tr>
@@ -65,7 +66,8 @@
                       <td>{{ number_format($data['SALARY']) }}</td>
                       <td>{{ number_format($debit) }}</td>
                       <td>{{ number_format($data['SALARY'] - $debit) }}</td>
-                      <td>{{ $data['TOTAL_LATE'] }}</td>
+                      <td class="text-right">{{ $data['TOTAL_LATE'] }}</td>
+                      <td class="text-right">{{ $data['TOTAL_OVERTIME'] }}</td>
                       <td>{{ $data['TOTAL_ABSENTS'] }}</td>
                       <td>{{ $data['TOTAL_SINGLE_ATTENDANCE'] }}</td>
                     </tr>
@@ -78,7 +80,8 @@
                     <th>Monthly Salary</th>
                     <th>Salary Advance</th>
                     <th>Remaining</th>
-                    <th>Late Time</th>
+                    <th class="text-right">Late (Hours)</th>
+                    <th class="text-right">Overtime (Hours)</th>
                     <th>Absents</th>
                     <th>Single Attendance</th>
                   </tr>

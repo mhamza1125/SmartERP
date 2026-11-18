@@ -77,10 +77,12 @@ class PayrollController extends Controller
             return redirect()->route('payroll.index')->with('error', 'Invalid month format');
         }
         $data = $request->payroll();
+        // The sheet's Month can be changed: the payroll then moves to that month
         $this->payrollRepository->update($month, $data);
+        $moved = $data['month'] !== $month ? ' (moved from '.$this->monthLabel($month).')' : '';
 
-        return redirect()->route('payroll.info', $month)
-            ->with('success', 'Payroll for '.$this->monthLabel($month).' updated: '.count($data['employees']).' employee(s).');
+        return redirect()->route('payroll.info', $data['month'])
+            ->with('success', 'Payroll for '.$this->monthLabel($data['month']).' updated'.$moved.': '.count($data['employees']).' employee(s).');
     }
 
     /** Saved payroll of a month with every employee's breakdown. */

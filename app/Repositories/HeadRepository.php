@@ -120,7 +120,7 @@ class HeadRepository implements GlobalInterface
     public function store(array $data)
     {
         $data['created_by'] = auth()->id();
-        $store = Head::create($data);
+        $store = Head::create($this->departmentTimes($data));
 
         return $store->head_id;
     }
@@ -128,7 +128,28 @@ class HeadRepository implements GlobalInterface
     public function update($id, array $data)
     {
         $update = Head::findOrFail($id);
-        $update->update($data);
+        $update->update($this->departmentTimes($data, $update));
+    }
+
+    /** Head type of departments: the only heads with working hours. */
+    public const DEPARTMENT_TYPE = 3;
+
+    /**
+     * Working hours belong to department heads only (empty = Payroll > Work Hours). A head of any
+     * other type has none. On update, a form without the fields keeps the stored hours.
+     */
+    private function departmentTimes(array $data, ?Head $head = null): array
+    {
+        $type = (int) ($data['head_type_id'] ?? $head?->head_type_id);
+        foreach (['work_start_time', 'work_end_time'] as $field) {
+            if ($type !== self::DEPARTMENT_TYPE) {
+                $data[$field] = null;
+            } elseif (array_key_exists($field, $data)) {
+                $data[$field] = $data[$field] ?: null;
+            }
+        }
+
+        return $data;
     }
 
     /**

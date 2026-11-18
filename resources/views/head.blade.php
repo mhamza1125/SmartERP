@@ -77,6 +77,7 @@
                       <tr>
                         <th>Sr.</th>
                         <th>Head</th>
+                        @if($ht->head_type_id == 3)<th>Work Start</th><th>Work End</th>@endif
                         <th>Status</th>
                         <th>Action</th>
                       </tr>
@@ -92,6 +93,11 @@
                         <tr>
                           <td>{{$loop->index + 1}}</td>
                           <td>{{$item->name}}</td>
+                          @if($ht->head_type_id == 3)
+                            {{-- Department working hours (late time from the start, overtime after the end) --}}
+                            <td>{{ $item->work_start_time ? \Carbon\Carbon::parse($item->work_start_time)->format('h:i A') : 'Work Hours' }}</td>
+                            <td>{{ $item->work_end_time ? \Carbon\Carbon::parse($item->work_end_time)->format('h:i A') : 'Work Hours' }}</td>
+                          @endif
                           <td>
                             @if($item->head_status)
                               <span class="badge badge-success">Active</span>
@@ -107,7 +113,7 @@
                         @endforeach
                       @else
                         <tr>
-                          <td colspan="4" class="text-center">No heads available for this type</td>
+                          <td colspan="{{ $ht->head_type_id == 3 ? 6 : 4 }}" class="text-center">No heads available for this type</td>
                         </tr>
                       @endif
                     </tbody>
@@ -162,6 +168,20 @@
                     <option value="0" {{ $item->head_status == '0' ? 'selected' : '' }}>Inactive</option>
                   </select>
                 </div>
+                @if($item->head_type_id == 3)
+                  {{-- Department working hours: late time is counted from the start, overtime after the end --}}
+                  <div class="form-row">
+                    <div class="form-group col-6">
+                      <label>Work Start Time</label>
+                      <input type="time" class="form-control" name="work_start_time" value="{{ $item->work_start_time ? substr($item->work_start_time, 0, 5) : '' }}">
+                    </div>
+                    <div class="form-group col-6">
+                      <label>Work End Time</label>
+                      <input type="time" class="form-control" name="work_end_time" value="{{ $item->work_end_time ? substr($item->work_end_time, 0, 5) : '' }}">
+                    </div>
+                  </div>
+                  <small class="form-text text-muted">Leave empty to use Payroll &gt; Work Hours for this department.</small>
+                @endif
               </div>
               <div class="card-footer text-right">
                 <button class="btn btn-primary">Submit</button>

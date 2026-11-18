@@ -100,8 +100,15 @@
                       <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>
                       <td class="text-right">{{ number_format($balance, 2) }}</td>
                       <td>
+                        @if(in_array($item->transaction_to, ['vendor', 'contractor'], true))
+                          {{-- Payment against a journal voucher with this expense head: opens the payment --}}
+                          @php $payRoute = $item->transaction_to === 'contractor' ? 'CPayment' : 'VPayment'; @endphp
+                          @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.show'.$payRoute, $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
+                          @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.edit'.$payRoute, $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>@endif
+                        @else
                         @if(auth()->user()->can('show', App\Models\Transaction::class))<a href="{{ route('transaction.showExpense', $item->transaction_id) }}" class="btn btn-info btn-sm">View</a>@endif
                         @if(auth()->user()->can('edit', App\Models\Transaction::class))<a href="{{ route('transaction.editExpense', $item->transaction_id) }}" class="btn btn-primary btn-sm">Edit</a>@endif
+                        @endif
                       </td>
                     </tr>
                     @endforeach

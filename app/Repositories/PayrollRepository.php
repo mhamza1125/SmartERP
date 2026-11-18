@@ -15,10 +15,15 @@ use Illuminate\Validation\ValidationException;
 /**
  * Monthly payroll with a full salary breakdown per employee.
  *
- *   hourly wage            = gross / total working days / hours per day
- *   salary for days        = gross x actual working days / total working days
+ *   hourly wage            = gross / total working days (payroll header) / hours per day
+ *   salary for days        = gross x (actual working days + paid leaves) / total working days (header)
  *   overtime rate          = hourly wage x overtime multiplier (Settings > Company)
- *   late deduction         = late minutes / 60 x hourly wage x late multiplier
+ *   late deduction         = late hours x hourly wage x late multiplier
+ *
+ * Each employee also has their own total days (default: the header's). It only sets the days
+ * they were expected to work (absent = own total - worked - paid leaves): an employee who works
+ * extra days (e.g. Sundays) gets a higher own total and is paid those days at the same daily
+ * rate, not as overtime. Paid leaves are recorded and paid, never deducted.
  *   remaining fixed advance = fixed advance - fixed advance deduction
  *   total salary           = salary for days + overtime - late deduction - temporary advance - fixed advance deduction
  *
@@ -29,6 +34,9 @@ use Illuminate\Validation\ValidationException;
 class PayrollRepository implements GlobalInterface
 {
     private const SALARY_EMPLOYEE_TYPE = 39;
+
+    /** employees.employee_status of an active employee (0 = inactive). */
+    private const ACTIVE_STATUS = 1;
 
     /**
      * Payroll months, newest first: payrolls saved with a breakdown, plus older months that
@@ -71,8 +79,9 @@ class PayrollRepository implements GlobalInterface
      * Save a month's payroll (new, or replacing a saved one) and post its transactions.
      *
      * $data: month, total_working_days, hours_per_day, overtime_multiplier, late_multiplier,
-     *        payment_date, bank_id, description, employees[employee_id => [actual_working_days,
-     *        overtime_hours, late_minutes, temp_advance, fixed_advance, fixed_advance_deduction]]
+     *        payment_date, bank_id, description, employees[employee_id => [total_working_days,
+     *        actual_working_days, paid_leaves, overtime_hours, late_hours, temp_advance,
+     *        fixed_advance, fixed_advance_deduction]]
      *
      * @throws ValidationException when deductions exceed an employee's salary
      */
@@ -132,10 +141,32 @@ class PayrollRepository implements GlobalInterface
         });
     }
 
-    /** Same as store(): a month has one payroll, saving it again replaces it. */
+    /**
+     * Same as store(): a month has one payroll, saving it again replaces it. When the sheet's
+     * month was changed ($data['month'] != $month, e.g. October's payroll saved under November),
+     * the payroll moves: the old month's payroll and its postings are removed and the payroll is
+     * saved for the new month, which must not have a payroll of its own.
+     *
+     * @throws ValidationException when the new month already has a payroll
+     */
     public function update($month, array $data)
     {
-        return $this->store(array_merge($data, ['month' => $month]));
+        $newMonth = $data['month'] ?? $month;
+        if ($newMonth === $month) {
+            return $this->store($data);
+        }
+
+        return DB::transaction(function () use ($month, $newMonth, $data) {
+            if (Payroll::where('month', $newMonth)->lockForUpdate()->exists()) {
+                throw ValidationException::withMessages([
+                    'month' => 'Payroll for '.Carbon::createFromFormat('Y-m', $newMonth)->format('F Y')
+                        .' has already been processed. Edit or delete that payroll first.',
+                ]);
+            }
+            $this->delete($month);
+
+            return $this->store($data);
+        });
     }
 
     /**
@@ -183,21 +214,26 @@ class PayrollRepository implements GlobalInterface
     /**
      * One employee's salary breakdown.
      *
-     * @param  array  $input  actual_working_days, overtime_hours, late_minutes, temp_advance, fixed_advance, fixed_advance_deduction
+     * @param  array  $input  total_working_days (own, default the header's), actual_working_days, paid_leaves,
+     *                        overtime_hours, late_hours, temp_advance, fixed_advance, fixed_advance_deduction
      * @param  array  $period  total_working_days, hours_per_day, overtime_multiplier, late_multiplier
      */
     public function calculate(float $gross, array $input, array $period): array
     {
+        // The rate always comes from the header's total days; the employee's own total days
+        // only says how many days they were expected to work
         $totalDays = (float) $period['total_working_days'];
         $hoursPerDay = (float) $period['hours_per_day'] ?: 8;
-        $actualDays = (float) ($input['actual_working_days'] ?? $totalDays);
+        $ownTotalDays = (float) (($input['total_working_days'] ?? '') === '' ? $totalDays : $input['total_working_days']);
+        $actualDays = (float) ($input['actual_working_days'] ?? $ownTotalDays);
+        $paidLeaves = (float) ($input['paid_leaves'] ?? 0);
         $hourly = $totalDays > 0 ? $gross / $totalDays / $hoursPerDay : 0;
 
-        $salaryForDays = $totalDays > 0 ? $gross * $actualDays / $totalDays : 0;
-        $overtimeHours = (float) ($input['overtime_hours'] ?? 0);
+        $salaryForDays = $totalDays > 0 ? $gross * ($actualDays + $paidLeaves) / $totalDays : 0;
+        $overtimeHours = round((float) ($input['overtime_hours'] ?? 0), 2);
         $overtimeRate = $hourly * (float) $period['overtime_multiplier'];
-        $lateMinutes = (int) round((float) ($input['late_minutes'] ?? 0));
-        $lateDeduction = $lateMinutes / 60 * $hourly * (float) $period['late_multiplier'];
+        $lateHours = round((float) ($input['late_hours'] ?? 0), 2);
+        $lateDeduction = $lateHours * $hourly * (float) $period['late_multiplier'];
         $tempAdvance = (float) ($input['temp_advance'] ?? 0);
         $fixedAdvance = (float) ($input['fixed_advance'] ?? 0);
         $fixedDeduction = min((float) ($input['fixed_advance_deduction'] ?? 0), $fixedAdvance);
@@ -209,13 +245,15 @@ class PayrollRepository implements GlobalInterface
 
         return [
             'gross_salary' => $round($gross),
-            'total_working_days' => $totalDays,
+            'total_working_days' => $ownTotalDays,
             'actual_working_days' => $actualDays,
+            'paid_leaves' => $paidLeaves,
             'salary_for_days' => $salaryForDays,
             'overtime_hours' => $overtimeHours,
             'overtime_rate' => $round($overtimeRate),
             'overtime_amount' => $overtimeAmount,
-            'late_minutes' => $lateMinutes,
+            'late_hours' => $lateHours,
+            'late_minutes' => (int) round($lateHours * 60), // same late time in minutes (older reports)
             'late_deduction' => $lateDeduction,
             'temp_advance' => $round($tempAdvance),
             'fixed_advance' => $round($fixedAdvance),
@@ -226,9 +264,10 @@ class PayrollRepository implements GlobalInterface
     }
 
     /**
-     * The payroll sheet for a month: every salary employee with their saved values, or
-     * (new payroll / employee not in it) defaults: full attendance, no overtime / late time,
-     * this month's temporary advances, the open fixed-loan balance and last month's instalment.
+     * The payroll sheet for a month: every active salary employee (plus inactive ones already in
+     * this month's saved payroll) with their saved values, or (new payroll / employee not in it)
+     * defaults: full attendance, no overtime / late time, this month's temporary advances, the
+     * open fixed loan and last month's instalment.
      */
     public function sheet(string $month): array
     {
@@ -238,7 +277,7 @@ class PayrollRepository implements GlobalInterface
         $ownDeductions = $items->pluck('fixed_deduction_transaction_id')->filter()->all();
         $previous = $this->previousItems($month);
 
-        $rows = $this->employees()->map(function ($employee) use ($month, $items, $ownDeductions, $previous) {
+        $rows = $this->employees($items->keys()->all())->map(function ($employee) use ($month, $items, $ownDeductions, $previous) {
             $saved = $items->get($employee->employee_id);
             $openLoan = $this->openFixedLoan($employee->employee_id, $ownDeductions);
             $lastInstalment = (float) ($previous[$employee->employee_id]->fixed_advance_deduction ?? 0);
@@ -246,9 +285,12 @@ class PayrollRepository implements GlobalInterface
             return (object) [
                 'employee' => $employee,
                 'included' => $saved !== null || ! $items->count(),
+                // Own total days: saved, else the header's (filled in by the sheet)
+                'total_working_days' => $saved?->total_working_days,
                 'actual_working_days' => $saved?->actual_working_days,
+                'paid_leaves' => (float) ($saved->paid_leaves ?? 0),
                 'overtime_hours' => (float) ($saved->overtime_hours ?? 0),
-                'late_minutes' => (int) ($saved->late_minutes ?? 0),
+                'late_hours' => (float) ($saved->late_hours ?? 0),
                 'temp_advance' => (float) ($saved->temp_advance ?? $this->temporaryAdvance($employee->employee_id, $month)),
                 'fixed_advance' => (float) ($saved->fixed_advance ?? $openLoan),
                 'fixed_advance_deduction' => (float) ($saved->fixed_advance_deduction ?? min($lastInstalment, $openLoan)),
@@ -286,10 +328,16 @@ class PayrollRepository implements GlobalInterface
             ->first();
     }
 
-    /** Salary employees (employee type 39). */
-    public function employees(): Collection
+    /**
+     * Active salary employees (employee type 39, employee_status 1). Inactive employees are left
+     * out, except $keepIds: those already in the payroll being edited, so re-saving a month does
+     * not drop their saved salary.
+     */
+    public function employees(array $keepIds = []): Collection
     {
         return Employee::where('employee_type_id', self::SALARY_EMPLOYEE_TYPE)
+            ->where(fn ($query) => $query->where('employee_status', self::ACTIVE_STATUS)
+                ->when($keepIds, fn ($query) => $query->orWhereIn('employee_id', $keepIds)))
             ->orderBy('name')
             ->get(['employee_id', 'employee_no', 'name', 'designation', 'salary']);
     }

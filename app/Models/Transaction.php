@@ -30,6 +30,8 @@ class Transaction extends Model
         'payee_id',
         'payee_bank_id',
         'expense_head_id',
+        // Journal voucher a vendor / contractor payment settles (Pay Vendor)
+        'voucher_id',
         'bank_id',
         'transfer_pair_id',
         'transaction_image',

@@ -272,6 +272,7 @@
                 <li><a class="nav-link" href="{{ route('stock.daily') }}">Daily Issuance</a></li>
                 <li><a class="nav-link" href="{{ route('rstock.daily') }}">Daily Receiving</a></li>
                 <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
+                <li><a class="nav-link" href="{{ route('product.ledger') }}">Product Purchase Ledger</a></li>
                 <li><a class="nav-link" href="{{ route('purchase.ledger') }}">Purchase Ledger</a></li>
                 <li><a class="nav-link" href="{{ route('reports.product.stock.requirements') }}">Product Stock Requirements</a></li>
                 <li><a class="nav-link" href="{{ route('reports.product.stock.ledger') }}">Product Stock Ledger</a></li>

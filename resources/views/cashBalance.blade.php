@@ -66,8 +66,8 @@
                           <td>{{\Carbon\Carbon::parse($dfrom)->format('d-m-Y')}}</td>
                           <td>Opening Balance</td>
                           <td>Opening Balance</td>
-                          <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                           <td>{{ $oBalance > 0 ? number_format(abs($oBalance)) : '' }}</td>
+                          <td>{{ $oBalance < 0 ? number_format(abs($oBalance)) : '' }}</td>
                           <td>{{ number_format($oBalance) }}</td>
                           <td></td>
                         </tr>
@@ -95,15 +95,15 @@
                         </tr>
                         @endforeach
                       @endif
-                      @if($cBalance != 0)
+                      @if(!empty($dfrom) && !empty($dto))
                         <tr>
                           <td>{{$index++}}</td>
                           <td>{{\Carbon\Carbon::parse($dto)->format('d-m-Y')}}</td>
                           <td>Closing Balance</td>
                           <td>Closing Balance</td>
-                          <td>{{ $cBalance < 0 ? number_format(abs($cBalance)) : '' }}</td>
-                          <td>{{ $cBalance > 0 ? number_format(abs($cBalance)) : '' }}</td>
-                          <td>{{ $balance ? number_format($balance += $cBalance) : number_format($oBalance + $cBalance) }}</td>
+                          <td></td>
+                          <td></td>
+                          <td>{{ number_format($cBalance) }}</td>
                           <td></td>
                         </tr>
                       @endif

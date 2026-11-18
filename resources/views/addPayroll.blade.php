@@ -33,14 +33,24 @@
             <form action="{{ $editing ? route('payroll.update', $selectedMonth) : route('payroll.store') }}" method="POST" id="payrollForm">
               @csrf
               @if($editing) @method('PUT') @endif
-              <input type="hidden" name="month" value="{{ $selectedMonth }}">
+              @unless($editing)<input type="hidden" name="month" value="{{ $selectedMonth }}">@endunless
 
               {{-- Payroll period: the values every employee's salary is calculated with --}}
               <div class="payroll-header">
                 <div class="form-group">
                   <label>Month</label>
                   @if($editing)
-                    <input type="text" class="form-control" value="{{ $monthLabel }}" readonly>
+                    {{-- The month the salary is for; changing it moves this payroll to that month --}}
+                    @php $postedMonth = old('month', $selectedMonth); @endphp
+                    <select class="form-control" name="month" id="monthEdit" title="Month the salary is for">
+                      @if(! array_key_exists($selectedMonth, $monthOptions))
+                        <option value="{{ $selectedMonth }}">{{ $monthLabel }}</option>
+                      @endif
+                      @foreach($monthOptions as $monthValue => $optionLabel)
+                        <option value="{{ $monthValue }}" {{ $monthValue == $postedMonth ? 'selected' : '' }}>{{ $optionLabel }}</option>
+                      @endforeach
+                    </select>
+                    <small class="form-text text-muted">Change it to move this payroll to another month.</small>
                   @else
                     <select class="form-control" id="monthSelector">
                       @foreach($monthOptions as $monthValue => $optionLabel)
@@ -51,12 +61,12 @@
                 </div>
                 <div class="form-group">
                   <label>Total Working Days <span class="text-danger">*</span></label>
-                  <input type="number" step="0.5" min="1" max="31" class="form-control js-period" name="total_working_days" id="total_working_days"
+                  <input type="number" step="0.01" min="1" max="31" class="form-control js-period" name="total_working_days" id="total_working_days"
                          value="{{ old('total_working_days', $num($period['total_working_days'])) }}" required>
                 </div>
                 <div class="form-group">
                   <label>Hours / Day <span class="text-danger">*</span></label>
-                  <input type="number" step="0.5" min="1" max="24" class="form-control js-period" name="hours_per_day" id="hours_per_day"
+                  <input type="number" step="0.01" min="1" max="24" class="form-control js-period" name="hours_per_day" id="hours_per_day"
                          value="{{ old('hours_per_day', $num($period['hours_per_day'])) }}" required>
                 </div>
                 <div class="form-group">
@@ -66,12 +76,12 @@
                 </div>
                 <div class="form-group">
                   <label>Overtime Rate <small class="text-muted">x hourly wage</small></label>
-                  <input type="number" step="0.05" min="0" max="10" class="form-control js-period" name="overtime_multiplier" id="overtime_multiplier"
+                  <input type="number" step="0.01" min="0" max="10" class="form-control js-period" name="overtime_multiplier" id="overtime_multiplier"
                          value="{{ old('overtime_multiplier', $num($period['overtime_multiplier'])) }}" required>
                 </div>
                 <div class="form-group">
                   <label>Late Deduction <small class="text-muted">x hourly wage</small></label>
-                  <input type="number" step="0.05" min="0" max="10" class="form-control js-period" name="late_multiplier" id="late_multiplier"
+                  <input type="number" step="0.01" min="0" max="10" class="form-control js-period" name="late_multiplier" id="late_multiplier"
                          value="{{ old('late_multiplier', $num($period['late_multiplier'])) }}" required>
                 </div>
                 <div class="form-group payroll-header__wide">
@@ -87,7 +97,9 @@
                 </div>
               </div>
               <p class="text-muted small mb-3">
-                Hourly wage = gross salary / total working days / hours per day. Defaults come from
+                Hourly wage = gross salary / total working days / hours per day. Each employee's Total days
+                can be changed (e.g. extra Sundays worked are paid at the same daily rate, not as overtime);
+                paid Leaves are not deducted. Overtime and late time are in hours. Defaults come from
                 @if(auth()->user()->can('access', App\Models\Settings::class))<a href="{{ route('company') }}">Settings &gt; Company</a>@endif. Temporary advances and the open fixed loan are filled in
                 from the employee's Give Loan entries. The Loan amount is read-only (it always comes from those records);
                 every other value can be changed.
@@ -100,7 +112,7 @@
                       <th rowspan="2"><input type="checkbox" id="selectAll" title="Select all"></th>
                       <th rowspan="2">Employee</th>
                       <th rowspan="2" class="num">Gross Salary</th>
-                      <th colspan="3" class="group">Attendance (days)</th>
+                      <th colspan="4" class="group">Attendance (days)</th>
                       <th rowspan="2" class="num">Salary for Days</th>
                       <th colspan="3" class="group">Overtime</th>
                       <th colspan="2" class="group">Late</th>
@@ -111,11 +123,12 @@
                     <tr>
                       <th class="num">Total</th>
                       <th class="num">Worked</th>
+                      <th class="num" title="Paid leaves: recorded, not deducted from salary">Leaves</th>
                       <th class="num">Absent</th>
                       <th class="num">Hours</th>
                       <th class="num">Rate/Hr</th>
                       <th class="num">Amount</th>
-                      <th class="num">Minutes</th>
+                      <th class="num">Hours</th>
                       <th class="num">Deduction</th>
                       <th class="num">Loan</th>
                       <th class="num">Deduction</th>
@@ -137,14 +150,15 @@
                           <div class="small text-muted">{{ $row->employee->employee_no }}{{ $row->employee->designation ? ' · ' . $row->employee->designation : '' }}</div>
                         </td>
                         <td class="num">{{ number_format((float) $row->employee->salary, 2) }}</td>
-                        <td class="num js-total-days"></td>
-                        <td><input type="number" step="0.5" min="0" class="form-control form-control-sm js-input" data-field="actual" name="employees[{{ $id }}][actual_working_days]" value="{{ $field('actual_working_days', $row->actual_working_days !== null ? $num($row->actual_working_days) : '') }}"></td>
+                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="total" name="employees[{{ $id }}][total_working_days]" value="{{ $field('total_working_days', $row->total_working_days !== null ? $num($row->total_working_days) : '') }}" title="This employee's total days (default: the header's). Extra days are paid at the same daily rate."></td>
+                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="actual" name="employees[{{ $id }}][actual_working_days]" value="{{ $field('actual_working_days', $row->actual_working_days !== null ? $num($row->actual_working_days) : '') }}"></td>
+                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="leaves" name="employees[{{ $id }}][paid_leaves]" value="{{ $field('paid_leaves', $num($row->paid_leaves)) }}" title="Paid leave days (not deducted)"></td>
                         <td class="num js-absent"></td>
                         <td class="num js-salary-days"></td>
-                        <td><input type="number" step="0.25" min="0" class="form-control form-control-sm js-input" data-field="ot" name="employees[{{ $id }}][overtime_hours]" value="{{ $field('overtime_hours', $num($row->overtime_hours)) }}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="ot" name="employees[{{ $id }}][overtime_hours]" value="{{ $field('overtime_hours', $num($row->overtime_hours)) }}"></td>
                         <td class="num js-ot-rate"></td>
                         <td class="num js-ot-amount"></td>
-                        <td><input type="number" step="1" min="0" class="form-control form-control-sm js-input" data-field="late" name="employees[{{ $id }}][late_minutes]" value="{{ $field('late_minutes', $row->late_minutes) }}" title="Total late minutes this month"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="late" name="employees[{{ $id }}][late_hours]" value="{{ $field('late_hours', $num($row->late_hours)) }}" title="Total late time this month, in hours (e.g. 1.25 = 1 h 15 min)"></td>
                         <td class="num js-late-amount"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="temp" name="employees[{{ $id }}][temp_advance]" value="{{ $field('temp_advance', $num($row->temp_advance)) }}"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control form-control-sm js-input" data-field="loan" name="employees[{{ $id }}][fixed_advance]" value="{{ $num($row->fixed_advance) }}" readonly tabindex="-1" title="Open loan from the employee's Give Loan / repayment records"></td>
@@ -154,12 +168,12 @@
                         <td class="num js-net font-weight-bold"></td>
                       </tr>
                     @empty
-                      <tr><td colspan="17" class="text-center text-muted">No salary employees found.</td></tr>
+                      <tr><td colspan="18" class="text-center text-muted">No active salary employees found.</td></tr>
                     @endforelse
                   </tbody>
                   <tfoot>
                     <tr>
-                      <th colspan="6" class="text-right">Selected employees total</th>
+                      <th colspan="7" class="text-right">Selected employees total</th>
                       <th class="num" id="sumSalaryDays"></th>
                       <th></th><th></th>
                       <th class="num" id="sumOvertime"></th>
@@ -207,21 +221,29 @@
 
       document.querySelectorAll('.payroll-row').forEach(function (row) {
         var input = function (field) { var el = row.querySelector('[data-field="' + field + '"]'); return parseFloat(el.value) || 0; };
+        // The employee's own total days default to the header's; worked days default to them
+        var ownInput = row.querySelector('[data-field="total"]');
+        if (ownInput.value === '') ownInput.value = totalDays;
         var actualInput = row.querySelector('[data-field="actual"]');
-        if (actualInput.value === '') actualInput.value = totalDays;
+        if (actualInput.value === '') actualInput.value = ownInput.value;
         var gross = parseFloat(row.dataset.gross) || 0;
+        var ownDays = input('total');
         var actual = input('actual');
+        var leaves = input('leaves');
+        // Rate from the header's total days; worked days + paid leaves are paid at that rate
         var hourly = totalDays > 0 ? gross / totalDays / hoursPerDay : 0;
-        var salaryDays = round2(totalDays > 0 ? gross * actual / totalDays : 0);
+        var salaryDays = round2(totalDays > 0 ? gross * (actual + leaves) / totalDays : 0);
         var otRate = hourly * otMultiplier;
-        var otAmount = round2(input('ot') * otRate);
-        var lateAmount = round2(Math.round(input('late')) / 60 * hourly * lateMultiplier);
+        var otAmount = round2(round2(input('ot')) * otRate);
+        var lateAmount = round2(round2(input('late')) * hourly * lateMultiplier);
         var loan = input('loan');
         var instalment = Math.min(input('instalment'), loan);
         var net = round2(salaryDays + otAmount - lateAmount - input('temp') - instalment);
 
-        row.querySelector('.js-total-days').textContent = totalDays;
-        row.querySelector('.js-absent').textContent = round2(Math.max(0, totalDays - actual));
+        var absent = row.querySelector('.js-absent');
+        absent.textContent = round2(Math.max(0, ownDays - actual - leaves));
+        absent.classList.toggle('text-danger', actual + leaves > ownDays + 0.001);
+        absent.title = actual + leaves > ownDays + 0.001 ? 'Worked days plus leaves are more than the total days' : '';
         row.querySelector('.js-salary-days').textContent = money(salaryDays);
         row.querySelector('.js-ot-rate').textContent = money(round2(otRate));
         row.querySelector('.js-ot-amount').textContent = money(otAmount);
@@ -258,12 +280,17 @@
 
     document.querySelectorAll('.js-input, .js-period').forEach(function (el) { el.addEventListener('input', recalc); });
     document.querySelectorAll('.employee-checkbox').forEach(function (el) { el.addEventListener('change', recalc); });
-    // Changing the total working days resets attendance to full for rows that had full attendance
+    // Changing the header's total days moves the rows that followed it (own total = header);
+    // their worked days follow too where attendance was full. Rows changed by hand keep their days.
     var lastTotal = period('total_working_days');
     document.getElementById('total_working_days').addEventListener('change', function () {
       var total = period('total_working_days');
-      document.querySelectorAll('[data-field="actual"]').forEach(function (el) {
-        if ((parseFloat(el.value) || 0) === lastTotal) el.value = total;
+      document.querySelectorAll('.payroll-row').forEach(function (row) {
+        var own = row.querySelector('[data-field="total"]');
+        var actual = row.querySelector('[data-field="actual"]');
+        if ((parseFloat(own.value) || 0) !== lastTotal) return;
+        if ((parseFloat(actual.value) || 0) === lastTotal) actual.value = total;
+        own.value = total;
       });
       lastTotal = total;
       recalc();

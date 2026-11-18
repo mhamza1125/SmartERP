@@ -58,7 +58,7 @@
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select a purchase, or General Payment</div>
-                    <small class="form-text text-muted">Choose General Payment for a payment that is not for a specific purchase.</small>
+                    <small class="form-text text-muted">Choose General Payment for a payment that is not for a specific purchase, or a Journal Voucher to pay an amount it put on the vendor's balance.</small>
                   </div>
                 </div>
                 <div class="col-md-6" id="display2">
@@ -174,6 +174,7 @@
   var ajaxBankUrl = "{{ route('ajaxBank') }}";
   var ajaxPurchaseUrl = "{{ route('ajaxPurchase') }}";
   // Purchase this payment is for (0 = General Payment), re-selected when the vendor's purchases load
-  var selectedPurchaseId = @json((string) ($transaction['order_id'] ?? ''));
+  var selectedPurchaseId = @json(! empty($transaction['voucher_id']) ? 'jv:'.$transaction['voucher_id'] : (string) ($transaction['order_id'] ?? ''));
+  var editingPaymentId = @json($transaction['transaction_id']);
 </script>
 @endsection

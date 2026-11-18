@@ -43,8 +43,10 @@ class DashboardController extends Controller
         $expenseThisMonth = 0;
         if ($user->can('access', Transaction::class)) {
             $expenseThisMonth = DB::table('transactions')
-                ->where('transaction_to', 'expense')
-                ->where('transaction_type', 'expense')
+                ->where(fn ($q) => $q->where(fn ($q) => $q->where('transaction_to', 'expense')->where('transaction_type', 'expense'))
+                    // Vendor payments of a journal voucher with an expense head are that expense, paid
+                    ->orWhere(fn ($q) => $q->whereIn('transaction_to', ['vendor', 'contractor'])->where('transaction_type', 'payment')
+                        ->whereNotNull('voucher_id')->whereNotNull('expense_head_id')))
                 ->whereMonth('transaction_date', Carbon::now()->month)
                 ->whereYear('transaction_date', Carbon::now()->year)
                 ->selectRaw('COALESCE(SUM(credit), 0) + COALESCE(SUM(debit), 0) as total')

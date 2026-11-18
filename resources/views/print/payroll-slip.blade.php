@@ -3,7 +3,7 @@
 @php
     $monthLabel = \Carbon\Carbon::createFromFormat('Y-m', $item->month)->format('F Y');
     $num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
-    $lateTime = intdiv((int) $item->late_minutes, 60) . 'h ' . str_pad((int) $item->late_minutes % 60, 2, '0', STR_PAD_LEFT) . 'm';
+    $lateTime = number_format((float) $item->late_hours, 2) . ' hrs';
     $earnings = $item->salary_for_days + $item->overtime_amount;
     $deductions = $item->late_deduction + $item->temp_advance + $item->fixed_advance_deduction;
 @endphp
@@ -41,8 +41,11 @@
         <div class="slip-box__title">Attendance</div>
         <div class="slip-line"><span>Total Working Days</span><span class="val">{{ $num($item->total_working_days) }}</span></div>
         <div class="slip-line"><span>Actual Working Days</span><span class="val">{{ $num($item->actual_working_days) }}</span></div>
-        <div class="slip-line"><span>Absent Days</span><span class="val">{{ $num(max(0, $item->total_working_days - $item->actual_working_days)) }}</span></div>
-        <div class="slip-line"><span>Overtime Hours</span><span class="val">{{ $num($item->overtime_hours) }}</span></div>
+        @if((float) $item->paid_leaves > 0)
+        <div class="slip-line"><span>Paid Leaves</span><span class="val">{{ $num($item->paid_leaves) }}</span></div>
+        @endif
+        <div class="slip-line"><span>Absent Days</span><span class="val">{{ $num(max(0, $item->total_working_days - $item->actual_working_days - $item->paid_leaves)) }}</span></div>
+        <div class="slip-line"><span>Overtime Hours</span><span class="val">{{ number_format((float) $item->overtime_hours, 2) }}</span></div>
         <div class="slip-line"><span>Late Time</span><span class="val">{{ $lateTime }}</span></div>
     </div>
     <div class="slip-box">

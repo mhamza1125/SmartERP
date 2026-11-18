@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\HeadRepository;
@@ -260,6 +261,28 @@ class ProductController extends Controller
             'material' => $material,
             'stage' => $stage,
             'openingStock' => $openingStock,
+        ]);
+    }
+
+    /**
+     * Product Purchase Ledger: product purchases, returns and stock movements (in / out), like
+     * the Material Ledger; with one size selected, an opening balance and a running balance.
+     */
+    public function ledger(Request $request)
+    {
+        $this->authorizeAny([['show', Product::class], ['reports_access', User::class]]);
+        $dfrom = $request->input('dfrom');
+        $dto = $request->input('dto');
+        $productTypeId = (int) $request->input('product_type_id') ?: null;
+        $ledger = $this->productRepository->purchaseLedger($dfrom, $dto, $productTypeId);
+
+        return view('productLedger', [
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+            'productTypeId' => $productTypeId,
+            'productTypes' => $this->productRepository->ledgerProductTypes(),
+            'rows' => $ledger['rows'],
+            'opening' => $ledger['opening'],
         ]);
     }
 

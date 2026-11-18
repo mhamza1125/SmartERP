@@ -22,6 +22,18 @@ class AttendanceRepository implements GlobalInterface
         return WorkTime::orderBy('created_at', 'desc')->get();
     }
 
+    /**
+     * Working hours set on department heads (head type 3), keyed by head_id: work_start_time /
+     * work_end_time ('H:i:s' or null). A department without them uses Payroll > Work Hours.
+     */
+    public function departmentHours()
+    {
+        return \App\Models\Head::where('head_type_id', HeadRepository::DEPARTMENT_TYPE)
+            ->where(fn ($q) => $q->whereNotNull('work_start_time')->orWhereNotNull('work_end_time'))
+            ->get(['head_id', 'work_start_time', 'work_end_time'])
+            ->keyBy('head_id');
+    }
+
     public function workHoliday()
     {
         return WorkHoliday::orderBy('created_at', 'desc')->get();

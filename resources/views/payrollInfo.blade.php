@@ -3,7 +3,7 @@
 @php
   $monthLabel = \Carbon\Carbon::createFromFormat('Y-m', $payroll->month)->format('F Y');
   $num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
-  $late = fn ($minutes) => intdiv((int) $minutes, 60) . 'h ' . str_pad((int) $minutes % 60, 2, '0', STR_PAD_LEFT) . 'm';
+  // Absent = the employee's own total days - worked days - paid leaves
 @endphp
 <section class="section">
   <div class="section-body">
@@ -44,7 +44,7 @@
                   <tr>
                     <th rowspan="2">Employee</th>
                     <th rowspan="2" class="num">Gross Salary</th>
-                    <th colspan="3" class="group">Attendance (days)</th>
+                    <th colspan="4" class="group">Attendance (days)</th>
                     <th rowspan="2" class="num">Salary for Days</th>
                     <th colspan="3" class="group">Overtime</th>
                     <th colspan="2" class="group">Late</th>
@@ -56,11 +56,12 @@
                   <tr>
                     <th class="num">Total</th>
                     <th class="num">Worked</th>
+                    <th class="num" title="Paid leaves (not deducted)">Leaves</th>
                     <th class="num">Absent</th>
                     <th class="num">Hours</th>
                     <th class="num">Rate/Hr</th>
                     <th class="num">Amount</th>
-                    <th class="num">Time</th>
+                    <th class="num">Hours</th>
                     <th class="num">Deduction</th>
                     <th class="num">Loan</th>
                     <th class="num">Deduction</th>
@@ -77,12 +78,13 @@
                       <td class="num">{{ number_format($item->gross_salary, 2) }}</td>
                       <td class="num">{{ $num($item->total_working_days) }}</td>
                       <td class="num">{{ $num($item->actual_working_days) }}</td>
-                      <td class="num">{{ $num(max(0, $item->total_working_days - $item->actual_working_days)) }}</td>
+                      <td class="num">{{ $num($item->paid_leaves) }}</td>
+                      <td class="num">{{ $num(max(0, $item->total_working_days - $item->actual_working_days - $item->paid_leaves)) }}</td>
                       <td class="num">{{ number_format($item->salary_for_days, 2) }}</td>
-                      <td class="num">{{ $num($item->overtime_hours) }}</td>
+                      <td class="num">{{ number_format((float) $item->overtime_hours, 2) }}</td>
                       <td class="num">{{ number_format($item->overtime_rate, 2) }}</td>
                       <td class="num">{{ number_format($item->overtime_amount, 2) }}</td>
-                      <td class="num">{{ $late($item->late_minutes) }}</td>
+                      <td class="num">{{ number_format((float) $item->late_hours, 2) }}</td>
                       <td class="num">{{ number_format($item->late_deduction, 2) }}</td>
                       <td class="num">{{ number_format($item->temp_advance, 2) }}</td>
                       <td class="num">{{ number_format($item->fixed_advance, 2) }}</td>
@@ -101,13 +103,13 @@
                       </td>
                     </tr>
                   @empty
-                    <tr><td colspan="17" class="text-center text-muted">No employees in this payroll.</td></tr>
+                    <tr><td colspan="18" class="text-center text-muted">No employees in this payroll.</td></tr>
                   @endforelse
                 </tbody>
                 @if($items->isNotEmpty())
                   <tfoot>
                     <tr>
-                      <th class="text-right" colspan="5">Total</th>
+                      <th class="text-right" colspan="6">Total</th>
                       <th class="num">{{ number_format($items->sum('salary_for_days'), 2) }}</th>
                       <th colspan="2"></th>
                       <th class="num">{{ number_format($items->sum('overtime_amount'), 2) }}</th>

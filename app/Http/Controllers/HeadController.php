@@ -78,6 +78,11 @@ class HeadController extends Controller
     public function update(Request $request, $id)
     {
         $this->authorize('edit', Head::class);
+        // Department heads: working hours (both optional; an end at or before the start = next day)
+        $request->validate([
+            'work_start_time' => 'nullable|date_format:H:i,H:i:s',
+            'work_end_time' => 'nullable|date_format:H:i,H:i:s',
+        ]);
         $this->headRepository->update($id, $request->input());
 
         return redirect()->route('head')->with('success', 'Record Updated Successfully');

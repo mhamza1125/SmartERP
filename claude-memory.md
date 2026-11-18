@@ -245,13 +245,27 @@ STATUS_PTC_CLOSED          = 9   (PTC closed early, before its end stage)
 - Batch half-page prints: `print.layout-voucher` with `sheetOnly` renders one sheet; `print.voucher-batch` + `$sheets` prints many (payroll "Print All Payment Vouchers" / "Print All Salary Slips")
 
 ### Vendor Payments
-Linked to a purchase (`order_id` = purchase_id) or a General Payment (`order_id` = 0, chosen on the Pay Vendor form; changed 2026-11-14 at the user's request). Same debit/credit handling either way; `describe()` labels it "General Payment".
+Linked to a purchase (`order_id` = purchase_id), a General Payment (`order_id` = 0, chosen on the Pay Vendor form; changed 2026-11-14 at the user's request), or a **journal voucher** (2026-11-19: Payment For posts `jv:{id}` -> `voucher_id` = the JV, `order_id` 0). Same debit/credit handling in every case; `describe()` labels them "General Payment" / "Journal Voucher #id".
+- Pay Vendor lists the vendor's credit vouchers (amount in `debit` = payable up) with unpaid = amount - SUM(credit of payments with that voucher_id) (`TransactionRepository::vendorVouchers`); `linkVoucherPayment()` refuses more than the unpaid amount and copies the JV's `expense_head_id` onto the payment. A JV with payments cannot be deleted.
+- Expense reporting = Expense page (`expenseRows()`: expense + bankCharges + vendor/contractor payments with voucher_id AND expense_head_id, head joined by payee_id / expense_head_id) and the dashboard "Expense This Month" card.
+
+### Journal vouchers are non-cash (user decision 2026-11-19)
+- An invoice is posted as a JV (vendor Credit Voucher): it changes only the party's payable, never cash / bank. Cash / bank move only when Pay Vendor pays it.
+- Every cash / bank query in `TransactionRepository` filters `ledger_flag != 0` AND `transaction_type != 'generalVoucher'` (vendor / contractor / employee JVs are still saved with `ledger_flag` 1, so the type filter is what keeps them out; old rows need no data fix). JVs skip the "Insufficient Balance" check on save
+- Party ledgers (vendor / customer / employee) do not filter ledger_flag, so JVs stay in them
+
+### Ledger date filters (fixed 2026-11-19)
+- Cash book / bank ledger (`bookForRange`): opening = debit - credit before Date From, rows in date order (`transaction_date`, `transaction_id`, unfiltered too), closing = opening + the range (the balance at Date To). A positive opening is shown in the Debit column; the Closing Balance row is always shown when filtered
+- Customer ledger: opening / closing run the view's own row rule (`customerLedgerAmount()`: JV +/- cc_amount, payment + cc_amount|debit, delivery/other - debit + credit) over the rows before / in the range
+- Purchase ledger returns are filtered by `return_date` (was created_at)
+- Payment balance check reads a bank as debit - credit (was inverted in `TransactionController::store`)
 
 ### Payroll (reworked 2026-11-13)
 - `payrolls` (one per month Y-m: total_working_days, hours_per_day, overtime_multiplier, late_multiplier, payment_date, bank_id) + `payroll_items` (per employee: designation, gross, working/actual days, salary_for_days, overtime hours/rate/amount, late_minutes/deduction, temp_advance, fixed_advance, fixed_advance_deduction, remaining_fixed_advance, net_salary, ids of the 3 posted transactions). All logic in `PayrollRepository` (calculate / sheet / store)
 - Formula: hourly = gross / total days / hours per day; salary for days = gross x actual / total; overtime rate = hourly x overtime multiplier; late deduction = late minutes/60 x hourly x late multiplier; net = salary for days + overtime - late - temp advance - fixed instalment (negative net is refused)
 - Defaults in Settings > Company: `overtime_multiplier` (2), `late_multiplier` (1), `work_hours_per_day` (8); default working days = month days minus Sundays
 - Employee Give / Receive Loan entries carry `transactions.advance_type` = `temporary` | `fixed` (NULL on older entries = fixed loan). Sheet pre-fills temp advance = this month's temporary advances, fixed advance = open fixed loan (`openFixedLoan`), instalment = last payroll's
+- 2026-11-19: each employee row has its own **Total days** (default the header's; only bounds worked + paid leaves; extra days e.g. Sundays are paid at the header daily rate, not overtime), **Leaves** (`paid_leaves`, paid, not deducted: salary for days = gross x (worked + leaves) / header days) and **late time in hours** (`late_hours`, 2 decimals; `late_minutes` still saved = hours x 60). All numeric inputs take 2 decimals (`decimal:0,2`). Only active employees (`employee_status` 1) are listed, plus inactive ones already in the month's saved payroll. The Edit sheet's Month can be changed: `PayrollRepository::update()` moves the payroll (old month + its postings removed, new month must be free)
 - Saving posts: salary transaction (net, from the payroll bank) + Receive Loan deductions (temporary / fixed) with `bank_id` 0 and `ledger_flag` 0 (no effect on bank / cash balances). Re-saving deletes the payroll's own transactions and re-posts. Months saved before this (salary transactions only) show as "No breakdown" and are replaced when saved
 - Prints: `payroll.print` (month salary sheet, A4 landscape), `payroll.slip` (one employee, A5). Test: tests/Feature/PayrollTest.php
 
@@ -325,6 +339,10 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Employee `attendance_id` = the device's machine number = `USERINFO.Badgenumber` (joined to `CHECKINOUT.USERID`), compared without leading zeros
 - Day pairing: first punch = check-in, last punch = check-out (CHECKTYPE is unreliable: staff press IN in the evening); punches within 120 s count once; a lone punch is in or out by CHECKTYPE. Late time only on days with both punches (existing rule). Employees without a machine number and numbers shared by several employees are listed as warnings; the employee filter uses employee_id
 - Only salaried employees (employee_type_id 39), as before
+- Department working hours (2026-11-19): `heads.work_start_time` / `work_end_time` on department heads (type 3, Settings > Heads, `HeadRepository::DEPARTMENT_TYPE`). Late time = check-in after the department start + Work Hours grace; overtime = check-out after the department end (end <= start = next day). A department without hours falls back to Payroll > Work Hours for that date. Attendance and summary show late and overtime in hours (2 decimals)
+
+## Product Purchase Ledger (2026-11-19)
+- `product.ledger` (`/productLedger`, Reports menu, `ProductController::ledger`, view `productLedger`): like the Material Ledger, for products. Rows from `ProductRepository::purchaseLedger()`: purchase receipts (approved qty), purchase returns, general-stock product / component lines (ptc_virtual 0; stock_type 1 in / 2 out, labelled Opening / Delivery / Delivery Return / PTC Release / PTC Issuance / Issuance / Receive Issuance). With one size selected: opening (before Date From) + running balance, which ends at the `pStock()` figure
 
 ## Journal Voucher Expense Head (2026-11-15)
 - `transactions.expense_head_id` (nullable FK to heads, SET NULL), only on journal vouchers, must be a head of type 7 (Expenses). A label only: never changes debit / credit / cc_amount / ledger_flag. Shown on the JV listing, detail page and voucher narration (`describe()` details 'Expense Head')

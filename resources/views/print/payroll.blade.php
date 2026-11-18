@@ -3,7 +3,7 @@
 @php
     $monthLabel = \Carbon\Carbon::createFromFormat('Y-m', $payroll->month)->format('F Y');
     $num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
-    $late = fn ($minutes) => intdiv((int) $minutes, 60) . ':' . str_pad((int) $minutes % 60, 2, '0', STR_PAD_LEFT);
+    // Late time and overtime are both shown in hours (2 decimals)
 @endphp
 
 @section('title', 'Payroll_' . $payroll->month)
@@ -43,6 +43,7 @@
             <th>Gross Salary</th>
             <th>Total Working Days</th>
             <th>Actual Working Days</th>
+            <th>Paid Leaves</th>
             <th>Absent Days</th>
             <th>Salary for Working Days</th>
             <th>Overtime Hours</th>
@@ -66,12 +67,13 @@
                 <td class="num">{{ number_format($item->gross_salary, 2) }}</td>
                 <td class="num">{{ $num($item->total_working_days) }}</td>
                 <td class="num">{{ $num($item->actual_working_days) }}</td>
-                <td class="num">{{ $num(max(0, $item->total_working_days - $item->actual_working_days)) }}</td>
+                <td class="num">{{ $num($item->paid_leaves) }}</td>
+                <td class="num">{{ $num(max(0, $item->total_working_days - $item->actual_working_days - $item->paid_leaves)) }}</td>
                 <td class="num">{{ number_format($item->salary_for_days, 2) }}</td>
-                <td class="num">{{ $num($item->overtime_hours) }}</td>
+                <td class="num">{{ number_format((float) $item->overtime_hours, 2) }}</td>
                 <td class="num">{{ number_format($item->overtime_rate, 2) }}</td>
                 <td class="num">{{ number_format($item->overtime_amount, 2) }}</td>
-                <td class="num">{{ $late($item->late_minutes) }}</td>
+                <td class="num">{{ number_format((float) $item->late_hours, 2) }}</td>
                 <td class="num">{{ number_format($item->late_deduction, 2) }}</td>
                 <td class="num">{{ number_format($item->temp_advance, 2) }}</td>
                 <td class="num">{{ number_format($item->fixed_advance, 2) }}</td>
@@ -85,7 +87,7 @@
         <tr>
             <td colspan="3" class="text-right">Total</td>
             <td class="num">{{ number_format($items->sum('gross_salary'), 2) }}</td>
-            <td colspan="3"></td>
+            <td colspan="4"></td>
             <td class="num">{{ number_format($items->sum('salary_for_days'), 2) }}</td>
             <td colspan="2"></td>
             <td class="num">{{ number_format($items->sum('overtime_amount'), 2) }}</td>

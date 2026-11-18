@@ -65,7 +65,8 @@
                         <th>Date</th>
                         <th>Check In</th>
                         <th>Check Out</th>
-                        <th>Late Minutes</th>
+                        <th class="text-right">Late (Hours)</th>
+                        <th class="text-right">Overtime (Hours)</th>
                         <th>Status</th>
                       </tr>
                     </thead>
@@ -85,7 +86,8 @@
                               <td data-order="{{ $row['DATE'] }}">{{ formatDate($row['DATE']) }}</td>
                               <td>{{ $row['CHECKIN'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKIN'])) : $row['CHECKIN'] }}</td>
                               <td>{{ $row['CHECKOUT'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKOUT'])) : $row['CHECKOUT'] }}</td>
-                              <td>{{ $row['LATE_MINUTES'] }}</td>
+                              <td class="text-right">{{ $row['LATE_MINUTES'] }}</td>
+                              <td class="text-right">{{ $row['OVERTIME'] }}</td>
                               <td>
                                 <span style="color: {{ $row['DETAIL'] == 'Absent' || $row['DETAIL'] == 'Single Attendance' ? '#FC544B' : '#54CA68' }}">
                                   {{ $row['DETAIL'] }}
@@ -96,7 +98,7 @@
                         @endforeach
                       @else
                         <tr>
-                          <td colspan="{{ $selectedEmployee == 'All Employees' ? 7 : 6 }}">{{ empty($dfrom) ? 'Choose a date range and press Filter.' : 'No attendance records found for this selection.' }}</td>
+                          <td colspan="{{ $selectedEmployee == 'All Employees' ? 8 : 7 }}">{{ empty($dfrom) ? 'Choose a date range and press Filter.' : 'No attendance records found for this selection.' }}</td>
                         </tr>
                       @endif
                     </tbody>
@@ -107,7 +109,8 @@
                         <th>Date</th>
                         <th>Check In</th>
                         <th>Check Out</th>
-                        <th>Late Minutes</th>
+                        <th class="text-right">Late (Hours)</th>
+                        <th class="text-right">Overtime (Hours)</th>
                         <th>Status</th>
                       </tr>
                     </tfoot>

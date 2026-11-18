@@ -38,6 +38,18 @@
                   <div class="invalid-feedback">Enter Head </div>
                 </div>
               </div>
+              {{-- Departments (head type 3) only: working hours of the department --}}
+              <div class="form-group row mb-4 js-department-times" style="display:none">
+                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Working Hours</label>
+                <div class="col-sm-6 col-md-3">
+                  <input type="time" name="work_start_time" class="form-control" value="{{ old('work_start_time') }}" title="Work start time">
+                  <small class="form-text text-muted">Start (late time after this)</small>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                  <input type="time" name="work_end_time" class="form-control" value="{{ old('work_end_time') }}" title="Work end time">
+                  <small class="form-text text-muted">End (overtime after this)</small>
+                </div>
+              </div>
               <div class="form-group row mb-4">
                 <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>
                 <div class="col-sm-12 col-md-7">
@@ -51,4 +63,13 @@
     </div>
   </div>
 </section>
+@push('scripts')
+<script>
+  $(function () {
+    var toggle = function () { $('.js-department-times').toggle($('select[name="head_type_id"]').val() === '3'); };
+    $('select[name="head_type_id"]').on('change', toggle);
+    toggle();
+  });
+</script>
+@endpush
 @endsection

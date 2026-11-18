@@ -152,6 +152,7 @@ class AttendanceController extends Controller
                     'EID' => $row['EID'],
                     'SALARY' => $row['SALARY'],
                     'TOTAL_LATE_MINUTES' => 0,
+                    'TOTAL_OVERTIME_MINUTES' => 0,
                     'TOTAL_ABSENTS' => 0,
                     'TOTAL_SINGLE_ATTENDANCE' => 0,
                 ];
@@ -164,11 +165,14 @@ class AttendanceController extends Controller
             }
 
             $summary[$key]['TOTAL_LATE_MINUTES'] += (int) ($row['LATE_VALUE'] ?? 0);
+            $summary[$key]['TOTAL_OVERTIME_MINUTES'] += (int) ($row['OVERTIME_VALUE'] ?? 0);
         }
 
+        // Late time and overtime in hours (2 decimals), as entered on the payroll sheet
         foreach ($summary as &$employeeSummary) {
-            $employeeSummary['TOTAL_LATE'] = $this->formatLateMinutes($employeeSummary['TOTAL_LATE_MINUTES']);
-            unset($employeeSummary['TOTAL_LATE_MINUTES']);
+            $employeeSummary['TOTAL_LATE'] = $this->hours($employeeSummary['TOTAL_LATE_MINUTES']);
+            $employeeSummary['TOTAL_OVERTIME'] = $this->hours($employeeSummary['TOTAL_OVERTIME_MINUTES']);
+            unset($employeeSummary['TOTAL_LATE_MINUTES'], $employeeSummary['TOTAL_OVERTIME_MINUTES']);
         }
 
         return $summary;
@@ -228,6 +232,11 @@ class AttendanceController extends Controller
      * The device's IN / OUT key (CHECKTYPE) is not used for pairing because staff often press the
      * wrong key (e.g. an evening punch recorded as IN); it only decides whether a lone punch is
      * shown as a check-in or a check-out. Repeated punches within a few seconds count once.
+     *
+     * Working hours per employee: their department head's start / end time (Settings > Heads >
+     * Departments), else the day's Payroll > Work Hours. Late time = check-in after start + grace
+     * time; overtime = check-out after the end (an end at or before the start is the next day).
+     * Both only on days with a check-in and a check-out (existing rule for late time).
      */
     private function processAttendanceData(array $punches, $employees, string $dfrom, string $dto, array &$warnings): array
     {
@@ -235,6 +244,7 @@ class AttendanceController extends Controller
         $dateRange = $this->getDateRange($dfrom, $dto);
         $holidays = $this->getHolidays($dfrom, $dto);
         $gap = (int) config('attendance.duplicate_punch_seconds', 120);
+        $departmentHours = $this->attendanceRepository->departmentHours();
 
         // [badge][date] => punches of that day, in time order
         $byDay = [];
@@ -262,6 +272,8 @@ class AttendanceController extends Controller
                     'CHECKOUT' => 'N/A',
                     'LATE_MINUTES' => 'N/A',
                     'LATE_VALUE' => 0,
+                    'OVERTIME' => 'N/A',
+                    'OVERTIME_VALUE' => 0,
                 ];
 
                 if ($holidayDetail || $isSunday) {
@@ -290,13 +302,26 @@ class AttendanceController extends Controller
                     $checkout = null;
                 }
 
-                // Late time: only on days with both punches (existing rule), after the grace time
+                // Late time and overtime: only on days with both punches (existing rule)
                 $lateMinutes = 0;
+                $overtimeMinutes = 0;
                 if ($checkin && $checkout) {
-                    if ($workTime) {
-                        $start = Carbon::parse($date.' '.$workTime->time_from)->addMinutes((int) $workTime->grace_time);
+                    $department = $departmentHours->get($employee->department_id);
+                    $startTime = $department->work_start_time ?? $workTime->time_from ?? null;
+                    $endTime = $department->work_end_time ?? $workTime->time_to ?? null;
+                    if ($startTime) {
+                        // Grace time comes from Work Hours (none when only the department has hours)
+                        $start = Carbon::parse($date.' '.$startTime)->addMinutes((int) ($workTime->grace_time ?? 0));
                         $lateMinutes = max(0, intdiv(Carbon::parse($checkin)->getTimestamp() - $start->getTimestamp(), 60));
-                    } else {
+                    }
+                    if ($endTime) {
+                        $end = Carbon::parse($date.' '.$endTime);
+                        if ($startTime && $end->lte(Carbon::parse($date.' '.$startTime))) {
+                            $end->addDay(); // night shift ends the next day
+                        }
+                        $overtimeMinutes = max(0, intdiv(Carbon::parse($checkout)->getTimestamp() - $end->getTimestamp(), 60));
+                    }
+                    if (! $startTime || ! $endTime) {
                         $missingWorkTime[$date] = true;
                     }
                 }
@@ -304,8 +329,10 @@ class AttendanceController extends Controller
                 $rows[] = array_merge($base, [
                     'CHECKIN' => $checkin ?? 'N/A',
                     'CHECKOUT' => $checkout ?? 'N/A',
-                    'LATE_MINUTES' => $this->formatLateMinutes($lateMinutes),
+                    'LATE_MINUTES' => $this->hours($lateMinutes),
                     'LATE_VALUE' => $lateMinutes,
+                    'OVERTIME' => $this->hours($overtimeMinutes),
+                    'OVERTIME_VALUE' => $overtimeMinutes,
                     'DETAIL' => $checkin && $checkout ? 'Present' : 'Single Attendance',
                     'HOLIDAY' => '0',
                 ]);
@@ -315,7 +342,7 @@ class AttendanceController extends Controller
         if ($missingWorkTime) {
             $warnings[] = 'No Work Hours are defined for '.count($missingWorkTime).' working day(s) in this range ('
                 .collect(array_keys($missingWorkTime))->take(5)->map(fn ($d) => formatDate($d))->implode(', ')
-                .(count($missingWorkTime) > 5 ? ', ...' : '').'), so late time was not calculated for them. Add them under Payroll > Work Hours.';
+                .(count($missingWorkTime) > 5 ? ', ...' : '').'), so late time / overtime was not calculated for them. Add them under Payroll > Work Hours, or set the department\'s working hours under Settings > Heads > Departments.';
         }
 
         return $rows;
@@ -341,17 +368,10 @@ class AttendanceController extends Controller
         return $kept;
     }
 
-    private function formatLateMinutes($lateMinutes)
+    /** Minutes shown as hours with 2 decimals (75 -> "1.25"), the unit used on the payroll sheet. */
+    private function hours($minutes): string
     {
-        $lateMinutes = intval($lateMinutes);
-        $hours = floor($lateMinutes / 60);
-        $minutes = $lateMinutes % 60;
-
-        if ($hours > 0) {
-            return sprintf('%d hours %d mins', $hours, $minutes);
-        }
-
-        return sprintf('%d mins', $minutes);
+        return number_format((int) $minutes / 60, 2);
     }
 
     private function getWorkTimes($date)

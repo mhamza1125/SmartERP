@@ -24,6 +24,8 @@ class PayrollItem extends Model
         'overtime_rate',
         'overtime_amount',
         'late_minutes',
+        'late_hours',
+        'paid_leaves',
         'late_deduction',
         'temp_advance',
         'fixed_advance',
