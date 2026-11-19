@@ -453,6 +453,12 @@
                       <blockquote> No Sale Price History </blockquote>
                     @endif
 
+                    <h5 class="mt-4">Vendor Price Comparison
+                      @if(auth()->user()->can('access', App\Models\Purchase::class) || auth()->user()->can('reports_access', App\Models\User::class))
+                        <a href="{{ route('purchase.ledger', ['item' => 'product:'.$product['product_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Ledger</a>
+                      @endif
+                    </h5>
+                    @include('purchaseVendorComparison', ['comparison' => $vendorComparison])
                     <h5 class="mt-4">Purchase Price History (Vendor Purchases)</h5>
                     @if($purchasePriceHistory->count())
                       <div class="table-responsive">

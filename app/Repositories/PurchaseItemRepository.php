@@ -40,7 +40,7 @@ class PurchaseItemRepository implements GlobalInterface
      * Price history of a material: every purchase / processing line for it,
      * newest first. is_process = 1 when the line belongs to a material process.
      */
-    public function materialPriceHistory($materialId)
+    public function materialPriceHistory($materialId, ?string $dfrom = null, ?string $dto = null)
     {
         // Product lines carry no material_id; processing lines store product_stage_id = 0
         return PurchaseItem::where('purchase_items.material_id', $materialId)
@@ -48,12 +48,14 @@ class PurchaseItemRepository implements GlobalInterface
             ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->leftJoin('mprocess', 'mprocess.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+            ->when($dfrom && $dto, fn ($q) => $q->whereBetween('purchases.purchase_date', [$dfrom, $dto]))
             ->select(
-                'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
+                'purchase_items.purchase_item_id', 'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
                 'purchase_items.created_at', 'purchases.purchase_no', 'purchases.purchase_date', 'orders.job_no',
-                'vendors.vendor_no', 'vendors.fname',
+                'purchases.vendor_id', 'vendors.vendor_no', 'vendors.fname',
                 DB::raw('CASE WHEN mprocess.purchase_item_id IS NOT NULL THEN 1 ELSE 0 END AS is_process')
             )
+            ->selectSub($this->receivedQty(), 'received_qty')
             ->orderBy('purchases.purchase_date', 'desc')
             ->orderBy('purchase_items.purchase_item_id', 'desc')
             ->get();
@@ -62,7 +64,7 @@ class PurchaseItemRepository implements GlobalInterface
     /**
      * Purchase price history of a product (all sizes / stages), newest first.
      */
-    public function productPriceHistory($productId)
+    public function productPriceHistory($productId, ?string $dfrom = null, ?string $dto = null)
     {
         return PurchaseItem::join('product_types', 'product_types.product_type_id', '=', 'purchase_items.product_type_id')
             ->where('product_types.product_id', $productId)
@@ -71,15 +73,61 @@ class PurchaseItemRepository implements GlobalInterface
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->leftJoin('heads as size', 'size.head_id', '=', 'product_types.size_id')
             ->leftJoin('heads as stage', 'stage.head_id', '=', 'purchase_items.product_stage_id')
+            ->when($dfrom && $dto, fn ($q) => $q->whereBetween('purchases.purchase_date', [$dfrom, $dto]))
             ->select(
-                'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
+                'purchase_items.purchase_item_id', 'purchase_items.purchase_id', 'purchase_items.quantity', 'purchase_items.price', 'purchase_items.total',
                 'purchases.purchase_no', 'purchases.purchase_date', 'orders.job_no',
-                'vendors.vendor_no', 'vendors.fname',
+                'purchases.vendor_id', 'vendors.vendor_no', 'vendors.fname',
                 'size.name as size_name', 'stage.name as stage_name'
             )
+            ->selectSub($this->receivedQty(), 'received_qty')
             ->orderBy('purchases.purchase_date', 'desc')
             ->orderBy('purchase_items.purchase_item_id', 'desc')
             ->get();
+    }
+
+    /** Approved (received into stock) quantity of a purchase line, as a sub-select. */
+    private function receivedQty()
+    {
+        return DB::table('receive_materials')
+            ->whereColumn('receive_materials.purchase_item_id', 'purchase_items.purchase_item_id')
+            ->selectRaw('COALESCE(SUM(receive_materials.approved_qty), 0)');
+    }
+
+    /**
+     * Vendor price comparison from purchase history lines (materialPriceHistory /
+     * productPriceHistory). Processing lines (a processing charge, not a purchase price) are
+     * left out. Per vendor: times purchased, total quantity, lowest / highest / average price
+     * (average weighted by quantity) and the last purchase's price and date. Cheapest last
+     * price first.
+     */
+    public function vendorComparison($lines)
+    {
+        return collect($lines)
+            ->reject(fn ($line) => ! empty($line->is_process))
+            ->groupBy('vendor_id')
+            ->map(function ($vendorLines) {
+                $last = $vendorLines->sortByDesc(fn ($l) => $l->purchase_date.' '.str_pad((string) $l->purchase_item_id, 12, '0', STR_PAD_LEFT))->first();
+                $quantity = (float) $vendorLines->sum('quantity');
+
+                return (object) [
+                    'vendor_id' => $last->vendor_id,
+                    'vendor_no' => $last->vendor_no,
+                    'fname' => $last->fname,
+                    'purchases' => $vendorLines->pluck('purchase_id')->unique()->count(),
+                    'quantity' => $quantity,
+                    'received_qty' => (float) $vendorLines->sum('received_qty'),
+                    'lowest_price' => (float) $vendorLines->min('price'),
+                    'highest_price' => (float) $vendorLines->max('price'),
+                    'average_price' => $quantity > 0
+                        ? round($vendorLines->sum(fn ($l) => (float) $l->price * (float) $l->quantity) / $quantity, 2)
+                        : round((float) $vendorLines->avg('price'), 2),
+                    'last_price' => (float) $last->price,
+                    'last_date' => $last->purchase_date,
+                ];
+            })
+            ->sortBy('last_price')
+            ->values();
     }
 
     public function receive($id)

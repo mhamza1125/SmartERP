@@ -266,11 +266,13 @@ class PayrollRepository implements GlobalInterface
     /**
      * The payroll sheet for a month: every active salary employee (plus inactive ones already in
      * this month's saved payroll) with their saved values, or (new payroll / employee not in it)
-     * defaults: full attendance, overtime and late hours from the attendance machine (the
-     * employee's department working hours, AttendanceRepository::monthTotals; 0 when it cannot
-     * be read), this month's temporary advances, the open fixed loan and last month's instalment.
-     * Each row also carries the machine figures (attendance) so a saved sheet can be compared.
-     * Worked days, leaves and advances are never read from the machine.
+     * defaults from the attendance machine (AttendanceRepository::monthTotals, the employee's
+     * department working hours): worked days = total days - absent days, overtime and late hours.
+     * When the machine cannot be read, or has no punch at all in the month (not synced), worked
+     * days stay at full attendance and the hours at 0. Advances: this month's temporary advances,
+     * the open fixed loan and last month's instalment. Each row also carries the machine figures
+     * (attendance) so a saved sheet can be compared. Leaves and advances are never read from the
+     * machine.
      *
      * @return array{payroll: ?Payroll, period: array, rows: Collection, attendance: array{totals: array, warnings: array, error: ?string}}
      */
@@ -284,10 +286,12 @@ class PayrollRepository implements GlobalInterface
 
         $employees = $this->employees($items->keys()->all());
         $attendance = app(AttendanceRepository::class)->monthTotals($employees, $month);
+        $headerDays = (float) ($period['total_working_days'] ?? $this->defaultWorkingDays($month));
 
-        $rows = $employees->map(function ($employee) use ($month, $items, $ownDeductions, $previous, $attendance) {
+        $rows = $employees->map(function ($employee) use ($month, $items, $ownDeductions, $previous, $attendance, $headerDays) {
             $saved = $items->get($employee->employee_id);
-            $machine = $attendance['totals'][$employee->employee_id] ?? null;
+            // Machine figures only when the machine has punches for the month (else not synced yet)
+            $machine = $attendance['synced'] ? ($attendance['totals'][$employee->employee_id] ?? null) : null;
             $openLoan = $this->openFixedLoan($employee->employee_id, $ownDeductions);
             $lastInstalment = (float) ($previous[$employee->employee_id]->fixed_advance_deduction ?? 0);
 
@@ -296,7 +300,9 @@ class PayrollRepository implements GlobalInterface
                 'included' => $saved !== null || ! $items->count(),
                 // Own total days: saved, else the header's (filled in by the sheet)
                 'total_working_days' => $saved?->total_working_days,
-                'actual_working_days' => $saved?->actual_working_days,
+                // Worked days: saved, else total days - absent days on the machine, else full (sheet)
+                'actual_working_days' => $saved?->actual_working_days
+                    ?? ($machine ? max(0, $headerDays - $machine['absent_days']) : null),
                 'paid_leaves' => (float) ($saved->paid_leaves ?? 0),
                 'overtime_hours' => (float) ($saved->overtime_hours ?? $machine['overtime_hours'] ?? 0),
                 'late_hours' => (float) ($saved->late_hours ?? $machine['late_hours'] ?? 0),
@@ -308,7 +314,7 @@ class PayrollRepository implements GlobalInterface
             ];
         });
 
-        return ['payroll' => $payroll, 'period' => $period ?? array_merge(['total_working_days' => $this->defaultWorkingDays($month)], $this->settings()), 'rows' => $rows, 'attendance' => $attendance];
+        return ['payroll' => $payroll, 'period' => $period ?? array_merge(['total_working_days' => $headerDays], $this->settings()), 'rows' => $rows, 'attendance' => $attendance];
     }
 
     /** A saved payroll's items with employee details, in sheet order. */

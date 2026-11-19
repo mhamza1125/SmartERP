@@ -53,6 +53,9 @@
                     <small class="form-text text-muted">Change it to move this payroll to another month.</small>
                   @else
                     <select class="form-control" id="monthSelector">
+                      @if(! array_key_exists($selectedMonth, $monthOptions))
+                        <option value="{{ $selectedMonth }}" selected>{{ $monthLabel }}</option>
+                      @endif
                       @foreach($monthOptions as $monthValue => $optionLabel)
                         <option value="{{ $monthValue }}" {{ $monthValue == $selectedMonth ? 'selected' : '' }}>{{ $optionLabel }}</option>
                       @endforeach
@@ -105,17 +108,24 @@
                 every other value can be changed.
               </p>
 
-              {{-- Overtime / late hours from the attendance machine (department working hours) --}}
+              {{-- Worked days (absents), overtime and late hours from the attendance machine (department working hours) --}}
               @if($attendance['error'])
                 <div class="alert alert-warning">
-                  Overtime and late hours could not be read from the attendance machine: {{ $attendance['error'] }}
-                  Enter them by hand.
+                  Attendance could not be read from the machine: {{ $attendance['error'] }}
+                  Enter worked days, overtime and late hours by hand.
+                </div>
+              @elseif(! $attendance['synced'])
+                <div class="alert alert-warning">
+                  The attendance machine has no punches for {{ $monthLabel }}{{ $attendance['until'] < \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->endOfMonth()->toDateString() ? ' up to ' . formatDate($attendance['until']) : '' }}
+                  (not downloaded yet?), so worked days are set to full attendance and overtime / late hours to 0. Enter them by hand, or
+                  download the machine data and reload this page.
                 </div>
               @else
                 <div class="alert alert-light border d-flex flex-wrap align-items-center justify-content-between">
                   <span>
-                    <strong>Attendance:</strong> overtime and late hours for {{ $monthLabel }} come from the attendance machine,
-                    using each employee's department working hours.
+                    <strong>Attendance:</strong> worked days (total days minus absents), overtime and late hours for {{ $monthLabel }}
+                    come from the attendance machine{{ $attendance['until'] < \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->endOfMonth()->toDateString() ? ' (machine data up to ' . formatDate($attendance['until']) . '; later days count as worked)' : '' }},
+                    using each employee's department working hours. Absent = a working day without any punch; a day with a single punch counts as worked.
                     @if($payroll) Saved values are kept; the machine figure is shown under each box. @endif
                   </span>
                   @if($payroll)
@@ -175,7 +185,14 @@
                         </td>
                         <td class="num">{{ number_format((float) $row->employee->salary, 2) }}</td>
                         <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="total" name="employees[{{ $id }}][total_working_days]" value="{{ $field('total_working_days', $row->total_working_days !== null ? $num($row->total_working_days) : '') }}" title="This employee's total days (default: the header's). Extra days are paid at the same daily rate."></td>
-                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="actual" name="employees[{{ $id }}][actual_working_days]" value="{{ $field('actual_working_days', $row->actual_working_days !== null ? $num($row->actual_working_days) : '') }}"></td>
+                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="actual" name="employees[{{ $id }}][actual_working_days]" value="{{ $field('actual_working_days', $row->actual_working_days !== null ? $num($row->actual_working_days) : '') }}" @if($row->attendance) data-absent="{{ $row->attendance['absent_days'] }}" @endif>
+                          @if($row->attendance)
+                            @if($row->attendance['punched_days'] === 0)
+                              <small class="d-block text-danger text-nowrap" title="The machine has no punch of this employee this month">No punches</small>
+                            @else
+                              <small class="d-block text-muted text-nowrap" title="Absent days (no punch) on the attendance machine{{ $row->attendance['single_days'] ? '; single-punch days are counted as worked' : '' }}">Att. {{ $row->attendance['absent_days'] }} absent{!! $row->attendance['single_days'] ? ' &middot; <span class="text-warning">' . $row->attendance['single_days'] . ' single</span>' : '' !!}</small>
+                            @endif
+                          @endif</td>
                         <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="leaves" name="employees[{{ $id }}][paid_leaves]" value="{{ $field('paid_leaves', $num($row->paid_leaves)) }}" title="Paid leave days (not deducted)"></td>
                         <td class="num js-absent"></td>
                         <td class="num js-salary-days"></td>
@@ -307,15 +324,17 @@
     document.querySelectorAll('.js-input, .js-period').forEach(function (el) { el.addEventListener('input', recalc); });
     document.querySelectorAll('.employee-checkbox').forEach(function (el) { el.addEventListener('change', recalc); });
     // Changing the header's total days moves the rows that followed it (own total = header);
-    // their worked days follow too where attendance was full. Rows changed by hand keep their days.
+    // their worked days follow too where they were total - machine absents (or full attendance).
+    // Rows changed by hand keep their days.
     var lastTotal = period('total_working_days');
     document.getElementById('total_working_days').addEventListener('change', function () {
       var total = period('total_working_days');
       document.querySelectorAll('.payroll-row').forEach(function (row) {
         var own = row.querySelector('[data-field="total"]');
         var actual = row.querySelector('[data-field="actual"]');
+        var absent = parseFloat(actual.dataset.absent) || 0;
         if ((parseFloat(own.value) || 0) !== lastTotal) return;
-        if ((parseFloat(actual.value) || 0) === lastTotal) actual.value = total;
+        if ((parseFloat(actual.value) || 0) === Math.max(0, lastTotal - absent)) actual.value = Math.max(0, total - absent);
         own.value = total;
       });
       lastTotal = total;
@@ -326,12 +345,16 @@
       document.querySelectorAll('.employee-checkbox').forEach(function (cb) { cb.checked = on; });
       recalc();
     });
-    // Saved sheet: replace overtime / late hours with the attendance machine figures
+    // Saved sheet: replace worked days (own total - absents), overtime and late hours with the machine figures
     var useAttendance = document.getElementById('useAttendance');
     if (useAttendance) {
       useAttendance.addEventListener('click', function () {
         document.querySelectorAll('[data-field="ot"][data-machine], [data-field="late"][data-machine]').forEach(function (el) {
           el.value = el.dataset.machine;
+        });
+        document.querySelectorAll('[data-field="actual"][data-absent]').forEach(function (el) {
+          var own = parseFloat(el.closest('.payroll-row').querySelector('[data-field="total"]').value) || 0;
+          el.value = Math.round(Math.max(0, own - (parseFloat(el.dataset.absent) || 0)) * 100) / 100;
         });
         recalc();
       });

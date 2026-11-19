@@ -230,7 +230,8 @@ class ProductController extends Controller
             'openingStock' => $openingStock,
             'productComponents' => $productComponents,
             'salePriceHistory' => $orderItemRepository->productPriceHistory($id),
-            'purchasePriceHistory' => $purchaseItemRepository->productPriceHistory($id),
+            'purchasePriceHistory' => $purchaseHistory = $purchaseItemRepository->productPriceHistory($id),
+            'vendorComparison' => $purchaseItemRepository->vendorComparison($purchaseHistory),
         ]);
     }
 

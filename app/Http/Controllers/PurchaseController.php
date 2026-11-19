@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Purchase;
 use Illuminate\Http\Request;
 use App\Repositories\HeadRepository;
@@ -297,65 +296,6 @@ class PurchaseController extends Controller
             $this->purchaseItemRepository->store($purchaseItem);
             if (!$stage) $this->materialRepository->update($material, ['cprice' => $price]);
         }
-    }
-
-    /**
-     * Purchase Ledger - Show all purchases, returns, and vendor payments
-     */
-    public function purchaseLedger(Request $request)
-    {
-        $this->authorizeAny([['access', Purchase::class], ['reports_access', User::class]]);
-
-        $dfrom = $request->input('dfrom');
-        $dto = $request->input('dto');
-        $oBalance = 0; // Opening Balance
-
-        // Get transaction data
-        if (! empty($dfrom) && ! empty($dto)) {
-            $all = $this->transactionRepository->pLedgerFilter($dfrom, $dto);
-            $detail = $all['transactions'];
-            $oBalance = $all['opening_balance'];
-        } else {
-            $detail = $this->transactionRepository->pLedger();
-        }
-
-        $balance = $oBalance;
-
-        return view('purchaseLedger', [
-            'detail' => $detail,
-            'oBalance' => $oBalance,
-            'balance' => $balance,
-            'dfrom' => $dfrom,
-            'dto' => $dto,
-        ]);
-    }
-
-    /**
-     * Print Purchase Ledger
-     */
-    public function printPurchaseLedger(Request $request)
-    {
-        $this->authorizeAny([['access', Purchase::class], ['reports_access', User::class]]);
-
-        $dfrom = $request->input('dfrom');
-        $dto = $request->input('dto');
-        $oBalance = 0; // Opening Balance
-
-        // Get transaction data
-        if (! empty($dfrom) && ! empty($dto)) {
-            $all = $this->transactionRepository->pLedgerFilter($dfrom, $dto);
-            $detail = $all['transactions'];
-            $oBalance = $all['opening_balance'];
-        } else {
-            $detail = $this->transactionRepository->pLedger();
-        }
-
-        return view('print.purchase-ledger', [
-            'detail' => $detail,
-            'oBalance' => $oBalance,
-            'dfrom' => $dfrom,
-            'dto' => $dto,
-        ]);
     }
 
     /**

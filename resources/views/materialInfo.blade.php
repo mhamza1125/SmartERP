@@ -55,6 +55,12 @@
             </div>
             <div class="row">
               <div class="col-md-12">
+                <h5>Vendor Price Comparison
+                  @if(auth()->user()->can('access', App\Models\Purchase::class) || auth()->user()->can('reports_access', App\Models\User::class))
+                    <a href="{{ route('purchase.ledger', ['item' => 'material:'.$material['material_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Ledger</a>
+                  @endif
+                </h5>
+                @include('purchaseVendorComparison', ['comparison' => $vendorComparison, 'unit' => $material['uname']])
                 <h5>Price History</h5>
                 @if($priceHistory->count())
                   <div class="table-responsive">

@@ -301,28 +301,68 @@ class AttendanceRepository implements GlobalInterface
     }
 
     /**
-     * A month's late time and overtime per employee from the attendance machine, in hours
-     * (2 decimals), with each employee's department working hours (dailyAttendance rules).
-     * Used to fill the payroll sheet; worked days, leaves and advances are not read.
+     * A month's attendance per employee from the machine, for the payroll sheet (dailyAttendance
+     * rules, each employee's department working hours):
+     *   late_hours / overtime_hours  (2 decimals)
+     *   absent_days   working days (not Sunday / holiday) without any punch
+     *   single_days   days with only one punch (counted as worked, shown for checking)
+     *   punched_days  days with at least one punch
+     * Only days up to today and up to the machine's last punch (its last download) are counted, so
+     * days without machine data yet are not marked absent; until = the last day counted.
+     * synced = false when the machine has no punch at all in the period for these employees
+     * (not downloaded yet): the sheet then keeps full attendance instead of marking everyone absent.
      *
-     * @return array{totals: array<int, array{late_hours: float, overtime_hours: float}>, warnings: array<int, string>, error: ?string}
+     * @return array{totals: array<int, array>, synced: bool, until: string, warnings: array<int, string>, error: ?string}
      */
     public function monthTotals($employees, string $month): array
     {
         $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        $result = $this->dailyAttendance($employees, $start->toDateString(), $start->copy()->endOfMonth()->toDateString());
+        $end = $start->copy()->endOfMonth();
+        $until = $end->gt(Carbon::today()) ? Carbon::today() : $end;
+        if ($until->lt($start)) {
+            // A future month: nothing to read yet
+            return ['totals' => [], 'synced' => false, 'until' => $start->toDateString(), 'warnings' => [], 'error' => null];
+        }
+        $result = $this->dailyAttendance($employees, $start->toDateString(), $until->toDateString());
 
-        $minutes = [];
+        // Count only up to the last day the machine has punches for (its last download): later
+        // days have no data yet and must not count as absent
+        $lastPunchDay = collect($result['rows'])
+            ->filter(fn ($row) => in_array($row['DETAIL'], ['Present', 'Single Attendance'], true))
+            ->max('DATE');
+        if ($lastPunchDay && $lastPunchDay < $until->toDateString()) {
+            $until = Carbon::parse($lastPunchDay);
+        }
+
+        $sum = [];
         foreach ($result['rows'] as $row) {
-            $minutes[$row['EID']]['late'] = ($minutes[$row['EID']]['late'] ?? 0) + (int) ($row['LATE_VALUE'] ?? 0);
-            $minutes[$row['EID']]['overtime'] = ($minutes[$row['EID']]['overtime'] ?? 0) + (int) ($row['OVERTIME_VALUE'] ?? 0);
+            if ($row['DATE'] > $until->toDateString()) {
+                continue;
+            }
+            $day = &$sum[$row['EID']];
+            $day ??= ['late' => 0, 'overtime' => 0, 'absent' => 0, 'single' => 0, 'punched' => 0];
+            $day['late'] += (int) ($row['LATE_VALUE'] ?? 0);
+            $day['overtime'] += (int) ($row['OVERTIME_VALUE'] ?? 0);
+            $day['absent'] += $row['DETAIL'] === 'Absent' ? 1 : 0;
+            $day['single'] += $row['DETAIL'] === 'Single Attendance' ? 1 : 0;
+            $day['punched'] += in_array($row['DETAIL'], ['Present', 'Single Attendance'], true) ? 1 : 0;
+            unset($day);
         }
         $totals = array_map(fn ($m) => [
             'late_hours' => round($m['late'] / 60, 2),
             'overtime_hours' => round($m['overtime'] / 60, 2),
-        ], $minutes);
+            'absent_days' => $m['absent'],
+            'single_days' => $m['single'],
+            'punched_days' => $m['punched'],
+        ], $sum);
 
-        return ['totals' => $totals, 'warnings' => $result['warnings'], 'error' => $result['error']];
+        return [
+            'totals' => $totals,
+            'synced' => collect($totals)->sum('punched_days') > 0,
+            'until' => $until->toDateString(),
+            'warnings' => $result['warnings'],
+            'error' => $result['error'],
+        ];
     }
 
     /**

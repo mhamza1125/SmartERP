@@ -275,8 +275,8 @@ Route::get('/ajaxPMQty', [PurchaseController::class, 'ajaxPMQty'])->name('ajaxPM
 Route::get('/ajaxOrderPurchaseItems', [PurchaseController::class, 'ajaxOrderPurchaseItems'])->name('ajaxOrderPurchaseItems'); //Items allowed for an order purchase
 Route::get('/addProductPurchase', [PurchaseController::class, 'create2'])->name('productPurchase.add');
 Route::get('/editProductPurchase/{id}', [PurchaseController::class, 'edit2'])->name('productPurchase.edit');
-Route::get('/pLedger', [PurchaseController::class, 'purchaseLedger'])->name('purchase.ledger');
-Route::post('/pLedger', [PurchaseController::class, 'purchaseLedger'])->name('purchase.ledger.filter');
+// Purchase Ledger: vendors, prices and purchases of one material / product (replaced the old ledger 2026-11-19)
+Route::get('/pLedger', [ReportController::class, 'purchaseHistory'])->name('purchase.ledger');
 
 // Purchase Receive
 Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
@@ -504,7 +504,6 @@ Route::get('/stock/print', [StockController::class, 'printStock'])->name('stock.
 Route::get('/cLedger/print/{id}', [CustomerController::class, 'printCustomerLedger'])->name('customer.ledger.print');
 Route::get('/eLedger/print/{id}', [EmployeeController::class, 'printEmployeeLedger'])->name('employee.ledger.print');
 Route::get('/vLedger/print/{id}', [VendorController::class, 'printVendorLedger'])->name('vendor.ledger.print');
-Route::get('/pLedger/print', [PurchaseController::class, 'printPurchaseLedger'])->name('purchase.ledger.print');
 Route::get('/expense/print/{id}', [TransactionController::class, 'printExpense'])->name('expense.print');
 Route::get('/brs/print/{id}', [TransactionController::class, 'printBRS'])->name('brs.print');
 Route::get('/transfer/print/{id}', [TransactionController::class, 'printTransfer'])->name('transfer.print');

@@ -196,9 +196,11 @@ class PayrollController extends Controller
     private function sheetView(string $month, bool $editing): array
     {
         $sheet = $this->payrollRepository->sheet($month);
+        // Months offered on the sheet: October 2026 to December 2028 (user request 2026-11-19).
+        // A payroll saved for another month still shows its own month (see addPayroll).
         $monthOptions = [];
-        for ($i = 24; $i >= -6; $i--) {
-            $date = Carbon::now()->addMonths(-$i);
+        $last = Carbon::create(2028, 12, 1);
+        for ($date = Carbon::create(2026, 10, 1); $date->lte($last); $date->addMonth()) {
             $monthOptions[$date->format('Y-m')] = $date->format('F Y');
         }
 

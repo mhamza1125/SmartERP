@@ -257,7 +257,6 @@ Linked to a purchase (`order_id` = purchase_id), a General Payment (`order_id` =
 ### Ledger date filters (fixed 2026-11-19)
 - Cash book / bank ledger (`bookForRange`): opening = debit - credit before Date From, rows in date order (`transaction_date`, `transaction_id`, unfiltered too), closing = opening + the range (the balance at Date To). A positive opening is shown in the Debit column; the Closing Balance row is always shown when filtered
 - Customer ledger: opening / closing run the view's own row rule (`customerLedgerAmount()`: JV +/- cc_amount, payment + cc_amount|debit, delivery/other - debit + credit) over the rows before / in the range
-- Purchase ledger returns are filtered by `return_date` (was created_at)
 - Payment balance check reads a bank as debit - credit (was inverted in `TransactionController::store`)
 
 ### Payroll (reworked 2026-11-13)
@@ -266,7 +265,7 @@ Linked to a purchase (`order_id` = purchase_id), a General Payment (`order_id` =
 - Defaults in Settings > Company: `overtime_multiplier` (2), `late_multiplier` (1), `work_hours_per_day` (8); default working days = month days minus Sundays
 - Employee Give / Receive Loan entries carry `transactions.advance_type` = `temporary` | `fixed` (NULL on older entries = fixed loan). Sheet pre-fills temp advance = this month's temporary advances, fixed advance = open fixed loan (`openFixedLoan`), instalment = last payroll's
 - 2026-11-19: each employee row has its own **Total days** (default the header's; only bounds worked + paid leaves; extra days e.g. Sundays are paid at the header daily rate, not overtime), **Leaves** (`paid_leaves`, paid, not deducted: salary for days = gross x (worked + leaves) / header days) and **late time in hours** (`late_hours`, 2 decimals; `late_minutes` still saved = hours x 60). All numeric inputs take 2 decimals (`decimal:0,2`). Only active employees (`employee_status` 1) are listed, plus inactive ones already in the month's saved payroll. The Edit sheet's Month can be changed: `PayrollRepository::update()` moves the payroll (old month + its postings removed, new month must be free)
-- Overtime / late hours default from the attendance machine (user decision 2026-11-19): `PayrollRepository::sheet()` calls `AttendanceRepository::monthTotals()` (the month's dailyAttendance rows, department working hours) for employees not saved in the month's payroll; saved rows keep their values and show the machine figure ("Att. x") with a "Use attendance figures" button. Worked days, leaves and advances are NOT read from attendance. Machine unreadable -> warning, 0. The attendance calculation lives in `AttendanceRepository::dailyAttendance()` (moved from AttendanceController)
+- Overtime / late hours default from the attendance machine (user decision 2026-11-19): `PayrollRepository::sheet()` calls `AttendanceRepository::monthTotals()` (the month's dailyAttendance rows, department working hours) for employees not saved in the month's payroll; saved rows keep their values and show the machine figure ("Att. x") with a "Use attendance figures" button. Since 2026-11-19 also worked days = total days - machine absents (absent = working day, not Sunday / holiday, without any punch; single-punch day = worked, shown as "single"); counted only up to today AND the machine's last punch date (last download); no punch at all in the month = not synced -> full attendance + warning; an employee with no punches while others have them -> 0 worked + red "No punches". Leaves and advances are NOT read from attendance. Machine unreadable -> warning, manual entry. The attendance calculation lives in `AttendanceRepository::dailyAttendance()` (moved from AttendanceController)
 - Saving posts: salary transaction (net, from the payroll bank) + Receive Loan deductions (temporary / fixed) with `bank_id` 0 and `ledger_flag` 0 (no effect on bank / cash balances). Re-saving deletes the payroll's own transactions and re-posts. Months saved before this (salary transactions only) show as "No breakdown" and are replaced when saved
 - Prints: `payroll.print` (month salary sheet, A4 landscape), `payroll.slip` (one employee, A5). Test: tests/Feature/PayrollTest.php
 
@@ -350,9 +349,15 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 
 ## Invoice Excel export (2026-11-15)
 - `delivery.commercial.excel` / `order.proforma.excel` (same query options as the prints), buttons in the commercial / proforma modals. Built by `App\Exports\InvoiceSpreadsheet` (phpoffice/phpspreadsheet) from the same data method the print uses (`DeliveryController::commercialInvoiceData`, `OrderController::proformaData`)
+- Workbook header (2026-11-19): logo + contact lines + title only; the company name and address are not written (user request); rows 1-3 keep their height
 - All invoice figures come from `App\Support\InvoiceTotals` (print views destructure `$totals`); the workbook uses live formulas (line = QTY x Price, sums, grand total, payment due) whose values equal those figures
 
 ---
+
+## Purchase Ledger by item (2026-11-19)
+- Reports > Purchase Ledger = `/pLedger` (`purchase.ledger`, GET `?item=material:{id}|product:{id}&dfrom&dto`, searches on the Search button only; `ReportController::purchaseHistory`, view `reports/purchase-history`; access: purchases access OR reports_access): vendor price comparison + every purchase line of the item. It replaced the old Purchase Ledger (all purchases / returns / vendor payments with a running balance; PurchaseController::purchaseLedger / printPurchaseLedger, TransactionRepository::pLedger / pLedgerFilter, views purchaseLedger + print/purchase-ledger) at the user's request 2026-11-19
+- Data = the same queries as the Price History on the item pages: `PurchaseItemRepository::materialPriceHistory` / `productPriceHistory` (optional dates, `received_qty` = SUM approved_qty) and `vendorComparison()` (per vendor: purchases, qty, received, lowest / highest / qty-weighted average / last price + date; processing lines left out; cheapest last price first). Partial `purchaseVendorComparison` is shown on the report, /material/{id} and /product/{id} (Price History tab)
+- The Vendors page only lists materials / products assigned on the vendor profile, not purchases
 
 ## Key DB Tables
 ```

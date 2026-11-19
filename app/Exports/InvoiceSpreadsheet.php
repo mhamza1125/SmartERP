@@ -203,25 +203,19 @@ class InvoiceSpreadsheet
     // Sections
     // =========================================================================================
 
-    /** Logo + company name / address left, contacts right, document title below. */
+    /**
+     * Logo left, contacts right, document title below. The company name and address are not
+     * written next to the logo (user request 2026-11-19); the rows keep their height, so the
+     * layout below is unchanged.
+     */
     private function header($company, string $title): void
     {
         $logo = $this->logoPath($company);
-        $textFrom = 'A';
         if ($logo) {
             $drawing = new Drawing();
             $drawing->setPath($logo)->setHeight(52)->setCoordinates('A1')->setOffsetX(4)->setOffsetY(4)->setWorksheet($this->sheet);
-            $textFrom = 'C';
         }
-        $mid = Coordinate::stringFromColumnIndex(max(3, $this->columns - 2));
         $right = Coordinate::stringFromColumnIndex($this->columns - 1);
-
-        $this->sheet->setCellValue($textFrom.'1', (string) ($company->name ?? ''));
-        $this->sheet->mergeCells("{$textFrom}1:{$mid}1");
-        $this->sheet->getStyle($textFrom.'1')->getFont()->setBold(true)->setSize(14);
-        $this->sheet->setCellValue($textFrom.'2', (string) ($company->address ?? ''));
-        $this->sheet->mergeCells("{$textFrom}2:{$mid}3");
-        $this->sheet->getStyle($textFrom.'2')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
 
         // Same contact lines as the print header (placeholders such as "." are left out)
         $known = PrintComposer::contacts($company);

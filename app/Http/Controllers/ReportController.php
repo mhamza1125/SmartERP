@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Purchase;
 use App\Models\User;
+use App\Repositories\MaterialRepository;
+use App\Repositories\ProductRepository;
+use App\Repositories\PurchaseItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\StockRequirementRepository;
 use App\Repositories\ProductMaterialRepository;
@@ -24,6 +28,54 @@ class ReportController extends Controller
         $this->stockItemRepository = $stockItemRepository;
         $this->productMaterialRepository = $productMaterialRepository;
         $this->stockRequirementRepository = $stockRequirementRepository;
+    }
+
+    /**
+     * Purchase History: pick a material or a product and see every vendor it was bought from,
+     * with a price comparison per vendor and the full purchase history (same data as the
+     * Price History on the material / product page). Optional date range.
+     * item = "material:{id}" or "product:{id}".
+     */
+    public function purchaseHistory(
+        Request $request,
+        PurchaseItemRepository $purchaseItemRepository,
+        MaterialRepository $materialRepository,
+        ProductRepository $productRepository
+    ) {
+        $this->authorizeAny([['access', Purchase::class], ['reports_access', User::class]]);
+        $item = (string) $request->query('item', '');
+        $dfrom = $request->query('dfrom') ?: null;
+        $dto = $request->query('dto') ?: null;
+        if (! $dfrom || ! $dto) {
+            $dfrom = $dto = null;
+        }
+
+        $materials = $materialRepository->all()->sortBy('material_no')->values();
+        $products = $productRepository->all()->sortBy('article_no')->values();
+        [$type, $id] = array_pad(explode(':', $item, 2), 2, null);
+        $id = (int) $id;
+
+        $selected = null;
+        $history = collect();
+        if ($type === 'material' && ($selected = $materials->firstWhere('material_id', $id))) {
+            $history = $purchaseItemRepository->materialPriceHistory($id, $dfrom, $dto);
+        } elseif ($type === 'product' && ($selected = $products->firstWhere('product_id', $id))) {
+            $history = $purchaseItemRepository->productPriceHistory($id, $dfrom, $dto);
+        } else {
+            $type = null;
+        }
+
+        return view('reports.purchase-history', [
+            'item' => $selected ? $item : '',
+            'type' => $type,
+            'selected' => $selected,
+            'materials' => $materials,
+            'products' => $products,
+            'history' => $history,
+            'comparison' => $purchaseItemRepository->vendorComparison($history),
+            'dfrom' => $dfrom,
+            'dto' => $dto,
+        ]);
     }
 
     /**
