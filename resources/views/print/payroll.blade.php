@@ -28,7 +28,6 @@
 <div class="meta-band">
     <div class="meta-field"><span class="meta-label">Month</span><span class="meta-value">{{ $monthLabel }}</span></div>
     <div class="meta-field"><span class="meta-label">Total Working Days</span><span class="meta-value mono">{{ $num($payroll->total_working_days) }}</span></div>
-    <div class="meta-field"><span class="meta-label">Hours / Day</span><span class="meta-value mono">{{ $num($payroll->hours_per_day) }}</span></div>
     <div class="meta-field"><span class="meta-label">Overtime Rate</span><span class="meta-value">{{ $num($payroll->overtime_multiplier) }}x hourly wage</span></div>
     <div class="meta-field"><span class="meta-label">Payment Date</span><span class="meta-value mono">{{ formatDate($payroll->payment_date) }}</span></div>
     <div class="meta-field"><span class="meta-label">Paid From</span><span class="meta-value">{{ $accountName }}</span></div>

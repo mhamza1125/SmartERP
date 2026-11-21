@@ -944,6 +944,12 @@ class TransactionRepository implements GlobalInterface
         if ($type === 'deliveryExpense') {
             return $impact->block('it is an expense of a delivery (edit or delete that delivery instead)');
         }
+        if (in_array($transaction->transaction_to, ['asset', 'liability'], true)) {
+            $register = $transaction->transaction_to === 'asset' ? ['Asset', 'Assets'] : ['Liability', 'Liabilities'];
+            $name = DB::table('assets')->where('transaction_id', $id)->value('asset_name');
+
+            return $impact->block('it was posted by '.$register[0].' "'.$name.'" (edit or delete that entry under Finance > '.$register[1].' instead)');
+        }
         if ($type === 'generalVoucher') {
             $payments = Transaction::where('voucher_id', $id)->where('transaction_type', 'payment')->pluck('transaction_id');
             if ($payments->isNotEmpty()) {
@@ -1054,6 +1060,8 @@ class TransactionRepository implements GlobalInterface
         'transfer' => 'Bank / Cash Transfer',
         'brs' => 'Balance Adjustment',
         'generalVoucher' => 'Journal Voucher',
+        'asset' => 'Asset',
+        'liability' => 'Liability',
     ];
 
     /**
@@ -1099,6 +1107,7 @@ class TransactionRepository implements GlobalInterface
             ->whereIn('delivery_id', $rows->where('transaction_type', 'deliveryExpense')->pluck('order_id')->filter())
             ->pluck('delivery_no', 'delivery_id');
         $expenseHeads = DB::table('heads')->whereIn('head_id', $rows->pluck('expense_head_id')->filter())->pluck('name', 'head_id');
+        $registerNames = DB::table('assets')->whereIn('asset_id', $of(['asset', 'liability'])->pluck('payee_id'))->pluck('asset_name', 'asset_id');
 
         // "Cash" for bank_id 0, otherwise "Bank name - Account title - A/C number"
         $account = function ($bankId) use ($banks) {
@@ -1111,7 +1120,7 @@ class TransactionRepository implements GlobalInterface
         };
         $amount = fn ($value) => $value !== null && (float) $value != 0 ? number_format((float) $value, 2) : null;
 
-        return $rows->map(function ($row) use ($all, $account, $amount, $vendors, $employees, $customers, $heads, $purchases, $orders, $deliveries, $expenseHeads) {
+        return $rows->map(function ($row) use ($all, $account, $amount, $vendors, $employees, $customers, $heads, $purchases, $orders, $deliveries, $expenseHeads, $registerNames) {
             [$note, $cheque] = $this->splitCheque($row->description);
             $type = self::TYPE_LABELS[$row->transaction_type] ?? ucfirst((string) $row->transaction_type);
             // Employee loans carry their kind: a temporary advance against salary or a fixed (instalment) loan
@@ -1130,12 +1139,15 @@ class TransactionRepository implements GlobalInterface
                 $party = trim($customer->customer_no.' - '.$customer->fname.' '.$customer->lname);
             } elseif ($row->transaction_to === 'expense') {
                 $party = $heads->get($row->payee_id);
+            } elseif (in_array($row->transaction_to, ['asset', 'liability'], true)) {
+                $party = $registerNames->get($row->payee_id);
             }
             $partyLabel = [
                 'vendor' => 'Vendor', 'contractor' => 'Contractor', 'employee' => 'Employee',
-                'customer' => 'Customer', 'expense' => 'Expense Head',
+                'customer' => 'Customer', 'expense' => 'Expense Head', 'asset' => 'Asset', 'liability' => 'Liability',
             ][$row->transaction_to] ?? 'Party';
-            $incoming = in_array($row->transaction_type, ['receiveAdvance', 'orderPayment'], true);
+            $incoming = in_array($row->transaction_type, ['receiveAdvance', 'orderPayment'], true)
+                || (in_array($row->transaction_to, ['asset', 'liability'], true) && (float) $row->debit > 0);
             $noAccount = in_array($row->transaction_type, ['openingBalance', 'generalVoucher'], true);
 
             $details = ['Type' => $type, $partyLabel => $party];
@@ -1163,7 +1175,8 @@ class TransactionRepository implements GlobalInterface
                 $details['Paid From'] = $account($row->bank_id);
                 $parts[] = 'paid from '.$account($row->bank_id);
             } else {
-                $parts[] = $type.($party ? ($noAccount ? ' - ' : ($incoming ? ' from ' : ' to ')).$party : '');
+                $named = $noAccount || in_array($row->transaction_to, ['asset', 'liability'], true); // "Asset - Delivery Van"
+                $parts[] = $type.($party ? ($named ? ' - ' : ($incoming ? ' from ' : ' to ')).$party : '');
                 if (in_array($row->transaction_to, ['vendor', 'contractor'], true) && $purchases->get($row->order_id)) {
                     $details['Purchase No'] = $purchases->get($row->order_id);
                     $parts[] = 'Purchase '.$purchases->get($row->order_id);

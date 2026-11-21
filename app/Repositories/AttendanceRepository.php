@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\Company;
-use App\Models\WorkHoliday;
-use App\Models\WorkTime;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,19 +11,18 @@ use RuntimeException;
 
 class AttendanceRepository implements GlobalInterface
 {
+    /**
+     * Attendance is read from the machine (dailyAttendance / monthTotals); there are no stored rows
+     * to list or change. Working hours come from the department heads (departmentHours()).
+     */
     public function all()
     {
-        return WorkTime::orderBy('created_at', 'desc')->get();
-    }
-
-    public function workTime()
-    {
-        return WorkTime::orderBy('created_at', 'desc')->get();
+        return collect();
     }
 
     /**
      * Working hours set on department heads (head type 3), keyed by head_id: work_start_time /
-     * work_end_time ('H:i:s' or null). A department without them uses Payroll > Work Hours.
+     * work_end_time ('H:i:s' or null). Late time and overtime are only calculated for departments with both.
      */
     public function departmentHours()
     {
@@ -35,48 +32,24 @@ class AttendanceRepository implements GlobalInterface
             ->keyBy('head_id');
     }
 
-    public function workHoliday()
-    {
-        return WorkHoliday::orderBy('created_at', 'desc')->get();
-    }
-
     public function get($id)
     {
+        return null;
     }
 
     public function store(array $data)
     {
-        $data['created_by'] = auth()->id();
-        if (isset($data['time_from'])) {
-            $store = WorkTime::create($data);
-        } else {
-            $store = WorkHoliday::create($data);
-        }
-
-        return $store->id;
+        throw new RuntimeException('Attendance is read from the machine and cannot be stored.');
     }
 
     public function update($id, array $data)
     {
-        if (isset($data['time_from'])) {
-            $update = WorkTime::findOrFail($id);
-        } else {
-            $update = WorkHoliday::findOrFail($id);
-        }
-        $update->update($data);
-
-        return $update->id;
+        throw new RuntimeException('Attendance is read from the machine and cannot be changed.');
     }
 
-    /**
-     * Work hours / non-working days are settings rows: nothing else references them.
-     * $data['type'] is 'time' (work_times) or 'holiday' (work_holidays).
-     */
-    public function delete($id, string $type = 'time')
+    public function delete($id)
     {
-        $model = $type === 'holiday' ? WorkHoliday::findOrFail($id) : WorkTime::findOrFail($id);
-
-        return $model->delete();
+        throw new RuntimeException('Attendance is read from the machine and cannot be deleted.');
     }
 
     // =====================================================================
@@ -304,7 +277,7 @@ class AttendanceRepository implements GlobalInterface
      * A month's attendance per employee from the machine, for the payroll sheet (dailyAttendance
      * rules, each employee's department working hours):
      *   late_hours / overtime_hours  (2 decimals)
-     *   absent_days   working days (not Sunday / holiday) without any punch
+     *   absent_days   working days (not Sunday) without any punch
      *   single_days   days with only one punch (counted as worked, shown for checking)
      *   punched_days  days with at least one punch
      * Only days up to today and up to the machine's last punch (its last download) are counted, so
@@ -371,16 +344,16 @@ class AttendanceRepository implements GlobalInterface
      * wrong key (e.g. an evening punch recorded as IN); it only decides whether a lone punch is
      * shown as a check-in or a check-out. Repeated punches within a few seconds count once.
      *
-     * Working hours per employee: their department head's start / end time (Settings > Heads >
-     * Departments), else the day's Payroll > Work Hours. Late time = check-in after start + grace
-     * time; overtime = check-out after the end (an end at or before the start is the next day).
+     * Working hours per employee: their department head's Work In / Work Out time (Settings > Heads >
+     * Departments); none for a department without them (warning). Late time = check-in after the
+     * start; overtime = check-out after the end (an end at or before the start is the next day).
+     * Sundays are the only non-working days.
      * Both only on days with a check-in and a check-out (existing rule for late time).
      */
     private function processAttendanceData(array $punches, $employees, string $dfrom, string $dto, array &$warnings): array
     {
         $rows = [];
         $dateRange = $this->getDateRange($dfrom, $dto);
-        $holidays = $this->getHolidays($dfrom, $dto);
         $gap = (int) config('attendance.duplicate_punch_seconds', 120);
         $departmentHours = $this->departmentHours();
 
@@ -390,12 +363,11 @@ class AttendanceRepository implements GlobalInterface
             $byDay[$punch['badge']][substr($punch['time'], 0, 10)][] = $punch;
         }
 
-        $missingWorkTime = [];
+        // Employees whose department has no Work In / Work Out times (no late time / overtime)
+        $missingHours = [];
 
         foreach ($dateRange as $date) {
-            $holidayDetail = $this->isHoliday($date, $holidays);
             $isSunday = $this->isSunday($date);
-            $workTime = ($holidayDetail || $isSunday) ? null : $this->getWorkTimes($date);
 
             foreach ($employees as $employee) {
                 $badge = $this->normalizeBadge($employee->attendance_id);
@@ -414,8 +386,8 @@ class AttendanceRepository implements GlobalInterface
                     'OVERTIME_VALUE' => 0,
                 ];
 
-                if ($holidayDetail || $isSunday) {
-                    $rows[] = $base + ['DETAIL' => $holidayDetail ?: 'Sunday', 'HOLIDAY' => '1'];
+                if ($isSunday) {
+                    $rows[] = $base + ['DETAIL' => 'Sunday', 'HOLIDAY' => '1'];
 
                     continue;
                 }
@@ -445,11 +417,10 @@ class AttendanceRepository implements GlobalInterface
                 $overtimeMinutes = 0;
                 if ($checkin && $checkout) {
                     $department = $departmentHours->get($employee->department_id);
-                    $startTime = $department->work_start_time ?? $workTime->time_from ?? null;
-                    $endTime = $department->work_end_time ?? $workTime->time_to ?? null;
+                    $startTime = $department->work_start_time ?? null;
+                    $endTime = $department->work_end_time ?? null;
                     if ($startTime) {
-                        // Grace time comes from Work Hours (none when only the department has hours)
-                        $start = Carbon::parse($date.' '.$startTime)->addMinutes((int) ($workTime->grace_time ?? 0));
+                        $start = Carbon::parse($date.' '.$startTime);
                         $lateMinutes = max(0, intdiv(Carbon::parse($checkin)->getTimestamp() - $start->getTimestamp(), 60));
                     }
                     if ($endTime) {
@@ -460,7 +431,7 @@ class AttendanceRepository implements GlobalInterface
                         $overtimeMinutes = max(0, intdiv(Carbon::parse($checkout)->getTimestamp() - $end->getTimestamp(), 60));
                     }
                     if (! $startTime || ! $endTime) {
-                        $missingWorkTime[$date] = true;
+                        $missingHours[$employee->employee_id] = $employee->name;
                     }
                 }
 
@@ -477,10 +448,11 @@ class AttendanceRepository implements GlobalInterface
             }
         }
 
-        if ($missingWorkTime) {
-            $warnings[] = 'No Work Hours are defined for '.count($missingWorkTime).' working day(s) in this range ('
-                .collect(array_keys($missingWorkTime))->take(5)->map(fn ($d) => formatDate($d))->implode(', ')
-                .(count($missingWorkTime) > 5 ? ', ...' : '').'), so late time / overtime was not calculated for them. Add them under Payroll > Work Hours, or set the department\'s working hours under Settings > Heads > Departments.';
+        if ($missingHours) {
+            $names = collect($missingHours)->values();
+            $warnings[] = 'The department of '.$names->take(5)->implode(', ').($names->count() > 5 ? ' and '.($names->count() - 5).' more' : '')
+                .' has no Work In / Work Out times, so late time / overtime was not calculated for them.'
+                .' Set them under Settings > Heads > Departments.';
         }
 
         return $rows;
@@ -510,40 +482,6 @@ class AttendanceRepository implements GlobalInterface
     public function hours($minutes): string
     {
         return number_format((int) $minutes / 60, 2);
-    }
-
-    private function getWorkTimes($date)
-    {
-        return DB::table('work_times')
-            ->whereDate('date_from', '<=', $date)
-            ->whereDate('date_to', '>=', $date)
-            ->orderByDesc('work_time_id')
-            ->first();
-    }
-
-    private function getHolidays($dfrom, $dto)
-    {
-        try {
-            return DB::table('work_holidays')
-                ->whereDate('date_from', '<=', $dto)
-                ->whereDate('date_to', '>=', $dfrom)
-                ->get();
-        } catch (\Exception $e) {
-            \Log::error('Error retrieving holidays: '.$e->getMessage());
-
-            return collect([]);
-        }
-    }
-
-    private function isHoliday($date, $holidays)
-    {
-        foreach ($holidays as $holiday) {
-            if ($holiday->date_from <= $date && $holiday->date_to >= $date) {
-                return $holiday->description ?: 'Holiday';
-            }
-        }
-
-        return false;
     }
 
     private function isSunday($date)

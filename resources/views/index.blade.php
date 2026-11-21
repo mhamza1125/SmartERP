@@ -212,7 +212,7 @@
             </li>
             @endcan
 
-            @canany(['access'], [App\Models\Bank::class, App\Models\Asset::class])
+            @canany(['access'], [App\Models\Bank::class, App\Models\Asset::class, App\Models\Liability::class])
             <li class="dropdown">
                 <a href="#" class="menu-toggle nav-link has-dropdown">
                     <i data-feather="briefcase"></i><span>Bank / Assets</span>
@@ -229,9 +229,12 @@
                         @endcan
                     @endcan
 
-                    {{-- Assets Section --}}
+                    {{-- Assets / Liabilities Section --}}
                     @can('access', App\Models\Asset::class)
                         <li><a class="nav-link" href="{{ route('asset') }}">Assets</a></li>
+                    @endcan
+                    @can('access', App\Models\Liability::class)
+                        <li><a class="nav-link" href="{{ route('liability') }}">Liabilities</a></li>
                     @endcan
                 </ul>
             </li>
@@ -256,8 +259,6 @@
                 @can('access', App\Models\Attendance::class)
                   <li><a class="nav-link" href="{{ route('attendance') }}">Attendance</a></li>
                   <li><a class="nav-link" href="{{ route('attendance.summary') }}">Salary Calculation</a></li>
-                  <li><a class="nav-link" href="{{ route('workTime') }}">Work Hours</a></li>
-                  <li><a class="nav-link" href="{{ route('workHoliday') }}">Non Working Days</a></li>
                 @endcan
               </ul>
             </li>

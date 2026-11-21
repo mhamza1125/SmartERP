@@ -24,7 +24,7 @@ class PageSmokeTest extends TestCase
             route('return'), route('ptc'), route('issue'), route('receiveIssue'), route('missue'), route('mprocess'),
             route('transaction'), route('expense'), route('generalVoucher'), route('ePayment'), route('vPayment'), route('cPayment'),
             route('oPayment'), route('cashBalance'), route('bank'), route('asset'), route('payroll.index'), route('wages'),
-            route('attendance'), route('attendance.summary'), route('workTime'), route('workHoliday'), route('user'), route('role'),
+            route('attendance'), route('attendance.summary'), route('user'), route('role'),
             route('head'), route('category'), route('packingList'), route('igroup'), route('productCost'), route('productMaterial'),
         ];
         $info = [

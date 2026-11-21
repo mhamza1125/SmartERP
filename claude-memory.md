@@ -82,7 +82,7 @@ routes/
 | Purchase | PurchaseController, ReceiveController, ReturnController | POs, receiving, returns |
 | Inventory/Stock | StockController | Daily issuance, PTC, wages ledger |
 | Products | ProductController, ProductCostController, ProductMaterialController | BOM-style materials |
-| Finance | TransactionController, BankController, AssetController | Multi-currency, dual ledger |
+| Finance | TransactionController, BankController, AssetController, LiabilityController | Multi-currency, dual ledger, asset / liability registers |
 | HR | AttendanceController, PayrollController | External MDB DB for attendance data |
 | Config | CategoryController, HeadController, CompanyController, RoleController | Lookup tables |
 | Reports | ReportController | Stock requirements, ledger analysis |
@@ -97,8 +97,8 @@ routes/
 - **Packing:** `PackingList`, `PackingCarton`, `PackingCartonItem`
 - **Procurement:** `Purchase`, `PurchaseItem`, `Receive`, `ReceiveMaterial`, `Returns`, `ReturnMaterial`
 - **Inventory:** `Stock`, `StockItem`, `IGroup`, `IGroupItem`, `MProcess`
-- **Finance:** `Transaction`, `Bank`, `Asset`
-- **HR:** `Salary`, `Attendance`, `WorkTime`, `WorkHoliday`
+- **Finance:** `Transaction`, `Bank`, `Asset`, `Liability` (same `assets` table, `kind` column)
+- **HR:** `Salary`, `Attendance` (WorkTime / WorkHoliday removed 2026-11-21; tables kept, unused)
 - **System:** `Image`, `Settings` (dummy — policy binding only, no DB table)
 
 ### Model Notes
@@ -261,10 +261,12 @@ Linked to a purchase (`order_id` = purchase_id), a General Payment (`order_id` =
 
 ### Payroll (reworked 2026-11-13)
 - `payrolls` (one per month Y-m: total_working_days, hours_per_day, overtime_multiplier, late_multiplier, payment_date, bank_id) + `payroll_items` (per employee: designation, gross, working/actual days, salary_for_days, overtime hours/rate/amount, late_minutes/deduction, temp_advance, fixed_advance, fixed_advance_deduction, remaining_fixed_advance, net_salary, ids of the 3 posted transactions). All logic in `PayrollRepository` (calculate / sheet / store)
-- Formula: hourly = gross / total days / hours per day; salary for days = gross x actual / total; overtime rate = hourly x overtime multiplier; late deduction = late minutes/60 x hourly x late multiplier; net = salary for days + overtime - late - temp advance - fixed instalment (negative net is refused)
-- Defaults in Settings > Company: `overtime_multiplier` (2), `late_multiplier` (1), `work_hours_per_day` (8); default working days = month days minus Sundays
+- Formula: hourly = gross / employee's total days / employee's hours per day; salary for days = gross x (actual + leaves) / employee's total days (2026-11-21: the row's own Total days, not the header's); overtime rate = hourly x overtime multiplier; late deduction = late minutes/60 x hourly x late multiplier; net = salary for days + overtime - late - temp advance - fixed instalment (negative net is refused)
+- Defaults in Settings > Company: `overtime_multiplier` (2), `late_multiplier` (1), `work_hours_per_day` (8, only for departments without Work In / Out); default working days = month days minus Sundays
+- Hours per day (2026-11-21): no header field any more. `PayrollRepository::hoursPerDay($employees)` = the employee's department Work In -> Work Out (heads.work_start_time / work_end_time, end <= start = night shift), else the Company default; computed server side on save and stored per line in `payroll_items.hours_per_day` (`payrolls.hours_per_day` dropped). The sheet shows it under each name (amber = default; red when a saved line used other hours)
+- Attendance (2026-11-21): the Work Hours (/workTime) and Non Working Days (/workHoliday) pages are gone. Late time / overtime use only the department's Work In / Out (no grace time); employees of a department without them get a warning and no late / overtime. Only Sundays are non-working days
 - Employee Give / Receive Loan entries carry `transactions.advance_type` = `temporary` | `fixed` (NULL on older entries = fixed loan). Sheet pre-fills temp advance = this month's temporary advances, fixed advance = open fixed loan (`openFixedLoan`), instalment = last payroll's
-- 2026-11-19: each employee row has its own **Total days** (default the header's; only bounds worked + paid leaves; extra days e.g. Sundays are paid at the header daily rate, not overtime), **Leaves** (`paid_leaves`, paid, not deducted: salary for days = gross x (worked + leaves) / header days) and **late time in hours** (`late_hours`, 2 decimals; `late_minutes` still saved = hours x 60). All numeric inputs take 2 decimals (`decimal:0,2`). Only active employees (`employee_status` 1) are listed, plus inactive ones already in the month's saved payroll. The Edit sheet's Month can be changed: `PayrollRepository::update()` moves the payroll (old month + its postings removed, new month must be free)
+- 2026-11-19: each employee row has its own **Total days** (default the header's; since 2026-11-21 the salary is divided by it, so it sets that employee's daily / hourly rate), **Leaves** (`paid_leaves`, paid, not deducted: salary for days = gross x (worked + leaves) / own total days) and **late time in hours** (`late_hours`, 2 decimals; `late_minutes` still saved = hours x 60). All numeric inputs take 2 decimals (`decimal:0,2`). Only active employees (`employee_status` 1) are listed, plus inactive ones already in the month's saved payroll. The Edit sheet's Month can be changed: `PayrollRepository::update()` moves the payroll (old month + its postings removed, new month must be free)
 - Overtime / late hours default from the attendance machine (user decision 2026-11-19): `PayrollRepository::sheet()` calls `AttendanceRepository::monthTotals()` (the month's dailyAttendance rows, department working hours) for employees not saved in the month's payroll; saved rows keep their values and show the machine figure ("Att. x") with a "Use attendance figures" button. Since 2026-11-19 also worked days = total days - machine absents (absent = working day, not Sunday / holiday, without any punch; single-punch day = worked, shown as "single"); counted only up to today AND the machine's last punch date (last download); no punch at all in the month = not synced -> full attendance + warning; an employee with no punches while others have them -> 0 worked + red "No punches". Leaves and advances are NOT read from attendance. Machine unreadable -> warning, manual entry. The attendance calculation lives in `AttendanceRepository::dailyAttendance()` (moved from AttendanceController)
 - Saving posts: salary transaction (net, from the payroll bank) + Receive Loan deductions (temporary / fixed) with `bank_id` 0 and `ledger_flag` 0 (no effect on bank / cash balances). Re-saving deletes the payroll's own transactions and re-posts. Months saved before this (salary transactions only) show as "No breakdown" and are replaced when saved
 - Prints: `payroll.print` (month salary sheet, A4 landscape), `payroll.slip` (one employee, A5). Test: tests/Feature/PayrollTest.php
@@ -315,6 +317,17 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Combined invoice = a multi-order delivery. **Multi-order delivery lines are one row per order** (add/edit forms post `line_order_id[]` aligned with `quantity[]`; container rows post ""), stored in `stock_items.order_id`. Same article on 2 orders = 2 lines. `allocateStockOut` limits such a line to its order's batches + free stock; `markLineOrders` keeps a valid explicit line order
 - Line price = `order_items` of `COALESCE(stock_items.order_id, stocks.order_id)` in `StockItemRepository::delivery()` (also returns `line_order_no`) and in customer ledger (`TransactionRepository::cDetail/cDetailFilter`). Invoice shows an Order No column when lines span >1 order
 - Legacy multi-order lines with NULL order_id show on the first order's row in the edit form and take that order on save
+
+## Assets & Liabilities (2026-11-21)
+- One table `assets` for both registers: `kind` = 'asset' | 'liability' (global scope on `Asset` / `Liability extends Asset`, set on create). Entries with the same `asset_name` = one asset / liability; balance = SUM(debit) - SUM(credit) (debit = increase, credit = decrease). Entry types + sign + money direction: `Asset::TYPES` / `Liability::TYPES` (`money` 'out' / 'in' / null = can never move money)
+- Optional money effect ("Affects cash / bank"): `bank_id` (0 = cash, NULL = no money) and `transaction_id` -> a transaction with transaction_to = transaction_type = the kind, payee_id = the entry, debit = received / credit = paid; it shows in the cash book / bank ledger. Editing the entry updates / removes it, deleting the entry deletes it; the transaction itself cannot be deleted from Transactions (blocked in `TransactionRepository::deletionImpact`). Its View button goes to `asset.entry` / `liability.entry` (redirect to the ledger)
+- Guards in `AssetRepository`: a decrease cannot take the balance below 0; a payment cannot exceed the cash / bank balance. Same repository for both (`LiabilityRepository extends AssetRepository`), screens in `AssetEntryController` (AssetController / LiabilityController only give labels), shared views asset / assetInfo / addAsset / editAsset + partial assetForm, `AssetRequest` (kind from the route name). Ledger URL: `asset.show` / `liability.show` with `?name=`. Permissions `liabilities_*` (LiabilityPolicy)
+
+## Customer prices (2026-11-21)
+- The customer page (customer.show) lists the prices the customer bought at: per product size (last price + order, lowest, highest, orders, qty) and the full order-line history (`OrderItemRepository::customerPriceHistory / customerPriceSummary`, non-cancelled orders). The product page's Price History tab no longer has the Sale Price History (customer prices); vendor prices stay there
+
+## Vendor balance (2026-11-21)
+- /vendor Balance = the ledger's (vendor.detail): received purchases - purchase returns + SUM(debit - credit) of all vendor / contractor transactions of the vendor (`VendorRepository::vendorWithBalance`). It used to add credits and drop wages / contractor rows
 
 ## Deletion (2026-11-15)
 - Every module deletes through one flow: `GET {module}/{id}/delete-check` (JSON) -> confirmation dialog -> `DELETE {module}/{id}` with `confirmed=1`. Routes are named `{module}.deleteCheck` / `{module}.destroy` (stock documents: `stock.deleteCheck` / `stock.destroy` on `/stock-record/{id}`; users / roles: `user.*`, `role.*`; payroll by month; work hours: `work.destroy` `/work/{time|holiday}/{id}`)
@@ -373,7 +386,7 @@ stocks, stock_items, igroups, igroup_items, mprocess
 products, product_materials, product_costs, product_types
 materials, machines, categories, heads, head_types
 transactions, banks, assets
-salaries, attendances, work_times, work_holidays
+salaries, attendances, work_times, work_holidays (last two unused since 2026-11-21)
 images, sessions, cache, jobs
 ```
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\LiabilityController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankController;
@@ -82,13 +83,6 @@ Route::get('/attendance', [AttendanceController::class, 'index'])->name('attenda
 Route::post('/attendance', [AttendanceController::class, 'index'])->name('attendance.filter');
 Route::get('/asummary', [AttendanceController::class, 'asummary'])->name('attendance.summary');
 Route::post('/asummary', [AttendanceController::class, 'asummary'])->name('attendance.summary');
-// Work Time
-Route::get('/workTime', [AttendanceController::class, 'workTime'])->name('workTime');
-Route::get('/workHoliday', [AttendanceController::class, 'workHoliday'])->name('workHoliday');
-Route::post('/work', [AttendanceController::class, 'store'])->name('work.store');
-Route::post('/work/{id}', [AttendanceController::class, 'update'])->name('work.update');
-Route::delete('/work/{type}/{id}', [AttendanceController::class, 'destroy'])->whereIn('type', ['time', 'holiday'])->name('work.destroy');
-
 // Head
 Route::get('/head', [HeadController::class, 'index'])->name('head');
 Route::get('/headType', [HeadController::class, 'headType'])->name('head.headType');
@@ -529,14 +523,25 @@ Route::get('/delivery-return/{id}/delete-check', [DeliveryReturnController::clas
 Route::delete('/delivery-return/{id}', [DeliveryReturnController::class, 'destroy'])->name('delivery-return.destroy');
 Route::get('/delivery-return/print/{id}', [DeliveryReturnController::class, 'printDeliveryReturn'])->name('delivery-return.print');
 
-// Assets
+// Assets and Liabilities (same screens: AssetEntryController). The ledger of one name is ?name=...
 Route::get('/asset', [AssetController::class, 'index'])->name('asset');
 Route::get('/addAsset', [AssetController::class, 'create'])->name('asset.add');
 Route::post('/asset', [AssetController::class, 'store'])->name('asset.store');
-Route::get('/asset/{id}', [AssetController::class, 'show'])->name('asset.show');
+Route::get('/asset/ledger', [AssetController::class, 'show'])->name('asset.show');
+Route::get('/asset/transaction/{transactionId}', [AssetController::class, 'entry'])->name('asset.entry');
 Route::get('/editAsset/{id}', [AssetController::class, 'edit'])->name('asset.edit');
 Route::post('/asset/{id}', [AssetController::class, 'update'])->name('asset.update');
+Route::get('/asset/{id}/delete-check', [AssetController::class, 'deleteCheck'])->name('asset.deleteCheck');
 Route::delete('/asset/{id}', [AssetController::class, 'destroy'])->name('asset.destroy');
+Route::get('/liability', [LiabilityController::class, 'index'])->name('liability');
+Route::get('/addLiability', [LiabilityController::class, 'create'])->name('liability.add');
+Route::post('/liability', [LiabilityController::class, 'store'])->name('liability.store');
+Route::get('/liability/ledger', [LiabilityController::class, 'show'])->name('liability.show');
+Route::get('/liability/transaction/{transactionId}', [LiabilityController::class, 'entry'])->name('liability.entry');
+Route::get('/editLiability/{id}', [LiabilityController::class, 'edit'])->name('liability.edit');
+Route::post('/liability/{id}', [LiabilityController::class, 'update'])->name('liability.update');
+Route::get('/liability/{id}/delete-check', [LiabilityController::class, 'deleteCheck'])->name('liability.deleteCheck');
+Route::delete('/liability/{id}', [LiabilityController::class, 'destroy'])->name('liability.destroy');
 
 // Company
 Route::get('/company/data', [CompanyController::class, 'getCompanyData'])->name('company.data');

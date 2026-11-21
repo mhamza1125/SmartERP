@@ -413,47 +413,7 @@
 
                   {{-- Price History --}}
                   <div class="tab-pane fade" id="priceHistory" role="tabpanel" aria-labelledby="price-history-tab">
-                    <h5 class="mt-2">Sale Price History (Customer Orders)</h5>
-                    @if($salePriceHistory->count())
-                      <div class="table-responsive">
-                        <table class="table table-sm table-striped">
-                          <thead>
-                            <tr>
-                              <th>Sr.</th>
-                              <th>Date</th>
-                              <th>Order No</th>
-                              <th>Job No</th>
-                              <th>Customer</th>
-                              <th>Size</th>
-                              <th>Status</th>
-                              <th class="text-right">QTY</th>
-                              <th class="text-right">Price</th>
-                              <th class="text-right">Total</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @foreach($salePriceHistory as $item)
-                              <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ formatDate($item->order_date) }}</td>
-                                <td><a href="{{ route('order.show', $item->order_id) }}" target="_blank">{{ $item->order_no }}</a></td>
-                                <td>{{ $item->job_no ?? '-' }}</td>
-                                <td>{{ $item->customer_no }}{{ $item->fname ? ' - '.trim($item->fname.' '.$item->lname) : '' }}</td>
-                                <td>{{ $item->size_name }}</td>
-                                <td>{{ \App\Models\Order::STATUS_LABELS[$item->order_status] ?? '-' }}</td>
-                                <td class="text-right">{{ number_format($item->quantity) }}</td>
-                                <td class="text-right">{{ number_format($item->price, 2) }}</td>
-                                <td class="text-right">{{ number_format($item->total, 2) }}</td>
-                              </tr>
-                            @endforeach
-                          </tbody>
-                        </table>
-                      </div>
-                    @else
-                      <blockquote> No Sale Price History </blockquote>
-                    @endif
-
-                    <h5 class="mt-4">Vendor Price Comparison
+                    <h5 class="mt-2">Vendor Price Comparison
                       @if(auth()->user()->can('access', App\Models\Purchase::class) || auth()->user()->can('reports_access', App\Models\User::class))
                         <a href="{{ route('purchase.ledger', ['item' => 'product:'.$product['product_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Ledger</a>
                       @endif

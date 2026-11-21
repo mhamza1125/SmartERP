@@ -10,7 +10,6 @@ use App\Repositories\HeadRepository;
 use App\Http\Requests\HeadRequest;
 use App\Http\Requests\ProductRequest;
 use App\Repositories\ImageRepository;
-use App\Repositories\OrderItemRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\PurchaseItemRepository;
 use App\Repositories\CategoryRepository;
@@ -194,7 +193,7 @@ class ProductController extends Controller
         return response()->json(['success' => true, 'head_id' => $headId, 'message' => 'Size created successfully']);
     }
 
-    public function show($id, PurchaseItemRepository $purchaseItemRepository, OrderItemRepository $orderItemRepository)
+    public function show($id, PurchaseItemRepository $purchaseItemRepository)
     {
         $this->authorize('show', Product::class);
         $product = $this->productRepository->get($id);
@@ -229,7 +228,6 @@ class ProductController extends Controller
             'stage' => $stage,
             'openingStock' => $openingStock,
             'productComponents' => $productComponents,
-            'salePriceHistory' => $orderItemRepository->productPriceHistory($id),
             'purchasePriceHistory' => $purchaseHistory = $purchaseItemRepository->productPriceHistory($id),
             'vendorComparison' => $purchaseItemRepository->vendorComparison($purchaseHistory),
         ]);

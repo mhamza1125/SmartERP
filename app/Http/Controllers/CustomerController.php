@@ -9,6 +9,7 @@ use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Http\Requests\CustomerRequest;
 use App\Repositories\CustomerRepository;
+use App\Repositories\OrderItemRepository;
 use App\Repositories\TransactionRepository;
 
 class CustomerController extends Controller
@@ -87,15 +88,18 @@ class CustomerController extends Controller
         return redirect()->route('customer.show', $getId)->with('success', 'Record Inserted Successfully');
     }
     
-    public function show($id)
+    public function show($id, OrderItemRepository $orderItemRepository)
     {
         $this->authorize('show', Customer::class);
         $customer = $this->customerRepository->get($id);
         $image = $this->imageRepository->image('customers', $id);
+        $priceHistory = $orderItemRepository->customerPriceHistory($id);
 
         return view('customerInfo', [
             'customer' => $customer,
             'image' => $image,
+            'priceHistory' => $priceHistory,
+            'priceSummary' => $orderItemRepository->customerPriceSummary($priceHistory),
         ]);
     }
 

@@ -52,11 +52,12 @@ final class PermissionCatalog
         'Finance' => [
             'transactions' => ['Transactions', 'Payments, receipts, expenses, journal vouchers (with expense head), transfers, balance adjustments, cash book, work wages'],
             'banks' => ['Bank Accounts', 'Company bank / cash accounts and bank ledgers'],
-            'assets' => ['Assets', 'Asset register'],
+            'assets' => ['Assets', 'Asset register; entries can be paid / received through cash or bank (posted to the cash book / bank ledger)'],
+            'liabilities' => ['Liabilities', 'Loans and other amounts owed; entries can be received / paid through cash or bank (posted to the cash book / bank ledger)'],
         ],
         'HR & Payroll' => [
             'employees' => ['Employees', 'Employee records. The employee ledger also needs Transactions: View'],
-            'attendance' => ['Attendance', 'Attendance from the machine, salary calculation, work hours, non-working days'],
+            'attendance' => ['Attendance', 'Attendance from the machine, salary calculation'],
             'payroll' => ['Monthly Payroll', 'Payroll sheets, salary slips and payroll payment vouchers (saving posts the salary transactions)'],
         ],
         'Reports & Settings' => [

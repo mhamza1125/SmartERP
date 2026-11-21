@@ -95,8 +95,8 @@
                           <td>{{$item->name}}</td>
                           @if($ht->head_type_id == 3)
                             {{-- Department working hours (late time from the start, overtime after the end) --}}
-                            <td>{{ $item->work_start_time ? \Carbon\Carbon::parse($item->work_start_time)->format('h:i A') : 'Work Hours' }}</td>
-                            <td>{{ $item->work_end_time ? \Carbon\Carbon::parse($item->work_end_time)->format('h:i A') : 'Work Hours' }}</td>
+                            <td>{{ $item->work_start_time ? \Carbon\Carbon::parse($item->work_start_time)->format('h:i A') : '-' }}</td>
+                            <td>{{ $item->work_end_time ? \Carbon\Carbon::parse($item->work_end_time)->format('h:i A') : '-' }}</td>
                           @endif
                           <td>
                             @if($item->head_status)
@@ -180,7 +180,7 @@
                       <input type="time" class="form-control" name="work_end_time" value="{{ $item->work_end_time ? substr($item->work_end_time, 0, 5) : '' }}">
                     </div>
                   </div>
-                  <small class="form-text text-muted">Leave empty to use Payroll &gt; Work Hours for this department.</small>
+                  <small class="form-text text-muted">Used for late time / overtime and payroll hours per day. Without them, no late time / overtime is calculated.</small>
                 @endif
               </div>
               <div class="card-footer text-right">

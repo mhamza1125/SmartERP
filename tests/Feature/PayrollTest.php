@@ -131,7 +131,7 @@ class PayrollTest extends TestCase
     private function sheet(array $row): array
     {
         return [
-            'month' => $this->month, 'total_working_days' => 26, 'hours_per_day' => 8,
+            'month' => $this->month, 'total_working_days' => 26,
             'overtime_multiplier' => 2, 'late_multiplier' => 1, 'payment_date' => $this->month.'-28', 'bank_id' => 0,
             'employee_ids' => [$this->employee->employee_id],
             'employees' => [$this->employee->employee_id => $row],

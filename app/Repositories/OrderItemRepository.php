@@ -54,23 +54,53 @@ class OrderItemRepository implements GlobalInterface
      * Sale price history of a product (all sizes) from customer orders,
      * newest first. Cancelled orders are left out.
      */
-    public function productPriceHistory($productId)
+    /**
+     * Prices a customer was charged per product line (order items of the customer's
+     * non-cancelled orders), newest first. Shown on the customer page (customer.show).
+     */
+    public function customerPriceHistory($customerId)
     {
-        return OrderItem::join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
-            ->where('product_types.product_id', $productId)
-            ->join('orders', 'orders.order_id', '=', 'order_items.order_id')
+        return OrderItem::join('orders', 'orders.order_id', '=', 'order_items.order_id')
+            ->where('orders.customer_id', $customerId)
             ->where('orders.order_status', '!=', \App\Models\Order::STATUS_CANCELLED)
-            ->leftJoin('customers', 'customers.customer_id', '=', 'orders.customer_id')
+            ->join('product_types', 'product_types.product_type_id', '=', 'order_items.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->leftJoin('heads as size', 'size.head_id', '=', 'product_types.size_id')
             ->select(
-                'order_items.order_id', 'order_items.quantity', 'order_items.price', 'order_items.total',
+                'order_items.order_id', 'order_items.product_type_id', 'order_items.quantity', 'order_items.price', 'order_items.total',
                 'orders.order_no', 'orders.job_no', 'orders.order_date', 'orders.order_status',
-                'customers.customer_no', 'customers.fname', 'customers.lname',
+                'products.product_id', 'products.article_no', 'products.name as product_name',
                 'size.name as size_name'
             )
             ->orderBy('orders.order_date', 'desc')
             ->orderBy('order_items.order_item_id', 'desc')
             ->get();
+    }
+
+    /**
+     * One row per product size from customerPriceHistory(): last price (with its order and date),
+     * lowest / highest price, number of orders and total quantity.
+     */
+    public function customerPriceSummary($history)
+    {
+        return $history->groupBy('product_type_id')->map(function ($lines) {
+            $last = $lines->first();
+
+            return (object) [
+                'product_id' => $last->product_id,
+                'article_no' => $last->article_no,
+                'product_name' => $last->product_name,
+                'size_name' => $last->size_name,
+                'last_price' => (float) $last->price,
+                'last_order_id' => $last->order_id,
+                'last_order_no' => $last->order_no,
+                'last_order_date' => $last->order_date,
+                'lowest' => (float) $lines->min('price'),
+                'highest' => (float) $lines->max('price'),
+                'orders' => $lines->pluck('order_id')->unique()->count(),
+                'quantity' => (float) $lines->sum('quantity'),
+            ];
+        })->sortBy(fn ($row) => $row->product_name.' '.$row->size_name, SORT_NATURAL | SORT_FLAG_CASE)->values();
     }
 
     public function estimate($id) // Required Material Against Order

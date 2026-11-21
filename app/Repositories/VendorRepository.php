@@ -65,6 +65,12 @@ class VendorRepository implements GlobalInterface
         return $vendors;
     }
 
+    /**
+     * Vendors with the same balance as their ledger (vendor.detail, TransactionRepository::vDetail):
+     * received purchases - purchase returns + transaction debit - transaction credit
+     * (all vendor / contractor transactions of the vendor, JVs and wages included).
+     * Positive = payable to the vendor.
+     */
     public function vendorWithBalance()
     {
         $vendors = Vendor::select('vendors.*')
@@ -72,44 +78,35 @@ class VendorRepository implements GlobalInterface
             ->orderBy('vendors.created_at', 'desc')
             ->get();
 
+        $purchases = DB::table('purchases')
+            ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
+            ->join('receive_materials', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->groupBy('purchases.vendor_id')
+            ->select('purchases.vendor_id', DB::raw('SUM(receive_materials.quantity * purchase_items.price) as amount'))
+            ->pluck('amount', 'vendor_id');
+
+        $purchaseReturns = DB::table('returns')
+            ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
+            ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
+            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+            ->groupBy('purchases.vendor_id')
+            ->select('purchases.vendor_id', DB::raw('SUM(return_materials.quantity * purchase_items.price) as amount'))
+            ->pluck('amount', 'vendor_id');
+
+        $transactions = DB::table('transactions')
+            ->whereIn('transaction_to', ['vendor', 'contractor'])
+            ->groupBy('payee_id')
+            ->select('payee_id', DB::raw('SUM(COALESCE(debit, 0) - COALESCE(credit, 0)) as amount'))
+            ->pluck('amount', 'payee_id');
+
         foreach ($vendors as $vendor) {
-            $purchases = \DB::table('purchases') // Amount of Received Purchase Items
-                ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as credit'))
-                ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
-                ->join('receive_materials', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-                ->where('purchases.vendor_id', $vendor->vendor_id)
-                ->groupBy('purchases.vendor_id')
-                ->first();
+            $id = $vendor->vendor_id;
+            $vendor->balance = (float) ($purchases[$id] ?? 0)
+                - (float) ($purchaseReturns[$id] ?? 0)
+                + (float) ($transactions[$id] ?? 0);
 
-            $purchaseReturns = \DB::table('returns')
-                ->join('return_materials', 'return_materials.return_id', '=', 'returns.return_id')
-                ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
-                ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-                ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-                ->select(\DB::raw('SUM(return_materials.quantity * purchase_items.price) as debit'))
-                ->where('purchases.vendor_id', $vendor->vendor_id)
-                ->groupBy('purchases.vendor_id')
-                ->first();
-
-            $transactions = \DB::table('transactions')
-                ->select(
-                    DB::raw('SUM(CASE WHEN transactions.transaction_type != "wages" THEN transactions.credit ELSE 0 END) AS totalCredit'),
-                    DB::raw('SUM(CASE WHEN transactions.transaction_type != "wages" THEN transactions.debit ELSE 0 END) AS totalDebit')
-                )
-                ->where('transactions.transaction_to', 'vendor')
-                ->where('transactions.payee_id', $vendor->vendor_id)
-                ->first();
-
-            $totalCredit = ($purchases->credit ?? 0) + ($transactions->totalCredit ?? 0);
-            $totalDebit = ($purchaseReturns->debit ?? 0) + ($transactions->totalDebit ?? 0);
-            $vendor->balance = $totalCredit - $totalDebit;
-
-            // Add vendor type names
-            if ($vendor->vendor_type_id) {
-                $vendor->vtname = $this->getVendorTypeNames($vendor->vendor_type_id);
-            } else {
-                $vendor->vtname = '';
-            }
+            $vendor->vtname = $vendor->vendor_type_id ? $this->getVendorTypeNames($vendor->vendor_type_id) : '';
         }
 
         return $vendors;

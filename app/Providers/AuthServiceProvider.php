@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Asset;
+use App\Models\Liability;
 use App\Models\Bank;
 use App\Models\Category;
 use App\Models\Head;
@@ -24,6 +25,7 @@ use App\Models\Attendance;
 use App\Models\Settings;
 use App\Models\Transaction;
 use App\Policies\AssetPolicy;
+use App\Policies\LiabilityPolicy;
 use App\Policies\BankPolicy;
 use App\Policies\AdminPolicy;
 use App\Policies\CategoryPolicy;
@@ -57,6 +59,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         User::class        => AdminPolicy::class,
         Asset::class       => AssetPolicy::class,
+        Liability::class   => LiabilityPolicy::class,
         Material::class    => MaterialPolicy::class,
         Bank::class        => BankPolicy::class,
         Product::class     => ProductPolicy::class,

@@ -55,7 +55,7 @@ class DateFormattingTest extends TestCase
             }
         }
 
-        foreach (['igroup', 'order', 'workTime', 'workHoliday', 'mprocess'] as $page) {
+        foreach (['igroup', 'order', 'mprocess'] as $page) {
             if (\Route::has($page)) {
                 $this->get(route($page))->assertOk();
             }

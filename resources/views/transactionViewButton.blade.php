@@ -14,6 +14,8 @@
       'transfer' => 'transaction.showTransfer',
       'brs' => 'transaction.showBRS',
       'admin' => 'transaction.showBRS', // bank opening balance
+      'asset' => 'asset.entry', // posted by an asset entry: opens that asset's ledger
+      'liability' => 'liability.entry',
   ];
   $viewRoute = $viewRoutes[$item->transaction_to ?? ''] ?? null;
 @endphp

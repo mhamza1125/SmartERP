@@ -49,6 +49,94 @@
                 </tr>
               </tbody>
             </table>
+
+            {{-- Prices this customer buys at (order lines of non-cancelled orders) --}}
+            <h5 class="mt-2">Product Prices</h5>
+            @if($priceSummary->count())
+              <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                  <thead>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Product</th>
+                      <th>Size</th>
+                      <th class="text-right">Last Price</th>
+                      <th>Last Order</th>
+                      <th class="text-right">Lowest</th>
+                      <th class="text-right">Highest</th>
+                      <th class="text-right">Orders</th>
+                      <th class="text-right">Total QTY</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($priceSummary as $item)
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>
+                          @can('show', App\Models\Product::class)
+                            <a href="{{ route('product.show', $item->product_id) }}" target="_blank">{{ $item->article_no ? $item->article_no.' - ' : '' }}{{ $item->product_name }}</a>
+                          @else
+                            {{ $item->article_no ? $item->article_no.' - ' : '' }}{{ $item->product_name }}
+                          @endcan
+                        </td>
+                        <td>{{ $item->size_name ?? '-' }}</td>
+                        <td class="text-right"><b>{{ number_format($item->last_price, 2) }}</b></td>
+                        <td>{{ $item->last_order_no }} ({{ formatDate($item->last_order_date) }})</td>
+                        <td class="text-right">{{ number_format($item->lowest, 2) }}</td>
+                        <td class="text-right">{{ number_format($item->highest, 2) }}</td>
+                        <td class="text-right">{{ $item->orders }}</td>
+                        <td class="text-right">{{ number_format($item->quantity) }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+
+              <h5 class="mt-4">Price History (Customer Orders)</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                  <thead>
+                    <tr>
+                      <th>Sr.</th>
+                      <th>Date</th>
+                      <th>Order No</th>
+                      <th>Job No</th>
+                      <th>Product</th>
+                      <th>Size</th>
+                      <th>Status</th>
+                      <th class="text-right">QTY</th>
+                      <th class="text-right">Price</th>
+                      <th class="text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($priceHistory as $item)
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ formatDate($item->order_date) }}</td>
+                        <td>
+                          @can('show', App\Models\Order::class)
+                            <a href="{{ route('order.show', $item->order_id) }}" target="_blank">{{ $item->order_no }}</a>
+                          @else
+                            {{ $item->order_no }}
+                          @endcan
+                        </td>
+                        <td>{{ $item->job_no ?? '-' }}</td>
+                        <td>{{ $item->article_no ? $item->article_no.' - ' : '' }}{{ $item->product_name }}</td>
+                        <td>{{ $item->size_name ?? '-' }}</td>
+                        <td>{{ \App\Models\Order::STATUS_LABELS[$item->order_status] ?? '-' }}</td>
+                        <td class="text-right">{{ number_format($item->quantity) }}</td>
+                        <td class="text-right">{{ number_format($item->price, 2) }}</td>
+                        <td class="text-right">{{ number_format($item->total, 2) }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            @else
+              <blockquote> No orders yet </blockquote>
+            @endif
+
             @if($image->count())
               <h5>Images</h5>
               <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

@@ -15,7 +15,9 @@ use Illuminate\Validation\ValidationException;
 /**
  * Monthly payroll with a full salary breakdown per employee.
  *
- *   hourly wage            = gross / employee's total days / hours per day
+ *   hourly wage            = gross / employee's total days / employee's hours per day
+ *   hours per day          = the employee's department Work In to Work Out (Settings > Heads >
+ *                            Departments); Settings > Company hours when the department has none
  *   salary for days        = gross x (actual working days + paid leaves) / employee's total days
  *   overtime rate          = hourly wage x overtime multiplier (Settings > Company)
  *   late deduction         = late hours x hourly wage x late multiplier
@@ -77,7 +79,7 @@ class PayrollRepository implements GlobalInterface
     /**
      * Save a month's payroll (new, or replacing a saved one) and post its transactions.
      *
-     * $data: month, total_working_days, hours_per_day, overtime_multiplier, late_multiplier,
+     * $data: month, total_working_days, overtime_multiplier, late_multiplier,
      *        payment_date, bank_id, description, employees[employee_id => [total_working_days,
      *        actual_working_days, paid_leaves, overtime_hours, late_hours, temp_advance,
      *        fixed_advance, fixed_advance_deduction]]
@@ -105,6 +107,7 @@ class PayrollRepository implements GlobalInterface
 
             $monthLabel = Carbon::createFromFormat('Y-m', $data['month'])->format('F Y');
             $employees = Employee::whereIn('employee_id', array_keys($data['employees']))->get()->keyBy('employee_id');
+            $hours = $this->hoursPerDay($employees);
             $errors = [];
 
             foreach ($data['employees'] as $employeeId => $input) {
@@ -115,6 +118,8 @@ class PayrollRepository implements GlobalInterface
                 // The loan is never taken from the form: always the open balance of the employee's
                 // Give Loan / repayment records (this payroll's own deductions were removed above)
                 $input['fixed_advance'] = $this->openFixedLoan((int) $employeeId);
+                // Hours per day always come from the department, never from the form
+                $input['hours_per_day'] = $hours[$employeeId]['hours'];
                 $item = $this->calculate((float) $employee->salary, $input, $period);
                 if ($item['net_salary'] < 0) {
                     $errors["employees.{$employeeId}.fixed_advance_deduction"] = "{$employee->name}: deductions ("
@@ -204,7 +209,8 @@ class PayrollRepository implements GlobalInterface
         $company = Company::first();
 
         return [
-            'hours_per_day' => (float) ($company->work_hours_per_day ?? 8) ?: 8,
+            // Only for employees whose department has no Work In / Work Out times
+            'default_hours_per_day' => (float) ($company->work_hours_per_day ?? 8) ?: 8,
             'overtime_multiplier' => (float) ($company->overtime_multiplier ?? 2),
             'late_multiplier' => (float) ($company->late_multiplier ?? 1),
         ];
@@ -214,14 +220,15 @@ class PayrollRepository implements GlobalInterface
      * One employee's salary breakdown.
      *
      * @param  array  $input  total_working_days (own, default the header's), actual_working_days, paid_leaves,
-     *                        overtime_hours, late_hours, temp_advance, fixed_advance, fixed_advance_deduction
-     * @param  array  $period  total_working_days, hours_per_day, overtime_multiplier, late_multiplier
+     *                        hours_per_day (the department's, see hoursPerDay()), overtime_hours, late_hours,
+     *                        temp_advance, fixed_advance, fixed_advance_deduction
+     * @param  array  $period  total_working_days, overtime_multiplier, late_multiplier
      */
     public function calculate(float $gross, array $input, array $period): array
     {
         // The salary is divided by the employee's own total days (default: the header's)
         $headerDays = (float) $period['total_working_days'];
-        $hoursPerDay = (float) $period['hours_per_day'] ?: 8;
+        $hoursPerDay = (float) ($input['hours_per_day'] ?? 0) ?: $this->settings()['default_hours_per_day'];
         $ownTotalDays = (float) (($input['total_working_days'] ?? '') === '' ? $headerDays : $input['total_working_days']);
         $totalDays = $ownTotalDays > 0 ? $ownTotalDays : $headerDays;
         $actualDays = (float) ($input['actual_working_days'] ?? $ownTotalDays);
@@ -247,6 +254,7 @@ class PayrollRepository implements GlobalInterface
             'total_working_days' => $ownTotalDays,
             'actual_working_days' => $actualDays,
             'paid_leaves' => $paidLeaves,
+            'hours_per_day' => $round($hoursPerDay),
             'salary_for_days' => $salaryForDays,
             'overtime_hours' => $overtimeHours,
             'overtime_rate' => $round($overtimeRate),
@@ -286,8 +294,9 @@ class PayrollRepository implements GlobalInterface
         $employees = $this->employees($items->keys()->all());
         $attendance = app(AttendanceRepository::class)->monthTotals($employees, $month);
         $headerDays = (float) ($period['total_working_days'] ?? $this->defaultWorkingDays($month));
+        $hours = $this->hoursPerDay($employees);
 
-        $rows = $employees->map(function ($employee) use ($month, $items, $ownDeductions, $previous, $attendance, $headerDays) {
+        $rows = $employees->map(function ($employee) use ($month, $items, $ownDeductions, $previous, $attendance, $headerDays, $hours) {
             $saved = $items->get($employee->employee_id);
             // Machine figures only when the machine has punches for the month (else not synced yet)
             $machine = $attendance['synced'] ? ($attendance['totals'][$employee->employee_id] ?? null) : null;
@@ -303,6 +312,10 @@ class PayrollRepository implements GlobalInterface
                 'actual_working_days' => $saved?->actual_working_days
                     ?? ($machine ? max(0, $headerDays - $machine['absent_days']) : null),
                 'paid_leaves' => (float) ($saved->paid_leaves ?? 0),
+                // Hours per day from the department now (a re-save recalculates with them);
+                // saved_hours_per_day = what the saved line was calculated with
+                'hours_per_day' => $hours[$employee->employee_id],
+                'saved_hours_per_day' => $saved?->hours_per_day !== null ? (float) $saved->hours_per_day : null,
                 'overtime_hours' => (float) ($saved->overtime_hours ?? $machine['overtime_hours'] ?? 0),
                 'late_hours' => (float) ($saved->late_hours ?? $machine['late_hours'] ?? 0),
                 // Attendance machine figures for the month (null: no attendance read for the employee)
@@ -339,7 +352,7 @@ class PayrollRepository implements GlobalInterface
             ->join('payrolls', 'payrolls.payroll_id', '=', 'payroll_items.payroll_id')
             ->leftJoin('heads as dhead', 'dhead.head_id', '=', 'employees.department_id')
             ->select('payroll_items.*', 'employees.employee_no', 'employees.name', 'employees.cnic', 'dhead.name as department',
-                'payrolls.month', 'payrolls.payment_date', 'payrolls.bank_id', 'payrolls.hours_per_day',
+                'payrolls.month', 'payrolls.payment_date', 'payrolls.bank_id',
                 'payrolls.overtime_multiplier', 'payrolls.late_multiplier')
             ->first();
     }
@@ -391,6 +404,39 @@ class PayrollRepository implements GlobalInterface
         return max(0, round((float) $sums->given - (float) $sums->repaid, 2));
     }
 
+    /**
+     * Daily working hours per employee: their department's Work In to Work Out (Settings > Heads >
+     * Departments; an end at or before the start is a night shift ending the next day). Employees
+     * whose department has no times get the Settings > Company hours.
+     *
+     * @return array<int, array{hours: float, source: string, from: ?string, to: ?string}> by employee_id
+     */
+    public function hoursPerDay(Collection $employees): array
+    {
+        $departments = app(AttendanceRepository::class)->departmentHours();
+        $default = $this->settings()['default_hours_per_day'];
+        $result = [];
+
+        foreach ($employees as $employee) {
+            $department = $departments->get($employee->department_id);
+            $hours = null;
+            if ($department && $department->work_start_time && $department->work_end_time) {
+                $start = Carbon::parse('2000-01-01 '.$department->work_start_time);
+                $end = Carbon::parse('2000-01-01 '.$department->work_end_time);
+                if ($end->lte($start)) {
+                    $end->addDay();
+                }
+                $hours = round($start->diffInMinutes($end) / 60, 2);
+            }
+
+            $result[$employee->employee_id] = $hours
+                ? ['hours' => $hours, 'source' => 'department', 'from' => substr($department->work_start_time, 0, 5), 'to' => substr($department->work_end_time, 0, 5)]
+                : ['hours' => $default, 'source' => 'default', 'from' => null, 'to' => null];
+        }
+
+        return $result;
+    }
+
     /** Working days of a month by default: calendar days minus Sundays. */
     public function defaultWorkingDays(string $month): int
     {
@@ -412,7 +458,6 @@ class PayrollRepository implements GlobalInterface
 
         return [
             'total_working_days' => (float) $data['total_working_days'],
-            'hours_per_day' => (float) ($data['hours_per_day'] ?? $settings['hours_per_day']) ?: 8,
             'overtime_multiplier' => (float) ($data['overtime_multiplier'] ?? $settings['overtime_multiplier']),
             'late_multiplier' => (float) ($data['late_multiplier'] ?? $settings['late_multiplier']),
         ];

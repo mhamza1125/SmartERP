@@ -26,6 +26,7 @@ class PayrollItem extends Model
         'late_minutes',
         'late_hours',
         'paid_leaves',
+        'hours_per_day',
         'late_deduction',
         'temp_advance',
         'fixed_advance',

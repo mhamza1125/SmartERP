@@ -24,7 +24,6 @@ class PayrollRequest extends FormRequest
         return [
             'month' => 'required|date_format:Y-m',
             'total_working_days' => 'required|numeric|min:1|max:31|decimal:0,2',
-            'hours_per_day' => 'required|numeric|min:1|max:24|decimal:0,2',
             'overtime_multiplier' => 'required|numeric|min:0|max:10|decimal:0,2',
             'late_multiplier' => 'required|numeric|min:0|max:10|decimal:0,2',
             'payment_date' => 'required|date',

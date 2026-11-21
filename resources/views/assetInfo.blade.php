@@ -1,3 +1,4 @@
+{{-- Ledger of one asset / liability name ($register from AssetController / LiabilityController) --}}
 @extends('index')
 @section('content')
 <section class="section">
@@ -6,132 +7,84 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Asset Ledger: {{ $assetName }}</h4>
+            <h4>{{ $register['title'] }} Ledger: {{ $assetName }}</h4>
             <div class="card-header-action">
-              @can('create', App\Models\Asset::class)<a href="{{ route('asset.add') }}?asset_name={{ urlencode($assetName) }}" class="btn btn-primary">Add Transaction</a>@endcan
-              <a href="{{ route('asset') }}" class="btn btn-secondary">Back</a>
+              @can('create', $register['model'])<a href="{{ route($register['route'] . '.add', ['name' => $assetName]) }}" class="btn btn-primary">Add Entry</a>@endcan
+              <a href="{{ route($register['route']) }}" class="btn btn-secondary">Back</a>
             </div>
           </div>
           <div class="card-body">
-            @if(session('success'))
-              <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-            @endif
-
-            {{-- Asset Summary --}}
-            <div class="alert alert-info mb-4">
-              <div class="row">
-                <div class="col-md-3">
-                  <strong>Asset Name:</strong><br>
-                  {{ $assetName }}
-                </div>
-                <div class="col-md-3">
-                  <strong>Total Acquisitions (Debit):</strong><br>
-                  {{ number_format($transactions->sum('debit'), 2) }}
-                </div>
-                <div class="col-md-3">
-                  <strong>Total Disposals (Credit):</strong><br>
-                  {{ number_format($transactions->sum('credit'), 2) }}
-                </div>
-                <div class="col-md-3">
-                  <strong>Net Asset Value:</strong><br>
-                  <span class="badge badge-{{ $netValue > 0 ? 'success' : ($netValue < 0 ? 'danger' : 'secondary') }}">
-                    {{ number_format($netValue, 2) }}
-                  </span>
-                </div>
-              </div>
+            <div class="ptc-facts ptc-facts--4 mb-4">
+              <div><span class="ptc-fact-label">{{ $register['title'] }}</span><span class="ptc-fact-value">{{ $assetName }}</span></div>
+              <div><span class="ptc-fact-label">{{ $register['increase'] }}</span><span class="ptc-fact-value">{{ number_format($transactions->sum('debit'), 2) }}</span></div>
+              <div><span class="ptc-fact-label">{{ $register['decrease'] }}</span><span class="ptc-fact-value">{{ number_format($transactions->sum('credit'), 2) }}</span></div>
+              <div><span class="ptc-fact-label">{{ $register['balance'] }}</span><span class="ptc-fact-value"><strong>{{ number_format($netValue, 2) }}</strong></span></div>
             </div>
 
-            {{-- Transaction History Table --}}
             <div class="table-responsive">
               <table class="table table-striped table-bordered">
                 <thead>
                   <tr>
                     <th>Sr.</th>
                     <th>Date</th>
-                    <th>Transaction Type</th>
+                    <th>Type</th>
                     <th>Description</th>
-                    <th class="text-right">Debit</th>
-                    <th class="text-right">Credit</th>
-                    <th class="text-right">Balance</th>
+                    <th>Cash / Bank</th>
+                    <th class="num">{{ $register['increase'] }}</th>
+                    <th class="num">{{ $register['decrease'] }}</th>
+                    <th class="num">{{ $register['balance'] }}</th>
                     <th>Attachment</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   @php $balance = 0; @endphp
-                  @forelse($transactions as $transaction)
+                  @foreach($transactions as $transaction)
                     @php
-                      $debit = $transaction->debit ?? 0;
-                      $credit = $transaction->credit ?? 0;
+                      $debit = (float) ($transaction->debit ?? 0);
+                      $credit = (float) ($transaction->credit ?? 0);
                       $balance += $debit - $credit;
+                      $type = $types[$transaction->transaction_type] ?? null;
                     @endphp
                     <tr>
                       <td>{{ $loop->iteration }}</td>
-                      <td>{{ \Carbon\Carbon::parse($transaction->transaction_date)->format('d-m-Y') ?? 'N/A' }}</td>
-                      <td>
-                        @if($transaction->transaction_type == 'purchase')
-                          <span class="badge badge-success">Purchase</span>
-                        @elseif($transaction->transaction_type == 'sale')
-                          <span class="badge badge-warning">Sale</span>
-                        @elseif($transaction->transaction_type == 'depreciation')
-                          <span class="badge badge-info">Depreciation</span>
-                        @elseif($transaction->transaction_type == 'writeoff')
-                          <span class="badge badge-danger">Write-off</span>
+                      <td>{{ formatDate($transaction->transaction_date) }}</td>
+                      <td><span class="badge badge-{{ ($type['sign'] ?? 1) > 0 ? 'success' : 'warning' }}">{{ $type['short'] ?? ucfirst($transaction->transaction_type) }}</span></td>
+                      <td>{{ $transaction->description ?? '-' }}</td>
+                      <td class="text-nowrap">
+                        @if($transaction->transaction_id)
+                          @php $account = $transaction->bank_id ? trim(($transaction->bank_name ?? 'Bank') . ' - ' . $transaction->account_title, ' -') : 'Cash'; @endphp
+                          {{ ($type['money'] ?? null) === 'in' ? 'Received into' : 'Paid from' }} {{ $account }}
+                          <small class="d-block text-muted">Transaction #{{ $transaction->transaction_id }}</small>
                         @else
-                          <span class="badge badge-secondary">Adjustment</span>
+                          <span class="text-muted">No money moved</span>
                         @endif
                       </td>
-                      <td>{{ $transaction->description ?? '-' }}</td>
-                      <td class="text-right">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>
-                      <td class="text-right">{{ $credit > 0 ? number_format($credit, 2) : '-' }}</td>
-                      <td class="text-right">
-                        <span class="badge badge-{{ $balance > 0 ? 'success' : ($balance < 0 ? 'danger' : 'secondary') }}">
-                          {{ number_format($balance, 2) }}
-                        </span>
-                      </td>
+                      <td class="num">{{ $debit > 0 ? number_format($debit, 2) : '-' }}</td>
+                      <td class="num">{{ $credit > 0 ? number_format($credit, 2) : '-' }}</td>
+                      <td class="num">{{ number_format($balance, 2) }}</td>
                       <td>
                         @if($transaction->attachment)
-                          <a href="{{ asset('storage/' . $transaction->attachment) }}" target="_blank" class="btn btn-sm btn-info">
-                            <i class="fas fa-download"></i>
-                          </a>
+                          <a href="{{ asset('storage/' . $transaction->attachment) }}" target="_blank" class="btn btn-sm btn-info" title="Open attachment"><i class="fas fa-download"></i></a>
                         @else
                           -
                         @endif
                       </td>
-                      <td>
-                        @can('edit', App\Models\Asset::class)<a href="{{ route('asset.edit', $transaction->asset_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
-                        <form action="{{ route('asset.destroy', $transaction->asset_id) }}" method="POST" style="display:inline;">
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this transaction?')">Delete</button>
-                        </form>
+                      <td class="text-nowrap">
+                        @can('edit', $register['model'])<a href="{{ route($register['route'] . '.edit', $transaction->asset_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
+                        @can('delete', $register['model'])@include('deleteButton', ['url' => route($register['route'] . '.destroy', $transaction->asset_id), 'check' => route($register['route'] . '.deleteCheck', $transaction->asset_id), 'label' => $register['title'] . ' entry #' . $transaction->asset_id])@endcan
                       </td>
                     </tr>
-                  @empty
-                    <tr>
-                      <td colspan="9" class="text-center">No transactions found</td>
-                    </tr>
-                  @endforelse
+                  @endforeach
                 </tbody>
                 <tfoot>
-                  @if($transactions->count())
-                    <tr style="background-color: #f5f5f5; font-weight: bold;">
-                      <td colspan="4" class="text-right">Total:</td>
-                      <td class="text-right">{{ number_format($transactions->sum('debit'), 2) }}</td>
-                      <td class="text-right">{{ number_format($transactions->sum('credit'), 2) }}</td>
-                      <td class="text-right">
-                        <span class="badge badge-{{ $netValue > 0 ? 'success' : ($netValue < 0 ? 'danger' : 'secondary') }}">
-                          {{ number_format($netValue, 2) }}
-                        </span>
-                      </td>
-                      <td colspan="2"></td>
-                    </tr>
-                  @endif
+                  <tr>
+                    <th colspan="5" class="text-right">Total</th>
+                    <th class="num">{{ number_format($transactions->sum('debit'), 2) }}</th>
+                    <th class="num">{{ number_format($transactions->sum('credit'), 2) }}</th>
+                    <th class="num">{{ number_format($netValue, 2) }}</th>
+                    <th colspan="2"></th>
+                  </tr>
                 </tfoot>
               </table>
             </div>
@@ -142,4 +95,3 @@
   </div>
 </section>
 @endsection
-

@@ -78,61 +78,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function workTime()
-    {
-        $this->authorize('access', Attendance::class);
-        $work = $this->attendanceRepository->workTime();
-
-        return view('workTime', [
-            'work' => $work,
-        ]);
-    }
-
-    public function workHoliday()
-    {
-        $this->authorize('access', Attendance::class);
-        $work = $this->attendanceRepository->workHoliday();
-
-        return view('workHoliday', [
-            'work' => $work,
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $this->authorize('create', Attendance::class);
-        $this->attendanceRepository->store($request->input());
-        if (isset($request->time_from)) {
-            return redirect()->route('workTime')->with('success', 'Record Inserted Successfully');
-        } else {
-            return redirect()->route('workHoliday')->with('success', 'Record Inserted Successfully');
-        }
-    }
-
-    public function update(Request $request, $id)
-    {
-        $this->authorize('edit', Attendance::class);
-        $this->attendanceRepository->update($id, $request->input());
-        if (isset($request->time_from)) {
-            return redirect()->route('workTime')->with('success', 'Record Updated Successfully');
-        } else {
-            return redirect()->route('workHoliday')->with('success', 'Record Updated Successfully');
-        }
-    }
-
-    /**
-     * Delete a Work Hours row ($type = time) or a Non Working Day ($type = holiday).
-     * Nothing references these rows; attendance pages simply stop using them.
-     */
-    public function destroy($type, $id)
-    {
-        $this->authorize('delete', Attendance::class);
-        $type = $type === 'holiday' ? 'holiday' : 'time';
-        $this->attendanceRepository->delete($id, $type);
-
-        return redirect()->route($type === 'holiday' ? 'workHoliday' : 'workTime')->with('success', 'Record Deleted Successfully');
-    }
-
     /**
      * Totals per employee (keyed by employee, so two employees sharing a machine number stay separate).
      */

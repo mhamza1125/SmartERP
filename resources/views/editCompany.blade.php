@@ -100,9 +100,9 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>Working Hours per Day</label>
+                                            <label>Default Working Hours per Day</label>
                                             <input type="number" step="0.5" min="1" max="24" class="form-control" name="work_hours_per_day" value="{{ old('work_hours_per_day', $company->work_hours_per_day ?? 8) }}">
-                                            <small class="form-text text-muted">Hourly wage = gross salary / working days / these hours</small>
+                                            <small class="form-text text-muted">Payroll uses each department's Work In / Work Out times; these hours only apply to departments without them</small>
                                         </div>
                                     </div>
                                 </div>

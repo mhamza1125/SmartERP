@@ -25,7 +25,7 @@
               {{-- Two rows, same order as the payroll sheet header: period, then rates and totals --}}
               <div class="ptc-facts ptc-facts--4">
                 <div><span class="ptc-fact-label">Total Working Days</span><span class="ptc-fact-value">{{ $num($payroll->total_working_days) }}</span></div>
-                <div><span class="ptc-fact-label">Hours / Day</span><span class="ptc-fact-value">{{ $num($payroll->hours_per_day) }}</span></div>
+                <div><span class="ptc-fact-label">Hours / Day</span><span class="ptc-fact-value">Department Work In / Out</span></div>
                 <div><span class="ptc-fact-label">Payment Date</span><span class="ptc-fact-value">{{ formatDate($payroll->payment_date) }}</span></div>
                 <div><span class="ptc-fact-label">Paid From</span><span class="ptc-fact-value">{{ $accountName }}</span></div>
                 <div><span class="ptc-fact-label">Overtime Rate</span><span class="ptc-fact-value">{{ $num($payroll->overtime_multiplier) }}x hourly wage</span></div>
@@ -74,6 +74,7 @@
                       <td class="text-nowrap">
                         <strong>{{ $item->name }}</strong>
                         <div class="small text-muted">{{ $item->employee_no }}{{ $item->designation ? ' · ' . $item->designation : '' }}</div>
+                        @if($item->hours_per_day !== null)<div class="small text-muted">{{ $num($item->hours_per_day) }} hrs/day</div>@endif
                       </td>
                       <td class="num">{{ number_format($item->gross_salary, 2) }}</td>
                       <td class="num">{{ $num($item->total_working_days) }}</td>

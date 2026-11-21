@@ -168,7 +168,7 @@ class RolePermissionScenariosTest extends TestCase
         $this->assertFalse($user->isAdmin());
         $this->actingAs($user);
 
-        foreach (['user', 'role', 'receive', 'return', 'head', 'category', 'attendance', 'workTime', 'payroll.index', 'stock.daily'] as $route) {
+        foreach (['user', 'role', 'receive', 'return', 'head', 'category', 'attendance', 'payroll.index', 'stock.daily'] as $route) {
             $this->get(route($route))->assertOk();
         }
         $this->get(route('company.edit', DB::table('company')->value('id')))->assertOk(); // attendance file location lives here

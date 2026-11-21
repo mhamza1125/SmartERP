@@ -135,7 +135,7 @@ class HeadRepository implements GlobalInterface
     public const DEPARTMENT_TYPE = 3;
 
     /**
-     * Working hours belong to department heads only (empty = Payroll > Work Hours). A head of any
+     * Working hours belong to department heads only (empty = no late time / overtime; Settings > Company hours/day for payroll). A head of any
      * other type has none. On update, a form without the fields keeps the stored hours.
      */
     private function departmentTimes(array $data, ?Head $head = null): array

@@ -1,3 +1,4 @@
+{{-- Assets / Liabilities list: one row per name ($register from AssetController / LiabilityController) --}}
 @extends('index')
 @section('content')
 <section class="section">
@@ -6,73 +7,69 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Assets</h4>
+            <h4>{{ $register['plural'] }}</h4>
             <div class="card-header-action">
-              @can('create', App\Models\Asset::class)<a href="{{ route('asset.add') }}" class="btn btn-primary">Add Asset</a>@endcan
+              @can('create', $register['model'])<a href="{{ route($register['route'] . '.add') }}" class="btn btn-primary">Add {{ $register['title'] }}</a>@endcan
             </div>
           </div>
           <div class="card-body">
-            @if(session('success'))
-              <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-            @endif
+            <p class="text-muted small">
+              @if($register['kind'] === 'asset')
+                Value = additions (purchases, improvements, increases) minus reductions (sales, depreciation, write-offs, decreases).
+              @else
+                Outstanding = new liabilities and charges minus payments, waivers and decreases.
+              @endif
+              Entries marked as affecting cash / bank are posted to the Cash Book / Bank Ledger.
+            </p>
             <div class="table-responsive">
               <table class="table table-striped table-hover" id="tableExport" style="width:100%;">
                 <thead>
                   <tr>
                     <th>Sr.</th>
-                    <th>Asset Name</th>
-                    <th class="text-right">Total Debit</th>
-                    <th class="text-right">Total Credit</th>
-                    <th class="text-right">Net Value</th>
-                    <th>Last Transaction</th>
+                    <th>{{ $register['title'] }}</th>
+                    <th class="num">{{ $register['increase'] }}</th>
+                    <th class="num">{{ $register['decrease'] }}</th>
+                    <th class="num">{{ $register['balance'] }}</th>
+                    <th class="num" title="Received into cash / bank by these entries">Money In</th>
+                    <th class="num" title="Paid from cash / bank by these entries">Money Out</th>
+                    <th class="num">Entries</th>
+                    <th>Last Entry</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @forelse($assets as $item)
+                  @foreach($assets as $item)
                     <tr>
-                      <td>{{ $loop->index + 1 }}</td>
+                      <td>{{ $loop->iteration }}</td>
                       <td>{{ $item->asset_name }}</td>
-                      <td class="text-right">{{ number_format($item->total_debit, 2) }}</td>
-                      <td class="text-right">{{ number_format($item->total_credit, 2) }}</td>
-                      <td class="text-right">
-                        @if($item->net_value > 0)
-                          <span class="badge badge-success">{{ number_format($item->net_value, 2) }}</span>
-                        @elseif($item->net_value < 0)
-                          <span class="badge badge-danger">{{ number_format($item->net_value, 2) }}</span>
-                        @else
-                          <span class="badge badge-secondary">{{ number_format($item->net_value, 2) }}</span>
-                        @endif
-                      </td>
-                      <td>{{ \Carbon\Carbon::parse($item->last_transaction_date)->format('d-m-Y') ?? 'N/A' }}</td>
-                      <td>
-                        @if(auth()->user()->can('show', App\Models\Asset::class))<a href="{{ route('asset.show', $item->asset_name) }}" class="btn btn-info btn-sm">View Ledger</a>@endif
+                      <td class="num">{{ number_format($item->total_debit, 2) }}</td>
+                      <td class="num">{{ number_format($item->total_credit, 2) }}</td>
+                      <td class="num"><strong>{{ number_format($item->net_value, 2) }}</strong></td>
+                      <td class="num">{{ $item->money_in ? number_format($item->money_in, 2) : '-' }}</td>
+                      <td class="num">{{ $item->money_out ? number_format($item->money_out, 2) : '-' }}</td>
+                      <td class="num">{{ $item->entries }}</td>
+                      <td>{{ formatDate($item->last_transaction_date) }}</td>
+                      <td class="text-nowrap">
+                        @can('show', $register['model'])<a href="{{ route($register['route'] . '.show', ['name' => $item->asset_name]) }}" class="btn btn-info btn-sm">Ledger</a>@endcan
+                        @can('create', $register['model'])<a href="{{ route($register['route'] . '.add', ['name' => $item->asset_name]) }}" class="btn btn-primary btn-sm">Add Entry</a>@endcan
                       </td>
                     </tr>
-                  @empty
-                    <tr>
-                      <td colspan="7" class="text-center">No assets found</td>
-                    </tr>
-                  @endforelse
+                  @endforeach
                 </tbody>
-                <tfoot>
-                  @if($assets->count())
-                    <tr style="background-color: #f5f5f5; font-weight: bold;">
-                      <td colspan="2" class="text-right">Total:</td>
-                      <td class="text-right">{{ number_format($assets->sum('total_debit'), 2) }}</td>
-                      <td class="text-right">{{ number_format($assets->sum('total_credit'), 2) }}</td>
-                      <td class="text-right">
-                        <span class="badge badge-success">{{ number_format($assets->sum('net_value'), 2) }}</span>
-                      </td>
-                      <td colspan="2"></td>
+                @if($assets->count())
+                  <tfoot>
+                    <tr>
+                      <th colspan="2" class="text-right">Total</th>
+                      <th class="num">{{ number_format($assets->sum('total_debit'), 2) }}</th>
+                      <th class="num">{{ number_format($assets->sum('total_credit'), 2) }}</th>
+                      <th class="num">{{ number_format($assets->sum('net_value'), 2) }}</th>
+                      <th class="num">{{ number_format($assets->sum('money_in'), 2) }}</th>
+                      <th class="num">{{ number_format($assets->sum('money_out'), 2) }}</th>
+                      <th class="num">{{ $assets->sum('entries') }}</th>
+                      <th colspan="2"></th>
                     </tr>
-                  @endif
-                </tfoot>
+                  </tfoot>
+                @endif
               </table>
             </div>
           </div>
@@ -82,4 +79,3 @@
   </div>
 </section>
 @endsection
-
