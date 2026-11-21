@@ -15,15 +15,14 @@ use Illuminate\Validation\ValidationException;
 /**
  * Monthly payroll with a full salary breakdown per employee.
  *
- *   hourly wage            = gross / total working days (payroll header) / hours per day
- *   salary for days        = gross x (actual working days + paid leaves) / total working days (header)
+ *   hourly wage            = gross / employee's total days / hours per day
+ *   salary for days        = gross x (actual working days + paid leaves) / employee's total days
  *   overtime rate          = hourly wage x overtime multiplier (Settings > Company)
  *   late deduction         = late hours x hourly wage x late multiplier
  *
- * Each employee also has their own total days (default: the header's). It only sets the days
- * they were expected to work (absent = own total - worked - paid leaves): an employee who works
- * extra days (e.g. Sundays) gets a higher own total and is paid those days at the same daily
- * rate, not as overtime. Paid leaves are recorded and paid, never deducted.
+ * Each employee has their own total days (default: the header's). The salary is divided by it,
+ * so changing one row's total days changes that employee's daily and hourly rate
+ * (absent = own total - worked - paid leaves). Paid leaves are recorded and paid, never deducted.
  *   remaining fixed advance = fixed advance - fixed advance deduction
  *   total salary           = salary for days + overtime - late deduction - temporary advance - fixed advance deduction
  *
@@ -220,11 +219,11 @@ class PayrollRepository implements GlobalInterface
      */
     public function calculate(float $gross, array $input, array $period): array
     {
-        // The rate always comes from the header's total days; the employee's own total days
-        // only says how many days they were expected to work
-        $totalDays = (float) $period['total_working_days'];
+        // The salary is divided by the employee's own total days (default: the header's)
+        $headerDays = (float) $period['total_working_days'];
         $hoursPerDay = (float) $period['hours_per_day'] ?: 8;
-        $ownTotalDays = (float) (($input['total_working_days'] ?? '') === '' ? $totalDays : $input['total_working_days']);
+        $ownTotalDays = (float) (($input['total_working_days'] ?? '') === '' ? $headerDays : $input['total_working_days']);
+        $totalDays = $ownTotalDays > 0 ? $ownTotalDays : $headerDays;
         $actualDays = (float) ($input['actual_working_days'] ?? $ownTotalDays);
         $paidLeaves = (float) ($input['paid_leaves'] ?? 0);
         $hourly = $totalDays > 0 ? $gross / $totalDays / $hoursPerDay : 0;

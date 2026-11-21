@@ -100,8 +100,8 @@
                 </div>
               </div>
               <p class="text-muted small mb-3">
-                Hourly wage = gross salary / total working days / hours per day. Each employee's Total days
-                can be changed (e.g. extra Sundays worked are paid at the same daily rate, not as overtime);
+                Hourly wage = gross salary / employee's Total days / hours per day. Each employee's Total days
+                can be changed and the salary is divided by that row's days;
                 paid Leaves are not deducted. Overtime and late time are in hours. Defaults come from
                 @if(auth()->user()->can('access', App\Models\Settings::class))<a href="{{ route('company') }}">Settings &gt; Company</a>@endif. Temporary advances and the open fixed loan are filled in
                 from the employee's Give Loan entries. The Loan amount is read-only (it always comes from those records);
@@ -184,7 +184,7 @@
                           <div class="small text-muted">{{ $row->employee->employee_no }}{{ $row->employee->designation ? ' · ' . $row->employee->designation : '' }}</div>
                         </td>
                         <td class="num">{{ number_format((float) $row->employee->salary, 2) }}</td>
-                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="total" name="employees[{{ $id }}][total_working_days]" value="{{ $field('total_working_days', $row->total_working_days !== null ? $num($row->total_working_days) : '') }}" title="This employee's total days (default: the header's). Extra days are paid at the same daily rate."></td>
+                        <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="total" name="employees[{{ $id }}][total_working_days]" value="{{ $field('total_working_days', $row->total_working_days !== null ? $num($row->total_working_days) : '') }}" title="This employee's total days (default: the header's). The salary is divided by these days."></td>
                         <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="actual" name="employees[{{ $id }}][actual_working_days]" value="{{ $field('actual_working_days', $row->actual_working_days !== null ? $num($row->actual_working_days) : '') }}" @if($row->attendance) data-absent="{{ $row->attendance['absent_days'] }}" @endif>
                           @if($row->attendance)
                             @if($row->attendance['punched_days'] === 0)
@@ -273,9 +273,10 @@
         var ownDays = input('total');
         var actual = input('actual');
         var leaves = input('leaves');
-        // Rate from the header's total days; worked days + paid leaves are paid at that rate
-        var hourly = totalDays > 0 ? gross / totalDays / hoursPerDay : 0;
-        var salaryDays = round2(totalDays > 0 ? gross * (actual + leaves) / totalDays : 0);
+        // Rate from this employee's own total days (header's when blank/0); worked days + paid leaves are paid at that rate
+        var rateDays = ownDays > 0 ? ownDays : totalDays;
+        var hourly = rateDays > 0 ? gross / rateDays / hoursPerDay : 0;
+        var salaryDays = round2(rateDays > 0 ? gross * (actual + leaves) / rateDays : 0);
         var otRate = hourly * otMultiplier;
         var otAmount = round2(round2(input('ot')) * otRate);
         var lateAmount = round2(round2(input('late')) * hourly * lateMultiplier);
