@@ -10,7 +10,10 @@ use App\Repositories\ReceiveMaterialRepository;
 use App\Repositories\ReceiveRepository;
 use App\Repositories\ReturnMaterialRepository;
 use App\Repositories\ReturnRepository;
+use App\Repositories\RejectionRepository;
+use App\Exceptions\StockBatchException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReturnController extends Controller
 {
@@ -70,7 +73,7 @@ class ReturnController extends Controller
             'received' => $returned,
             'combined' => $combined,
             'receiveMaterial' => $receiveMaterial,
-        ]);
+        ] + $this->stageOptions($receive['purchase_type'], $receiveMaterial));
     }
 
     public function store(ReturnRequest $request)
@@ -89,8 +92,18 @@ class ReturnController extends Controller
             return redirect()->back()->with(['fails' => $validationError])->withInput();
         }
 
-        $getId = $this->returnRepository->store($validatedData);
-        $this->storeRM($getId, $rid, $quantities, $remarks);
+        try {
+            $getId = DB::transaction(function () use ($request, $validatedData, $rid, $quantities, $remarks) {
+                $choices = $this->returnRepository->stageChoices($request->input());
+                $getId = $this->returnRepository->store($validatedData);
+                $this->storeRM($getId, $rid, $quantities, $remarks, $choices);
+                $this->returnRepository->syncStageCorrections($getId);
+
+                return $getId;
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('return.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -148,7 +161,7 @@ class ReturnController extends Controller
             'return' => $return,
             'returnMaterial' => $returnMaterial,
             'receiveMaterial' => $receiveMaterial,
-        ]);
+        ] + $this->stageOptions($return['purchase_type'], $receiveMaterial, (int) $id));
     }
 
     public function update(Request $request, $id)
@@ -165,14 +178,25 @@ class ReturnController extends Controller
             return redirect()->back()->with(['fails' => $validationError])->withInput();
         }
 
-        $this->returnRepository->update($id, $request->input());
-        $this->returnMaterialRepository->update($id, $request->input());
+        try {
+            DB::transaction(function () use ($request, $id) {
+                $data = $request->input();
+                $data['stage_choice'] = $this->returnRepository->stageChoices($data);
+                // the old stage corrections are linked to the lines, so they go before the lines change
+                $this->returnRepository->purgeStageCorrections((int) $id);
+                $this->returnRepository->update($id, $data);
+                $this->returnMaterialRepository->update($id, $data);
+                $this->returnRepository->syncStageCorrections((int) $id);
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('return.show', $id)->with('success', 'Record Updated Successfully');
     }
 
 
-    private function storeRM($getId, $rids, $quantities, $remarks)
+    private function storeRM($getId, $rids, $quantities, $remarks, array $choices = [])
     {
         foreach ($quantities as $key => $quantity) {
             $id = $rids[$key] ?? null;
@@ -181,10 +205,37 @@ class ReturnController extends Controller
                 'return_id' => $getId,
                 'receive_material_id' => $id,
                 'quantity' => $quantity,
+                'stage_id' => $choices[$key]['stage_id'] ?? null,
+                'rejected_stage_id' => $choices[$key]['rejected_stage_id'] ?? null,
                 'remarks' => $remark,
             ];
             $this->returnMaterialRepository->store($returnMaterial);
         }
+    }
+
+    /**
+     * Return From choices of a product return form: per product size its stages, and the rejection
+     * stock it holds per rejected-at stage (general stock; a return being edited gives its own back).
+     */
+    private function stageOptions(string $purchaseType, $receiveLines, ?int $returnId = null): array
+    {
+        if ($purchaseType === 'material') {
+            return ['productStages' => [], 'rejectionStock' => []];
+        }
+        $rejection = app(RejectionRepository::class);
+        $productTypeIds = DB::table('receive_materials')
+            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->whereIn('receive_materials.receive_material_id', collect($receiveLines)->pluck('receive_material_id'))
+            ->pluck('purchase_items.product_type_id', 'receive_materials.receive_material_id');
+        $exclude = $returnId ? DB::table('stocks')->where('table_name', \App\Models\Stock::TABLE_PURCHASE_RETURN)
+            ->whereIn('source_id', DB::table('return_materials')->where('return_id', $returnId)->select('return_material_id'))
+            ->pluck('stock_id')->all() : [];
+
+        return [
+            'lineProductType' => $productTypeIds->all(),
+            'productStages' => $productTypeIds->unique()->mapWithKeys(fn ($pt) => [$pt => $rejection->rejectableStages((int) $pt)])->all(),
+            'rejectionStock' => $rejection->generalBuckets($productTypeIds->unique()->values()->all(), $exclude),
+        ];
     }
 
     /**

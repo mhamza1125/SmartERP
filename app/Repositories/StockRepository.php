@@ -109,7 +109,7 @@ class StockRepository implements GlobalInterface
             ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->where('stocks.stock_id', '>', '1') // Default Entries Excluded
-            ->whereNotIn('stocks.table_name', ['delivery', 'delivery_returns', Stock::TABLE_PTC_RELEASE])
+            ->whereNotIn('stocks.table_name', ['delivery', 'delivery_returns', Stock::TABLE_PTC_RELEASE, Stock::TABLE_ADJUSTMENT, Stock::TABLE_PURCHASE_RETURN])
             ->select('stocks.*', 'job_no', 'employees.employee_no', 'vendors.vendor_no', 'vendors.fname', 'employees.name', 'shead.name as sname',
                 DB::raw("GROUP_CONCAT(DISTINCT products.article_no SEPARATOR ', ') as articles")
             )
@@ -613,7 +613,7 @@ class StockRepository implements GlobalInterface
      */
     public function documentKind(Stock $stock): ?string
     {
-        if ((int) $stock->stock_id === 1 || in_array($stock->table_name, ['delivery', 'delivery_returns', 'mprocess', 'openingStock', 'ptc_release'], true)
+        if ((int) $stock->stock_id === 1 || in_array($stock->table_name, ['delivery', 'delivery_returns', 'mprocess', 'openingStock', 'ptc_release', Stock::TABLE_ADJUSTMENT, Stock::TABLE_PURCHASE_RETURN], true)
             || (int) $stock->stock_status === Stock::STATUS_DELIVERY) {
             return null;
         }

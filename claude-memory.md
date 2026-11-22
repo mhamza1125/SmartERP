@@ -208,6 +208,14 @@ Additional domain-specific methods are added per repository beyond these five.
   - normal issuance forms stay on Auto
 - Balances: `StockBatchRepository::balanceQuery()`. The sum over batches equals the pooled `pStock()` figures. `php artisan stock:backfill-batches --check` reports missing or stale allocations and any total mismatch.
 
+### Rejection stage, returns from any stage, stock adjustments (2026-11-22)
+- `stock_items.rejected_stage_id`: on Rejection lines (stage 105) the work stage the pieces were rejected at; NULL = not recorded. PTC receipts into Rejection (product or damaged component) take the issuance's Issue For stage; PTC releases of Rejection are split per rejected-at stage (`RejectionRepository::ptcBuckets` + `split`, recorded stages first). `php artisan stock:backfill-rejected-stage [--dry-run]` tags older PTC receipt lines (run on the local DB? NO as of 2026-11-22 - dry run only, 3 lines)
+- `RejectionRepository`: buckets = balance per product size + rejected-at stage (general stock, ptc_virtual 0). Movements without a stage are settled against the recorded stages (lowest id first; a recorded stage short takes from "not recorded" first), so buckets always sum to the Rejection stage total. /stock stage modal shows "Rejection by Stage"
+- Purchase returns: product lines have Return From (any product stage or Rejection + Rejected At, partial `returnFromStage`); stored on `return_materials.stage_id` / `rejected_stage_id` (NULL = purchased stage). The vendor is still credited qty x purchase price (unchanged ledger). Because every stock query deducts returns at the purchased stage, `ReturnRepository::syncStageCorrections` posts a hidden pair per such line: stocks `table_name` purchase_returns (`Stock::TABLE_PURCHASE_RETURN`, status 11, source_id = return_material_id): in at the purchased stage (batch = the receipt's batch, none if the receipt has none) + out of the real stage (`allocateStockOut`, purchase's order then free). Purged / rebuilt on edit (purge BEFORE the lines change) and delete. Rejection returns are capped by the rejected-at bucket
+- Stock Adjustments (Production menu, `StockAdjustmentController`, `stock_adjustments_access/show/create/delete`, model `StockAdjustment extends Stock` = policy target + list scope): stocks `table_name` stock_adjustments, stock_type 1 increase / 2 decrease, status 10, `ADJ-yymmNNN`. Materials or products at any stage / Rejection + rejected-at. Increase = own batch; decrease = chosen order's reserved stock then free (batches), materials may not go below 0, Rejection capped per bucket. No edit (delete + re-enter); deleting an increase is blocked once its stock was used
+- Both new tables are excluded from the receivings list and the stock document delete flow; product ledger / batch history label them
+- NOTE 2026-11-22: on smarterp_erp `stock:backfill-batches --check` reports 24 product/stage totals where batches are 0 (older purchase receipts without batch_id). Decreases / returns from another stage / deliveries are refused for those (batch stock 0). Plain `stock:backfill-batches` does nothing once batches exist; only `--fresh` rebuilds (drops manual reservations / splits) - reported to the user, not fixed
+
 ### Stock Status Constants (on `Stock` model)
 ```
 STATUS_NOT_RECEIVED       = 0
@@ -220,6 +228,8 @@ STATUS_PTC_IN_PROGRESS     = 6
 STATUS_PTC_COMPLETED       = 7   (PTC completed: end stage fully received)
 STATUS_PTC_RELEASED        = 8   (PTC stock released to general stock)
 STATUS_PTC_CLOSED          = 9   (PTC closed early, before its end stage)
+STATUS_ADJUSTMENT          = 10  (stock adjustment, table_name stock_adjustments)
+STATUS_RETURN_STAGE        = 11  (purchase return stage-correction pair, table_name purchase_returns)
 ```
 
 ### Purchase → Stock Flow
@@ -325,15 +335,19 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Guards in `AssetRepository`: a decrease cannot take the balance below 0; a payment cannot exceed the cash / bank balance. Same repository for both (`LiabilityRepository extends AssetRepository`), screens in `AssetEntryController` (AssetController / LiabilityController only give labels), shared views asset / assetInfo / addAsset / editAsset + partial assetForm, `AssetRequest` (kind from the route name). Ledger URL: `asset.show` / `liability.show` with `?name=`. Permissions `liabilities_*` (LiabilityPolicy)
 - Prints (2026-11-22, need the register's show): `asset.print` / `liability.print` (`print/asset-ledger`; `?name=` = one ledger, none = every name grouped with its own running balance + grand total; button on the list and ledger pages) and `asset.entry.print` / `liability.entry.print` (`print/asset-entry`, half-page voucher like print.payment: Payment / Receipt Voucher when cash / bank moved, else Journal Voucher; voucher no `AST-0001` / `LIA-0001`; double entry asset up = Dr asset, liability up = Cr liability, counter = cash / bank account or the entry type; print button on each ledger row)
 
+## Material price field removed (2026-11-22)
+- Add / Edit Material no longer have a price input (user request): prices are set per vendor (party prices). `materials.cprice` stays = last purchase / processing price (purchases and MProcess still write it; 0 for a new material); shown as "Last Purchase Price" and still used for BOM material cost and stock value. `updateFromForm` never changes it; old opening / edit rows stay in material_price_logs
+
 ## Customer prices (2026-11-21)
 - The customer page (customer.show) lists the prices the customer bought at: per product size (last price + order, lowest, highest, orders, qty) and the full order-line history (`OrderItemRepository::customerPriceHistory / customerPriceSummary`, non-cancelled orders). The product page's Price History tab no longer has the old Sale Price History table; since 2026-11-21 it shows the customer price register instead (see "Vendor / customer prices")
 
 ## Vendor / customer prices (party prices, 2026-11-21)
 - `party_prices` = current price of one item for one vendor (`party_type` vendor, buying) or customer (customer, selling, in the customer's currency). Item = `material_id`, or `product_type_id` + `stage_id` (unused keys 0; unique per party + item). `party_price_logs` = every change (old_price NULL = first price, price NULL = removed; source manual | purchase | order | backfill | removed; doc_id = purchase / order). All logic in `PartyPriceRepository`
-- Set by hand on /material/{id} and /product/{id} (Price History tab), partial `partyPrices` (current table + history table). Vendor section only with purchases access, customer section only with customers access; setting / removing (`partyPrice.store` / `partyPrice.destroy`, PartyPriceController) needs Purchase create|edit (vendor) or Order create|edit (customer)
+- Set by hand on /material/{id} and /product/{id} (Price History tab, VENDOR prices only), partial `partyPrices` (current table + history table). Customer (selling) prices are set / shown ONLY on the customer page (user decision 2026-11-22, same as 2026-11-21: no selling prices on the product page). Vendor section only with purchases access; setting / removing (`partyPrice.store` / `partyPrice.destroy`, PartyPriceController) needs Purchase create|edit (vendor) or Order create|edit (customer)
 - Documents move the price: `PurchaseController` store/update -> `syncPurchase()`, `OrderController` store/update -> `syncOrder()`. Any different price (higher OR lower) becomes current. On edits only lines that are new, changed price or moved to another party count (`snapshot()` before the save), so re-saving an old document never overwrites a newer price. Material-processing lines are ignored. Sync failures are logged, never undo the document
 - Purchase / order add+edit forms: read-only "Vendor Price" / "Customer Price" box (partial `partyPriceField`, AJAX `partyPrice.lookup`) with a "Use" link that copies it into Price; for products it waits for the stage (ajaxPS) and lists other stages' prices when the chosen stage has none
 - Deleting a vendor / customer / material / product deletes its prices + history (cascade in their deletionImpact)
+- 2026-11-22: also entered / listed per party: vendor page "Buying Prices" (purchases access) and customer page "Selling Prices" (partial `partyPriceList`, `partySection()`), with Set Price + Price Change History (partial `priceChangesTable`, `changes()`). Dashboard: "Recent Purchase Price Changes" (purchases access) / "Recent Selling Price Changes" (customers access), latest 10. As of 2026-11-22 party_prices was still EMPTY (prices:backfill not run)
 - Existing data: `php artisan prices:backfill [--dry-run]` replays purchases / non-cancelled orders oldest first (history dated by document date) and adds an 'opening' wage history row per product_costs row; skips items / wages already present
 
 ## Product wage history (2026-11-21)
@@ -381,6 +395,17 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - All invoice figures come from `App\Support\InvoiceTotals` (print views destructure `$totals`); the workbook uses live formulas (line = QTY x Price, sums, grand total, payment due) whose values equal those figures
 
 ---
+
+## Reports menu names / URLs (renamed 2026-11-22; route names unchanged, old URLs 301-redirect with query)
+| Menu / heading | URL | route name | shows |
+|---|---|---|---|
+| Issuance Report | /reports/issuance (+/print) | stock.daily | stock issued out, by date / worker / order (today by default) |
+| Receiving Report | /reports/receiving (+/print) | rstock.daily | products received back, by date / worker / order |
+| Material Stock Ledger | /reports/material-ledger (+/print) | material.detail | material purchases, returns, stock in / out |
+| Product Stock Movements | /reports/product-movements | product.ledger | every product stock movement with running balance (was "Product Purchase Ledger") |
+| Purchase Price History | /reports/purchase-prices | purchase.ledger | vendor price comparison + every purchase line of one material / product (was "Purchase Ledger", /pLedger) |
+| Stock Requirements | /reports/stock-requirements | reports.product.stock.requirements | shortfall of confirmed orders |
+| Product Stock Forecast | /reports/product-stock-forecast | reports.product.stock.ledger | current stock + PTCs in progress - open orders (was "Product Stock Ledger") |
 
 ## Purchase Ledger by item (2026-11-19)
 - Reports > Purchase Ledger = `/pLedger` (`purchase.ledger`, GET `?item=material:{id}|product:{id}&dfrom&dto`, searches on the Search button only; `ReportController::purchaseHistory`, view `reports/purchase-history`; access: purchases access OR reports_access): vendor price comparison + every purchase line of the item. It replaced the old Purchase Ledger (all purchases / returns / vendor payments with a running balance; PurchaseController::purchaseLedger / printPurchaseLedger, TransactionRepository::pLedger / pLedgerFilter, views purchaseLedger + print/purchase-ledger) at the user's request 2026-11-19

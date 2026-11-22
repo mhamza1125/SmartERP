@@ -17,6 +17,7 @@ class StockItem extends Model
         'material_id',
         'quantity',
         'stage_id',
+        'rejected_stage_id', // Rejection lines: the work stage the pieces were rejected at
         'component_product_type_id',
         'ptc_virtual',
         'order_id',

@@ -6,7 +6,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Daily Issuance</h4>
+            <h4>Issuance Report</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
             </div>
@@ -73,7 +73,7 @@
                       <td>
                         <div class="btn-group">
                           @if((auth()->user()->can('show', App\Models\Stock::class) || auth()->user()->can('reports_access', App\Models\User::class)))<a class="btn btn-info" href="{{ route('stock.daily.print', ['dfrom' => $dfrom, 'dto' => $dto, 'oid' => $oid, 'tid' => $tid, 'tname' => $tname]) }}" target="_blank">
-                            <i class="fas fa-file-alt"></i> Daily Issuance Report
+                            <i class="fas fa-file-alt"></i> Print Issuance Report
                           </a>@endif
                         </div>
                       </td>

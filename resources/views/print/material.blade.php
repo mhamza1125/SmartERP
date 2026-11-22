@@ -28,7 +28,7 @@
     
     <div class="meta-group">
         <div class="meta-field">
-            <span class="meta-label">Current Price</span>
+            <span class="meta-label">Last Purchase Price</span>
             <span class="meta-value">{{ isset($material['cprice']) ? number_format($material['cprice'], 2) : 'N/A' }}</span>
         </div>
         <div class="meta-field">

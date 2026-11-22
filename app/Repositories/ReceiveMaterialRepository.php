@@ -35,7 +35,7 @@ class ReceiveMaterialRepository implements GlobalInterface
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
             ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
-            ->select('products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname', 'receive_materials.*')
+            ->select('products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname', 'receive_materials.*', 'purchase_items.product_stage_id')
             ->get();
     }
 

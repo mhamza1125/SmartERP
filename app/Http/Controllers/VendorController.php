@@ -152,6 +152,10 @@ class VendorController extends Controller
             'product' => $product,
             'vendor' => $vendor,
             'image' => $image,
+            // Saved buying prices + their changes (the purchase forms show them): purchase users only
+            'buyingPrices' => auth()->user()->can('access', \App\Models\Purchase::class)
+                ? app(\App\Repositories\PartyPriceRepository::class)->partySection('vendor', (int) $id)
+                : null,
         ]);
     }
 

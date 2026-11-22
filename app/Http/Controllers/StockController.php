@@ -130,6 +130,8 @@ class StockController extends Controller
             'pstock' => $isProduct ? $this->stockItemRepository->pStock() : collect(),
             // Product stock per batch (free / reserved for an order), keyed by product type
             'batches' => $isProduct ? $this->stockBatchRepository->stockByProduct() : collect(),
+            // Rejection stock per product size split by the stage it was rejected at
+            'rejectionByStage' => $isProduct ? app(\App\Repositories\RejectionRepository::class)->byStage() : [],
         ]);
     }
 

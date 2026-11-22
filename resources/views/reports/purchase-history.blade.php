@@ -11,7 +11,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Purchase Ledger</h4>
+            <h4>Purchase Price History</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
             </div>

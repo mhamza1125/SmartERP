@@ -194,6 +194,23 @@
                 | <strong class="text-warning">Rejection:</strong> {{ number_format($rejectionStock) }} {{ $firstItem->uname }}
               @endif
             </div>
+            @php $rejectedAt = $rejectionByStage[$productTypeId] ?? collect(); @endphp
+            @if($rejectedAt->isNotEmpty())
+              <h6 class="mb-2">Rejection by Stage</h6>
+              <table class="table table-sm table-bordered mb-3">
+                <thead class="thead-light">
+                  <tr><th>Rejected At</th><th class="text-right">In Rejection Stock</th></tr>
+                </thead>
+                <tbody>
+                  @foreach($rejectedAt as $bucket)
+                    <tr>
+                      <td>{{ $bucket->stage_name }}</td>
+                      <td class="text-right">{{ number_format($bucket->quantity) }} {{ $firstItem->uname }}</td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            @endif
             @php
               $productBatches = $batches[$productTypeId] ?? collect();
               $stageNames = $stageItems->pluck('stname', 'stage_id');

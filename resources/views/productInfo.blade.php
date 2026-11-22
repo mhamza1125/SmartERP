@@ -417,16 +417,12 @@
                   <div class="tab-pane fade" id="priceHistory" role="tabpanel" aria-labelledby="price-history-tab">
                     <h5 class="mt-2">Vendor Price Comparison
                       @if(auth()->user()->can('access', App\Models\Purchase::class) || auth()->user()->can('reports_access', App\Models\User::class))
-                        <a href="{{ route('purchase.ledger', ['item' => 'product:'.$product['product_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Ledger</a>
+                        <a href="{{ route('purchase.ledger', ['item' => 'product:'.$product['product_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Price History</a>
                       @endif
                     </h5>
                     @include('purchaseVendorComparison', ['comparison' => $vendorComparison])
                     @if($vendorPrices)
                       @include('partyPrices', $vendorPrices + ['sizes' => $size, 'stages' => $stage])
-                    @endif
-                    @if($customerPrices)
-                      <hr>
-                      @include('partyPrices', $customerPrices + ['sizes' => $size, 'stages' => $stage])
                     @endif
                     <h5 class="mt-4">Purchase Price History (Vendor Purchases)</h5>
                     @if($purchasePriceHistory->count())

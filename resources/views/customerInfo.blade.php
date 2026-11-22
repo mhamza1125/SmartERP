@@ -50,8 +50,13 @@
               </tbody>
             </table>
 
-            {{-- Prices this customer buys at (order lines of non-cancelled orders) --}}
-            <h5 class="mt-2">Product Prices</h5>
+            {{-- Saved selling prices of this customer (shown on the order form) --}}
+            @if($sellingPrices)
+              @include('partyPriceList', $sellingPrices)
+            @endif
+
+            {{-- Prices this customer bought at (order lines of non-cancelled orders) --}}
+            <h5 class="mt-4">Prices on Past Orders</h5>
             @if($priceSummary->count())
               <div class="table-responsive">
                 <table class="table table-sm table-striped">

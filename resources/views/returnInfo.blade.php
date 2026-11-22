@@ -60,6 +60,7 @@
                         <th class="text-center">Article No</th>
                         <th>Product Name</th>
                         <th class="text-center">Size</th>
+                        <th class="text-center">Returned From</th>
                       @endif
                       <th class="text-center">Return Qty</th>
                       <th class="text-center">Remarks</th>
@@ -80,6 +81,9 @@
                             <td>{{ $item->name ?? '' }}</td>
                           @endif
                           <td class="text-center">{{$item->hname}}</td>
+                          @if($return['purchase_type'] != 'material')
+                            <td class="text-center">{{ $item->from_stage_name ?? $item->sname }}</td>
+                          @endif
                           <td class="text-center">{{$item->quantity}}</td>
                           <td>{{$item->remarks}}</td>
                         </tr>
@@ -98,6 +102,7 @@
                         <th class="text-center">Article No</th>
                         <th>Product Name</th>
                         <th class="text-center">Size</th>
+                        <th class="text-center">Returned From</th>
                       @endif
                       <th class="text-center">Return Qty</th>
                       <th class="text-center">Remarks</th>

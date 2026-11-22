@@ -357,6 +357,8 @@ class ProductRepository implements GlobalInterface
                 ! empty($row->delivery_id) => ['Delivery', 'delivery.show', $row->delivery_id],
                 $row->table_name === 'delivery_returns' => ['Delivery Return', 'delivery-return.show', $row->source_id],
                 $row->table_name === \App\Models\Stock::TABLE_PTC_RELEASE => ['PTC Release', 'ptc.show', $row->ptc_id],
+                $row->table_name === \App\Models\Stock::TABLE_ADJUSTMENT => [(int) $row->stock_type === 1 ? 'Stock Adjustment (+)' : 'Stock Adjustment (-)', 'stockAdjustment.show', $row->stock_id],
+                $row->table_name === \App\Models\Stock::TABLE_PURCHASE_RETURN => [(int) $row->stock_type === 1 ? 'Purchase Return (purchased stage)' : 'Purchase Return (stage returned from)', null, null],
                 (bool) $row->is_ptc_master || ! empty($row->ptc_id) => [(int) $row->stock_type === 2 ? 'PTC Issuance' : 'PTC Receipt', 'ptc.show', $row->ptc_id ?: $row->stock_id],
                 (int) $row->stock_type === 2 => ['Issuance', 'stock.show', $row->stock_id],
                 default => ['Receive Issuance', 'rstock.show', $row->stock_id],

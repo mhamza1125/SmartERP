@@ -213,5 +213,35 @@
     </div>
   </div>
   @endcan
+
+  {{-- Recent price changes: buying (purchases access) and selling (customers access) --}}
+  @if($purchasePriceChanges !== null)
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4><i class="fas fa-tags"></i> Recent Purchase Price Changes (Latest 10)</h4>
+        </div>
+        <div class="card-body">
+          @include('priceChangesTable', ['changes' => $purchasePriceChanges, 'partyType' => 'vendor', 'empty' => 'No vendor price changes yet.'])
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+  @if($sellingPriceChanges !== null)
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4><i class="fas fa-tags"></i> Recent Selling Price Changes (Latest 10)</h4>
+        </div>
+        <div class="card-body">
+          @include('priceChangesTable', ['changes' => $sellingPriceChanges, 'partyType' => 'customer', 'empty' => 'No customer price changes yet.'])
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
 </section>
 @endsection

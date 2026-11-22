@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ReturnMaterial;
+use Illuminate\Support\Facades\DB;
 
 class ReturnMaterialRepository implements GlobalInterface
 {
@@ -33,7 +34,14 @@ class ReturnMaterialRepository implements GlobalInterface
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
             ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
-            ->select('heads.name as hname', 'return_materials.*', 'products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname')
+            ->leftJoin('heads as fromhead', 'fromhead.head_id', '=', 'return_materials.stage_id')
+            ->leftJoin('heads as rejhead', 'rejhead.head_id', '=', 'return_materials.rejected_stage_id')
+            ->select('heads.name as hname', 'return_materials.*', 'products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname',
+                'purchase_items.product_type_id', 'purchase_items.price',
+                // Returned From label: purchased stage, another stage, or "Rejection (Printing)"
+                DB::raw("CASE WHEN return_materials.stage_id IS NULL THEN shead.name
+                    WHEN return_materials.stage_id = ".\App\Models\Stock::STAGE_REJECTED." THEN CONCAT(fromhead.name, ' (', COALESCE(rejhead.name, 'stage not recorded'), ')')
+                    ELSE fromhead.name END as from_stage_name"))
             ->get();
     }
 
@@ -105,6 +113,9 @@ class ReturnMaterialRepository implements GlobalInterface
                 'return_id' => $id,
                 'receive_material_id' => $rid,
                 'quantity' => $quantity,
+                // Return From (ReturnRepository::stageChoices); NULL = the purchased stage
+                'stage_id' => $data['stage_choice'][$key]['stage_id'] ?? null,
+                'rejected_stage_id' => $data['stage_choice'][$key]['rejected_stage_id'] ?? null,
                 'remarks' => $remarks,
             ];
             $return = ReturnMaterial::where('return_id', $id)

@@ -55,10 +55,10 @@
         <input type="hidden" name="material_id" value="{{ $itemId }}">
       @endif
       <div class="row">
-        <div class="col-md-{{ $isProduct ? 4 : 6 }}">
+        <div class="col-md">{{-- vendor / customer: takes the free width --}}
           <div class="form-group">
             <label>{{ $partyLabel }}</label>
-            <select class="form-control select2" name="party_id" required>
+            <select class="form-control select2" name="party_id" required style="width: 100%">
               <option value="" selected disabled>Select {{ $partyLabel }}</option>
               @foreach($parties as $party)
                 @if($isVendor)
@@ -71,10 +71,10 @@
           </div>
         </div>
         @if($isProduct)
-          <div class="col-md-2">
+          <div class="col-md-3">
             <div class="form-group">
               <label>Size</label>
-              <select class="form-control select2" name="product_type_id" required>
+              <select class="form-control select2" name="product_type_id" required style="width: 100%">
                 <option value="" selected disabled>Select Size</option>
                 @foreach($sizes as $size)
                   <option value="{{ $size->product_type_id }}">{{ $size->name }}</option>
@@ -85,7 +85,7 @@
           <div class="col-md-2">
             <div class="form-group">
               <label>Stage</label>
-              <select class="form-control select2" name="stage_id" required>
+              <select class="form-control select2" name="stage_id" required style="width: 100%">
                 @foreach($stages as $stageItem)
                   <option value="{{ $stageItem->head_id }}" {{ $loop->last ? 'selected' : '' }}>{{ $stageItem->name }}</option>
                 @endforeach
@@ -93,13 +93,13 @@
             </div>
           </div>
         @endif
-        <div class="col-md-{{ $isProduct ? 2 : 4 }}">
+        <div class="col-md-2">
           <div class="form-group">
             <label>Price</label>
             <input type="number" step="0.001" min="0.001" class="form-control" name="price" required placeholder="0">
           </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
           <div class="form-group">
             <label>&nbsp;</label>
             <button type="submit" class="btn btn-primary btn-block">Save</button>

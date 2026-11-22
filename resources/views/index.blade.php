@@ -81,6 +81,7 @@
             {{-- Production Section (Stock + Machines) --}}
             @if(auth()->user()->can('stocks_access', App\Models\Stock::class) || 
                 auth()->user()->can('access', App\Models\Stock::class) || 
+                auth()->user()->can('access', App\Models\StockAdjustment::class) ||
                 auth()->user()->can('access', App\Models\Machine::class))
             <li class="dropdown">
                 <a href="#" class="menu-toggle nav-link has-dropdown">
@@ -90,6 +91,9 @@
                     {{-- Stock links --}}
                     @can('stocks_access', App\Models\Stock::class)
                         <li><a class="nav-link" href="{{ route('stock') }}">Inventory Stock</a></li>
+                    @endcan
+                    @can('access', App\Models\StockAdjustment::class)
+                        <li><a class="nav-link" href="{{ route('stockAdjustment') }}">Stock Adjustments</a></li>
                     @endcan
                     @can('access', App\Models\Stock::class)
                         <li><a class="nav-link" href="{{ route('ptc') }}">PTC</a></li>
@@ -270,13 +274,13 @@
               <a href="#" class="menu-toggle nav-link has-dropdown"><i
                   data-feather="briefcase"></i><span>Reports</span></a>
               <ul class="dropdown-menu">
-                <li><a class="nav-link" href="{{ route('stock.daily') }}">Daily Issuance</a></li>
-                <li><a class="nav-link" href="{{ route('rstock.daily') }}">Daily Receiving</a></li>
-                <li><a class="nav-link" href="{{ route('material.detail') }}">Material Ledger</a></li>
-                <li><a class="nav-link" href="{{ route('product.ledger') }}">Product Purchase Ledger</a></li>
-                <li><a class="nav-link" href="{{ route('purchase.ledger') }}">Purchase Ledger</a></li>
-                <li><a class="nav-link" href="{{ route('reports.product.stock.requirements') }}">Product Stock Requirements</a></li>
-                <li><a class="nav-link" href="{{ route('reports.product.stock.ledger') }}">Product Stock Ledger</a></li>
+                <li><a class="nav-link" href="{{ route('stock.daily') }}">Issuance Report</a></li>
+                <li><a class="nav-link" href="{{ route('rstock.daily') }}">Receiving Report</a></li>
+                <li><a class="nav-link" href="{{ route('material.detail') }}">Material Stock Ledger</a></li>
+                <li><a class="nav-link" href="{{ route('product.ledger') }}">Product Stock Movements</a></li>
+                <li><a class="nav-link" href="{{ route('purchase.ledger') }}">Purchase Price History</a></li>
+                <li><a class="nav-link" href="{{ route('reports.product.stock.requirements') }}">Stock Requirements</a></li>
+                <li><a class="nav-link" href="{{ route('reports.product.stock.ledger') }}">Product Stock Forecast</a></li>
               </ul>
             </li>
             @endcan

@@ -1,7 +1,7 @@
 @extends('print.layout')
 
-@section('title', 'Daily_Receiving_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
-@section('doc_title', 'Daily Receiving Report')
+@section('title', 'Receiving_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
+@section('doc_title', 'Receiving Report')
 
 @section('content')
 

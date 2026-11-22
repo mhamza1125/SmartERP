@@ -6,7 +6,7 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-header">
-          <h4>Product Stock Ledger Report</h4>
+          <h4>Product Stock Forecast</h4>
           <div class="card-header-action">
             @if(auth()->user()->can('reports_access', App\Models\User::class))<a href="{{ route('reports.product.stock.ledger') }}" class="btn btn-primary">
               <i class="fas fa-redo"></i> Reset

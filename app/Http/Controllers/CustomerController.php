@@ -100,6 +100,8 @@ class CustomerController extends Controller
             'image' => $image,
             'priceHistory' => $priceHistory,
             'priceSummary' => $orderItemRepository->customerPriceSummary($priceHistory),
+            // Saved selling prices + their changes (the order form shows them)
+            'sellingPrices' => app(\App\Repositories\PartyPriceRepository::class)->partySection('customer', (int) $id),
         ]);
     }
 

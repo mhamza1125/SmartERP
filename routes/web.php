@@ -34,6 +34,7 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\DeliveryReturnController;
 use App\Http\Controllers\PackingListController;
 use App\Http\Controllers\StockBatchController;
+use App\Http\Controllers\StockAdjustmentController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------------------
@@ -166,17 +167,17 @@ Route::get('/editMaterial/{id}', [MaterialController::class, 'edit'])->name('mat
 Route::post('/material/{id}', [MaterialController::class, 'update'])->name('material.update');
 Route::get('/material/{id}/delete-check', [MaterialController::class, 'deleteCheck'])->name('material.deleteCheck');
 Route::delete('/material/{id}', [MaterialController::class, 'destroy'])->name('material.destroy');
-Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
-Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
-Route::get('/materialDetail/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
+Route::get('/reports/material-ledger', [MaterialController::class, 'detail'])->name('material.detail');
+Route::post('/reports/material-ledger', [MaterialController::class, 'detail'])->name('material.filter');
+Route::get('/reports/material-ledger/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
 // Vendor (buying) / customer (selling) prices: set on the material / product page, read by the purchase / order forms
 Route::get('/party-price/lookup', [PartyPriceController::class, 'lookup'])->name('partyPrice.lookup');
 Route::post('/party-price', [PartyPriceController::class, 'store'])->name('partyPrice.store');
 Route::get('/party-price/{id}/delete-check', [PartyPriceController::class, 'deleteCheck'])->name('partyPrice.deleteCheck');
 Route::delete('/party-price/{id}', [PartyPriceController::class, 'destroy'])->name('partyPrice.destroy');
 // Product Purchase Ledger (product purchases, returns and stock movements)
-Route::get('/productLedger', [ProductController::class, 'ledger'])->name('product.ledger');
-Route::post('/productLedger', [ProductController::class, 'ledger'])->name('product.ledger.filter');
+Route::get('/reports/product-movements', [ProductController::class, 'ledger'])->name('product.ledger');
+Route::post('/reports/product-movements', [ProductController::class, 'ledger'])->name('product.ledger.filter');
 
 // Machine
 Route::get('/machine', [MachineController::class, 'index'])->name('machine');
@@ -276,7 +277,7 @@ Route::get('/ajaxOrderPurchaseItems', [PurchaseController::class, 'ajaxOrderPurc
 Route::get('/addProductPurchase', [PurchaseController::class, 'create2'])->name('productPurchase.add');
 Route::get('/editProductPurchase/{id}', [PurchaseController::class, 'edit2'])->name('productPurchase.edit');
 // Purchase Ledger: vendors, prices and purchases of one material / product (replaced the old ledger 2026-11-19)
-Route::get('/pLedger', [ReportController::class, 'purchaseHistory'])->name('purchase.ledger');
+Route::get('/reports/purchase-prices', [ReportController::class, 'purchaseHistory'])->name('purchase.ledger');
 
 // Purchase Receive
 Route::get('/receive', [ReceiveController::class, 'index'])->name('receive');
@@ -311,6 +312,13 @@ Route::post('/igroup/{id}', [IGroupController::class, 'update'])->name('igroup.u
 
 // Stock / Issuance
 Route::get('/stock', [StockController::class, 'index'])->defaults('type', 'product')->name('stock');
+// Stock adjustments: general increase / decrease of material or product stock (any stage, incl. rejection)
+Route::get('/stock-adjustment', [StockAdjustmentController::class, 'index'])->name('stockAdjustment');
+Route::get('/addStockAdjustment', [StockAdjustmentController::class, 'create'])->name('stockAdjustment.add');
+Route::post('/stock-adjustment', [StockAdjustmentController::class, 'store'])->name('stockAdjustment.store');
+Route::get('/stock-adjustment/{id}', [StockAdjustmentController::class, 'show'])->name('stockAdjustment.show');
+Route::get('/stock-adjustment/{id}/delete-check', [StockAdjustmentController::class, 'deleteCheck'])->name('stockAdjustment.deleteCheck');
+Route::delete('/stock-adjustment/{id}', [StockAdjustmentController::class, 'destroy'])->name('stockAdjustment.destroy');
 Route::get('/stock/material', [StockController::class, 'index'])->defaults('type', 'material')->name('stock.material');
 Route::get('/stock/machine', [StockController::class, 'index'])->defaults('type', 'machine')->name('stock.machine');
 // Stock batches (lots, order reservations)
@@ -321,9 +329,9 @@ Route::prefix('stock/batches')->group(function () {
     Route::post('/{id}/split', [StockBatchController::class, 'split'])->name('batch.split');
 });
 Route::get('/issue', [StockController::class, 'issue'])->name('issue');
-Route::get('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.daily');
-Route::post('/dailyIssue', [StockController::class, 'dailyIssue'])->name('stock.filter');
-Route::get('/dailyIssue/print', [StockController::class, 'printDailyIssue'])->name('stock.daily.print');
+Route::get('/reports/issuance', [StockController::class, 'dailyIssue'])->name('stock.daily');
+Route::post('/reports/issuance', [StockController::class, 'dailyIssue'])->name('stock.filter');
+Route::get('/reports/issuance/print', [StockController::class, 'printDailyIssue'])->name('stock.daily.print');
 Route::get('/addIssue', [StockController::class, 'create'])->name('stock.add');
 Route::get('/addGIssue', [StockController::class, 'gcreate'])->name('stock.gadd');
 Route::post('/gissue', [StockController::class, 'gstore'])->name('stock.gstore');
@@ -383,9 +391,9 @@ Route::get('/ajaxPtcStages', [StockController::class, 'ajaxPtcStages'])->name('a
 
 // Receive Issuance
 Route::get('/receiveIssue', [StockController::class, 'rIssue'])->name('receiveIssue');
-Route::get('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.daily');
-Route::post('/dailyReceive', [StockController::class, 'dailyReceive'])->name('rstock.filter');
-Route::get('/dailyReceive/print', [StockController::class, 'printDailyReceive'])->name('rstock.daily.print');
+Route::get('/reports/receiving', [StockController::class, 'dailyReceive'])->name('rstock.daily');
+Route::post('/reports/receiving', [StockController::class, 'dailyReceive'])->name('rstock.filter');
+Route::get('/reports/receiving/print', [StockController::class, 'printDailyReceive'])->name('rstock.daily.print');
 Route::get('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::post('/addReceiveIssue/{id}', [StockController::class, 'rCreate'])->name('rstock.add');
 Route::get('/receiveIssue/{id}', [StockController::class, 'rShow'])->name('rstock.show');
@@ -473,8 +481,23 @@ Route::get('/oPayment/{id}', [TransactionController::class, 'showOPayment'])->na
 Route::get('/editOPayment/{id}', [TransactionController::class, 'editOPayment'])->name('transaction.editOPayment');
 
 // Reports
-Route::get('/reports/product-stock-requirements', [ReportController::class, 'productStockRequirements'])->name('reports.product.stock.requirements');
-Route::get('/reports/product-stock-ledger', [ReportController::class, 'productStockLedger'])->name('reports.product.stock.ledger');
+Route::get('/reports/stock-requirements', [ReportController::class, 'productStockRequirements'])->name('reports.product.stock.requirements');
+Route::get('/reports/product-stock-forecast', [ReportController::class, 'productStockLedger'])->name('reports.product.stock.ledger');
+// Old report URLs (renamed 2026-11-22) keep working: redirect with the query string
+foreach ([
+    '/dailyIssue' => 'stock.daily',
+    '/dailyIssue/print' => 'stock.daily.print',
+    '/dailyReceive' => 'rstock.daily',
+    '/dailyReceive/print' => 'rstock.daily.print',
+    '/materialDetail' => 'material.detail',
+    '/materialDetail/print' => 'material.detail.print',
+    '/productLedger' => 'product.ledger',
+    '/pLedger' => 'purchase.ledger',
+    '/reports/product-stock-ledger' => 'reports.product.stock.ledger',
+    '/reports/product-stock-requirements' => 'reports.product.stock.requirements',
+] as $oldUrl => $routeName) {
+    Route::get($oldUrl, fn (\Illuminate\Http\Request $request) => redirect()->route($routeName, $request->query(), 301));
+}
 
 // Standard Print Routes
 Route::get('/order/print/{id}', [OrderController::class, 'printOrder'])->name('order.print');

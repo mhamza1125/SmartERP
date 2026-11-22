@@ -1233,7 +1233,7 @@ $(document).ready(function () {
         var returnQuantityInputs = document.querySelectorAll('.return-qty');
         returnQuantityInputs.forEach(function (input) {
             var row = input.closest('tr');
-            var receiveQuantityCell = row.querySelector('td:nth-child(5)');
+            var receiveQuantityCell = row.querySelector('td.js-receive-qty'); // Returned / Receive Qty cell
             var receiveQuantity = parseInt(receiveQuantityCell.textContent.split('/')[1].trim());
             var returnedQuantity = parseInt(receiveQuantityCell.textContent.split('/')[0].trim()) || 0;
             var availableToReturn = receiveQuantity - returnedQuantity;
@@ -1251,7 +1251,7 @@ $(document).ready(function () {
         var ereturnQuantityInputs = document.querySelectorAll('.ereturn-qty');
         ereturnQuantityInputs.forEach(function (input) {
             var row = input.closest('tr');
-            var receiveQuantityCell = row.querySelector('td:nth-child(5)');
+            var receiveQuantityCell = row.querySelector('td.js-receive-qty'); // Returned / Receive Qty cell
             var availableToReturn = parseInt(receiveQuantityCell.textContent);
 
             input.addEventListener('input', function () {

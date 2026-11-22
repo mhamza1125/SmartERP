@@ -119,6 +119,11 @@
               <blockquote>No Products</blockquote>
             @endif
 
+            {{-- Saved buying prices of this vendor (shown on the purchase forms) --}}
+            @if($buyingPrices)
+              @include('partyPriceList', $buyingPrices)
+            @endif
+
             @if($image->count())
               <h5>Images</h5>
               <div id="aniimated-thumbnials" class="list-unstyled row clearfix">

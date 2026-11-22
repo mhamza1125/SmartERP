@@ -149,7 +149,14 @@ class DashboardController extends Controller
                 });
         }
 
+        // Recent price changes: buying prices for purchase users, selling prices for customer users
+        $partyPrices = app(\App\Repositories\PartyPriceRepository::class);
+        $purchasePriceChanges = $user->can('access', \App\Models\Purchase::class) ? $partyPrices->changes('vendor', null, 10) : null;
+        $sellingPriceChanges = $user->can('access', \App\Models\Customer::class) ? $partyPrices->changes('customer', null, 10) : null;
+
         return view('dashboard', [
+            'purchasePriceChanges' => $purchasePriceChanges,
+            'sellingPriceChanges' => $sellingPriceChanges,
             'ordersInProgress' => $ordersInProgress,
             'runningPtcs' => $runningPtcs,
             'expenseThisMonth' => $expenseThisMonth ?? 0,

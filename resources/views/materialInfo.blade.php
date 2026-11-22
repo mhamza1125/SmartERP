@@ -30,7 +30,7 @@
                   <tr>
                     <td><b>Material Type: </b> {{$material['mtname']}}</td>
                     <td><b>Current Vendor: </b> {{$material['vendor_no']}} - {{$material['fname']}}</td>
-                    <td><b>Current Price (Pkr): </b> {{$material['cprice']}}</td>
+                    <td><b>Last Purchase Price (Pkr): </b> {{$material['cprice']}}</td>
                   </tr>
                   <tr>
                     <td><b>Current Stock: </b> {{ number_format($currentStock ?? 0) }} {{$material['uname']}}</td>
@@ -57,7 +57,7 @@
               <div class="col-md-12">
                 <h5>Vendor Price Comparison
                   @if(auth()->user()->can('access', App\Models\Purchase::class) || auth()->user()->can('reports_access', App\Models\User::class))
-                    <a href="{{ route('purchase.ledger', ['item' => 'material:'.$material['material_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Ledger</a>
+                    <a href="{{ route('purchase.ledger', ['item' => 'material:'.$material['material_id']]) }}" class="btn btn-sm btn-outline-primary float-right" target="_blank">Purchase Price History</a>
                   @endif
                 </h5>
                 @include('purchaseVendorComparison', ['comparison' => $vendorComparison, 'unit' => $material['uname']])

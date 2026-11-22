@@ -10,6 +10,7 @@
     'ptc.show' => App\Models\Stock::class,
     'stock.show' => App\Models\Stock::class,
     'rstock.show' => App\Models\Stock::class,
+    'stockAdjustment.show' => App\Models\StockAdjustment::class,
   ];
   $selected = $productTypeId ? $productTypes->firstWhere('product_type_id', $productTypeId) : null;
   $qty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2), '0'), '.');
@@ -20,7 +21,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h4>Product Purchase Ledger</h4>
+            <h4>Product Stock Movements</h4>
             <div class="card-header-action">
               <a href="{{ url()->previous() }}" class="btn btn-primary">Back</a>
             </div>

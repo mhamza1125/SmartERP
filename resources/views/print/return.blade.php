@@ -75,6 +75,7 @@
                 <th class="text-center" style="width: 14%">{{ $isMaterial ? 'Material No' : 'Article No' }}</th>
                 <th class="text-left">{{ $isMaterial ? 'Material' : 'Product' }}</th>
                 <th class="text-center" style="width: 12%">{{ $isMaterial ? 'Unit' : 'Size' }}</th>
+                @unless($isMaterial)<th class="text-center">Returned From</th>@endunless
                 <th class="num" style="width: 12%">QTY</th>
                 <th class="text-left" style="width: 22%">Remarks</th>
             </tr>
@@ -86,6 +87,7 @@
                 <td class="text-center">{{ $isMaterial ? ($item->material_no ?? '') : ($item->article_no ?? '') }}</td>
                 <td class="text-left">{{ $item->name ?? '' }}</td>
                 <td class="text-center">{{ $item->hname ?? '' }}</td>
+                @unless($isMaterial)<td class="text-center">{{ $item->from_stage_name ?? $item->sname }}</td>@endunless
                 <td class="num">{{ number_format($item->quantity ?? 0, 2) }}</td>
                 <td class="text-left">{{ $item->remarks ?? '' }}</td>
             </tr>
@@ -93,7 +95,7 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="4" class="text-right">Total</td>
+                <td colspan="{{ $isMaterial ? 4 : 5 }}" class="text-right">Total</td>
                 <td class="num">{{ number_format($returnMaterial->sum('quantity'), 2) }}</td>
                 <td></td>
             </tr>

@@ -36,6 +36,7 @@ final class PermissionCatalog
         'Production & Stock' => [
             'issuances' => ['PTC & Issuances', 'PTCs (issue, receive, release, close), issuances and their receivings, machine material issuance, issuance groups'],
             'stocks' => ['Inventory Stock', 'Product / material / machine stock pages and stock batches (Edit = reserve or split batches)'],
+            'stock_adjustments' => ['Stock Adjustments', 'Increase / decrease material or product stock (any stage, including rejection). No edit: delete and enter again'],
             'machines' => ['Machines', 'Machine records'],
         ],
         'Purchasing' => [

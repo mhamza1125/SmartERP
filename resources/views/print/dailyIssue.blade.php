@@ -1,7 +1,7 @@
 @extends('print.layout')
 
-@section('title', 'Daily_Issuance_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
-@section('doc_title', 'Daily Issuance Report')
+@section('title', 'Issuance_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
+@section('doc_title', 'Issuance Report')
 
 @section('content')
 {{-- Report Header Information --}}

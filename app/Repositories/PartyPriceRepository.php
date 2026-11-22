@@ -283,6 +283,95 @@ class PartyPriceRepository implements GlobalInterface
     // ---------------------------------------------------------------- display
 
     /**
+     * Data of the partyPriceList partial (vendor / customer page): the party's current prices, its
+     * price changes and the items for the Set Price form (materials for vendors only).
+     */
+    public function partySection(string $partyType, int $partyId): array
+    {
+        $productTypes = app(ProductRepository::class)->activeTypes();
+
+        return [
+            'partyType' => $partyType,
+            'partyId' => $partyId,
+            'current' => $this->currentForParty($partyType, $partyId),
+            'changes' => $this->changes($partyType, $partyId),
+            'materials' => $partyType === PartyPrice::PARTY_VENDOR ? app(MaterialRepository::class)->all() : collect(),
+            'productTypes' => $productTypes,
+            'stagesByType' => app(RejectionRepository::class)->stagesForTypes($productTypes),
+        ];
+    }
+
+    /**
+     * Current prices of one vendor / customer, every item (materials and product sizes), with names.
+     */
+    public function currentForParty(string $partyType, int $partyId)
+    {
+        return $this->withItemNames(PartyPrice::query(), 'party_prices', $partyType)
+            ->where('party_prices.party_id', $partyId)
+            ->addSelect('party_prices.party_price_id', 'party_prices.price', 'party_prices.source', 'party_prices.doc_id', 'party_prices.updated_at')
+            ->orderBy('item_name')
+            ->get();
+    }
+
+    /**
+     * Price changes, newest first: of one vendor / customer ($partyId), or of every vendor / customer
+     * (dashboard, $limit rows).
+     */
+    public function changes(string $partyType, ?int $partyId = null, ?int $limit = null)
+    {
+        return $this->withItemNames(PartyPriceLog::query(), 'party_price_logs', $partyType)
+            ->when($partyId, fn ($q) => $q->where('party_price_logs.party_id', $partyId))
+            ->leftJoin('users', 'users.id', '=', 'party_price_logs.created_by')
+            ->addSelect('party_price_logs.party_price_log_id', 'party_price_logs.old_price', 'party_price_logs.price',
+                'party_price_logs.source', 'party_price_logs.doc_id', 'party_price_logs.created_at', 'users.name as user_name')
+            ->orderBy('party_price_logs.created_at', 'desc')
+            ->orderBy('party_price_logs.party_price_log_id', 'desc')
+            ->when($limit, fn ($q) => $q->limit($limit))
+            ->get();
+    }
+
+    /**
+     * Party / item / document names for prices of any item: item_type (material | product), item_id
+     * (material_id / product_id), item_name, size_name, stage_name, party_no, party_name, doc_no.
+     */
+    private function withItemNames($query, string $table, string $partyType)
+    {
+        $query->where("$table.party_type", $partyType)
+            ->leftJoin('materials', function ($join) use ($table) {
+                $join->on('materials.material_id', '=', "$table.material_id")->where("$table.material_id", '>', 0);
+            })
+            ->leftJoin('heads as munit', 'munit.head_id', '=', 'materials.unit_id')
+            ->leftJoin('product_types', 'product_types.product_type_id', '=', "$table.product_type_id")
+            ->leftJoin('products', 'products.product_id', '=', 'product_types.product_id')
+            ->leftJoin('heads as size', 'size.head_id', '=', 'product_types.size_id')
+            ->leftJoin('heads as stage', 'stage.head_id', '=', "$table.stage_id")
+            ->select("$table.party_id", "$table.material_id", "$table.product_type_id", "$table.stage_id",
+                'size.name as size_name', 'stage.name as stage_name', 'munit.name as unit_name',
+                DB::raw("CASE WHEN $table.material_id > 0 THEN 'material' ELSE 'product' END as item_type"),
+                DB::raw("CASE WHEN $table.material_id > 0 THEN materials.material_id ELSE products.product_id END as item_id"),
+                DB::raw("CASE WHEN $table.material_id > 0 THEN CONCAT(materials.material_no, ' - ', materials.name)
+                    ELSE CONCAT(products.article_no, ' - ', products.name) END as item_name"));
+
+        if ($partyType === PartyPrice::PARTY_VENDOR) {
+            $query->leftJoin('vendors', 'vendors.vendor_id', '=', "$table.party_id")
+                ->leftJoin('purchases', function ($join) use ($table) {
+                    $join->on('purchases.purchase_id', '=', "$table.doc_id")->where("$table.source", PartyPrice::SOURCE_PURCHASE);
+                })
+                ->addSelect('vendors.vendor_no as party_no', 'vendors.fname as party_name', 'purchases.purchase_no as doc_no');
+        } else {
+            $query->leftJoin('customers', 'customers.customer_id', '=', "$table.party_id")
+                ->leftJoin('heads as currency', 'currency.head_id', '=', 'customers.currency_id')
+                ->leftJoin('orders', function ($join) use ($table) {
+                    $join->on('orders.order_id', '=', "$table.doc_id")->where("$table.source", PartyPrice::SOURCE_ORDER);
+                })
+                ->addSelect('customers.customer_no as party_no', DB::raw("TRIM(CONCAT(COALESCE(customers.fname, ''), ' ', COALESCE(customers.lname, ''))) as party_name"),
+                    'currency.name as currency_name', 'orders.job_no as doc_no');
+        }
+
+        return $query;
+    }
+
+    /**
      * Data of the partyPrices partial: current prices, history and the vendors / customers for
      * the Set Price form.
      */

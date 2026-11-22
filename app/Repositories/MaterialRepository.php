@@ -202,28 +202,28 @@ class MaterialRepository implements GlobalInterface
 
     public function store(array $data)
     {
+        // The material forms no longer take a price (2026-11-22): prices are set per vendor
+        // (Vendor Prices). cprice = last purchase price, 0 until the first purchase.
+        $data['cprice'] = $data['cprice'] ?? 0;
         $data['created_by'] = auth()->id();
         $store = Material::create($data);
-        $this->logPrice($store->material_id, $store->cprice, $store->vendor_id, MaterialPriceLog::SOURCE_OPENING);
+        if ((float) $store->cprice > 0) {
+            $this->logPrice($store->material_id, $store->cprice, $store->vendor_id, MaterialPriceLog::SOURCE_OPENING);
+        }
 
         return $store->material_id;
     }
 
     /**
-     * Edit Material form: saves the material and logs the price when its price or
-     * vendor changed. Purchases and processing update cprice through update() and are
-     * not logged, since their price already lives on the purchase line.
+     * Edit Material form: saves the material. The form has no price field any more, so the
+     * price (last purchase price, set by purchases / processing) is left as it is; older
+     * price edits stay in material_price_logs.
      */
     public function updateFromForm($id, array $data)
     {
+        unset($data['cprice']);
         $material = Material::findOrFail($id);
-        $oldPrice = (float) $material->cprice;
-        $oldVendor = (int) $material->vendor_id;
         $material->update($data);
-
-        if ((float) $material->cprice !== $oldPrice || (int) $material->vendor_id !== $oldVendor) {
-            $this->logPrice($material->material_id, $material->cprice, $material->vendor_id, MaterialPriceLog::SOURCE_EDIT);
-        }
 
         return $material->material_id;
     }

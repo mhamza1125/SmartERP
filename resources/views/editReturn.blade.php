@@ -65,6 +65,7 @@
                         <th>Item / Material</th>
                         <th>Units</th>
                         <th>Receive Qty</th>
+                        <th>Return From</th>
                         <th>Return Qty</th>
                         <th>Remarks</th>
                       </tr>
@@ -72,8 +73,11 @@
                     <tbody>
                       @if($receiveMaterial->count())
                         @foreach($receiveMaterial as $key => $item)
-                        @php if($item->receive_material_id == $returnMaterial[$key]['receive_material_id']){
-                          $qty = $returnMaterial[$key]['quantity'];}else{$qty = 0;} @endphp
+                        @php
+                          // saved line of this receive line (matched by id, not by position)
+                          $savedLine = $returnMaterial->firstWhere('receive_material_id', $item->receive_material_id);
+                          $qty = $savedLine->quantity ?? 0;
+                        @endphp
                         <tr>
                           <td>{{ $loop->index + 1 }}</td>
                           {{-- <td>{{$item->material_no}}</td> --}}
@@ -85,11 +89,12 @@
                             @endif
                             <input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
                           <td>{{$item->hname}}</td>
-                          <td>{{$item->quantity}}</td>
+                          <td class="js-receive-qty">{{$item->quantity}}</td>
+                          <td style="min-width: 200px">@include('returnFromStage', ['isMaterial' => $return['purchase_type'] == 'material', 'selectedStage' => $savedLine->stage_id ?? null, 'selectedRejected' => $savedLine->rejected_stage_id ?? null])</td>
                           <td>
                             <input type="number" class="form-control ereturn-qty" name="quantity[]" value="{{$qty}}">
                           </td>
-                          <td><textarea class="form-control" name="remarks[]">{{ $returnMaterial[$key]['remarks'] }}</textarea></td>
+                          <td><textarea class="form-control" name="remarks[]">{{ $savedLine->remarks ?? '' }}</textarea></td>
                         </tr>
                         @endforeach
                       @endif
@@ -102,6 +107,7 @@
                         <th>Item / Material</th>
                         <th>Units</th>
                         <th>Receive Qty</th>
+                        <th>Return From</th>
                         <th>Return Qty</th>
                         <th>Remarks</th>
                       </tr>
@@ -130,4 +136,12 @@
   </div>
 </section>
 <script> var isReturnPage = true; </script>
+@push('scripts')
+<script>
+  // Return From = Rejection: ask the stage the pieces were rejected at
+  $(document).on('change', '.js-return-from', function () {
+    $(this).siblings('.js-rejected-at').toggleClass('d-none', $(this).val() != '{{ \App\Models\Stock::STAGE_REJECTED }}');
+  });
+</script>
+@endpush
 @endsection

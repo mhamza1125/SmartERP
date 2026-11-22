@@ -22,9 +22,18 @@ class Stock extends Model
     const STATUS_PTC_COMPLETED = 7; // PTC finished: its end stage was fully received
     const STATUS_PTC_RELEASED = 8;  // PTC virtual stock released to general stock
     const STATUS_PTC_CLOSED = 9;    // PTC stopped before its end stage (closed early)
+    const STATUS_ADJUSTMENT = 10;   // Stock adjustment (increase = stock_type 1, decrease = 2)
+    const STATUS_RETURN_STAGE = 11; // Purchase return taken from another stage (stage correction pair)
 
     // table_name of a PTC release record (stock_type = 1, ptc_id = PTC master)
     const TABLE_PTC_RELEASE = 'ptc_release';
+
+    // table_name of a stock adjustment (source_id unused)
+    const TABLE_ADJUSTMENT = 'stock_adjustments';
+
+    // table_name of the stage correction of a purchase return line (source_id = return_material_id):
+    // stock_type 1 = back in at the purchased stage, stock_type 2 = out of the stage it was returned from
+    const TABLE_PURCHASE_RETURN = 'purchase_returns';
 
     // Stage head used for rejected pieces on receive forms
     const STAGE_REJECTED = 105;

@@ -1,7 +1,7 @@
 @extends('print.layout')
 
-@section('title', 'Material_Detail_Report_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
-@section('doc_title', 'Material Detail Report')
+@section('title', 'Material_Stock_Ledger_' . formatDate($dfrom ?? now()) . '_to_' . formatDate($dto ?? now()))
+@section('doc_title', 'Material Stock Ledger')
 
 @section('content')
 {{-- Report Header Information --}}
@@ -30,7 +30,7 @@
 {{-- Material Ledger Items --}}
 @if(isset($materialItem) && $materialItem->count() > 0)
 <div class="items-section avoid-break">
-    <h3>Material Ledger</h3>
+    <h3>Material Stock Ledger</h3>
     <table class="print-table">
         <thead>
             <tr>

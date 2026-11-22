@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Customer;
 use App\Models\PartyPrice;
 use App\Models\Purchase;
 use App\Repositories\PartyPriceRepository;
@@ -234,12 +233,9 @@ class ProductController extends Controller
             'productComponents' => $productComponents,
             'purchasePriceHistory' => $purchaseHistory = $purchaseItemRepository->productPriceHistory($id),
             'vendorComparison' => $purchaseItemRepository->vendorComparison($purchaseHistory),
-            // Buying prices: purchase module users; selling prices: customer module users
+            // Buying prices (purchase module users). Selling prices are set / shown on the customer page
             'vendorPrices' => auth()->user()->can('access', Purchase::class)
                 ? $partyPriceRepository->section(PartyPrice::PARTY_VENDOR, 'product', (int) $id)
-                : null,
-            'customerPrices' => auth()->user()->can('access', Customer::class)
-                ? $partyPriceRepository->section(PartyPrice::PARTY_CUSTOMER, 'product', (int) $id)
                 : null,
             'wageHistory' => $this->productCostRepository->wageHistory(null, null, (int) $id),
         ]);

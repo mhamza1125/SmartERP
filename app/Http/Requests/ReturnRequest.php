@@ -30,6 +30,10 @@ class ReturnRequest extends FormRequest
             'receive_material_id.*' => 'required',
             'quantity.*' => 'required',
             'remarks' => '',
+            // Product lines: stage the pieces are returned from (empty = the purchased stage);
+            // from Rejection also the stage they were rejected at (0 = not recorded)
+            'stage_id.*' => 'nullable|integer|min:0',
+            'rejected_stage_id.*' => 'nullable|integer|min:0',
         ];
     }
 }

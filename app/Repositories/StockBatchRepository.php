@@ -436,6 +436,8 @@ class StockBatchRepository implements GlobalInterface
             (bool) $row->ptc_id => ['PTC issue', $ptcNo.' / '.Stock::ptcDisplayNo($row->stock_no, $row->ptc_no), ['ptc.show', $row->ptc_id]],
             $row->table_name === 'delivery' => ['Delivery', 'Delivery '.($row->delivery_id ?? $row->stock_no), $row->delivery_id ? ['delivery.show', $row->delivery_id] : null],
             $row->table_name === 'delivery_returns' => ['Delivery return', $row->stock_no, $row->source_id ? ['delivery-return.show', $row->source_id] : null],
+            $row->table_name === Stock::TABLE_ADJUSTMENT => [(int) $row->stock_type === 1 ? 'Stock adjustment (+)' : 'Stock adjustment (-)', $row->stock_no, ['stockAdjustment.show', $row->stock_id]],
+            $row->table_name === Stock::TABLE_PURCHASE_RETURN => [(int) $row->stock_type === 1 ? 'Purchase return (back to purchased stage)' : 'Purchase return (taken from this stage)', $row->stock_no, null],
             (int) $row->stock_id === 1 => ['Opening stock', 'Opening stock', null],
             (int) $row->stock_type === 1 => ['Issuance receipt', $row->stock_no, ['rstock.show', $row->stock_id]],
             default => ['Issuance', $row->stock_no, ['stock.show', $row->stock_id]],
@@ -985,6 +987,19 @@ class StockBatchRepository implements GlobalInterface
 
         if ($header->table_name === 'delivery_returns' && ($allocation = $this->deliveryReturnAllocation($header, $line))) {
             return $allocation;
+        }
+
+        // Purchase return taken from another stage: the purchased-stage half goes back into the
+        // purchase's batch, which the return line itself takes out of (net zero for that batch)
+        if ($header->table_name === Stock::TABLE_PURCHASE_RETURN && $header->source_id) {
+            $purchaseBatch = DB::table('return_materials')
+                ->join('receive_materials', 'receive_materials.receive_material_id', '=', 'return_materials.receive_material_id')
+                ->where('return_materials.return_material_id', $header->source_id)
+                ->value('receive_materials.batch_id');
+
+            // A receipt without a batch (older data) is outside the batches together with its
+            // returns, so the line that cancels the return stays outside them too
+            return $purchaseBatch ? [(int) $purchaseBatch => $quantity] : [];
         }
 
         if ($header->ptc_id) {

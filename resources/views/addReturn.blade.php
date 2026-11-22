@@ -66,6 +66,7 @@
                         <th>Item / Material</th>
                         <th>Units</th>
                         <th>Returned / Receive Qty</th>
+                        <th>Return From</th>
                         <th>Return Qty</th>
                         <th>Remarks</th>
                       </tr>
@@ -84,7 +85,8 @@
                             @endif
                             <input type="hidden" name="receive_material_id[]" value="{{$item->receive_material_id}}"></td>
                           <td>{{$item->hname}}</td>
-                          <td>{{$item->rqty}} / {{$item->quantity}}</td>
+                          <td class="js-receive-qty">{{$item->rqty}} / {{$item->quantity}}</td>
+                          <td style="min-width: 200px">@include('returnFromStage', ['isMaterial' => $receive['purchase_type'] == 'material', 'selectedStage' => old('stage_id.'.$loop->index), 'selectedRejected' => old('rejected_stage_id.'.$loop->index)])</td>
                           <td>
                             <input type="number" class="form-control return-qty" name="quantity[]" placeholder="0">
                           </td>
@@ -101,6 +103,7 @@
                         <th>Item / Material</th>
                         <th>Units</th>
                         <th>Returned / Receive Qty</th>
+                        <th>Return From</th>
                         <th>Return Qty</th>
                         <th>Remarks</th>
                       </tr>
@@ -129,4 +132,13 @@
   </div>
 </section>
 <script> var isReturnPage = false; </script>
+@push('scripts')
+<script>
+  // Return From = Rejection: ask the stage the pieces were rejected at
+  $(document).on('change', '.js-return-from', function () {
+    $(this).siblings('.js-rejected-at').toggleClass('d-none', $(this).val() != '{{ \App\Models\Stock::STAGE_REJECTED }}');
+  });
+</script>
+@endpush
+
 @endsection

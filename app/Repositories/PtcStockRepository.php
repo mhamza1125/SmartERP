@@ -969,13 +969,16 @@ class PtcStockRepository implements GlobalInterface
                     $wages = $this->productCostRepository->wages($line['product_type_id'], $workLog, $header['employee_id'], $header['table_name']) ?: '0';
                 }
 
+                $stageId = $line['component_id'] ? $this->componentReturnStage($line, $componentStages) : $line['stage_id'];
                 $this->stockItemRepository->store([
                     'stock_id' => $receiveId,
                     'product_type_id' => $line['product_type_id'],
                     'material_id' => $line['material_id'],
                     'component_product_type_id' => $line['component_id'],
                     'quantity' => $line['quantity'],
-                    'stage_id' => $line['component_id'] ? $this->componentReturnStage($line, $componentStages) : $line['stage_id'],
+                    'stage_id' => $stageId,
+                    // Rejected / damaged pieces: rejected at the stage this issuance was worked for
+                    'rejected_stage_id' => (int) $stageId === Stock::STAGE_REJECTED ? $receiveStageId : null,
                     'ptc_virtual' => $isProduct ? 1 : 0,
                     'work_logs' => $workLog,
                     'work_wages' => $wages,
@@ -1028,18 +1031,27 @@ class PtcStockRepository implements GlobalInterface
                 'description' => $description,
             ]);
 
+            // Rejection stock keeps the stage it was rejected at: one line per rejected-at stage
+            $rejectionRepository = app(RejectionRepository::class);
+            $ptcRejection = $rejectionRepository->ptcBuckets((int) $ptcId);
             foreach ($lines as $line) {
-                $this->stockItemRepository->store([
-                    'stock_id' => $releaseId,
-                    'product_type_id' => $line['product_type_id'],
-                    'material_id' => 0,
-                    'component_product_type_id' => null,
-                    'quantity' => $line['quantity'],
-                    'stage_id' => $line['stage_id'],
-                    'ptc_virtual' => 0,
-                    'work_logs' => '0',
-                    'work_wages' => '0',
-                ]);
+                $parts = (int) $line['stage_id'] === Stock::STAGE_REJECTED
+                    ? $rejectionRepository->split($ptcRejection[$line['product_type_id']] ?? [], $line['quantity'])
+                    : [null => $line['quantity']];
+                foreach ($parts as $origin => $quantity) {
+                    $this->stockItemRepository->store([
+                        'stock_id' => $releaseId,
+                        'product_type_id' => $line['product_type_id'],
+                        'material_id' => 0,
+                        'component_product_type_id' => null,
+                        'quantity' => $quantity,
+                        'stage_id' => $line['stage_id'],
+                        'rejected_stage_id' => $origin ?: null,
+                        'ptc_virtual' => 0,
+                        'work_logs' => '0',
+                        'work_wages' => '0',
+                    ]);
+                }
             }
 
             return $releaseId;
