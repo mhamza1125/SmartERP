@@ -202,6 +202,8 @@ class VendorRepository implements GlobalInterface
 
         $impact->cascadeIf($this->refCount('transactions', 'payee_id', $id, $opening), 'opening balance entry', 'opening balance entries');
         $impact->cascadeIf(app(ImageRepository::class)->countFor('vendors', $id), 'image');
+        $impact->cascadeIf(app(PartyPriceRepository::class)->countFor(['party', 'vendor', $id]), 'material / product price');
+        $impact->cascadeIf(app(ProductCostRepository::class)->countForPerson('vendor', (int) $id), 'own product wage rate');
 
         return $impact;
     }
@@ -210,6 +212,8 @@ class VendorRepository implements GlobalInterface
     {
         DB::table('transactions')->whereIn('transaction_to', ['vendor', 'contractor'])->where('transaction_type', 'openingBalance')->where('payee_id', $id)->delete();
         app(ImageRepository::class)->deleteFor('vendors', $id);
+        app(PartyPriceRepository::class)->deleteFor(['party', 'vendor', $id]);
+        app(ProductCostRepository::class)->deleteForPerson('vendor', (int) $id);
 
         return Vendor::findOrFail($id)->delete();
     }

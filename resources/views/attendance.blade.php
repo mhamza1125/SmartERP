@@ -86,7 +86,13 @@
                               <td data-order="{{ $row['DATE'] }}">{{ formatDate($row['DATE']) }}</td>
                               <td>{{ $row['CHECKIN'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKIN'])) : $row['CHECKIN'] }}</td>
                               <td>{{ $row['CHECKOUT'] !== 'N/A' ? date('h:i A', strtotime($row['CHECKOUT'])) : $row['CHECKOUT'] }}</td>
-                              <td class="text-right">{{ $row['LATE_MINUTES'] }}</td>
+                              <td class="text-right" data-export="{{ $row['LATE_MINUTES'] }}">
+                                {{ $row['LATE_MINUTES'] }}
+                                @if(($row['EARLY_OUT_VALUE'] ?? 0) > 0)
+                                  {{-- late time = late check-in + early check-out --}}
+                                  <small class="d-block text-muted no-export">In {{ number_format(($row['LATE_IN_VALUE'] ?? 0) / 60, 2) }} + Early out {{ number_format($row['EARLY_OUT_VALUE'] / 60, 2) }}</small>
+                                @endif
+                              </td>
                               <td class="text-right">{{ $row['OVERTIME'] }}</td>
                               <td>
                                 <span style="color: {{ $row['DETAIL'] == 'Absent' || $row['DETAIL'] == 'Single Attendance' ? '#FC544B' : '#54CA68' }}">

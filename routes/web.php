@@ -20,6 +20,7 @@ use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MProcessController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\PartyPriceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCostController;
 use App\Http\Controllers\ProductMaterialController;
@@ -168,6 +169,11 @@ Route::delete('/material/{id}', [MaterialController::class, 'destroy'])->name('m
 Route::get('/materialDetail', [MaterialController::class, 'detail'])->name('material.detail');
 Route::post('/materialDetail', [MaterialController::class, 'detail'])->name('material.filter');
 Route::get('/materialDetail/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
+// Vendor (buying) / customer (selling) prices: set on the material / product page, read by the purchase / order forms
+Route::get('/party-price/lookup', [PartyPriceController::class, 'lookup'])->name('partyPrice.lookup');
+Route::post('/party-price', [PartyPriceController::class, 'store'])->name('partyPrice.store');
+Route::get('/party-price/{id}/delete-check', [PartyPriceController::class, 'deleteCheck'])->name('partyPrice.deleteCheck');
+Route::delete('/party-price/{id}', [PartyPriceController::class, 'destroy'])->name('partyPrice.destroy');
 // Product Purchase Ledger (product purchases, returns and stock movements)
 Route::get('/productLedger', [ProductController::class, 'ledger'])->name('product.ledger');
 Route::post('/productLedger', [ProductController::class, 'ledger'])->name('product.ledger.filter');
@@ -528,6 +534,8 @@ Route::get('/asset', [AssetController::class, 'index'])->name('asset');
 Route::get('/addAsset', [AssetController::class, 'create'])->name('asset.add');
 Route::post('/asset', [AssetController::class, 'store'])->name('asset.store');
 Route::get('/asset/ledger', [AssetController::class, 'show'])->name('asset.show');
+Route::get('/asset/print', [AssetController::class, 'printLedger'])->name('asset.print'); // ?name= one ledger, none = all
+Route::get('/asset/{id}/print', [AssetController::class, 'printEntry'])->name('asset.entry.print');
 Route::get('/asset/transaction/{transactionId}', [AssetController::class, 'entry'])->name('asset.entry');
 Route::get('/editAsset/{id}', [AssetController::class, 'edit'])->name('asset.edit');
 Route::post('/asset/{id}', [AssetController::class, 'update'])->name('asset.update');
@@ -537,6 +545,8 @@ Route::get('/liability', [LiabilityController::class, 'index'])->name('liability
 Route::get('/addLiability', [LiabilityController::class, 'create'])->name('liability.add');
 Route::post('/liability', [LiabilityController::class, 'store'])->name('liability.store');
 Route::get('/liability/ledger', [LiabilityController::class, 'show'])->name('liability.show');
+Route::get('/liability/print', [LiabilityController::class, 'printLedger'])->name('liability.print'); // ?name= one ledger, none = all
+Route::get('/liability/{id}/print', [LiabilityController::class, 'printEntry'])->name('liability.entry.print');
 Route::get('/liability/transaction/{transactionId}', [LiabilityController::class, 'entry'])->name('liability.entry');
 Route::get('/editLiability/{id}', [LiabilityController::class, 'edit'])->name('liability.edit');
 Route::post('/liability/{id}', [LiabilityController::class, 'update'])->name('liability.update');

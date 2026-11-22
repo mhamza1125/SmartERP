@@ -75,14 +75,36 @@ class AssetRepository implements GlobalInterface
     /** All entries of one name in date order, with the account they went through. */
     public function ledger(string $name): Collection
     {
+        return $this->ledgerQuery()->where('assets.asset_name', $name)->get();
+    }
+
+    /** Ledger print: entries of one name, or of every name (grouped by name, names A-Z). */
+    public function printLedgers(?string $name = null): Collection
+    {
+        return $this->ledgerQuery()
+            ->when($name !== null && $name !== '', fn ($q) => $q->where('assets.asset_name', $name))
+            ->reorder()
+            ->orderBy('assets.asset_name')
+            ->orderBy('assets.transaction_date')
+            ->orderBy('assets.asset_id')
+            ->get()
+            ->groupBy('asset_name');
+    }
+
+    /** One entry with its cash / bank account, for the entry voucher print. */
+    public function entryWithAccount($id)
+    {
+        return $this->ledgerQuery()->where('assets.asset_id', $id)->firstOrFail();
+    }
+
+    private function ledgerQuery()
+    {
         return ($this->model)::query()
-            ->where('assets.asset_name', $name)
             ->leftJoin('banks', 'banks.bank_id', '=', 'assets.bank_id')
             ->leftJoin('heads as bhead', 'bhead.head_id', '=', 'banks.head_id')
             ->select('assets.*', 'bhead.name as bank_name', 'banks.account_title', 'banks.account')
             ->orderBy('assets.transaction_date')
-            ->orderBy('assets.asset_id')
-            ->get();
+            ->orderBy('assets.asset_id');
     }
 
     /** Value (asset) / outstanding amount (liability) of a name, optionally without one entry. */

@@ -84,6 +84,43 @@ abstract class AssetEntryController extends Controller
         ]);
     }
 
+    /**
+     * Ledger print: one name (?name=) with its running balance, or every name of the register
+     * (list page), each with its own running balance and a grand total.
+     */
+    public function printLedger(Request $request)
+    {
+        $this->authorize('show', $this->register()['model']);
+        $name = trim((string) $request->query('name', ''));
+        $ledgers = $this->repository->printLedgers($name);
+        abort_if($name !== '' && $ledgers->isEmpty(), 404, $this->register()['title'].' not found');
+
+        return view('print.asset-ledger', [
+            'register' => $this->register(),
+            'assetName' => $name,
+            'ledgers' => $ledgers,
+            'types' => $this->repository->types(),
+        ]);
+    }
+
+    /** Half-page voucher of one entry (payment / receipt / journal, by whether money moved). */
+    public function printEntry($id)
+    {
+        $this->authorize('show', $this->register()['model']);
+        $entry = $this->repository->entryWithAccount($id);
+
+        return view('print.asset-entry', [
+            'register' => $this->register(),
+            'entry' => $entry,
+            'type' => $this->repository->types()[$entry->transaction_type] ?? null,
+            // balance of the name right after this entry (ledger order: date, then id)
+            'balanceAfter' => $this->repository->ledger($entry->asset_name)
+                ->takeUntil(fn ($row) => $row->asset_id == $entry->asset_id)
+                ->push($entry)
+                ->sum(fn ($row) => (float) $row->debit - (float) $row->credit),
+        ]);
+    }
+
     /** View button of the entry's cash / bank transaction (Transactions, Cash Book, Bank Ledger). */
     public function entry($transactionId)
     {

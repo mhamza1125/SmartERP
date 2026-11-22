@@ -184,6 +184,7 @@ class ProductRepository implements GlobalInterface
             $impact->cascadeIf($this->openingStockLines($types)->count(), 'opening stock line');
         }
         $impact->cascadeIf($this->refCount('product_costs', 'product_id', $id), 'costing / wages line');
+        $impact->cascadeIf(app(PartyPriceRepository::class)->countFor(['product', $id]), 'vendor / customer price');
         $images = app(ImageRepository::class)->countFor('products', $id);
         $impact->cascadeIf($images, 'image / file', 'images / files');
 
@@ -202,6 +203,8 @@ class ProductRepository implements GlobalInterface
     public function delete($id)
     {
         $types = DB::table('product_types')->where('product_id', $id)->pluck('product_type_id')->all();
+        app(PartyPriceRepository::class)->deleteFor(['product', $id]); // before product_types go
+        DB::table('product_cost_logs')->where('product_id', $id)->delete();
 
         if ($types) {
             $openingLines = $this->openingStockLines($types)->pluck('stock_item_id')->all();

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\VendorRequest;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
+use App\Repositories\ProductCostRepository;
 use App\Repositories\VendorRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\MaterialRepository;
@@ -245,7 +246,7 @@ class VendorController extends Controller
         ]);
     }
 
-    public function show2($id) // For Contractor
+    public function show2($id, ProductCostRepository $productCostRepository) // For Contractor
     {
         $this->authorize('contractors_show', Vendor::class);
         $vendor = $this->vendorRepository->get($id);
@@ -254,6 +255,9 @@ class VendorController extends Controller
         return view('contractorInfo', [
             'vendor' => $vendor,
             'image' => $image,
+            // Own product wages vs the general wage, and when / how much they changed
+            'personWages' => $productCostRepository->personWages('vendor', (int) $id),
+            'personWageHistory' => $productCostRepository->wageHistory('vendor', (int) $id),
         ]);
     }
 

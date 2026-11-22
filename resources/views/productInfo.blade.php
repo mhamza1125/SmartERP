@@ -407,6 +407,8 @@
                             </tr>
                           </tfoot>
                         </table>
+                        <h5 class="mt-3">Wage Change History</h5>
+                        @include('wageHistory', ['history' => $wageHistory, 'showPerson' => true, 'showProduct' => false])
                       </div>
                     </div>
                   </div>
@@ -419,6 +421,13 @@
                       @endif
                     </h5>
                     @include('purchaseVendorComparison', ['comparison' => $vendorComparison])
+                    @if($vendorPrices)
+                      @include('partyPrices', $vendorPrices + ['sizes' => $size, 'stages' => $stage])
+                    @endif
+                    @if($customerPrices)
+                      <hr>
+                      @include('partyPrices', $customerPrices + ['sizes' => $size, 'stages' => $stage])
+                    @endif
                     <h5 class="mt-4">Purchase Price History (Vendor Purchases)</h5>
                     @if($purchasePriceHistory->count())
                       <div class="table-responsive">

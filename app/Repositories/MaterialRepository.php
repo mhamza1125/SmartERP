@@ -314,6 +314,7 @@ class MaterialRepository implements GlobalInterface
 
         $impact->cascadeIf($this->refCount('stock_items', 'material_id', $id, fn ($q) => $q->where('stock_id', 1)), 'opening stock line');
         $impact->cascadeIf(app(ImageRepository::class)->countFor('materials', $id), 'image');
+        $impact->cascadeIf(app(PartyPriceRepository::class)->countFor(['material', $id]), 'vendor price');
 
         return $impact;
     }
@@ -322,6 +323,7 @@ class MaterialRepository implements GlobalInterface
     {
         DB::table('stock_items')->where('stock_id', 1)->where('material_id', $id)->delete();
         MaterialPriceLog::where('material_id', $id)->delete();
+        app(PartyPriceRepository::class)->deleteFor(['material', $id]);
         app(ImageRepository::class)->deleteFor('materials', $id);
 
         return Material::findOrFail($id)->delete();

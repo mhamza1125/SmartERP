@@ -9,6 +9,7 @@
           <div class="card-header">
             <h4>{{ $register['plural'] }}</h4>
             <div class="card-header-action">
+              @can('show', $register['model'])<a href="{{ route($register['route'] . '.print') }}" class="btn btn-info" target="_blank"><i class="fas fa-file-alt"></i> Print Ledger</a>@endcan
               @can('create', $register['model'])<a href="{{ route($register['route'] . '.add') }}" class="btn btn-primary">Add {{ $register['title'] }}</a>@endcan
             </div>
           </div>

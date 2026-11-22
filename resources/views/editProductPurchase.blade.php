@@ -72,7 +72,7 @@
 
               <h6>Purchase Items</h6>
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>Products</label>
                     <select class="form-control select2" name="product_type_id" id="product_type_id">
@@ -96,6 +96,7 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
+                @include('partyPriceField', ['partyType' => 'vendor', 'partySelect' => 'select[name="vendor_id"]', 'itemSelect' => '#product_type_id', 'itemParam' => 'product_type_id', 'stageSelect' => '#stage_id'])
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>

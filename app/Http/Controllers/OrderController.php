@@ -15,6 +15,7 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\OrderItemRepository;
+use App\Repositories\PartyPriceRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\PurchaseItemRepository;
 use App\Repositories\CompanyRepository;
@@ -97,7 +98,7 @@ class OrderController extends Controller
         ]);
     }
 
-    public function store(OrderRequest $request)
+    public function store(OrderRequest $request, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('create', Order::class);
         $validatedData = $request->validated();
@@ -114,6 +115,7 @@ class OrderController extends Controller
         $quantities = $request->input('quantity');
         $getId = $this->orderRepository->store($validatedData);
         $this->storeOI($getId, $products, $stages, $prices, $quantities);
+        $this->syncCustomerPrices($partyPriceRepository, $getId);
 
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -465,7 +467,7 @@ class OrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('edit', Order::class);
         if (! $request->has('total')) {
@@ -488,8 +490,10 @@ class OrderController extends Controller
             $requestData['job_no'] = $this->generateJobNumber($requestData['customer_id']);
         }
 
+        $before = $partyPriceRepository->snapshot('order', (int) $id);
         $this->orderRepository->update($id, $requestData);
         $this->orderItemRepository->update($id, $request->input());
+        $this->syncCustomerPrices($partyPriceRepository, (int) $id, $before);
 
         return redirect()->route('order.show', $id)->with('success', 'Record Updated Successfully');
     }
@@ -536,6 +540,19 @@ class OrderController extends Controller
         return redirect()->route('order')->with('success', $message);
     }
 
+
+    /**
+     * The customer's price of each product follows the order (see PartyPriceRepository). A failure
+     * here must not undo the saved order, so it is only logged.
+     */
+    private function syncCustomerPrices(PartyPriceRepository $partyPriceRepository, int $orderId, ?array $before = null): void
+    {
+        try {
+            $partyPriceRepository->syncOrder($orderId, $before);
+        } catch (\Exception $e) {
+            \Log::error('Customer price update failed: '.$e->getMessage(), ['order_id' => $orderId]);
+        }
+    }
 
     private function storeOI($getId, $products, $stages, $prices, $quantities)
     {

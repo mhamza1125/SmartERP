@@ -78,6 +78,7 @@ class CustomerRepository implements GlobalInterface
 
         $impact->cascadeIf($this->refCount('transactions', 'payee_id', $id, fn ($q) => $q->where('transaction_to', 'customer')->where('transaction_type', 'openingBalance')), 'opening balance entry', 'opening balance entries');
         $impact->cascadeIf(app(ImageRepository::class)->countFor('customers', $id), 'image');
+        $impact->cascadeIf(app(PartyPriceRepository::class)->countFor(['party', 'customer', $id]), 'product price');
 
         return $impact;
     }
@@ -86,6 +87,7 @@ class CustomerRepository implements GlobalInterface
     {
         DB::table('transactions')->where('transaction_to', 'customer')->where('transaction_type', 'openingBalance')->where('payee_id', $id)->delete();
         app(ImageRepository::class)->deleteFor('customers', $id);
+        app(PartyPriceRepository::class)->deleteFor(['party', 'customer', $id]);
 
         return Customer::findOrFail($id)->delete();
     }

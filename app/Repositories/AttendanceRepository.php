@@ -346,7 +346,8 @@ class AttendanceRepository implements GlobalInterface
      *
      * Working hours per employee: their department head's Work In / Work Out time (Settings > Heads >
      * Departments); none for a department without them (warning). Late time = check-in after the
-     * start; overtime = check-out after the end (an end at or before the start is the next day).
+     * start PLUS check-out before the end (leaving early is late time too, user decision 2026-11-22);
+     * overtime = check-out after the end (an end at or before the start is the next day).
      * Sundays are the only non-working days.
      * Both only on days with a check-in and a check-out (existing rule for late time).
      */
@@ -382,6 +383,8 @@ class AttendanceRepository implements GlobalInterface
                     'CHECKOUT' => 'N/A',
                     'LATE_MINUTES' => 'N/A',
                     'LATE_VALUE' => 0,
+                    'LATE_IN_VALUE' => 0,
+                    'EARLY_OUT_VALUE' => 0,
                     'OVERTIME' => 'N/A',
                     'OVERTIME_VALUE' => 0,
                 ];
@@ -413,7 +416,9 @@ class AttendanceRepository implements GlobalInterface
                 }
 
                 // Late time and overtime: only on days with both punches (existing rule)
-                $lateMinutes = 0;
+                $lateMinutes = 0;      // late check-in + early check-out
+                $lateInMinutes = 0;
+                $earlyOutMinutes = 0;
                 $overtimeMinutes = 0;
                 if ($checkin && $checkout) {
                     $department = $departmentHours->get($employee->department_id);
@@ -421,7 +426,7 @@ class AttendanceRepository implements GlobalInterface
                     $endTime = $department->work_end_time ?? null;
                     if ($startTime) {
                         $start = Carbon::parse($date.' '.$startTime);
-                        $lateMinutes = max(0, intdiv(Carbon::parse($checkin)->getTimestamp() - $start->getTimestamp(), 60));
+                        $lateInMinutes = max(0, intdiv(Carbon::parse($checkin)->getTimestamp() - $start->getTimestamp(), 60));
                     }
                     if ($endTime) {
                         $end = Carbon::parse($date.' '.$endTime);
@@ -429,7 +434,9 @@ class AttendanceRepository implements GlobalInterface
                             $end->addDay(); // night shift ends the next day
                         }
                         $overtimeMinutes = max(0, intdiv(Carbon::parse($checkout)->getTimestamp() - $end->getTimestamp(), 60));
+                        $earlyOutMinutes = max(0, intdiv($end->getTimestamp() - Carbon::parse($checkout)->getTimestamp(), 60));
                     }
+                    $lateMinutes = $lateInMinutes + $earlyOutMinutes;
                     if (! $startTime || ! $endTime) {
                         $missingHours[$employee->employee_id] = $employee->name;
                     }
@@ -440,6 +447,8 @@ class AttendanceRepository implements GlobalInterface
                     'CHECKOUT' => $checkout ?? 'N/A',
                     'LATE_MINUTES' => $this->hours($lateMinutes),
                     'LATE_VALUE' => $lateMinutes,
+                    'LATE_IN_VALUE' => $lateInMinutes,
+                    'EARLY_OUT_VALUE' => $earlyOutMinutes,
                     'OVERTIME' => $this->hours($overtimeMinutes),
                     'OVERTIME_VALUE' => $overtimeMinutes,
                     'DETAIL' => $checkin && $checkout ? 'Present' : 'Single Attendance',

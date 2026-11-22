@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Customer;
+use App\Models\PartyPrice;
+use App\Models\Purchase;
+use App\Repositories\PartyPriceRepository;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,7 +197,7 @@ class ProductController extends Controller
         return response()->json(['success' => true, 'head_id' => $headId, 'message' => 'Size created successfully']);
     }
 
-    public function show($id, PurchaseItemRepository $purchaseItemRepository)
+    public function show($id, PurchaseItemRepository $purchaseItemRepository, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('show', Product::class);
         $product = $this->productRepository->get($id);
@@ -230,6 +234,14 @@ class ProductController extends Controller
             'productComponents' => $productComponents,
             'purchasePriceHistory' => $purchaseHistory = $purchaseItemRepository->productPriceHistory($id),
             'vendorComparison' => $purchaseItemRepository->vendorComparison($purchaseHistory),
+            // Buying prices: purchase module users; selling prices: customer module users
+            'vendorPrices' => auth()->user()->can('access', Purchase::class)
+                ? $partyPriceRepository->section(PartyPrice::PARTY_VENDOR, 'product', (int) $id)
+                : null,
+            'customerPrices' => auth()->user()->can('access', Customer::class)
+                ? $partyPriceRepository->section(PartyPrice::PARTY_CUSTOMER, 'product', (int) $id)
+                : null,
+            'wageHistory' => $this->productCostRepository->wageHistory(null, null, (int) $id),
         ]);
     }
 

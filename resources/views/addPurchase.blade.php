@@ -75,7 +75,7 @@
 
               <h6>Purchase Items</h6>
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Materials</label>
                     <select class="form-control select2" name="smaterial_id[]" id="material_id">
@@ -88,12 +88,13 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                   <div class="form-group">
-                    <label>Require Quantity</label>
+                    <label title="Require Quantity">Req. Qty</label>
                     <input type="text" class="form-control" id="materialQty" value="0" readonly>
                   </div>
                 </div>
+                @include('partyPriceField', ['partyType' => 'vendor', 'partySelect' => 'select[name="vendor_id"]', 'itemSelect' => '#material_id', 'itemParam' => 'material_id'])
                 <div class="col-md-2">
                   <div class="form-group">
                     <label>Quantity</label>

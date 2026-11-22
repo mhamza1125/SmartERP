@@ -117,6 +117,7 @@ class EmployeeRepository implements GlobalInterface
 
         $impact->cascadeIf($this->refCount('transactions', 'payee_id', $id, $opening), 'opening balance entry', 'opening balance entries');
         $impact->cascadeIf(app(ImageRepository::class)->countFor('employees', $id), 'image');
+        $impact->cascadeIf(app(ProductCostRepository::class)->countForPerson('employee', (int) $id), 'own product wage rate');
 
         return $impact;
     }
@@ -125,6 +126,7 @@ class EmployeeRepository implements GlobalInterface
     {
         DB::table('transactions')->where('transaction_to', 'employee')->where('transaction_type', 'openingBalance')->where('payee_id', $id)->delete();
         app(ImageRepository::class)->deleteFor('employees', $id);
+        app(ProductCostRepository::class)->deleteForPerson('employee', (int) $id);
 
         return Employee::findOrFail($id)->delete();
     }

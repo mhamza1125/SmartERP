@@ -9,6 +9,7 @@
           <div class="card-header">
             <h4>{{ $register['title'] }} Ledger: {{ $assetName }}</h4>
             <div class="card-header-action">
+              <a href="{{ route($register['route'] . '.print', ['name' => $assetName]) }}" class="btn btn-info" target="_blank"><i class="fas fa-file-alt"></i> Print Ledger</a>
               @can('create', $register['model'])<a href="{{ route($register['route'] . '.add', ['name' => $assetName]) }}" class="btn btn-primary">Add Entry</a>@endcan
               <a href="{{ route($register['route']) }}" class="btn btn-secondary">Back</a>
             </div>
@@ -71,6 +72,7 @@
                         @endif
                       </td>
                       <td class="text-nowrap">
+                        <a href="{{ route($register['route'] . '.entry.print', $transaction->asset_id) }}" class="btn btn-info btn-sm" target="_blank" title="Print voucher"><i class="fas fa-print"></i></a>
                         @can('edit', $register['model'])<a href="{{ route($register['route'] . '.edit', $transaction->asset_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan
                         @can('delete', $register['model'])@include('deleteButton', ['url' => route($register['route'] . '.destroy', $transaction->asset_id), 'check' => route($register['route'] . '.deleteCheck', $transaction->asset_id), 'label' => $register['title'] . ' entry #' . $transaction->asset_id])@endcan
                       </td>

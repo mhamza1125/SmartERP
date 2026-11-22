@@ -61,7 +61,10 @@
                   @endif
                 </h5>
                 @include('purchaseVendorComparison', ['comparison' => $vendorComparison, 'unit' => $material['uname']])
-                <h5>Price History</h5>
+                @if($vendorPrices)
+                  @include('partyPrices', $vendorPrices)
+                @endif
+                <h5 class="mt-3">Price History</h5>
                 @if($priceHistory->count())
                   <div class="table-responsive">
                     <table class="table table-sm table-striped">

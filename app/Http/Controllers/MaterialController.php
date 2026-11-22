@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Http\Requests\MaterialRequest;
 use App\Models\Material;
+use App\Models\PartyPrice;
+use App\Models\Purchase;
+use App\Repositories\PartyPriceRepository;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\MaterialRepository;
@@ -90,7 +93,7 @@ class MaterialController extends Controller
         return redirect()->route('material.show', $getId)->with('success', 'Record Inserted Successfully');
     }
 
-    public function show($id, PurchaseItemRepository $purchaseItemRepository)
+    public function show($id, PurchaseItemRepository $purchaseItemRepository, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('show', Material::class);
         $material = $this->materialRepository->get($id);
@@ -104,6 +107,10 @@ class MaterialController extends Controller
             'priceHistory' => $this->materialRepository->priceHistory($id),
             // Per-vendor prices from the material's purchases (Purchase History report has the same)
             'vendorComparison' => $purchaseItemRepository->vendorComparison($purchaseItemRepository->materialPriceHistory($id)),
+            // Vendor prices (buying): purchase module users only
+            'vendorPrices' => auth()->user()->can('access', Purchase::class)
+                ? $partyPriceRepository->section(PartyPrice::PARTY_VENDOR, 'material', (int) $id)
+                : null,
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
+use App\Repositories\ProductCostRepository;
 use App\Http\Requests\EmployeeRequest;
 use App\Repositories\SalaryRepository;
 use App\Repositories\EmployeeRepository;
@@ -120,7 +121,7 @@ class EmployeeController extends Controller
         return redirect()->route('employee.show', $getId)->with('success', 'Record Inserted Successfully');
     }
 
-    public function show($id)
+    public function show($id, ProductCostRepository $productCostRepository)
     {
         $this->authorize('show', Employee::class);
         $employee = $this->employeeRepository->get($id);
@@ -129,6 +130,9 @@ class EmployeeController extends Controller
         return view('employeeInfo', [
             'employee' => $employee,
             'image' => $image,
+            // Own product wages vs the general wage, and when / how much they changed
+            'personWages' => $productCostRepository->personWages('employee', (int) $id),
+            'personWageHistory' => $productCostRepository->wageHistory('employee', (int) $id),
         ]);
     }
 

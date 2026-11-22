@@ -14,6 +14,7 @@ use App\Repositories\MaterialRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\PurchaseItemRepository;
+use App\Repositories\PartyPriceRepository;
 use App\Repositories\ReturnMaterialRepository;
 use App\Repositories\ReceiveMaterialRepository;
 
@@ -138,7 +139,7 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function store(PurchaseRequest $request)
+    public function store(PurchaseRequest $request, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('create', Purchase::class);
         $validatedData = $request->validated();
@@ -152,6 +153,7 @@ class PurchaseController extends Controller
         $quantities = $request->input('quantity');
         $getId = $this->purchaseRepository->store($validatedData);
         $this->storePI($getId, $materials, $products, $stages, $prices, $quantities);
+        $this->syncVendorPrices($partyPriceRepository, $getId);
 
         return redirect()->route('purchase.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -263,14 +265,16 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('edit', Purchase::class);
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+        $before = $partyPriceRepository->snapshot('purchase', (int) $id);
         $this->purchaseRepository->update($id, $request->input());
         $this->purchaseItemRepository->update($id, $request->input());
+        $this->syncVendorPrices($partyPriceRepository, (int) $id, $before);
 
         return redirect()->route('purchase.show', $id)->with('success', 'Record Updated Successfully');
     }
@@ -295,6 +299,19 @@ class PurchaseController extends Controller
             ];
             $this->purchaseItemRepository->store($purchaseItem);
             if (!$stage) $this->materialRepository->update($material, ['cprice' => $price]);
+        }
+    }
+
+    /**
+     * The vendor's price of each item follows the purchase (see PartyPriceRepository). A failure here
+     * must not undo the saved purchase, so it is only logged.
+     */
+    private function syncVendorPrices(PartyPriceRepository $partyPriceRepository, int $purchaseId, ?array $before = null): void
+    {
+        try {
+            $partyPriceRepository->syncPurchase($purchaseId, $before);
+        } catch (\Exception $e) {
+            \Log::error('Vendor price update failed: '.$e->getMessage(), ['purchase_id' => $purchaseId]);
         }
     }
 

@@ -176,6 +176,9 @@
                 </tbody>
               </table>
             @endif
+
+            @include('personWages')
+
             @if($image->count())
               <h5>Images</h5>
               <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
