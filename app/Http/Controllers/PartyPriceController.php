@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PartyPriceRequest;
+use App\Http\Requests\PriceChangeFilterRequest;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartyPrice;
 use App\Models\Purchase;
+use App\Models\Vendor;
 use App\Repositories\PartyPriceRepository;
 use App\Support\DeletionImpact;
 
@@ -51,6 +54,37 @@ class PartyPriceController extends Controller
         }
 
         return back()->with('success', ucfirst($data['party_type']).' price saved');
+    }
+
+    /**
+     * Price Change History: every buying (vendor) or selling (customer) price change, filtered by
+     * product / material, vendor / customer and user. Same access as the dashboard lists.
+     */
+    public function changes(PriceChangeFilterRequest $request, string $partyType)
+    {
+        $this->authorize('access', $partyType === PartyPrice::PARTY_VENDOR ? Purchase::class : Customer::class);
+        $filters = $request->validated();
+
+        return view('priceChanges', [
+            'partyType' => $partyType,
+            'filters' => $filters,
+            'changes' => $this->partyPriceRepository->changeLog($partyType, $filters),
+            'options' => $this->partyPriceRepository->changeFilterOptions($partyType),
+        ]);
+    }
+
+    /** Printable price list of one vendor (buying prices) or customer (selling prices). */
+    public function print(string $partyType, int $partyId)
+    {
+        if ($partyType === PartyPrice::PARTY_VENDOR) {
+            // Same access as the Buying Prices section on the vendor page
+            $this->authorize('show', Vendor::class);
+            $this->authorize('access', Purchase::class);
+        } else {
+            $this->authorize('show', Customer::class);
+        }
+
+        return view('print.party-prices', $this->partyPriceRepository->printData($partyType, $partyId));
     }
 
     public function deleteCheck($id)

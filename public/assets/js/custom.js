@@ -3770,3 +3770,49 @@ $(document).ready(function () {
             .always(function () { $btn.prop('disabled', false); });
     });
 })(jQuery);
+
+// Start - Table column filters
+// <div class="js-table-filter" data-target="#tableId"> with <select data-col="N" data-label="All ..."> per
+// filtered column (+ optional .js-filter-count / .js-filter-reset). Each select lists the distinct texts of
+// its column; rows not matching every chosen value are hidden. Used by the price change history tables.
+$(document).ready(function () {
+    function cellText($row, col) {
+        return $.trim($row.children().eq(col).text()).replace(/\s+/g, ' ');
+    }
+    $('.js-table-filter').each(function () {
+        var $bar = $(this);
+        var $rows = $($bar.data('target')).find('tbody tr');
+        var $selects = $bar.find('select[data-col]');
+
+        $selects.each(function () {
+            var $select = $(this), col = $select.data('col'), seen = {}, values = [];
+            $rows.each(function () {
+                var text = cellText($(this), col);
+                if (text && text !== '-' && !seen[text]) { seen[text] = true; values.push(text); }
+            });
+            values.sort(function (a, b) { return a.localeCompare(b); });
+            $select.empty().append(new Option($select.data('label') || 'All', ''));
+            values.forEach(function (v) { $select.append(new Option(v, v)); });
+            if ($.fn.select2) { $select.select2({ width: '100%' }); }
+        });
+
+        function apply() {
+            var chosen = $selects.map(function () { return { col: $(this).data('col'), val: $(this).val() }; }).get()
+                .filter(function (f) { return f.val; });
+            var shown = 0;
+            $rows.each(function () {
+                var $row = $(this);
+                var match = chosen.every(function (f) { return cellText($row, f.col) === f.val; });
+                $row.toggle(match);
+                if (match) { shown++; }
+            });
+            $bar.find('.js-filter-count').text(chosen.length ? shown + ' of ' + $rows.length + ' shown' : '');
+        }
+        $selects.on('change', apply);
+        $bar.find('.js-filter-reset').on('click', function () {
+            $selects.val('').trigger('change.select2');
+            apply();
+        });
+    });
+});
+// End - Table column filters

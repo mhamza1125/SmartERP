@@ -45,6 +45,42 @@ class PurchaseRepository implements GlobalInterface
             ->orderBy('purchases.created_at', 'desc')->get();
     }
 
+    /**
+     * Dashboard "Open Purchase Orders": purchases (not material processing) with quantity still to
+     * receive. Per line, received = received qty - returned qty (as on the receive form), capped at the
+     * ordered qty; balance = ordered - received. Status: Pending (nothing received yet) or Partially
+     * Received. Nearest required date first (none last).
+     */
+    public function openPurchases()
+    {
+        $received = 'COALESCE((SELECT SUM(rm.quantity) FROM receive_materials rm WHERE rm.purchase_item_id = purchase_items.purchase_item_id), 0)'
+            .' - COALESCE((SELECT SUM(ret.quantity) FROM return_materials ret JOIN receive_materials rr ON rr.receive_material_id = ret.receive_material_id'
+            .' WHERE rr.purchase_item_id = purchase_items.purchase_item_id), 0)';
+
+        $lines = DB::table('purchase_items')
+            ->select('purchase_items.purchase_id', 'purchase_items.quantity')
+            ->selectRaw("GREATEST(LEAST($received, purchase_items.quantity), 0) as received");
+
+        $totals = DB::query()->fromSub($lines, 'l')
+            ->groupBy('l.purchase_id')
+            ->select('l.purchase_id')
+            ->selectRaw('COUNT(*) as item_count, SUM(l.quantity) as ordered_qty, SUM(l.received) as received_qty, SUM(l.quantity - l.received) as balance_qty');
+
+        return Purchase::joinSub($totals, 't', 't.purchase_id', '=', 'purchases.purchase_id')
+            ->leftJoin('vendors', 'vendors.vendor_id', '=', 'purchases.vendor_id')
+            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('mprocess')->whereColumn('mprocess.purchase_id', 'purchases.purchase_id'))
+            ->where('t.balance_qty', '>', 0)
+            ->select('purchases.purchase_id', 'purchases.purchase_no', 'purchases.purchase_type', 'purchases.purchase_date', 'purchases.require_date',
+                'vendors.vendor_no', 'vendors.fname', 'orders.job_no',
+                't.item_count', 't.ordered_qty', 't.received_qty', 't.balance_qty')
+            ->selectRaw("CASE WHEN t.received_qty > 0 THEN 'Partially Received' ELSE 'Pending' END as receive_status")
+            ->orderByRaw('purchases.require_date IS NULL')
+            ->orderBy('purchases.require_date')
+            ->orderBy('purchases.purchase_no')
+            ->get();
+    }
+
     public function mprocess()
     {
         return Purchase::leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')

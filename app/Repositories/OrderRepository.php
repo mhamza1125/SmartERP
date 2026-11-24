@@ -26,6 +26,24 @@ class OrderRepository implements GlobalInterface
             ->orderBy('orders.created_at', 'desc')->get();
     }
 
+    /**
+     * Dashboard "Orders in Progress": every confirmed (running) order, nearest due date first
+     * (no due date last), with its number of lines and total quantity.
+     */
+    public function inProgress()
+    {
+        return Order::join('customers', 'customers.customer_id', '=', 'orders.customer_id')
+            ->where('orders.order_status', Order::STATUS_CONFIRMED)
+            ->select('orders.order_id', 'orders.order_no', 'orders.job_no', 'orders.order_date', 'orders.due_date',
+                'customers.customer_no', 'customers.fname', 'customers.lname')
+            ->selectSub(DB::table('order_items')->whereColumn('order_items.order_id', 'orders.order_id')->selectRaw('COUNT(*)'), 'item_count')
+            ->selectSub(DB::table('order_items')->whereColumn('order_items.order_id', 'orders.order_id')->selectRaw('COALESCE(SUM(quantity), 0)'), 'total_qty')
+            ->orderByRaw('orders.due_date IS NULL')
+            ->orderBy('orders.due_date')
+            ->orderBy('orders.job_no')
+            ->get();
+    }
+
     public function get($id)
     {
         return Order::where('order_id', $id)

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Purchase;
 use App\Models\Stock;
 use App\Models\Transaction;
+use App\Repositories\OrderRepository;
+use App\Repositories\PurchaseRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -121,37 +124,19 @@ class DashboardController extends Controller
                 });
         }
 
-        // Table 2: Orders in Progress (10 most recent)
-        $ordersInProgressTable = collect();
-        if ($user->can('access', Order::class)) {
-            $ordersInProgressTable = DB::table('orders')
-                ->join('customers', 'customers.customer_id', '=', 'orders.customer_id')
-                ->where('orders.order_status', 2)
-                ->select(
-                    'orders.order_id',
-                    'orders.job_no',
-                    'orders.order_date',
-                    'orders.due_date',
-                    'customers.fname',
-                    'customers.lname'
-                )
-                ->orderBy('orders.order_date', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function ($order) {
-                    // Count order items
-                    $itemCount = DB::table('order_items')
-                        ->where('order_id', $order->order_id)
-                        ->count();
-                    $order->item_count = $itemCount;
+        // Table: Orders in Progress - every confirmed (running) order, nearest due date first
+        $ordersInProgressTable = $user->can('access', Order::class)
+            ? app(OrderRepository::class)->inProgress()
+            : collect();
 
-                    return $order;
-                });
-        }
+        // Table: Open Purchase Orders - pending / partially received, nearest required date first
+        $openPurchasesTable = $user->can('access', Purchase::class)
+            ? app(PurchaseRepository::class)->openPurchases()
+            : null;
 
         // Recent price changes: buying prices for purchase users, selling prices for customer users
         $partyPrices = app(\App\Repositories\PartyPriceRepository::class);
-        $purchasePriceChanges = $user->can('access', \App\Models\Purchase::class) ? $partyPrices->changes('vendor', null, 10) : null;
+        $purchasePriceChanges = $user->can('access', Purchase::class) ? $partyPrices->changes('vendor', null, 10) : null;
         $sellingPriceChanges = $user->can('access', \App\Models\Customer::class) ? $partyPrices->changes('customer', null, 10) : null;
 
         return view('dashboard', [
@@ -163,6 +148,7 @@ class DashboardController extends Controller
             'lowStockAlerts' => $lowStockAlerts,
             'runningPtcsTable' => $runningPtcsTable,
             'ordersInProgressTable' => $ordersInProgressTable,
+            'openPurchasesTable' => $openPurchasesTable,
         ]);
     }
 }

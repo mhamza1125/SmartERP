@@ -279,6 +279,11 @@
                 <li><a class="nav-link" href="{{ route('material.detail') }}">Material Stock Ledger</a></li>
                 <li><a class="nav-link" href="{{ route('product.ledger') }}">Product Stock Movements</a></li>
                 <li><a class="nav-link" href="{{ route('purchase.ledger') }}">Purchase Price History</a></li>
+                @if(auth()->user()->can('access', App\Models\Purchase::class))
+                  <li><a class="nav-link" href="{{ route('partyPrice.changes', 'vendor') }}">Price Change History</a></li>
+                @elseif(auth()->user()->can('access', App\Models\Customer::class))
+                  <li><a class="nav-link" href="{{ route('partyPrice.changes', 'customer') }}">Price Change History</a></li>
+                @endif
                 <li><a class="nav-link" href="{{ route('reports.product.stock.requirements') }}">Stock Requirements</a></li>
                 <li><a class="nav-link" href="{{ route('reports.product.stock.ledger') }}">Product Stock Forecast</a></li>
               </ul>

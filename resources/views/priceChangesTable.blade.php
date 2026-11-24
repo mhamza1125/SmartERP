@@ -1,10 +1,14 @@
 {{--
   Vendor / customer price changes (PartyPriceRepository::changes), newest first.
-  Params: $changes, $partyType ('vendor' | 'customer'), $showParty (default true), $empty (text when none)
+  Params: $changes, $partyType ('vendor' | 'customer'), $showParty (default true), $empty (text when none),
+          $filters (default false: Product / Vendor-Customer / User filters above the table, in the browser)
 --}}
 @php
   $isVendor = $partyType === 'vendor';
   $showParty = $showParty ?? true;
+  $filters = ($filters ?? false) && $changes->count() > 1;
+  $tableId = 'priceChanges-'.$partyType.'-'.\Illuminate\Support\Str::random(6);
+  $col = $showParty ? 1 : 0; // the Item column follows Date (and Vendor / Customer)
   $money = fn ($v) => $v === null ? '-' : rtrim(rtrim(number_format((float) $v, 3), '0'), '.');
   $canOpenDoc = auth()->user()->can('show', $isVendor ? App\Models\Purchase::class : App\Models\Order::class);
   $canOpenItem = [
@@ -20,8 +24,21 @@
   ];
 @endphp
 @if($changes->count())
+  @if($filters)
+    <div class="form-row align-items-center mb-2 js-table-filter" data-target="#{{ $tableId }}">
+      <div class="col-md-4 mb-1"><select class="form-control form-control-sm" data-col="{{ $col + 1 }}" data-label="All Products{{ $isVendor ? ' / Materials' : '' }}"></select></div>
+      @if($showParty)
+        <div class="col-md-3 mb-1"><select class="form-control form-control-sm" data-col="1" data-label="All {{ $isVendor ? 'Vendors' : 'Customers' }}"></select></div>
+      @endif
+      <div class="col-md-2 mb-1"><select class="form-control form-control-sm" data-col="{{ $col + 7 }}" data-label="All Users"></select></div>
+      <div class="col-md-auto mb-1">
+        <button type="button" class="btn btn-sm btn-outline-secondary js-filter-reset">Clear</button>
+        <small class="text-muted ml-2 js-filter-count"></small>
+      </div>
+    </div>
+  @endif
   <div class="table-responsive">
-    <table class="table table-sm table-striped mb-0">
+    <table class="table table-sm table-striped mb-0" id="{{ $tableId }}">
       <thead>
         <tr>
           <th>Date</th>

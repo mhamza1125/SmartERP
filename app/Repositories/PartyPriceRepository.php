@@ -289,15 +289,77 @@ class PartyPriceRepository implements GlobalInterface
     public function partySection(string $partyType, int $partyId): array
     {
         $productTypes = app(ProductRepository::class)->activeTypes();
+        $materials = collect();
+
+        // A vendor's Set Price form lists only the vendor's own items (client request 2026-11-24)
+        if ($partyType === PartyPrice::PARTY_VENDOR) {
+            $items = $this->vendorItemIds($partyId);
+            $materials = app(MaterialRepository::class)->all()
+                ->filter(fn ($m) => in_array((int) $m->material_id, $items['material_ids'], true))
+                ->sortBy('material_no')->values();
+            $productTypes = $productTypes
+                ->filter(fn ($t) => in_array((int) $t->product_id, $items['product_ids'], true)
+                    || in_array((int) $t->product_type_id, $items['product_type_ids'], true))
+                ->values();
+        }
 
         return [
             'partyType' => $partyType,
             'partyId' => $partyId,
             'current' => $this->currentForParty($partyType, $partyId),
             'changes' => $this->changes($partyType, $partyId),
-            'materials' => $partyType === PartyPrice::PARTY_VENDOR ? app(MaterialRepository::class)->all() : collect(),
+            'materials' => $materials,
             'productTypes' => $productTypes,
             'stagesByType' => app(RejectionRepository::class)->stagesForTypes($productTypes),
+        ];
+    }
+
+    /**
+     * Items a vendor supplies: the materials / products chosen on the vendor (vendors.material_id /
+     * product_id, '|' separated), materials whose main vendor it is, and items it already has a price for.
+     */
+    public function vendorItemIds(int $vendorId): array
+    {
+        $vendor = DB::table('vendors')->where('vendor_id', $vendorId)->first(['material_id', 'product_id']);
+        $ids = fn ($list) => array_values(array_filter(array_map('intval', explode('|', (string) $list))));
+        $priced = DB::table('party_prices')->where('party_type', PartyPrice::PARTY_VENDOR)->where('party_id', $vendorId)
+            ->get(['material_id', 'product_type_id']);
+
+        return [
+            'material_ids' => array_values(array_unique(array_merge(
+                $ids($vendor->material_id ?? ''),
+                DB::table('materials')->where('vendor_id', $vendorId)->pluck('material_id')->map(fn ($id) => (int) $id)->all(),
+                $priced->where('material_id', '>', 0)->pluck('material_id')->map(fn ($id) => (int) $id)->all()
+            ))),
+            'product_ids' => $ids($vendor->product_id ?? ''),
+            'product_type_ids' => $priced->where('product_type_id', '>', 0)->pluck('product_type_id')->map(fn ($id) => (int) $id)->values()->all(),
+        ];
+    }
+
+    /**
+     * Data of the price list print (print/party-prices): the vendor / customer and its current prices.
+     */
+    public function printData(string $partyType, int $partyId): array
+    {
+        $party = $partyType === PartyPrice::PARTY_VENDOR
+            ? DB::table('vendors')->leftJoin('heads as city', 'city.head_id', '=', 'vendors.city_id')
+                ->where('vendor_id', $partyId)
+                ->select('vendors.vendor_no as party_no', 'vendors.fname as party_name', 'vendors.phone1 as phone', 'vendors.address', 'city.name as place', DB::raw('NULL as currency_name'))
+                ->first()
+            : DB::table('customers')->leftJoin('heads as country', 'country.head_id', '=', 'customers.country_id')
+                ->leftJoin('heads as currency', 'currency.head_id', '=', 'customers.currency_id')
+                ->where('customer_id', $partyId)
+                ->select('customers.customer_no as party_no', DB::raw("TRIM(CONCAT(COALESCE(customers.fname, ''), ' ', COALESCE(customers.lname, ''))) as party_name"),
+                    'customers.phone', 'customers.address', 'country.name as place', 'currency.name as currency_name')
+                ->first();
+        abort_unless($party, 404);
+
+        return [
+            'partyType' => $partyType,
+            'party' => $party,
+            'prices' => $this->currentForParty($partyType, $partyId)
+                ->sortBy(fn ($r) => [$r->item_type === 'material' ? 0 : 1, $r->item_name, $r->size_name, $r->stage_name])
+                ->values(),
         ];
     }
 
@@ -319,15 +381,77 @@ class PartyPriceRepository implements GlobalInterface
      */
     public function changes(string $partyType, ?int $partyId = null, ?int $limit = null)
     {
+        return $this->changesQuery($partyType, ['party_id' => $partyId])
+            ->when($limit, fn ($q) => $q->limit($limit))
+            ->get();
+    }
+
+    /**
+     * Price Change History page: changes of every vendor / customer, newest first, $perPage a page.
+     * $filters: item ('material:{id}' | 'product:{product_id}', every size / stage), party_id,
+     * user_id (who made the change), dfrom + dto (Y-m-d).
+     */
+    public function changeLog(string $partyType, array $filters, int $perPage = 50)
+    {
+        return $this->changesQuery($partyType, $filters)->paginate($perPage)->withQueryString();
+    }
+
+    private function changesQuery(string $partyType, array $filters)
+    {
+        [$itemType, $itemId] = array_pad(explode(':', (string) ($filters['item'] ?? ''), 2), 2, 0);
+        $itemId = (int) $itemId;
+
         return $this->withItemNames(PartyPriceLog::query(), 'party_price_logs', $partyType)
-            ->when($partyId, fn ($q) => $q->where('party_price_logs.party_id', $partyId))
+            ->when(! empty($filters['party_id']), fn ($q) => $q->where('party_price_logs.party_id', (int) $filters['party_id']))
+            ->when(! empty($filters['user_id']), fn ($q) => $q->where('party_price_logs.created_by', (int) $filters['user_id']))
+            ->when($itemType === 'material' && $itemId, fn ($q) => $q->where('party_price_logs.material_id', $itemId))
+            ->when($itemType === 'product' && $itemId, fn ($q) => $q->where('party_price_logs.product_type_id', '>', 0)->where('product_types.product_id', $itemId))
+            ->when(! empty($filters['dfrom']), fn ($q) => $q->where('party_price_logs.created_at', '>=', $filters['dfrom'].' 00:00:00'))
+            ->when(! empty($filters['dto']), fn ($q) => $q->where('party_price_logs.created_at', '<=', $filters['dto'].' 23:59:59'))
             ->leftJoin('users', 'users.id', '=', 'party_price_logs.created_by')
             ->addSelect('party_price_logs.party_price_log_id', 'party_price_logs.old_price', 'party_price_logs.price',
                 'party_price_logs.source', 'party_price_logs.doc_id', 'party_price_logs.created_at', 'users.name as user_name')
             ->orderBy('party_price_logs.created_at', 'desc')
-            ->orderBy('party_price_logs.party_price_log_id', 'desc')
-            ->when($limit, fn ($q) => $q->limit($limit))
-            ->get();
+            ->orderBy('party_price_logs.party_price_log_id', 'desc');
+    }
+
+    /**
+     * Choices of the Price Change History filters: only the products / materials, vendors / customers
+     * and users that appear in the changes. Each a collection of {value, label}.
+     */
+    public function changeFilterOptions(string $partyType): array
+    {
+        $logs = fn () => DB::table('party_price_logs')->where('party_price_logs.party_type', $partyType);
+
+        $products = $logs()->where('party_price_logs.product_type_id', '>', 0)
+            ->join('product_types', 'product_types.product_type_id', '=', 'party_price_logs.product_type_id')
+            ->join('products', 'products.product_id', '=', 'product_types.product_id')
+            ->distinct()
+            ->orderBy('products.article_no')
+            ->get(['products.product_id', 'products.article_no', 'products.name'])
+            ->map(fn ($r) => (object) ['value' => 'product:'.$r->product_id, 'label' => $r->article_no.' - '.$r->name]);
+        $materials = $logs()->where('party_price_logs.material_id', '>', 0)
+            ->join('materials', 'materials.material_id', '=', 'party_price_logs.material_id')
+            ->distinct()
+            ->orderBy('materials.material_no')
+            ->get(['materials.material_id', 'materials.material_no', 'materials.name'])
+            ->map(fn ($r) => (object) ['value' => 'material:'.$r->material_id, 'label' => $r->material_no.' - '.$r->name]);
+
+        $parties = $partyType === PartyPrice::PARTY_VENDOR
+            ? $logs()->join('vendors', 'vendors.vendor_id', '=', 'party_price_logs.party_id')->distinct()
+                ->orderBy('vendors.vendor_no')->get(['vendors.vendor_id as id', 'vendors.vendor_no as no', 'vendors.fname as name'])
+            : $logs()->join('customers', 'customers.customer_id', '=', 'party_price_logs.party_id')->distinct()
+                ->orderBy('customers.customer_no')
+                ->get(['customers.customer_id as id', 'customers.customer_no as no', DB::raw("TRIM(CONCAT(COALESCE(customers.fname, ''), ' ', COALESCE(customers.lname, ''))) as name")]);
+
+        return [
+            'products' => $products,
+            'materials' => $materials,
+            'parties' => $parties->map(fn ($r) => (object) ['value' => $r->id, 'label' => $r->no.($r->name ? ' - '.$r->name : '')]),
+            'users' => $logs()->join('users', 'users.id', '=', 'party_price_logs.created_by')->distinct()
+                ->orderBy('users.name')->get(['users.id', 'users.name'])
+                ->map(fn ($r) => (object) ['value' => $r->id, 'label' => $r->name]),
+        ];
     }
 
     /**

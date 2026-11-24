@@ -171,6 +171,8 @@ Route::get('/reports/material-ledger', [MaterialController::class, 'detail'])->n
 Route::post('/reports/material-ledger', [MaterialController::class, 'detail'])->name('material.filter');
 Route::get('/reports/material-ledger/print', [MaterialController::class, 'printMaterialDetail'])->name('material.detail.print');
 // Vendor (buying) / customer (selling) prices: set on the material / product page, read by the purchase / order forms
+Route::get('/reports/price-changes/{partyType}', [PartyPriceController::class, 'changes'])
+    ->whereIn('partyType', ['vendor', 'customer'])->name('partyPrice.changes');
 Route::get('/party-price/lookup', [PartyPriceController::class, 'lookup'])->name('partyPrice.lookup');
 Route::post('/party-price', [PartyPriceController::class, 'store'])->name('partyPrice.store');
 Route::get('/party-price/{id}/delete-check', [PartyPriceController::class, 'deleteCheck'])->name('partyPrice.deleteCheck');
@@ -520,6 +522,8 @@ Route::get('/machine/print/{id}', [MachineController::class, 'printMachine'])->n
 Route::get('/customer/print/{id}', [CustomerController::class, 'printCustomer'])->name('customer.print');
 Route::get('/employee/print/{id}', [EmployeeController::class, 'printEmployee'])->name('employee.print');
 Route::get('/vendor/print/{id}', [VendorController::class, 'printVendor'])->name('vendor.print');
+Route::get('/print/party-prices/{partyType}/{partyId}', [PartyPriceController::class, 'print'])
+    ->whereIn('partyType', ['vendor', 'customer'])->whereNumber('partyId')->name('partyPrice.print');
 Route::get('/contractor/print/{id}', [VendorController::class, 'printContractor'])->name('contractor.print');
 Route::get('/material/print/{id}', [MaterialController::class, 'printMaterial'])->name('material.print');
 Route::get('/productMaterial/print/{id}', [ProductMaterialController::class, 'printProductMaterial'])->name('productMaterial.print');

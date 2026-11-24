@@ -27,6 +27,17 @@
       }
       return $isVendor ? route('purchase.show', $row->doc_id) : route('order.show', $row->doc_id);
   };
+  $historyId = 'partyPriceHistory-'.$partyType.'-'.$itemType;
+  // Current prices by "party|size-stage" (material: "party|m") for the "price already exists" check
+  $priceMap = $current->mapWithKeys(fn ($row) => [
+      $row->party_id.'|'.($isProduct ? $row->product_type_id.'-'.$row->stage_id : 'm') => [
+          'price' => $money($row->price),
+          'raw' => (float) $row->price,
+          'date' => formatDate($row->updated_at),
+          'label' => $row->party_no.($row->party_name ? ' - '.$row->party_name : '').($isProduct ? ', size '.$row->size_name.' / '.($row->stage_name ?? '') : ''),
+          'currency' => $row->currency_name ?? '',
+      ],
+  ]);
   $sourceLabels = [
       'manual' => ['Set by hand', 'warning'],
       'purchase' => ['Purchase', 'success'],
@@ -48,7 +59,7 @@
 
 @if($canSet)
   <div class="collapse mb-3" id="{{ $formId }}">
-    <form action="{{ route('partyPrice.store') }}" method="POST" class="border rounded p-3">
+    <form action="{{ route('partyPrice.store') }}" method="POST" class="border rounded p-3 js-item-price-form">
       @csrf
       <input type="hidden" name="party_type" value="{{ $partyType }}">
       @if(! $isProduct)
@@ -58,7 +69,7 @@
         <div class="col-md">{{-- vendor / customer: takes the free width --}}
           <div class="form-group">
             <label>{{ $partyLabel }}</label>
-            <select class="form-control select2" name="party_id" required style="width: 100%">
+            <select class="form-control select2 js-ip-party" name="party_id" required style="width: 100%">
               <option value="" selected disabled>Select {{ $partyLabel }}</option>
               @foreach($parties as $party)
                 @if($isVendor)
@@ -74,7 +85,7 @@
           <div class="col-md-3">
             <div class="form-group">
               <label>Size</label>
-              <select class="form-control select2" name="product_type_id" required style="width: 100%">
+              <select class="form-control select2 js-ip-size" name="product_type_id" required style="width: 100%">
                 <option value="" selected disabled>Select Size</option>
                 @foreach($sizes as $size)
                   <option value="{{ $size->product_type_id }}">{{ $size->name }}</option>
@@ -85,7 +96,7 @@
           <div class="col-md-2">
             <div class="form-group">
               <label>Stage</label>
-              <select class="form-control select2" name="stage_id" required style="width: 100%">
+              <select class="form-control select2 js-ip-stage" name="stage_id" required style="width: 100%">
                 @foreach($stages as $stageItem)
                   <option value="{{ $stageItem->head_id }}" {{ $loop->last ? 'selected' : '' }}>{{ $stageItem->name }}</option>
                 @endforeach
@@ -96,7 +107,8 @@
         <div class="col-md-2">
           <div class="form-group">
             <label>Price</label>
-            <input type="number" step="0.001" min="0.001" class="form-control" name="price" required placeholder="0">
+            <input type="number" step="0.001" min="0.001" class="form-control js-ip-price" name="price" required placeholder="0">
+            <small class="form-text text-muted js-ip-current"></small>
           </div>
         </div>
         <div class="col-md-1">
@@ -106,7 +118,7 @@
           </div>
         </div>
       </div>
-      <small class="text-muted">If the {{ strtolower($partyLabel) }} already has a price for this item, it is replaced and the change is kept in the history.</small>
+      <small class="text-muted">If the {{ strtolower($partyLabel) }} already has a price for this item you are asked before it is replaced; the change is kept in the history.</small>
     </form>
   </div>
 @endif
@@ -139,7 +151,11 @@
               @if($link)<a href="{{ $link }}" target="_blank">{{ $row->doc_no }}</a> @else {{ $row->doc_no }} @endif
             </td>
             @if($canSet)
-              <td>@include('deleteButton', ['url' => route('partyPrice.destroy', $row->party_price_id), 'check' => route('partyPrice.deleteCheck', $row->party_price_id), 'label' => $partyLabel.' price of '.$row->party_no, 'text' => 'Remove'])</td>
+              <td class="text-nowrap">
+                <button type="button" class="btn btn-sm btn-primary js-ip-edit" data-form="{{ $formId }}" data-party="{{ $row->party_id }}"
+                  data-size="{{ $row->product_type_id }}" data-stage="{{ $row->stage_id }}" data-price="{{ (float) $row->price }}">Edit</button>
+                @include('deleteButton', ['url' => route('partyPrice.destroy', $row->party_price_id), 'check' => route('partyPrice.deleteCheck', $row->party_price_id), 'label' => $partyLabel.' price of '.$row->party_no, 'text' => 'Remove'])
+              </td>
             @endif
           </tr>
         @endforeach
@@ -152,8 +168,21 @@
 
 <h6 class="mt-3">{{ $partyLabel }} Price History</h6>
 @if($history->count())
+  @if($history->count() > 1)
+    <div class="form-row align-items-center mb-2 js-table-filter" data-target="#{{ $historyId }}">
+      <div class="col-md-4 mb-1"><select class="form-control form-control-sm" data-col="2" data-label="All {{ $partyLabel }}s"></select></div>
+      @if($isProduct)
+        <div class="col-md-2 mb-1"><select class="form-control form-control-sm" data-col="3" data-label="All Sizes"></select></div>
+      @endif
+      <div class="col-md-2 mb-1"><select class="form-control form-control-sm" data-col="{{ $isProduct ? 9 : 7 }}" data-label="All Users"></select></div>
+      <div class="col-md-auto mb-1">
+        <button type="button" class="btn btn-sm btn-outline-secondary js-filter-reset">Clear</button>
+        <small class="text-muted ml-2 js-filter-count"></small>
+      </div>
+    </div>
+  @endif
   <div class="table-responsive">
-    <table class="table table-sm table-striped">
+    <table class="table table-sm table-striped" id="{{ $historyId }}">
       <thead>
         <tr>
           <th>Sr.</th>
@@ -202,4 +231,69 @@
   </div>
 @else
   <blockquote> No price changes yet </blockquote>
+@endif
+
+@if($canSet)
+@push('scripts')
+<script>
+  $(function () {
+    var prices = @json($priceMap);
+    var isProduct = {{ $isProduct ? 'true' : 'false' }};
+    var $collapse = $('#{{ $formId }}');
+    var $form = $collapse.find('form');
+    var confirmed = false;
+
+    function key() {
+      var party = $form.find('.js-ip-party').val();
+      if (!party) return null;
+      if (!isProduct) return party + '|m';
+      var size = $form.find('.js-ip-size').val(), stage = $form.find('.js-ip-stage').val();
+      return size && stage ? party + '|' + size + '-' + stage : null;
+    }
+    function showCurrent() {
+      var k = key(), p = k ? prices[k] : null;
+      $form.find('.js-ip-current').text(p ? 'Current: ' + p.price + (p.currency ? ' ' + p.currency : '') + ' (since ' + p.date + ')' : '');
+    }
+    $form.find('.js-ip-party, .js-ip-size, .js-ip-stage').on('change', showCurrent);
+
+    // Edit on a price row: opens the form on that vendor / size / stage with its price
+    $(document).on('click', '.js-ip-edit[data-form="{{ $formId }}"]', function () {
+      var d = $(this).data();
+      $form.find('.js-ip-party').val(String(d.party)).trigger('change');
+      if (isProduct) {
+        $form.find('.js-ip-size').val(String(d.size)).trigger('change');
+        $form.find('.js-ip-stage').val(String(d.stage)).trigger('change');
+      }
+      $form.find('.js-ip-price').val(d.price);
+      $collapse.collapse('show');
+      $('html, body').animate({ scrollTop: $collapse.offset().top - 120 }, 200);
+      $form.find('.js-ip-price').trigger('focus').trigger('select');
+    });
+
+    // Price already saved for this vendor / item: show the last price and ask before replacing it
+    $form.on('submit', function (e) {
+      if (confirmed) return true;
+      var k = key(), p = k ? prices[k] : null;
+      if (!p) return true;
+      e.preventDefault();
+      var newPrice = $form.find('.js-ip-price').val();
+      var unit = p.currency ? ' ' + p.currency : '';
+      if (Math.abs(parseFloat(newPrice) - p.raw) < 0.0005) {
+        swal({ title: 'Price unchanged', text: p.label + ' already has the price ' + p.price + unit + ' (since ' + p.date + ').', icon: 'info', buttons: 'OK' });
+        return false;
+      }
+      var box = document.createElement('div');
+      box.innerHTML = '<div class="text-left">A price already exists for:<br><b>' + $('<div>').text(p.label).html() + '</b>'
+        + '<table class="table table-sm mt-2 mb-0"><tr><td>Last price</td><td class="text-right"><b>' + p.price + unit + '</b> <small class="text-muted">since ' + p.date + '</small></td></tr>'
+        + '<tr><td>New price</td><td class="text-right"><b>' + $('<div>').text(newPrice).html() + unit + '</b></td></tr></table>'
+        + '<small class="text-muted">The last price is kept in the price history.</small></div>';
+      swal({ title: 'Update the existing price?', content: box, icon: 'warning', buttons: ['Cancel', 'Yes, update price'] })
+        .then(function (ok) {
+          if (ok) { confirmed = true; $form[0].submit(); }
+        });
+      return false;
+    });
+  });
+</script>
+@endpush
 @endif
