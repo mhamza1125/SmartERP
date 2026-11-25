@@ -81,6 +81,7 @@ class DashboardController extends Controller
                 ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
                 ->join('products', 'products.product_id', '=', 'product_types.product_id')
                 ->join('heads as size_head', 'size_head.head_id', '=', 'product_types.size_id')
+                ->leftJoin('orders', 'orders.order_id', '=', 'stocks.order_id') // PTC without an order = Default PTC
                 ->where('stocks.is_ptc_master', 1)
                 ->where('stocks.stock_status', 6)
                 ->select(
@@ -90,7 +91,8 @@ class DashboardController extends Controller
                     'stocks.stock_date',
                     'products.article_no',
                     'products.name as product_name',
-                    'size_head.name as size_name'
+                    'size_head.name as size_name',
+                    'orders.job_no'
                 )
                 ->orderBy('stocks.stock_date', 'desc')
                 ->orderBy('stocks.stock_id', 'desc')

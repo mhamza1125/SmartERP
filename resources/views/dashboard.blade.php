@@ -270,29 +270,31 @@
           <h4><i class="fas fa-tasks"></i> Running PTCs (Latest 10)</h4>
         </div>
         <div class="card-body">
+          @if($runningPtcsTable->count())
           <div class="table-responsive">
-            <table class="table table-striped table-sm">
+            <table class="table table-striped table-sm js-dashboard-table" id="dashboardPtcs">
               <thead>
                 <tr>
                   <th>PTC No.</th>
+                  <th>Order</th>
                   <th>Product</th>
                   <th>Size</th>
                   <th>Quantity</th>
                   <th>Status</th>
                   <th>Date Created</th>
-                  <th>Actions</th>
+                  <th class="no-sort">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                @if($runningPtcsTable->count())
                   @foreach($runningPtcsTable as $ptc)
                     <tr>
                       <td><strong>PTC-{{ $ptc->stock_no }}</strong></td>
+                      <td>{{ $ptc->job_no ?? 'Default PTC' }}</td>
                       <td>{{ $ptc->article_no }} - {{ $ptc->product_name }}</td>
                       <td>{{ $ptc->size_name }}</td>
                       <td>{{ $ptc->quantity }}</td>
                       <td><span class="badge badge-info">In Progress</span></td>
-                      <td>{{ \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') }}</td>
+                      <td data-order="{{ $ptc->stock_date }}">{{ \Carbon\Carbon::parse($ptc->stock_date)->format('d-m-Y') }}</td>
                       <td>
                         <a href="{{ route('ptc.show', $ptc->stock_id) }}" class="btn btn-sm btn-info">
                           <i class="fas fa-eye"></i> View
@@ -300,14 +302,12 @@
                       </td>
                     </tr>
                   @endforeach
-                @else
-                  <tr>
-                    <td colspan="7" class="text-center text-muted">No running PTCs</td>
-                  </tr>
-                @endif
               </tbody>
             </table>
           </div>
+          @else
+            <p class="text-center text-muted mb-0">No running PTCs</p>
+          @endif
         </div>
       </div>
     </div>
@@ -354,7 +354,7 @@
 
 @push('scripts')
 <script>
-  // Orders / purchase orders: all rows (no paging), the built-in search, sortable, and columns that can be
+  // Orders / purchase orders / running PTCs: all rows (no paging), the built-in search, sortable, and columns that can be
   // dragged into another order (ColReorder). Only the column order is remembered; sorting and search
   // start fresh on each visit, so the nearest due date is always first.
   $(function () {

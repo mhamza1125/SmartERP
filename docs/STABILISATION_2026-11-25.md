@@ -94,7 +94,7 @@ Orders, purchases, receipts, material processing, payments and transfers each sa
 ### Reports
 - Low Stock card: uses the real stock figures (now 19, was 34).
 - Expense This Month: expenses minus reversals.
-- Running PTCs: each PTC once.
+- Running PTCs: each PTC once, with its order (job no, or "Default PTC") and a search box like the other dashboard tables.
 - Receipt print: shows the real receiving status.
 - Excel invoice: address and free-text cells cannot become formulas.
 - New indexes on the stock and transaction tables speed up stock and ledger lookups.

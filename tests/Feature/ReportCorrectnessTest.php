@@ -73,6 +73,24 @@ class ReportCorrectnessTest extends TestCase
         $this->assertSame(min(10, $open), $rows->count(), 'up to 10 PTCs, not 10 rows');
     }
 
+    public function test_running_ptcs_show_their_order_and_are_searchable(): void
+    {
+        $ptc = DB::table('stocks')->where('is_ptc_master', 1)->where('stock_status', 6)->where('order_id', '>', 0)->orderByDesc('stock_date')->first();
+        if (! $ptc) {
+            $this->markTestSkipped('needs an open PTC with an order');
+        }
+        $jobNo = DB::table('orders')->where('order_id', $ptc->order_id)->value('job_no');
+
+        $response = $this->get(route('dashboard'))->assertOk();
+        $row = $response->viewData('runningPtcsTable')->firstWhere('stock_id', $ptc->stock_id);
+        if ($row) {
+            $this->assertSame($jobNo, $row->job_no);
+            $response->assertSee($jobNo);
+        }
+        // same DataTables set-up (search box) as the orders / purchases tables
+        $response->assertSee('id="dashboardPtcs"', false)->assertSee('js-dashboard-table" id="dashboardPtcs"', false);
+    }
+
     public function test_receipt_print_shows_the_real_receiving_status(): void
     {
         $purchaseId = DB::table('purchases')->insertGetId(['purchase_no' => 'ZZP-'.uniqid(), 'purchase_type' => 'material', 'order_id' => 0,
