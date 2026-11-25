@@ -12,7 +12,7 @@ Things only you can do (production server, passwords, data). In order of urgency
     intended: it changes nothing. Leave it until question Q20 in [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md) is
     answered (the message will repeat on every `migrate` until then).
   - If one of the other UNIQUE migrations stops, it lists the duplicate numbers: correct them by hand, run again.
-- [ ] Clear caches after deploying: `php artisan optimize:clear` (the routes depend on `ALLOW_DATA_RESET`, see 4).
+- [ ] Clear caches after deploying: `php artisan optimize:clear`.
 
 ## 2. Production `.env` (D11)
 
@@ -21,7 +21,6 @@ Things only you can do (production server, passwords, data). In order of urgency
   password**. The local `.env` uses root without a password: fine on a development PC only.
 - [ ] A new `APP_KEY` for production (`php artisan key:generate` on the server, once; changing it later logs
   everybody out).
-- [ ] `ALLOW_DATA_RESET=false` (or leave it out; see 4).
 
 ## 3. Was the repository or its history ever shared? (Q17)
 
@@ -35,14 +34,13 @@ stays tracked).
 - [ ] Whether to remove the dumps from history (e.g. `git filter-repo`) is your decision; it rewrites every
   commit hash and every clone must be re-made.
 
-## 4. Settings > Reset Test Data (D10)
+## 4. Settings > Reset Test Data
 
-The tool (it deletes all transactional data) now exists only when `ALLOW_DATA_RESET=true` in `.env`;
-otherwise its menu entry and URLs (`/settings/reset-data`) do not exist. Your local `.env` does not have the
-variable, so the menu entry is gone locally too.
+Changed 2026-11-25 at your request (replaces D10): the tool (it deletes all transactional data) is always in
+Settings for the Admin role only; no `.env` switch any more (`ALLOW_DATA_RESET` is no longer read, remove it
+from `.env` if present). It still asks for the confirmation phrase.
 
-- [ ] Keep it `false`. To use it once: take a backup, set `ALLOW_DATA_RESET=true`, run
-  `php artisan optimize:clear`, use it, set it back to `false`, `php artisan optimize:clear` again.
+- [ ] Take a backup before using it, especially on the live database.
 
 ## 5. Check over HTTP that uploads cannot run as code
 

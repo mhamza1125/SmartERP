@@ -52,12 +52,10 @@ Route::group(['middleware' => 'auth'], function () {
     ], function () {
         // Add Routes Here
 
-        // TEMPORARY one-time cleanup (Settings > Reset Test Data). Destructive: registered only when
-        // ALLOW_DATA_RESET=true in .env (default false, D10); otherwise these URLs do not exist.
-        if (config('app.allow_data_reset')) {
-            Route::get('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'index'])->name('data-reset.index');
-            Route::post('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'run'])->name('data-reset.run');
-        }
+        // Settings > Reset Test Data (destructive). Admin only: is_admin here + in the controller and
+        // SettingsPolicy::resetData. Always available to the admin (user decision 2026-11-25, replaces D10's .env switch).
+        Route::get('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'index'])->name('data-reset.index');
+        Route::post('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'run'])->name('data-reset.run');
     });
 });
 

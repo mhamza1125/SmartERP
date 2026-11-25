@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * F-10 login throttle, F-28 logout ends the session, F-31 / D10 Reset Test Data only when
- * ALLOW_DATA_RESET is true.
+ * F-10 login throttle, F-28 logout ends the session, Reset Test Data visible to the admin only
+ * (user decision 2026-11-25; the ALLOW_DATA_RESET switch of D10 is gone).
  */
 class SecurityBasicsTest extends TestCase
 {
@@ -72,16 +72,20 @@ class SecurityBasicsTest extends TestCase
         $this->assertNotSame($sessionId, session()->getId(), 'new session id');
     }
 
-    public function test_reset_test_data_routes_are_absent_by_default(): void
+    public function test_reset_test_data_is_available_to_the_admin_only(): void
     {
-        $this->assertFalse((bool) config('app.allow_data_reset'));
-        $this->assertFalse(Route::has('data-reset.index'));
-        $this->assertFalse(Route::has('data-reset.run'));
+        $this->assertTrue(Route::has('data-reset.index'));
+        $this->assertTrue(Route::has('data-reset.run'));
 
+        // Admin: menu link + the confirmation screen (a preview only; nothing is run here)
         $admin = User::where('role_id', User::ROLE_ADMIN)->orderBy('id')->firstOrFail();
-        $this->actingAs($admin)->get('/settings/reset-data')->assertNotFound();
-        $this->actingAs($admin)->post('/settings/reset-data', ['confirmation' => 'RESET'])->assertNotFound();
-        // the menu still renders without the link
-        $this->actingAs($admin)->get(route('dashboard'))->assertOk()->assertDontSee('Reset Test Data');
+        $this->actingAs($admin)->get(route('dashboard'))->assertOk()->assertSee('Reset Test Data');
+        $this->actingAs($admin)->get(route('data-reset.index'))->assertOk();
+
+        // Any other user: no link, and neither URL is reachable
+        $user = $this->user();
+        $this->actingAs($user)->get(route('dashboard'))->assertDontSee('Reset Test Data');
+        $this->assertNotSame(200, $this->actingAs($user)->get(route('data-reset.index'))->getStatusCode());
+        $this->assertNotSame(200, $this->actingAs($user)->post(route('data-reset.run'), ['confirmation' => 'RESET'])->getStatusCode());
     }
 }

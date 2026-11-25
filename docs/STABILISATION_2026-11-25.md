@@ -20,7 +20,7 @@ No new features: only validation, guards, locks, transactions, bug fixes, securi
 | D7 | Document numbers are unique; gaps are allowed |
 | D8 | Existing data is never renamed to make an index fit |
 | D9 | Login and permission checks stay in the controllers' constructors |
-| D10 | Reset Test Data exists only when `ALLOW_DATA_RESET=true` |
+| D10 | Reset Test Data exists only when `ALLOW_DATA_RESET=true` (REPLACED 2026-11-25: always available to the Admin role, no .env switch) |
 | D11-D13 | Production settings, git history and backups are the owner's job (documented) |
 
 ## What changed
@@ -89,7 +89,7 @@ Orders, purchases, receipts, material processing, payments and transfers each sa
 ### Security
 - Login allows 5 failed attempts per minute per email and IP.
 - Logout ends the session completely.
-- Reset Test Data routes exist only when `ALLOW_DATA_RESET=true`.
+- Reset Test Data routes exist only when `ALLOW_DATA_RESET=true` (replaced 2026-11-25: admin only, always available).
 
 ### Reports
 - Low Stock card: uses the real stock figures (now 19, was 34).

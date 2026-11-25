@@ -315,12 +315,10 @@
                 @can('access', App\Models\Category::class)
                   <li><a class="nav-link" href="{{ route('category') }}">Category</a></li>
                 @endcan
-                {{-- TEMPORARY one-time cleanup - remove with DataResetController --}}
-                @if(Route::has('data-reset.index'))
+                {{-- Reset Test Data (destructive): Admin only through SettingsPolicy::resetData --}}
                 @can('resetData', App\Models\Settings::class)
                   <li><a class="nav-link text-danger" href="{{ route('data-reset.index') }}">Reset Test Data</a></li>
                 @endcan
-                @endif
               </ul>
             </li>
             @endif
