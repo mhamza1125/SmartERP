@@ -321,58 +321,114 @@ class StockItemRepository implements GlobalInterface
             ->get();
     }
 
-    public function stockVehicle($id)
+    // ==================================================================================
+    // THE stock formula. Every material / product stock figure is built from these.
+    //
+    //   material stock = approved received (purchase receipts) - returned + stock-in - stock-out
+    //   product stock  = stock-in - stock-out per product size + stage (general stock,
+    //                    ptc_virtual 0) + approved received - returned at the purchased stage
+    //
+    // Returns are summed per receipt line BEFORE they meet the receipts, so a receipt line
+    // with several partial returns is counted once (F-02: 100 - 10 - 5 = 85, never 185).
+    // ==================================================================================
+
+    /** Purchase returns, one row per receipt line: receive_material_id, quantity. */
+    public function returnsPerReceiptLine(): \Illuminate\Database\Query\Builder
     {
-        // Available Material Stock
-        return DB::table(function ($subquery) use ($id) {
-            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname')
-                // ->selectRaw('SUM(receive_materials.quantity) as total_received')
-                ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
-                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-                ->where('materials.material_type_id', '=', '96')
-                ->from('materials')
-                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
-                ->leftJoin('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
+        return DB::table('return_materials')
+            ->select('return_materials.receive_material_id')
+            ->selectRaw('SUM(return_materials.quantity) as quantity')
+            ->groupBy('return_materials.receive_material_id');
+    }
+
+    /**
+     * Purchase-receipt part of MATERIAL stock, one row per material:
+     * material_id, total_received (approved; NULL when nothing received), total_returned.
+     *
+     * @param  int|null  $orderId  only purchases made for this order
+     */
+    public function materialReceiptTotals(?int $orderId = null): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('purchase_items')
+            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+            ->leftJoinSub($this->returnsPerReceiptLine(), 'returned', 'returned.receive_material_id', '=', 'receive_materials.receive_material_id')
+            ->when($orderId !== null, fn ($q) => $q->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
+                ->where('purchases.order_id', $orderId))
+            ->where('purchase_items.material_id', '>', 0)
+            ->groupBy('purchase_items.material_id')
+            ->select('purchase_items.material_id')
+            ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
+            ->selectRaw('IFNULL(SUM(returned.quantity), 0) as total_returned');
+    }
+
+    /**
+     * Purchase-receipt part of PRODUCT stock, one row per product size + purchased stage:
+     * product_type_id, stage_id, total_received (approved), total_returned.
+     *
+     * @param  array<int>|null  $productTypeIds  only these product sizes
+     */
+    public function productReceiptTotals(?array $productTypeIds = null): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('purchase_items')
+            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
+            ->leftJoinSub($this->returnsPerReceiptLine(), 'returned', 'returned.receive_material_id', '=', 'receive_materials.receive_material_id')
+            ->where('purchase_items.material_id', 0)
+            ->when($productTypeIds !== null, fn ($q) => $q->whereIn('purchase_items.product_type_id', $productTypeIds))
+            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id')
+            ->select('purchase_items.product_type_id', 'purchase_items.product_stage_id as stage_id')
+            ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
+            ->selectRaw('IFNULL(SUM(returned.quantity), 0) as total_returned');
+    }
+
+    /**
+     * Material stock rows: the material columns asked for + total_received, total_returned,
+     * stockIn, stockOut. Balance = total_received - total_returned + stockIn - stockOut.
+     *
+     * @param  array<string>  $columns  material columns (materials.*, mthead.name as mtname, uhead.name as uname)
+     * @param  \Closure|null  $scope  extra conditions on the materials query
+     * @param  int|null  $orderId  receipts of this order's purchases only (and only materials it purchased)
+     */
+    private function materialStockRows(array $columns, ?\Closure $scope = null, ?int $orderId = null)
+    {
+        $receipts = $this->materialReceiptTotals($orderId);
+        $groupBy = array_map(fn ($column) => 'material_stock.'.preg_replace('/^.*(\.| as )/', '', $column), $columns);
+
+        return DB::table(function ($subquery) use ($columns, $scope, $receipts, $orderId) {
+            $subquery->from('materials')
+                ->select($columns)
+                ->addSelect('receipts.total_received')
+                ->selectRaw('IFNULL(receipts.total_returned, 0) as total_returned')
+                ->{$orderId === null ? 'leftJoinSub' : 'joinSub'}($receipts, 'receipts', 'receipts.material_id', '=', 'materials.material_id')
                 ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
                 ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-                ->where('purchases.order_id', $id)
-                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
+                ->when($scope, $scope);
         }, 'material_stock')
             ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
             ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->select('material_stock.*')
             ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
             ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
-            ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
+            ->groupBy($groupBy)
             ->get();
+    }
+
+    public function stockVehicle($id)
+    {
+        // Available Material Stock of box / vehicle materials (type 96) purchased for an order
+        return $this->materialStockRows(
+            ['materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname'],
+            fn ($q) => $q->where('materials.material_type_id', '=', '96'),
+            (int) $id
+        );
     }
 
     public function stock(?int $materialId = null)
     {
         // Available Material Stock (optionally for one material)
-        return DB::table(function ($subquery) use ($materialId) {
-            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'materials.location', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
-                // ->selectRaw('SUM(receive_materials.quantity) as total_received')
-                ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
-                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-                ->from('materials')
-                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
-                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-                ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
-                ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-                ->when($materialId, fn ($q) => $q->where('materials.material_id', $materialId))
-                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'materials.location', 'mthead.name', 'uhead.name');
-        }, 'material_stock')
-            ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
-            ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->select('material_stock.*')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
-            ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.location', 'material_stock.mtname', 'material_stock.uname')
-            ->get();
+        return $this->materialStockRows(
+            ['materials.material_id', 'materials.material_no', 'materials.name', 'materials.location', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id'],
+            $materialId ? fn ($q) => $q->where('materials.material_id', $materialId) : null
+        );
     }
 
     /**
@@ -385,6 +441,57 @@ class StockItemRepository implements GlobalInterface
 
         return $row ? (float) ($row->total_received + $row->stockIn - $row->stockOut - $row->total_returned) : 0.0;
     }
+
+    /**
+     * Row-locks the materials (SELECT ... FOR UPDATE) until the transaction ends, so material
+     * stock-outs of the same material are checked one after another.
+     *
+     * Call it as the FIRST read of the transaction (after other locking reads only): under
+     * REPEATABLE READ the snapshot used by assertMaterialsAvailable() is taken at the first plain
+     * SELECT, so it then includes every stock-out committed by whoever held the lock before.
+     */
+    public function lockMaterials(iterable $materialIds): void
+    {
+        $ids = collect($materialIds)->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->unique()->sort()->values()->all();
+        if ($ids !== []) {
+            DB::table('materials')->whereIn('material_id', $ids)->orderBy('material_id')->lockForUpdate()->pluck('material_id');
+        }
+    }
+
+    /**
+     * Refuses when a material would be below 0 after the lines just written (D3: negative stock is
+     * never allowed). Call after the document's lines are saved, inside the same transaction as
+     * lockMaterials(); the caller's rollback undoes the save.
+     *
+     * @param  array<int>  $stockIds  the document(s) being saved, for the "requested" figure
+     *
+     * @throws MaterialStockException
+     */
+    public function assertMaterialsAvailable(iterable $materialIds, array $stockIds = []): void
+    {
+        $ids = collect($materialIds)->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->unique()->values();
+        foreach ($ids as $materialId) {
+            $balance = $this->materialStock($materialId);
+            if ($balance >= -self::QTY_EPSILON) {
+                continue;
+            }
+            $requested = $stockIds === [] ? 0.0 : (float) DB::table('stock_items')
+                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+                ->whereIn('stock_items.stock_id', $stockIds)
+                ->where('stock_items.material_id', $materialId)
+                ->where('stocks.stock_type', 2)
+                ->sum('stock_items.quantity');
+            $material = DB::table('materials')->where('material_id', $materialId)->first(['material_no', 'name']);
+            $label = $material ? trim($material->material_no.' - '.$material->name, ' -') : 'Material #'.$materialId;
+            $available = max(0, round($balance + $requested, 4));
+
+            throw new \App\Exceptions\MaterialStockException(
+                "{$label}: only {$available} in stock, ".round($requested ?: -$balance, 4).' requested.'
+            );
+        }
+    }
+
+    private const QTY_EPSILON = 0.0001;
 
     /**
      * Available material stock split by category:
@@ -402,42 +509,15 @@ class StockItemRepository implements GlobalInterface
     public function freeStock()
     {
         // Free Material Stock Based on Default Purchases
-        return DB::table(function ($subquery) {
-            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
-                // ->selectRaw('SUM(receive_materials.quantity) as total_received')
-                ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
-                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-                ->from('materials')
-                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
-                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-                ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
-                ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
-        }, 'material_stock')
-            ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
-            ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->select('material_stock.*')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
-            ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
-            ->get();
+        return $this->materialStockRows(
+            ['materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id']
+        );
     }
 
     public function orderDeliveryTemp($id)
     {
-        // Subquery to calculate purchase-based received and returned stock quantities
-        $purchaseSub = DB::table('purchase_items')
-            ->select(
-                'purchase_items.product_type_id',
-                'purchase_items.product_stage_id',
-                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
-                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-            )
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->where('purchase_items.material_id', 0)
-            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
+        // Purchase-based received and returned stock quantities (the shared receipt formula)
+        $purchaseSub = $this->productReceiptTotals();
 
         // Main Query: Combine order delivery with purchase stock calculations
         return StockItem::select(
@@ -468,7 +548,7 @@ class StockItemRepository implements GlobalInterface
             ->join('materials', 'materials.material_id', 'product_materials.material_id')
             ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
                 $join->on('purchase_sub.product_type_id', '=', 'product_types.product_type_id')
-                    ->on('purchase_sub.product_stage_id', '=', 'stock_items.stage_id');
+                    ->on('purchase_sub.stage_id', '=', 'stock_items.stage_id');
             })
             ->where('materials.material_type_id', '61') // Box
             ->where('order_items.order_id', $id)
@@ -490,9 +570,18 @@ class StockItemRepository implements GlobalInterface
     }
 
 
-    public function pStock()
+    /**
+     * Product stock per product size + stage: product_type_id, stage_id, stockIn, stockOut.
+     * stockIn = general stock-in (ptc_virtual 0; components under their own product size)
+     * + approved purchase receipts - purchase returns. Balance = stockIn - stockOut.
+     *
+     * @param  array<int>|null  $productTypeIds  only these product sizes (null = all)
+     */
+    public function productStockAggregate(?array $productTypeIds = null): \Illuminate\Database\Query\Builder
     {
-        // Subquery 1: Stock-based quantities grouped by product_type_id and stage_id (regular products)
+        $productTypeIds = $productTypeIds === null ? null : array_values(array_map('intval', $productTypeIds));
+
+        // Regular product lines
         $stockSub = DB::table('stock_items')
             ->select(
                 'stock_items.product_type_id',
@@ -504,11 +593,10 @@ class StockItemRepository implements GlobalInterface
             ->where('stock_items.material_id', '=', 0)
             ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
             ->where('stock_items.ptc_virtual', 0) // PTC virtual stock is not general stock
+            ->when($productTypeIds !== null, fn ($q) => $q->whereIn('stock_items.product_type_id', $productTypeIds))
             ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
 
-        // Subquery 1b: Component product stock (when products are used as components)
-        // These are tracked by component_product_type_id, not product_type_id
-        // Use the actual stage_id from stock_items (components don't have stages when used as components)
+        // Component lines (a product used to make another), counted under the component's product size
         $componentStockSub = DB::table('stock_items')
             ->select(
                 'stock_items.component_product_type_id as product_type_id',
@@ -519,23 +607,14 @@ class StockItemRepository implements GlobalInterface
             ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->whereNotNull('stock_items.component_product_type_id')
             ->where('stock_items.ptc_virtual', 0)
+            ->when($productTypeIds !== null, fn ($q) => $q->whereIn('stock_items.component_product_type_id', $productTypeIds))
             ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
 
-        // Subquery 2: Purchase-based received/returned quantities (for products only)
-        $purchaseSub = DB::table('purchase_items')
-            ->select(
-                'purchase_items.product_type_id',
-                'purchase_items.product_stage_id as stage_id',
-                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
-                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-            )
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->where('purchase_items.material_id', 0)
-            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
+        // Purchase receipts (approved) minus returns: the shared receipt formula
+        $purchaseSub = $this->productReceiptTotals($productTypeIds);
 
         // Combine stock, component stock, and purchase data using UNION approach
-        $combinedSub = DB::table(DB::raw("(
+        return DB::table(DB::raw("(
             SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
             FROM ({$stockSub->toSql()}) as stock_data
             UNION ALL
@@ -555,6 +634,16 @@ class StockItemRepository implements GlobalInterface
                 DB::raw('SUM(stockOut) as stockOut')
             )
             ->groupBy('product_type_id', 'stage_id');
+    }
+
+    /**
+     * Product stock (/stock): one row per product size + stage with product names.
+     *
+     * @param  array<int>|null  $productTypeIds  only these product sizes (computed in SQL, not filtered afterwards)
+     */
+    public function pStock(?array $productTypeIds = null)
+    {
+        $combinedSub = $this->productStockAggregate($productTypeIds);
 
         // Main Query - Join aggregated data with product info
         return DB::table(DB::raw("({$combinedSub->toSql()}) as agg_stock"))
@@ -590,13 +679,8 @@ class StockItemRepository implements GlobalInterface
      */
     public function pStockByProductType($productTypeId)
     {
-        // Get all stock data using the same method as the /stock page
-        $allStock = $this->pStock();
-
-        // Filter to only the requested product type
-        $filteredStock = $allStock->filter(function ($item) use ($productTypeId) {
-            return $item->product_type_id == $productTypeId;
-        });
+        // Same formula as the /stock page, computed for this product size only
+        $filteredStock = $this->pStock([(int) $productTypeId]);
 
         // Return as a collection with only the needed fields
         return $filteredStock->map(function ($item) {
@@ -617,9 +701,11 @@ class StockItemRepository implements GlobalInterface
      */
     public function pStockForProductTypes(array $productTypeIds): \Illuminate\Support\Collection
     {
-        return $this->pStock()
-            ->filter(fn($item) => in_array($item->product_type_id, $productTypeIds))
-            ->groupBy('product_type_id');
+        if ($productTypeIds === []) {
+            return collect();
+        }
+
+        return $this->pStock($productTypeIds)->groupBy('product_type_id');
     }
 
     public function gStock()
@@ -630,40 +716,11 @@ class StockItemRepository implements GlobalInterface
             ->select('igroup_items.*', 'igroup_items.stage_id as igstage_id')
             ->get();
 
-        // Fetch available material stock
-        $materialStock = DB::table(function ($subquery) {
-            $subquery->select('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name as mtname', 'uhead.name as uname', 'material_type_id')
-                ->selectRaw('SUM(receive_materials.approved_qty) as total_received')
-                ->selectRaw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-                ->from('materials')
-                ->leftJoin('purchase_items', 'purchase_items.material_id', '=', 'materials.material_id')
-                ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-                ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-                ->leftJoin('heads as mthead', 'mthead.head_id', '=', 'materials.material_type_id')
-                ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'materials.unit_id')
-                ->groupBy('materials.material_id', 'materials.material_no', 'materials.name', 'mthead.name', 'uhead.name');
-        }, 'material_stock')
-            ->leftJoin('stock_items', 'stock_items.material_id', '=', 'material_stock.material_id')
-            ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->select('material_stock.*')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END), 0) as stockIn')
-            ->selectRaw('IFNULL(SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END), 0) as stockOut')
-            ->groupBy('material_stock.material_id', 'material_stock.material_no', 'material_stock.name', 'material_stock.mtname', 'material_stock.uname')
-            ->get()
-            ->keyBy('material_id');
+        // Fetch available material stock (the shared material formula)
+        $materialStock = $this->freeStock()->keyBy('material_id');
 
-        // Subquery: purchase-based received/returned quantities (for products only)
-        $purchaseSub = DB::table('purchase_items')
-            ->select(
-                'purchase_items.product_type_id',
-                'purchase_items.product_stage_id',
-                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
-                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-            )
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->where('purchase_items.material_id', 0)
-            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
+        // Purchase-based received/returned quantities for products (the shared receipt formula)
+        $purchaseSub = $this->productReceiptTotals();
 
         // Fetch available product stock with stage_id check
         $productStock = DB::table('product_types')
@@ -676,7 +733,7 @@ class StockItemRepository implements GlobalInterface
                 'sthead.head_id as sthead_id',
                 'uhead.name as uname',
                 'products.product_id',
-                DB::raw('COALESCE(stock_items.stage_id, purchase_sub.product_stage_id) as stage_id'),
+                DB::raw('COALESCE(stock_items.stage_id, purchase_sub.stage_id) as stage_id'),
                 DB::raw('
                     SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END)
                     + IFNULL(purchase_sub.total_received, 0)
@@ -693,10 +750,10 @@ class StockItemRepository implements GlobalInterface
             ->leftJoin('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
             ->leftJoinSub($purchaseSub, 'purchase_sub', function ($join) {
                 $join->on('purchase_sub.product_type_id', '=', 'product_types.product_type_id')
-                    ->whereRaw('purchase_sub.product_stage_id = COALESCE(stock_items.stage_id, purchase_sub.product_stage_id)');
+                    ->whereRaw('purchase_sub.stage_id = COALESCE(stock_items.stage_id, purchase_sub.stage_id)');
             })
             ->leftJoin('heads as sthead', function ($join) {
-                $join->on('sthead.head_id', '=', DB::raw('COALESCE(stock_items.stage_id, purchase_sub.product_stage_id)'));
+                $join->on('sthead.head_id', '=', DB::raw('COALESCE(stock_items.stage_id, purchase_sub.stage_id)'));
             })
             ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
             ->groupBy(
@@ -708,7 +765,7 @@ class StockItemRepository implements GlobalInterface
                 'sthead.head_id',
                 'uhead.name',
                 'products.product_id',
-                DB::raw('COALESCE(stock_items.stage_id, purchase_sub.product_stage_id)')
+                DB::raw('COALESCE(stock_items.stage_id, purchase_sub.stage_id)')
             )
             ->get()
             ->keyBy(function ($item) {
@@ -793,72 +850,11 @@ class StockItemRepository implements GlobalInterface
     public function orderStatus($id)
     {
         // Order Current Status - includes ordered quantity from order_items
-        // Start from order_items to show ALL products in the order, including those with zero stock
-        // Uses the same calculation logic as pStock() to include both stock_items and purchase_items
-
-        // Subquery 1: Stock-based quantities grouped by product_type_id and stage_id (regular products)
-        $stockSub = DB::table('stock_items')
-            ->select(
-                'stock_items.product_type_id',
-                'stock_items.stage_id',
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
-            )
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stock_items.material_id', '=', 0)
-            ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
-            ->where('stock_items.ptc_virtual', 0) // PTC virtual stock is not general stock
-            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
-
-        // Subquery 1b: Component product stock (when products are used as components)
-        // Use the actual stage_id from stock_items (components don't have stages when used as components)
-        $componentStockSub = DB::table('stock_items')
-            ->select(
-                'stock_items.component_product_type_id as product_type_id',
-                'stock_items.stage_id', // Use actual stage from stock_items
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
-            )
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->whereNotNull('stock_items.component_product_type_id')
-            ->where('stock_items.ptc_virtual', 0)
-            ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
-
-        // Subquery 2: Purchase-based received/returned quantities (for products only)
-        $purchaseSub = DB::table('purchase_items')
-            ->select(
-                'purchase_items.product_type_id',
-                'purchase_items.product_stage_id as stage_id',
-                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
-                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-            )
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->where('purchase_items.material_id', 0)
-            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
-
-        // Combine stock, component stock, and purchase data using UNION approach
-        $combinedSub = DB::table(DB::raw("(
-            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
-            FROM ({$stockSub->toSql()}) as stock_data
-            UNION ALL
-            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
-            FROM ({$componentStockSub->toSql()}) as component_stock_data
-            UNION ALL
-            SELECT product_type_id, stage_id, 0 as stockIn, 0 as stockOut, total_received as purchase_received, total_returned as purchase_returned
-            FROM ({$purchaseSub->toSql()}) as purchase_data
-        ) as combined_data"))
-            ->mergeBindings($stockSub)
-            ->mergeBindings($componentStockSub)
-            ->mergeBindings($purchaseSub)
-            ->select(
-                'product_type_id',
-                'stage_id',
-                DB::raw('SUM(stockIn) + SUM(purchase_received) - SUM(purchase_returned) as stockIn'),
-                DB::raw('SUM(stockOut) as stockOut')
-            )
-            ->groupBy('product_type_id', 'stage_id');
-
+        // Start from order_items to show ALL products in the order, including those with zero stock.
+        // Stock per product size + stage is the shared formula (productStockAggregate), computed
+        // only for the order's product sizes.
+        $orderTypeIds = DB::table('order_items')->where('order_id', $id)->pluck('product_type_id')->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $combinedSub = $this->productStockAggregate($orderTypeIds);
         // Main Query - Join aggregated data with order items and product info
         return DB::table('order_items')
             ->select(
@@ -996,102 +992,8 @@ class StockItemRepository implements GlobalInterface
 
     public function pStockGet($id)
     {
-        // Product Stock AjaxPM - includes both purchase-based and in-house stock
-        // Uses the same UNION-based approach as pStock() to prevent double-counting
-
-        // Subquery 1: Stock-based quantities for regular products (not components)
-        $stockSub = DB::table('stock_items')
-            ->select(
-                'stock_items.product_type_id',
-                'stock_items.stage_id',
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
-            )
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stock_items.material_id', '=', 0)
-            ->where('stock_items.product_type_id', '=', $id)
-            ->whereNull('stock_items.component_product_type_id') // Exclude component product entries
-            ->where('stock_items.ptc_virtual', 0) // PTC virtual stock is not general stock
-            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id');
-
-        // Subquery 1b: Component product stock (when this product is used as a component)
-        // These are tracked by component_product_type_id, not product_type_id
-        // Use the actual stage_id from stock_items (components don't have stages when used as components)
-        $componentStockSub = DB::table('stock_items')
-            ->select(
-                'stock_items.component_product_type_id as product_type_id',
-                'stock_items.stage_id', // Use actual stage from stock_items
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 1 THEN stock_items.quantity ELSE 0 END) as stockIn'),
-                DB::raw('SUM(CASE WHEN stocks.stock_type = 2 THEN stock_items.quantity ELSE 0 END) as stockOut')
-            )
-            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->where('stock_items.component_product_type_id', '=', $id)
-            ->whereNotNull('stock_items.component_product_type_id')
-            ->where('stock_items.ptc_virtual', 0)
-            ->groupBy('stock_items.component_product_type_id', 'stock_items.stage_id');
-
-        // Subquery 2: Purchase-based received/returned quantities (for products only)
-        $purchaseSub = DB::table('purchase_items')
-            ->select(
-                'purchase_items.product_type_id',
-                'purchase_items.product_stage_id as stage_id',
-                DB::raw('SUM(receive_materials.approved_qty) as total_received'),
-                DB::raw('IFNULL(SUM(return_materials.quantity), 0) as total_returned')
-            )
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->where('purchase_items.material_id', 0)
-            ->where('purchase_items.product_type_id', '=', $id)
-            ->groupBy('purchase_items.product_type_id', 'purchase_items.product_stage_id');
-
-        // Combine stock, component stock, and purchase data using UNION approach
-        // This prevents double-counting by keeping each data source separate until final aggregation
-        $combinedSub = DB::table(DB::raw("(
-            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
-            FROM ({$stockSub->toSql()}) as stock_data
-            UNION ALL
-            SELECT product_type_id, stage_id, stockIn, stockOut, 0 as purchase_received, 0 as purchase_returned
-            FROM ({$componentStockSub->toSql()}) as component_stock_data
-            UNION ALL
-            SELECT product_type_id, stage_id, 0 as stockIn, 0 as stockOut, total_received as purchase_received, total_returned as purchase_returned
-            FROM ({$purchaseSub->toSql()}) as purchase_data
-        ) as combined_data"))
-            ->mergeBindings($stockSub)
-            ->mergeBindings($componentStockSub)
-            ->mergeBindings($purchaseSub)
-            ->select(
-                'product_type_id',
-                'stage_id',
-                DB::raw('SUM(stockIn) + SUM(purchase_received) - SUM(purchase_returned) as stockIn'),
-                DB::raw('SUM(stockOut) as stockOut')
-            )
-            ->groupBy('product_type_id', 'stage_id');
-
-        // Main Query - Join aggregated data with product info
-        return DB::table(DB::raw("({$combinedSub->toSql()}) as agg_stock"))
-            ->mergeBindings($combinedSub)
-            ->select(
-                'agg_stock.product_type_id',
-                'products.name',
-                'products.article_no',
-                'shead.name as sname',
-                'agg_stock.stage_id',
-                'sthead.name as stname',
-                'sthead.head_id as sthead_id',
-                'uhead.name as uname',
-                'products.product_id',
-                'agg_stock.stockIn',
-                'agg_stock.stockOut'
-            )
-            ->join('product_types', 'product_types.product_type_id', '=', 'agg_stock.product_type_id')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'product_types.size_id')
-            ->leftJoin('heads as sthead', 'sthead.head_id', '=', 'agg_stock.stage_id')
-            ->leftJoin('heads as uhead', 'uhead.head_id', '=', 'products.unit_id')
-            ->orderBy('products.product_id')
-            ->orderBy('product_types.size_id')
-            ->orderBy('agg_stock.stage_id')
-            ->get();
+        // Product Stock AjaxPM: the /stock formula (purchases included) for one product size
+        return $this->pStock([(int) $id]);
     }
 
     public function store(array $data)
@@ -1365,10 +1267,12 @@ class StockItemRepository implements GlobalInterface
      * material stock, product stock per size and stage, and the batches the lines were booked to.
      *
      * @param  array<int>  $stockIds  stocks rows being deleted (only their stock-in lines count)
-     * @param  array<int>  $receiveMaterialIds  purchase receipt lines being deleted
+     * @param  array<int>  $receiveMaterialIds  purchase receipt lines being deleted (or lowered, see below)
+     * @param  array<int, float>  $receiptQuantities  receive_material_id => approved quantity being removed when a line is
+     *                                                 only lowered; lines not listed lose all they still hold (approved - returned)
      * @return array<int, string>  one message per shortfall; empty = safe
      */
-    public function stockInRemovalShortfalls(array $stockIds, array $receiveMaterialIds = []): array
+    public function stockInRemovalShortfalls(array $stockIds, array $receiveMaterialIds = [], array $receiptQuantities = []): array
     {
         $materials = [];   // material_id => qty removed
         $products = [];    // "pt|stage" => qty removed
@@ -1402,16 +1306,16 @@ class StockItemRepository implements GlobalInterface
         }
 
         if ($receiveMaterialIds) {
-            $returned = DB::table('return_materials')->select('receive_material_id')->selectRaw('SUM(quantity) as quantity')->groupBy('receive_material_id');
+            $returned = $this->returnsPerReceiptLine();
             $receipts = DB::table('receive_materials')
                 ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
                 ->leftJoinSub($returned, 'returned', 'returned.receive_material_id', '=', 'receive_materials.receive_material_id')
                 ->whereIn('receive_materials.receive_material_id', $receiveMaterialIds)
-                ->select('purchase_items.material_id', 'purchase_items.product_type_id', 'purchase_items.product_stage_id', 'receive_materials.batch_id')
+                ->select('receive_materials.receive_material_id', 'purchase_items.material_id', 'purchase_items.product_type_id', 'purchase_items.product_stage_id', 'receive_materials.batch_id')
                 ->selectRaw('receive_materials.approved_qty - IFNULL(returned.quantity, 0) as quantity')
                 ->get();
             foreach ($receipts as $receipt) {
-                $quantity = (float) $receipt->quantity;
+                $quantity = (float) ($receiptQuantities[$receipt->receive_material_id] ?? $receipt->quantity);
                 if ((int) $receipt->material_id === 0) {
                     $key = $receipt->product_type_id.'|'.(int) $receipt->product_stage_id;
                     $products[$key] = ($products[$key] ?? 0) + $quantity;

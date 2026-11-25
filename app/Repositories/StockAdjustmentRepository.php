@@ -74,10 +74,8 @@ class StockAdjustmentRepository implements GlobalInterface
 
     public function refNo(): string
     {
-        $prefix = 'ADJ-'.Carbon::now()->format('ym');
-        $count = Stock::where('table_name', Stock::TABLE_ADJUSTMENT)->where('stock_no', 'like', $prefix.'%')->count();
-
-        return $prefix.str_pad((string) ($count + 1), 3, '0', STR_PAD_LEFT);
+        // ADJ-{YYMM}{NNN}: highest + 1 (Asia/Karachi month), locked inside the save, a preview otherwise
+        return (new \App\Support\DocumentNumbers())->nextAdjustmentNo(DB::transactionLevel() === 0);
     }
 
     /**
@@ -95,6 +93,8 @@ class StockAdjustmentRepository implements GlobalInterface
             $lines = $this->normalise($data['lines']);
 
             if ($type === self::DECREASE) {
+                // Same rule as every material stock-out: row lock on the materials before the first read
+                app(StockItemRepository::class)->lockMaterials(array_column($lines, 'material_id'));
                 $this->assertRejectionAvailable($lines);
             }
 

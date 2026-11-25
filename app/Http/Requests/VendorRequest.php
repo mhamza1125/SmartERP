@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Uploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class VendorRequest extends FormRequest
@@ -35,6 +36,8 @@ class VendorRequest extends FormRequest
             'balance_type' => 'required|max:255',
             'address' => 'required|max:255',
             'description' => '',
+            'image' => 'nullable|array',
+            'image.*' => Uploads::imageRules(),
         ];
     }
 }

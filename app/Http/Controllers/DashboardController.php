@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\StockItemRepository;
 use App\Models\Order;
 use App\Models\Purchase;
 use App\Models\Stock;
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    /** Low Stock Alerts card: a product size below this many units (all stages except Rejection). */
+    private const LOW_STOCK_THRESHOLD = 50;
+
     public function __construct()
     {
         $this->middleware(['auth']);
@@ -41,8 +45,7 @@ class DashboardController extends Controller
         }
 
         // Card 3: Expense This Month
-        // Expenses are stored as credit (incurred) or debit (reversal)
-        // Sum both to get total expense activity
+        // Expenses are stored as credit (incurred) or debit (reversal): net expense = credit - debit (F-12)
         $expenseThisMonth = 0;
         if ($user->can('access', Transaction::class)) {
             $expenseThisMonth = DB::table('transactions')
@@ -52,48 +55,29 @@ class DashboardController extends Controller
                         ->whereNotNull('voucher_id')->whereNotNull('expense_head_id')))
                 ->whereMonth('transaction_date', Carbon::now()->month)
                 ->whereYear('transaction_date', Carbon::now()->year)
-                ->selectRaw('COALESCE(SUM(credit), 0) + COALESCE(SUM(debit), 0) as total')
+                ->selectRaw('COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0) as total')
                 ->value('total') ?? 0;
         }
 
-        // Card 4: Low Stock Alerts (products with stock < 50 units, excluding rejection stock head_id = 105)
+        // Card 4: Low Stock Alerts: product sizes whose stock (the /stock figure, all stages except
+        // Rejection 105) is below 50 units. One stock query (F-11; it used to read raw lines, 1 query per size)
         $lowStockAlerts = 0;
         if ($user->can('stocks_access', Stock::class)) {
-            $lowStockAlerts = DB::table('stock_items')
-                ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-                ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-                ->where('stock_items.material_id', 0) // Only products, not materials
-                ->whereNull('stock_items.component_product_type_id') // Exclude component products
-                ->select('stock_items.product_type_id')
-                ->distinct()
-                ->get()
-                ->filter(function ($item) {
-                    // Calculate total stock for this product type across all stages, excluding rejection stock
-                    $totalStock = DB::table('stock_items')
-                        ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
-                        ->where('stock_items.product_type_id', $item->product_type_id)
-                        ->where('stock_items.material_id', 0)
-                        ->whereNull('stock_items.component_product_type_id')
-                        ->get()
-                        ->sum(function ($stock) {
-                            // Exclude rejection stock (head_id = 105)
-                            if (($stock->sthead_id ?? $stock->stage_id) == 105) {
-                                return 0;
-                            }
-
-                            return ($stock->stockIn ?? 0) - ($stock->stockOut ?? 0);
-                        });
-
-                    return $totalStock < 50;
-                })
+            $lowStockAlerts = app(StockItemRepository::class)->pStock()
+                ->groupBy('product_type_id')
+                ->filter(fn ($rows) => $rows->sum(fn ($row) => (int) $row->stage_id === Stock::STAGE_REJECTED ? 0 : (float) $row->stockIn - (float) $row->stockOut) < self::LOW_STOCK_THRESHOLD)
                 ->count();
         }
 
         // Table 1: Running PTCs (10 most recent)
         $runningPtcsTable = collect();
         if ($user->can('access', Stock::class)) {
+            // One row per PTC: its first product line (a PTC with several lines used to repeat, F-39)
+            $firstLine = DB::table('stock_items')->where('product_type_id', '>', 0)
+                ->groupBy('stock_id')->selectRaw('stock_id, MIN(stock_item_id) as stock_item_id');
             $runningPtcsTable = DB::table('stocks')
-                ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
+                ->joinSub($firstLine, 'first_line', 'first_line.stock_id', '=', 'stocks.stock_id')
+                ->join('stock_items', 'stock_items.stock_item_id', '=', 'first_line.stock_item_id')
                 ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
                 ->join('products', 'products.product_id', '=', 'product_types.product_id')
                 ->join('heads as size_head', 'size_head.head_id', '=', 'product_types.size_id')
@@ -108,8 +92,8 @@ class DashboardController extends Controller
                     'products.name as product_name',
                     'size_head.name as size_name'
                 )
-                ->distinct('stocks.stock_id')
                 ->orderBy('stocks.stock_date', 'desc')
+                ->orderBy('stocks.stock_id', 'desc')
                 ->limit(10)
                 ->get()
                 ->map(function ($ptc) {

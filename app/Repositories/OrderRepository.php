@@ -134,6 +134,140 @@ class OrderRepository implements GlobalInterface
         return $update->order_id;
     }
 
+    /** Delivered quantity per order line, "product_type_id|stage_id" => qty (deliveries made for this order). */
+    public function deliveredByLine(int $orderId): array
+    {
+        return DB::table('stock_items')
+            ->join('stocks', 'stocks.stock_id', '=', 'stock_items.stock_id')
+            ->where('stocks.stock_type', 2)
+            ->where('stocks.stock_status', \App\Models\Stock::STATUS_DELIVERY)
+            ->where('stock_items.material_id', 0)
+            ->where(fn ($q) => $q->where('stock_items.order_id', $orderId)
+                ->orWhere(fn ($q) => $q->whereNull('stock_items.order_id')->where('stocks.order_id', $orderId)))
+            ->groupBy('stock_items.product_type_id', 'stock_items.stage_id')
+            ->selectRaw('CONCAT(stock_items.product_type_id, "|", stock_items.stage_id) as line_key, SUM(stock_items.quantity) as qty')
+            ->pluck('qty', 'line_key')
+            ->map(fn ($qty) => (float) $qty)
+            ->filter(fn ($qty) => $qty > 0.0001)
+            ->all();
+    }
+
+    /**
+     * F-40: delivered (all deliveries of the order, the one being saved included) may not exceed the
+     * ordered quantity of an order line. The delivery form limits this in the browser only.
+     *
+     * @throws \App\Exceptions\DocumentLockedException
+     */
+    public function assertNotOverDelivered(int $orderId): void
+    {
+        $ordered = DB::table('order_items')->where('order_id', $orderId)
+            ->groupBy('product_type_id', 'product_stage_id')
+            ->selectRaw('CONCAT(product_type_id, "|", product_stage_id) as line_key, SUM(quantity) as qty')
+            ->pluck('qty', 'line_key');
+        foreach ($this->deliveredByLine($orderId) as $key => $delivered) {
+            if (! $ordered->has($key) || $delivered <= (float) $ordered[$key] + 0.0001) {
+                continue; // lines not on this order are not judged here
+            }
+            [$pt, $stage] = array_map('intval', explode('|', $key));
+            $fmt = fn ($q) => rtrim(rtrim(number_format((float) $q, 2, '.', ','), '0'), '.');
+            throw new \App\Exceptions\DocumentLockedException(
+                app(StockBatchRepository::class)->productLabel($pt, $stage).": ordered {$fmt($ordered[$key])}, this would make the delivered total {$fmt($delivered)}. Delivering more than was ordered is not allowed."
+            );
+        }
+    }
+
+    public function hasDeliveries(int $orderId): bool
+    {
+        return $this->deliveredByLine($orderId) !== [];
+    }
+
+    /** Stock reserved for the order (batches with a positive balance). */
+    public function hasReservedStock(int $orderId): bool
+    {
+        return app(StockBatchRepository::class)->balances(['order_id' => $orderId])->contains(fn ($row) => (float) $row->balance > 0.0001);
+    }
+
+    /**
+     * D4: once delivered, an order keeps its customer, and each delivered line keeps its price,
+     * at least the delivered quantity and its place on the order. Harmless fields stay editable.
+     *
+     * @param  array  $lines  product_type_id[], product_stage_id[], quantity[], price[]
+     *
+     * @throws \App\Exceptions\DocumentLockedException
+     */
+    public function assertDeliveredLinesKept(Order $order, int $customerId, array $lines): void
+    {
+        $delivered = $this->deliveredByLine((int) $order->order_id);
+        if ($delivered === []) {
+            return;
+        }
+        $askAdmin = \App\Exceptions\DocumentLockedException::ASK_ADMIN;
+        if ((int) $order->customer_id !== $customerId) {
+            throw new \App\Exceptions\DocumentLockedException('This order has deliveries, so its customer cannot change.'.$askAdmin);
+        }
+
+        $new = [];
+        foreach ((array) ($lines['quantity'] ?? []) as $key => $quantity) {
+            $new[(int) $lines['product_type_id'][$key].'|'.(int) $lines['product_stage_id'][$key]] = ['quantity' => (float) $quantity, 'price' => (float) $lines['price'][$key]];
+        }
+        $items = DB::table('order_items')->where('order_id', $order->order_id)->get()
+            ->keyBy(fn ($item) => (int) $item->product_type_id.'|'.(int) $item->product_stage_id);
+        $stockItems = app(StockBatchRepository::class);
+
+        foreach ($delivered as $key => $qty) {
+            $item = $items->get($key);
+            if (! $item) {
+                continue; // delivered against another order line / legacy row: nothing on this order to protect
+            }
+            [$pt, $stage] = array_map('intval', explode('|', $key));
+            $label = $stockItems->productLabel($pt, $stage);
+            $line = $new[$key] ?? null;
+            $qtyText = rtrim(rtrim(number_format($qty, 2, '.', ','), '0'), '.');
+            $problem = match (true) {
+                $line === null => 'cannot be removed',
+                abs($line['price'] - (float) $item->price) > 0.0001 => 'cannot change its price',
+                $line['quantity'] < $qty - 0.0001 => 'cannot be ordered below what was delivered',
+                default => null,
+            };
+            if ($problem) {
+                throw new \App\Exceptions\DocumentLockedException("{$label}: {$qtyText} already delivered, so this line {$problem}.".$askAdmin);
+            }
+        }
+    }
+
+    /**
+     * D5: refuses a status change that is not allowed (see Order::TRANSITIONS). Same status = no change.
+     *
+     * @throws \App\Exceptions\DocumentLockedException
+     */
+    public function assertStatusChange(Order $order, int $to, ?\App\Models\User $user): void
+    {
+        $from = (int) $order->order_status;
+        if ($from === $to) {
+            return;
+        }
+        $labels = Order::STATUS_LABELS;
+        if (! isset($labels[$to])) {
+            throw new \App\Exceptions\DocumentLockedException('Unknown order status.');
+        }
+        $reopen = $to !== Order::STATUS_CANCELLED && (Order::SEQUENCE[$to] ?? 0) < (Order::SEQUENCE[$from] ?? 0);
+
+        if ($reopen) {
+            if (! $user || ! $user->can('reopen', Order::class)) {
+                throw new \App\Exceptions\DocumentLockedException("Only an admin can move an order back from {$labels[$from]} to {$labels[$to]} (re-open).");
+            }
+        } elseif (! in_array($to, Order::TRANSITIONS[$from] ?? [], true)) {
+            throw new \App\Exceptions\DocumentLockedException("An order cannot go from {$labels[$from]} to {$labels[$to]}.");
+        }
+
+        if (in_array($to, [Order::STATUS_DISPATCHED, Order::STATUS_DELIVERED], true) && ! $this->hasDeliveries((int) $order->order_id)) {
+            throw new \App\Exceptions\DocumentLockedException("Nothing has been delivered on this order yet, so it cannot be {$labels[$to]}.");
+        }
+        if ($to === Order::STATUS_CANCELLED && ($this->hasDeliveries((int) $order->order_id) || $this->hasReservedStock((int) $order->order_id))) {
+            throw new \App\Exceptions\DocumentLockedException('This order has delivered or reserved stock, so it cannot be cancelled.');
+        }
+    }
+
     /**
      * An order can be deleted only while no delivery, PTC / issuance, purchase, payment, packing
      * list or issuance group refers to it. Its lines go with it; stock batches reserved for it

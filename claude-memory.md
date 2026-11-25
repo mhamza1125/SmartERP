@@ -23,21 +23,22 @@ app/
   Exceptions/          Custom exception handler
   Helpers/             NumberHelper.php (currency/number formatting)
   Http/
-    Controllers/       42 controllers (thin — delegate to repositories)
+    Controllers/       48 controllers (thin — delegate to repositories)   [counts 2026-11-25]
     Middleware/        is_admin, all, auth, guest + framework middleware
-    Requests/          24 FormRequest classes (validation + authorization)
+    Requests/          44 FormRequest classes (validation + authorization)
     View/Composers/    PrintComposer.php
-  Models/              46 Eloquent models
-  Policies/            17 Gate policies
+  Models/              55 Eloquent models
+  Policies/            24 Gate policies
   Providers/           RouteServiceProvider, EventServiceProvider, etc.
-  Repositories/        38 repos all implementing GlobalInterface
-database/migrations/   33+ migration files
-resources/views/       171 Blade files
+  Repositories/        49 classes, 46 implementing GlobalInterface
+  Support/             DocumentNumbers, Uploads, UniqueIndexGuard, DeletionImpact, ...
+database/migrations/   73 migration files; database/schema/mysql-schema.sql = core table structure
+resources/views/       246 Blade files
   Template/            Shared layouts (header, sidebar, footer, bundled assets)
   print/               Self-contained print templates
   reports/             Report-specific views
 routes/
-  web.php              ~475 routes grouped by module
+  web.php              ~435 routes grouped by module
   api.php              Minimal — Sanctum auth only
 ```
 
@@ -110,7 +111,7 @@ routes/
 ---
 
 ## GlobalInterface Contract
-All 38 repositories implement this interface (`app/Repositories/GlobalInterface.php`):
+The repositories (46 of the 49 classes in `app/Repositories/`) implement this interface (`app/Repositories/GlobalInterface.php`):
 ```php
 public function all();
 public function get($id);
@@ -125,7 +126,7 @@ Additional domain-specific methods are added per repository beyond these five.
 ## Key Business Logic
 
 ### Order Flow
-- Order created → `job_no` auto-generated (`Order::generateOrderNo()` → format `SLE-O001-25`)
+- Order created → `job_no` = `{customer_no}/J{YY}-{NNN}` (`OrderController::generateJobNumber()`); `order_no` is typed by the user, `SLE-O{NNN}-{YY}` (`Order::generateOrderNo()`) only when left empty. Both via `App\Support\DocumentNumbers` (see "Stabilisation 2026-11-25")
 - Order has stages tracked via PTC (Process Travel Card)
 
 ### PTC (Process Travel Card) Flow
@@ -285,7 +286,7 @@ Linked to a purchase (`order_id` = purchase_id), a General Payment (`order_id` =
 - Prints: `payroll.print` (month salary sheet, A4 landscape), `payroll.slip` (one employee, A5). Test: tests/Feature/PayrollTest.php
 
 ### Approved Qty Rule
-When receiving purchase items, the **approved qty** (not ordered/delivered qty) is the quantity added to stock.
+When receiving purchase items, the **approved qty** (not ordered/delivered qty) is the quantity added to stock, and (D1, 2026-11-25) the only quantity the vendor is billed for: vendor balance (`VendorRepository::vendorWithBalance`), vendor ledger (`TransactionRepository::vDetail` / `vDetailFilter`) and its item narration use `approved_qty x price`. Gross received `quantity` is still used for "remaining to receive" (receive form, over-receipt check), the receipt summary on the purchase page, the material ledger and the dashboard's open purchases.
 
 ---
 
@@ -361,7 +362,7 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Deleting an employee / contractor deletes their own wage rates + history
 
 ## Vendor balance (2026-11-21)
-- /vendor Balance = the ledger's (vendor.detail): received purchases - purchase returns + SUM(debit - credit) of all vendor / contractor transactions of the vendor (`VendorRepository::vendorWithBalance`). It used to add credits and drop wages / contractor rows
+- /vendor Balance = the ledger's (vendor.detail): received purchases (approved qty x price, D1 2026-11-25) - purchase returns + SUM(debit - credit) of all vendor / contractor transactions of the vendor (`VendorRepository::vendorWithBalance`). It used to add credits and drop wages / contractor rows
 
 ## Deletion (2026-11-15)
 - Every module deletes through one flow: `GET {module}/{id}/delete-check` (JSON) -> confirmation dialog -> `DELETE {module}/{id}` with `confirmed=1`. Routes are named `{module}.deleteCheck` / `{module}.destroy` (stock documents: `stock.deleteCheck` / `stock.destroy` on `/stock-record/{id}`; users / roles: `user.*`, `role.*`; payroll by month; work hours: `work.destroy` `/work/{time|holiday}/{id}`)
@@ -417,6 +418,22 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Data = the same queries as the Price History on the item pages: `PurchaseItemRepository::materialPriceHistory` / `productPriceHistory` (optional dates, `received_qty` = SUM approved_qty) and `vendorComparison()` (per vendor: purchases, qty, received, lowest / highest / qty-weighted average / last price + date; processing lines left out; cheapest last price first). Partial `purchaseVendorComparison` is shown on the report, /material/{id} and /product/{id} (Price History tab)
 - The Vendors page only lists materials / products assigned on the vendor profile, not purchases
 
+## Stabilisation 2026-11-25 (audit docs/AUDIT_2026-11-25.md, owner decisions D1-D13)
+- **Tests:** only on DB `smarterp_test` (guard in tests/TestCase.php; docs/TESTING.md); all files `DatabaseTransactions`
+- **Uploads:** `App\Support\Uploads` (images jpg/jpeg/png/gif 5 MB, no SVG; product files pdf/images/doc(x)/xls(x) 10 MB); random names, content extension; `public/resources/.htaccess` denies scripts and .mdb/.sql; `public/.htaccess` denies .mdb/.sql
+- **Issuance header:** `StockRepository::issuanceHeader()` decides stock_type / stock_status / table_name (issuance 2/0/employee|vendor, machine issue 2/4/employee, receipt 1/1|2/parent's); `/issue/{id}` edits only those kinds (`issuanceKind()`, else 404). Delivery control columns `Delivery::STOCK_HEADER`; delivery edit uses the delivery's own stock row. Status links (deliveryStatus, receiveStatus) are POST with allowed lists
+- **Stock formula:** one set of builders in StockItemRepository (`returnsPerReceiptLine`, `materialReceiptTotals`, `productReceiptTotals`, `productStockAggregate`, `pStock(?ids)`); `pStockGet` / `pStockByProductType` / `pStockForProductTypes` / `orderStatus` compute only the sizes asked for. `StockItem` stores "no component" as NULL (mutator)
+- **Material stock-outs** (issuance, machine issue, PTC create/edit/issue, MProcess, adjustment decrease): `lockMaterials()` first, `assertMaterialsAvailable()` after the lines (`MaterialStockException` extends `StockBatchException`)
+- **Receipts** (`ReceiveRepository::saveReceipt`): purchase lines locked; approved + rejected + pending = received; total received per purchase line <= ordered (D2, only raised lines are checked); lines with returns cannot be lowered / dropped, used stock cannot be removed (`stockInRemovalShortfalls` 3rd param = partial quantities)
+- **Purchases / MProcess:** received lines keep item, price, quantity >= received (`PurchaseItemRepository::assertReceivedLinesKept`); a received MProcess keeps its lines (header-only edits); MProcess line rewrite also removes its old `mprocess` stock rows
+- **Orders:** delivered lines keep price, quantity >= delivered, cannot be removed; customer fixed once delivered (`OrderRepository::assertDeliveredLinesKept`). Status table `Order::TRANSITIONS`: Draft→Confirmed|Cancelled; Confirmed→Dispatched|Delivered|Cancelled; Dispatched→Delivered; Dispatched / Delivered need a delivery; Cancelled needs no delivery and no reserved stock; moving back = re-open, admin only (`OrderPolicy::reopen` false, Gate::before). New orders start Draft or Confirmed. Applied in the status menu and the delivery form. Server-side over-delivery check `assertNotOverDelivered` (F-40)
+- **Money:** payments + bank charges, transfers (4 statements) and edits in one transaction; `lockMoneyAccounts()` (bank rows; cash = the `company` row) before the balance check; edits re-check the balance with their own old amount available (`balanceEffect`); `TransactionRequest` / `TransactionUpdateRequest` (allowed transaction_to → type pairs `TYPES_BY_PARTY`, amount > 0, bank 0 or existing)
+- **Numbers:** `App\Support\DocumentNumbers` (MAX + 1 FOR UPDATE inside the save, Asia/Karachi; formats unchanged); issuance and PTC numbers are assigned by the server, not the form. UNIQUE order_no / job_no / delivery_no (migrations 2026_11_25_100001-3); UNIQUE stock_no migration 100004 stops while the 10 legacy duplicates exist and is blocked by Q20
+- **Security:** login throttled 5 / minute per email + IP; logout invalidates the session; Reset Test Data routes only with `ALLOW_DATA_RESET=true` (`config('app.allow_data_reset')`)
+- **Dashboard:** Low Stock = product sizes whose /stock total (all stages but Rejection 105) < 50, from one `pStock()`; Expense This Month = credit - debit; Running PTCs one row per PTC. Receipt print status = purchase fully received as of that receipt (1) or partially (2)
+- **Indexes** (migration 2026_11_25_100000): stock_items(stock_id), (product_type_id, stage_id), (material_id); stocks(ptc_id), (issue_id), (order_id), (table_name, stock_type); transactions(transaction_to, payee_id), (bank_id), (transaction_date)
+- Owner follow-ups: docs/OWNER_ACTIONS.md, docs/DATA_FIXES.md, docs/BACKUP.md; open questions Q19-Q24 in docs/AUDIT_QUESTIONS.md
+
 ## Key DB Tables
 ```
 users, roles, permissions, permission_role
@@ -439,7 +456,7 @@ images, sessions, cache, jobs
 
 ## Dev Environment
 - **URL:** http://05_smarterp.test (XAMPP local)
-- **DB:** MySQL, database `smarterp_erp` (DB_DATABASE in .env)
+- **DB:** MySQL, database `smarterp_erp` (DB_DATABASE in .env); tests use `smarterp_test` (docs/TESTING.md)
 - **Debug:** Enabled (local)
 - **Timezone:** UTC
 - **Git:** `main` is stable; use feature branches for changes

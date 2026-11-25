@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Uploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CustomerRequest extends FormRequest
@@ -33,6 +34,8 @@ class CustomerRequest extends FormRequest
             'country_id' => 'required',
             'address' => '',
             'description' => '',
+            'image' => 'nullable|array',
+            'image.*' => Uploads::imageRules(),
         ];
     }
 }

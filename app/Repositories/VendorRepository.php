@@ -82,7 +82,7 @@ class VendorRepository implements GlobalInterface
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
             ->groupBy('purchases.vendor_id')
-            ->select('purchases.vendor_id', DB::raw('SUM(receive_materials.quantity * purchase_items.price) as amount'))
+            ->select('purchases.vendor_id', DB::raw('SUM(receive_materials.approved_qty * purchase_items.price) as amount'))
             ->pluck('amount', 'vendor_id');
 
         $purchaseReturns = DB::table('returns')

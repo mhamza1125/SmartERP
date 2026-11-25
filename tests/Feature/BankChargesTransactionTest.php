@@ -5,12 +5,12 @@ namespace Tests\Feature;
 use App\Models\Head;
 use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class BankChargesTransactionTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected $user;
 

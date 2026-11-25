@@ -26,4 +26,13 @@ class StockItem extends Model
         'created_by',
         'updated_at',
     ];
+
+    /**
+     * "No component" is NULL, never 0: general product stock selects product lines with
+     * component_product_type_id IS NULL, so a 0 hides the line from /stock (F-13).
+     */
+    public function setComponentProductTypeIdAttribute($value): void
+    {
+        $this->attributes['component_product_type_id'] = empty($value) ? null : (int) $value;
+    }
 }

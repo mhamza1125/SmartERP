@@ -17,7 +17,10 @@ use App\Repositories\StockItemRepository;
 use App\Repositories\StockRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\VendorRepository;
+use App\Exceptions\DocumentLockedException;
+use App\Exceptions\StockBatchException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MProcessController extends Controller
 {
@@ -106,8 +109,19 @@ class MProcessController extends Controller
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $getId = $this->purchaseRepository->store($validatedData);
-        $this->storeAll($getId, $validatedData);
+        // One transaction; the raw material sent out may not go below 0 (row lock, then check)
+        try {
+            $getId = DB::transaction(function () use ($validatedData) {
+                $this->stockItemRepository->lockMaterials((array) ($validatedData['amaterial_id'] ?? []));
+                $getId = $this->purchaseRepository->store($validatedData);
+                $stockIds = $this->storeAll($getId, $validatedData);
+                $this->stockItemRepository->assertMaterialsAvailable((array) ($validatedData['amaterial_id'] ?? []), $stockIds);
+
+                return $getId;
+            });
+        } catch (StockBatchException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('mprocess.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -187,22 +201,49 @@ class MProcessController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(PurchaseRequest $request, $id)
     {
         $this->authorize('edit', Material::class);
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $this->purchaseRepository->update($id, $request->input());
-        $this->mprocessRepository->delete($id);
-        $this->storeAll($id, $request->input());
+        $data = $request->validated();
+        $header = array_intersect_key($data, array_flip(['vendor_id', 'order_id', 'description', 'purchase_date', 'require_date']));
+        try {
+            DB::transaction(function () use ($data, $header, $id) {
+                $this->stockItemRepository->lockMaterials((array) ($data['amaterial_id'] ?? []));
+                DB::table('purchase_items')->where('purchase_id', $id)->orderBy('purchase_item_id')->lockForUpdate()->pluck('purchase_item_id');
+                $this->purchaseRepository->update($id, $header);
+
+                // Lines are rewritten as new rows; once something was received that would orphan the
+                // receipt, so received processing orders keep their lines (D4)
+                $unchanged = $this->mprocessRepository->linesUnchanged((int) $id, $data);
+                if ($this->purchaseItemRepository->receivedByLine((int) $id)->filter(fn ($q) => $q > 0.0001)->isNotEmpty()) {
+                    if (! $unchanged) {
+                        throw new DocumentLockedException('Something was already received on this processing order, so its lines cannot be changed.'.DocumentLockedException::ASK_ADMIN);
+                    }
+
+                    return;
+                }
+                if ($unchanged) {
+                    return;
+                }
+                $this->mprocessRepository->delete($id);
+                $stockIds = $this->storeAll($id, $data);
+                $this->stockItemRepository->assertMaterialsAvailable((array) ($data['amaterial_id'] ?? []), $stockIds);
+            });
+        } catch (StockBatchException|DocumentLockedException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('mprocess.show', $id)->with('success', 'Record Updated Successfully');
     }
 
 
-    private function storeAll($getId, $validatedData)
+    /** @return array<int> the stocks rows created for the material sent out */
+    private function storeAll($getId, $validatedData): array
     {
+        $stockIds = [];
         $amaterials = $validatedData['amaterial_id'];
         $bmaterials = $validatedData['bmaterial_id'];
         $aquantities = $validatedData['aquantity'];
@@ -242,6 +283,7 @@ class MProcessController extends Controller
                 'stock_status' => Stock::STATUS_MATERIAL_PROCESSING,
                 'description' => 'Material sent for processing (Purchase #'.$getId.')',
             ]);
+            $stockIds[] = (int) $stockId;
 
             $stockItem = [
                 'stock_id' => $stockId,
@@ -271,6 +313,8 @@ class MProcessController extends Controller
                 // 'stock_id' => '0', 'issue_id' => NULL, 'issue_for' => '0', 'stock_no' => 'I24000000', 'order_id' => '0', 'machine_id' => NULL, 'table_name' => 'mprocess', 'employee_id' => '0', 'stock_type' => '2', 'stock_date' => '2024-06-01', 'stock_status' => '5', 'description' => '',
             ];
         }
+
+        return $stockIds;
     }
 
     /**

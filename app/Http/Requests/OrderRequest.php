@@ -22,14 +22,16 @@ class OrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_no' => 'required|max:255',
+            // Typed by the user (empty = SLE-O number); unique (D7)
+            'order_no' => 'nullable|string|max:255|unique:orders,order_no',
             'job_no' => 'nullable|max:255',
-            'customer_id' => 'required',
+            'customer_id' => 'required|integer|exists:customers,customer_id',
             'description' => '',
             'order_date' => 'required',
             'due_date' => 'nullable|date|after_or_equal:order_date',
             'payment_terms' => 'nullable|string',
-            'order_status' => 'required',
+            // A new order starts as Draft or Confirmed (D5; later moves go through the status menu)
+            'order_status' => 'required|integer|in:'.implode(',', \App\Models\Order::INITIAL_STATUSES),
             // Purchase Items
             'product_type_id.*' => 'required',
             'product_stage_id.*' => 'required',

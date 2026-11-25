@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DocumentLockedException;
 use App\Http\Requests\ReceiveRequest;
+use App\Http\Requests\ReceiveUpdateRequest;
 use App\Models\Receive;
 use App\Repositories\PurchaseItemRepository;
 use App\Repositories\PurchaseRepository;
@@ -68,18 +70,15 @@ class ReceiveController extends Controller
     {
         $this->authorize('create', Receive::class);
         $validatedData = $request->validated();
-        if (array_sum($request->input('quantity', [])) == 0) {
+        if (array_sum($validatedData['quantity']) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $pid = $request->input('purchase_item_id');
-        $quantities = $request->input('quantity');
-        $pending = $request->input('pending_qty');
-        $approved = $request->input('approved_qty');
-        $rejected = $request->input('rejected_qty');
-        $inspections = $request->input('inspection_status');
-        $idates = $request->input('inspection_date');
-        $getId = $this->receiveRepository->store($validatedData);
-        $this->storeRM($getId, $pid, $quantities, $inspections, $idates, $pending, $approved, $rejected);
+        try {
+            // One transaction: purchase lines locked, over-receipt refused (ReceiveRepository::saveReceipt)
+            $getId = $this->receiveRepository->saveReceipt(null, $validatedData);
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('receive.show', $getId)->with('success', 'Record Inserted Successfully');
     }
@@ -142,14 +141,19 @@ class ReceiveController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(ReceiveUpdateRequest $request, $id)
     {
         $this->authorize('edit', Receive::class);
-        if (array_sum($request->input('quantity', [])) == 0) {
+        $validatedData = $request->validated();
+        if (array_sum($validatedData['quantity']) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
-        $this->receiveRepository->update($id, $request->input());
-        $this->receiveMaterialRepository->update($id, $request->input());
+        try {
+            // Explicit fields only; returned / used lines cannot be lowered or dropped (D4)
+            $this->receiveRepository->saveReceipt((int) $id, $validatedData);
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('receive.show', $id)->with('success', 'Record Updated Successfully');
     }
@@ -157,7 +161,9 @@ class ReceiveController extends Controller
     public function updateStatus($id, $status)
     {
         $this->authorize('edit', Receive::class);
-        $receiveStatus = ['receive_status' => $status];
+        // 0 Pending, 1 Checked (the only receive statuses); POST only
+        abort_unless(in_array((string) $status, ['0', '1'], true), 404);
+        $receiveStatus = ['receive_status' => (int) $status];
         $this->receiveRepository->update($id, $receiveStatus);
 
         return redirect()->route('receive')->with('success', 'Status Updated Successfully');

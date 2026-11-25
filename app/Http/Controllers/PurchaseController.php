@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DocumentLockedException;
 use App\Models\Purchase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\OrderItemRepository;
@@ -151,8 +153,13 @@ class PurchaseController extends Controller
         $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
-        $getId = $this->purchaseRepository->store($validatedData);
-        $this->storePI($getId, $materials, $products, $stages, $prices, $quantities);
+        // Header and lines are saved together or not at all
+        $getId = DB::transaction(function () use ($validatedData, $materials, $products, $stages, $prices, $quantities) {
+            $getId = $this->purchaseRepository->store(array_intersect_key($validatedData, array_flip(array_merge(self::EDITABLE_HEADER, ['purchase_no', 'purchase_type']))));
+            $this->storePI($getId, $materials, $products, $stages, $prices, $quantities);
+
+            return $getId;
+        });
         $this->syncVendorPrices($partyPriceRepository, $getId);
 
         return redirect()->route('purchase.show', $getId)->with('success', 'Record Inserted Successfully');
@@ -265,15 +272,29 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id, PartyPriceRepository $partyPriceRepository)
+    /** Purchase header columns a save may set (purchase_no / purchase_type only on create). */
+    private const EDITABLE_HEADER = ['vendor_id', 'order_id', 'description', 'purchase_date', 'require_date'];
+
+    public function update(PurchaseRequest $request, $id, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('edit', Purchase::class);
         if (! $request->has('total')) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+        $validated = $request->validated();
+        $lines = array_intersect_key($validated, array_flip(['material_id', 'product_type_id', 'product_stage_id', 'quantity', 'price']));
         $before = $partyPriceRepository->snapshot('purchase', (int) $id);
-        $this->purchaseRepository->update($id, $request->input());
-        $this->purchaseItemRepository->update($id, $request->input());
+        try {
+            DB::transaction(function () use ($id, $validated, $lines) {
+                // Lines locked first; received lines keep item, price and at least the received quantity (D4)
+                DB::table('purchase_items')->where('purchase_id', $id)->orderBy('purchase_item_id')->lockForUpdate()->pluck('purchase_item_id');
+                $this->purchaseItemRepository->assertReceivedLinesKept((int) $id, $lines);
+                $this->purchaseRepository->update($id, array_intersect_key($validated, array_flip(self::EDITABLE_HEADER)));
+                $this->purchaseItemRepository->update($id, $lines);
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
+        }
         $this->syncVendorPrices($partyPriceRepository, (int) $id, $before);
 
         return redirect()->route('purchase.show', $id)->with('success', 'Record Updated Successfully');

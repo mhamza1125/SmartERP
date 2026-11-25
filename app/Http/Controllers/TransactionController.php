@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Validation\Rule;
 use App\Http\Requests\TransactionRequest;
+use App\Http\Requests\TransactionUpdateRequest;
+use App\Exceptions\DocumentLockedException;
+use Illuminate\Support\Facades\DB;
 use App\Models\Head;
 use App\Models\Transaction;
 use App\Repositories\BankRepository;
@@ -752,47 +755,36 @@ class TransactionController extends Controller
                               ($validatedData['transaction_type'] == 'receiveAdvance') ||
                               ($validatedData['transaction_to'] == 'brs' && $request->has('brs_type') && $request->input('brs_type') == 1);
 
-        // Get current balance
-        if ($validatedData['bank_id'] != '0') {
-            // Bank account balance
-            $transaction = $this->transactionRepository->bankBalance2($validatedData['bank_id']);
-            // Bank balance = debit (in) - credit (out), as on the bank ledger
-            $balance = ($transaction->tdebit ?? 0) - ($transaction->tcredit ?? 0);
-        } else {
-            // Cash balance
-            $balance = $this->transactionRepository->cashBalance();
+        // Balance check and the entries in one transaction, the account locked first (F-18)
+        $checkOutflow = $isOutflowTransaction && ! $isInflowTransaction;
+        try {
+            $getId = DB::transaction(function () use ($validatedData, $request, $checkOutflow) {
+                $bankId = (int) $validatedData['bank_id'];
+                $this->transactionRepository->lockMoneyAccounts([$bankId]);
+                // Outflow amount is stored in 'credit'; inflows are not checked
+                $outflowAmount = (float) ($validatedData['credit'] ?? 0);
+                if ($checkOutflow && $outflowAmount > 0 && $this->transactionRepository->accountBalance($bankId) < $outflowAmount) {
+                    throw new DocumentLockedException('Insufficient Balance Available');
+                }
+
+                $getId = $this->transactionRepository->store($validatedData);
+
+                // Bank charges of an order payment belong to the same save
+                if ($validatedData['transaction_to'] == 'customer' && $validatedData['transaction_type'] == 'orderPayment') {
+                    $dbCharges = $request->input('db_charges', 0);
+                    if ($dbCharges > 0) {
+                        $this->createBankChargesTransaction($getId, $dbCharges, $validatedData['bank_id'], $validatedData['transaction_date']);
+                    }
+                }
+
+                return $getId;
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
         }
-
-        // Validate balance only for outflow transactions
-        if ($isOutflowTransaction && !$isInflowTransaction) {
-            // For outflow transactions, check if we have sufficient balance
-            // Outflow amount is stored in 'credit' column
-            $outflowAmount = $validatedData['credit'] ?? 0;
-
-            if ($outflowAmount > 0 && $balance < $outflowAmount) {
-                return redirect()->back()->with(['fails' => 'Insufficient Balance Available'])->withInput();
-            }
-        }
-        // For inflow transactions, skip balance validation entirely
-
-        $getId = $this->transactionRepository->store($validatedData);
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'transaction', 'transactions', $getId);
-            }
-        }
-
-        // Handle bank charges for order payments
-        if ($validatedData['transaction_to'] == 'customer' &&
-            $validatedData['transaction_type'] == 'orderPayment') {
-            $dbCharges = $request->input('db_charges', 0);
-            if ($dbCharges > 0) {
-                $this->createBankChargesTransaction(
-                    $getId,
-                    $dbCharges,
-                    $validatedData['bank_id'],
-                    $validatedData['transaction_date']
-                );
             }
         }
 
@@ -839,18 +831,6 @@ class TransactionController extends Controller
             return redirect()->back()->with('fails', 'From and To accounts must be different')->withInput();
         }
 
-        // Check balance for outflow account
-        if ($fromBankId != '0') {
-            $fromBalance = $this->transactionRepository->bankBalance2($fromBankId);
-            $balance = ($fromBalance->tdebit ?? 0) - ($fromBalance->tcredit ?? 0);
-        } else {
-            $balance = $this->transactionRepository->cashBalance();
-        }
-
-        if ($balance < $amount) {
-            return redirect()->back()->with('fails', 'Insufficient Balance in From Account')->withInput();
-        }
-
         // Build description with check number if provided
         $fullDescription = $description;
         if ($checkNo) {
@@ -881,13 +861,25 @@ class TransactionController extends Controller
             'created_by' => auth()->id(),
         ];
 
-        // Store both transactions
-        $getId1 = $this->transactionRepository->store($transaction1);
-        $getId2 = $this->transactionRepository->store($transaction2);
+        // Balance check + both halves + their links: one transaction, both accounts locked first (F-18)
+        try {
+            $getId1 = DB::transaction(function () use ($fromBankId, $toBankId, $amount, $transaction1, $transaction2) {
+                $this->transactionRepository->lockMoneyAccounts([(int) $fromBankId, (int) $toBankId]);
+                if ($this->transactionRepository->accountBalance((int) $fromBankId) < (float) $amount) {
+                    throw new DocumentLockedException('Insufficient Balance in From Account');
+                }
+                $getId1 = $this->transactionRepository->store($transaction1);
+                $getId2 = $this->transactionRepository->store($transaction2);
 
-        // Link the two transfer transactions so they can be found deterministically during update
-        Transaction::where('transaction_id', $getId1)->update(['transfer_pair_id' => $getId2]);
-        Transaction::where('transaction_id', $getId2)->update(['transfer_pair_id' => $getId1]);
+                // Link the two transfer transactions so they can be found deterministically during update
+                Transaction::where('transaction_id', $getId1)->update(['transfer_pair_id' => $getId2]);
+                Transaction::where('transaction_id', $getId2)->update(['transfer_pair_id' => $getId1]);
+
+                return $getId1;
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with('fails', $e->getMessage())->withInput();
+        }
 
         return redirect()->route('transaction.showTransfer', $getId1)->with('success', 'Transfer Created Successfully');
     }
@@ -1144,7 +1136,7 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(TransactionUpdateRequest $request, $id)
     {
         $this->authorize('edit', Transaction::class);
 
@@ -1255,23 +1247,42 @@ class TransactionController extends Controller
             // debit already has the amount, no swap needed for orderPayment
         }
 
-        $getId = $this->transactionRepository->update($id, $request->input());
+        // Server-controlled columns are never taken from the form
+        $data = array_diff_key($request->input(), array_flip(['ledger_flag', 'transfer_pair_id', 'created_by', 'transaction_id']));
+        // Same outflow rule as store(); the entry's own old amount counts as available again
+        $isOutflow = $data['transaction_type'] !== 'generalVoucher' && (
+            in_array($data['transaction_to'], ['employee', 'vendor', 'contractor', 'expense'], true)
+            || ($data['transaction_to'] == 'brs' && $request->input('brs_type') == 2));
+        $isInflow = ($data['transaction_to'] == 'customer' && $data['transaction_type'] == 'orderPayment')
+            || $data['transaction_type'] == 'receiveAdvance'
+            || ($data['transaction_to'] == 'brs' && $request->input('brs_type') == 1);
+        try {
+            DB::transaction(function () use ($id, $data, $request, $isOutflow, $isInflow) {
+                $existing = Transaction::findOrFail($id);
+                $bankId = (int) ($data['bank_id'] ?? $existing->bank_id);
+                $this->transactionRepository->lockMoneyAccounts([$bankId, (int) $existing->bank_id]);
+                $outflow = (float) ($data['credit'] ?? 0);
+                if ($isOutflow && ! $isInflow && $outflow > 0) {
+                    $available = $this->transactionRepository->accountBalance($bankId) - $this->transactionRepository->balanceEffect($existing->fresh(), $bankId);
+                    if ($available < $outflow) {
+                        throw new DocumentLockedException('Insufficient Balance Available');
+                    }
+                }
+
+                $this->transactionRepository->update($id, $data);
+
+                // Bank charges of an order payment belong to the same save
+                if ($data['transaction_to'] == 'customer' && $data['transaction_type'] == 'orderPayment') {
+                    $this->updateBankChargesTransaction($id, $request->input('db_charges', 0), $data['bank_id'], $data['transaction_date']);
+                }
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with('fails', $e->getMessage())->withInput();
+        }
         if ($request->hasFile('image')) {
             foreach ($request->file('image') as $file) {
                 $this->storeImage($file, 'transaction', 'transactions', $id);
             }
-        }
-
-        // Handle bank charges for order payments
-        if ($request->input('transaction_to') == 'customer' &&
-            $request->input('transaction_type') == 'orderPayment') {
-            $dbCharges = $request->input('db_charges', 0);
-            $this->updateBankChargesTransaction(
-                $id,
-                $dbCharges,
-                $request->input('bank_id'),
-                $request->input('transaction_date')
-            );
         }
 
         // Check if this is a general voucher (transaction_type = 'generalVoucher')
@@ -1329,6 +1340,16 @@ class TransactionController extends Controller
             $fullDescription = ($description ? $description . ' - ' : '') . 'Cheque No: ' . trim($checkNo);
         }
 
+        try {
+            DB::transaction(function () use ($id, $originalTransaction, $fromBankId, $toBankId, $amount, $transactionDate, $fullDescription) {
+        // Both accounts locked first; the transfer's own outflow is available again for its edit
+        $this->transactionRepository->lockMoneyAccounts([(int) $fromBankId, (int) $toBankId, (int) $originalTransaction->bank_id]);
+        $available = $this->transactionRepository->accountBalance((int) $fromBankId)
+            - $this->transactionRepository->balanceEffect($originalTransaction->fresh(), (int) $fromBankId);
+        if ($available < (float) $amount) {
+            throw new DocumentLockedException('Insufficient Balance in From Account');
+        }
+
         // Update the original transaction (outflow)
         $this->transactionRepository->update($id, [
             'bank_id' => $fromBankId,
@@ -1369,6 +1390,10 @@ class TransactionController extends Controller
             // Ensure pair links are updated if they changed
             Transaction::where('transaction_id', $id)->update(['transfer_pair_id' => $pairedTransaction->transaction_id]);
             Transaction::where('transaction_id', $pairedTransaction->transaction_id)->update(['transfer_pair_id' => $id]);
+        }
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with('fails', $e->getMessage())->withInput();
         }
 
         return redirect()->route('transaction.showTransfer', $id)->with('success', 'Transfer Updated Successfully');

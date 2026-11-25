@@ -64,33 +64,8 @@ class ReceiveMaterialRepository implements GlobalInterface
             ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
             ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, materials.material_no, materials.name, heads.name as hname, orders.job_no, COALESCE(received.total_received, 0) as rqty, COALESCE(returned.total_returned, 0) as rqty2')
             ->get();
-
-        // Used by PurchaseInfo Recieving / Return Sum, Working Good but showing error when single receiving have multiple returns
-        return ReceiveMaterial::where('purchase_items.purchase_id', $id)
-            ->leftJoin('return_materials', function ($join) {
-                $join->on('return_materials.receive_material_id', '=', 'receive_materials.receive_material_id');
-            })
-            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-            ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-            ->groupBy('receive_materials.purchase_item_id')
-            ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, materials.material_no, materials.name,
-            heads.name as hname, orders.job_no, SUM(receive_materials.quantity) AS rqty, SUM(return_materials.quantity) AS rqty2')
-            ->get();
-
-        // Total Receive Old
-        return ReceiveMaterial::where('purchase_items.purchase_id', $id)
-            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
-            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-            ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-            ->groupBy('receive_materials.purchase_item_id')
-            ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, materials.material_no, materials.name,
-            heads.name as hname, orders.job_no, SUM(receive_materials.quantity) AS rqty')
-            ->get();
+        // (Two unreachable older versions were removed here: one joined returns to receipts
+        // directly and counted a receipt once per return, F-02.)
     }
 
     public function rSum2($id) // Used b Product Purchase

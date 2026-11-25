@@ -71,10 +71,14 @@
                               {{$status}}
                             </button>
                             <div class="dropdown-menu">
-                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '1']) }}">Pending</a>@endif
-                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '2']) }}">Dispatched</a>@endif
-                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '3']) }}">Delivered</a>@endif
-                              @if(auth()->user()->can('edit', App\Models\Delivery::class))<a class="dropdown-item" href="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => '4']) }}">Returned</a>@endif
+                              @can('edit', App\Models\Delivery::class)
+                                @foreach(App\Models\Delivery::STATUSES as $statusCode => $statusLabel)
+                                  <form method="POST" action="{{ route('delivery.updateStatus', ['id' => $item->delivery_id, 'status' => $statusCode]) }}" class="m-0">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item">{{ $statusLabel }}</button>
+                                  </form>
+                                @endforeach
+                              @endcan
                             </div>
                           </div>
                       </td>

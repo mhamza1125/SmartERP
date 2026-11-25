@@ -9,6 +9,9 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Requests\OrderRequest;
 use App\Http\Requests\OrderStatusRequest;
+use App\Http\Requests\OrderUpdateRequest;
+use App\Exceptions\DocumentLockedException;
+use App\Support\DocumentNumbers;
 use App\Repositories\BankRepository;
 use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
@@ -106,15 +109,20 @@ class OrderController extends Controller
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
 
-        // Generate dynamic job number
-        $validatedData['job_no'] = $this->generateJobNumber($validatedData['customer_id']);
 
         $products = $request->input('product_type_id');
         $stages = $request->input('product_stage_id');
         $prices = $request->input('price');
         $quantities = $request->input('quantity');
-        $getId = $this->orderRepository->store($validatedData);
-        $this->storeOI($getId, $products, $stages, $prices, $quantities);
+        // Header and lines are saved together or not at all
+        $getId = DB::transaction(function () use ($validatedData, $products, $stages, $prices, $quantities) {
+            // Job number (and the order number when left empty) taken under a lock in this transaction
+            $validatedData['job_no'] = $this->generateJobNumber($validatedData['customer_id']);
+            $getId = $this->orderRepository->store($validatedData);
+            $this->storeOI($getId, $products, $stages, $prices, $quantities);
+
+            return $getId;
+        });
         $this->syncCustomerPrices($partyPriceRepository, $getId);
 
         return redirect()->route('order.show', $getId)->with('success', 'Record Inserted Successfully');
@@ -128,18 +136,9 @@ class OrderController extends Controller
             throw new \Exception('Customer not found');
         }
 
-        $customerNumber = $customer->customer_no; // e.g., "CU0001"
-        $currentYear = date('y'); // e.g., "25" for 2025
-
-        // Count existing orders for this customer in current year
-        $orderCount = DB::table('orders')
-            ->where('customer_id', $customerId)
-            ->whereYear('created_at', date('Y'))
-            ->count();
-
-        $nextCount = str_pad($orderCount + 1, 3, '0', STR_PAD_LEFT); // e.g., "001"
-
-        return $customerNumber . '/J' . $currentYear . '-' . $nextCount;
+        // {customer_no}/J{YY}-{NNN}: highest of the customer's year (Asia/Karachi) + 1, locked inside a
+        // save (never repeats after a delete); a preview outside a transaction (form pre-fill)
+        return (new DocumentNumbers())->nextJobNo((string) $customer->customer_no, DB::transactionLevel() === 0);
     }
 
     public function show($id)
@@ -467,12 +466,9 @@ class OrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id, PartyPriceRepository $partyPriceRepository)
+    public function update(OrderUpdateRequest $request, $id, PartyPriceRepository $partyPriceRepository)
     {
         $this->authorize('edit', Order::class);
-        if (! $request->has('total')) {
-            return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
-        }
 
         // Get current order to check if customer changed
         $currentOrder = Order::findOrFail($id);
@@ -483,16 +479,28 @@ class OrderController extends Controller
                 ->with('fails', 'Cannot update orders with status: Dispatched, Delivered, or Cancelled');
         }
 
-        $requestData = $request->input();
+        // Explicit field list: status, numbers, creator and totals are never taken from the form
+        $validated = $request->validated();
+        $requestData = $request->safe()->only(OrderUpdateRequest::HEADER_FIELDS);
 
-        // If customer changed, regenerate job number
-        if ($currentOrder->customer_id != $requestData['customer_id']) {
-            $requestData['job_no'] = $this->generateJobNumber($requestData['customer_id']);
-        }
 
+        $lines = array_intersect_key($validated, array_flip(['product_type_id', 'product_stage_id', 'quantity', 'price']));
         $before = $partyPriceRepository->snapshot('order', (int) $id);
-        $this->orderRepository->update($id, $requestData);
-        $this->orderItemRepository->update($id, $request->input());
+        try {
+            DB::transaction(function () use ($id, $requestData, $lines) {
+                // Order row locked; delivered lines keep price, customer and the delivered quantity (D4)
+                $order = Order::whereKey($id)->lockForUpdate()->firstOrFail();
+                $this->orderRepository->assertDeliveredLinesKept($order, (int) $requestData['customer_id'], $lines);
+                // Customer changed: a new job number of the new customer (taken under a lock)
+                if ((int) $order->customer_id !== (int) $requestData['customer_id']) {
+                    $requestData['job_no'] = $this->generateJobNumber($requestData['customer_id']);
+                }
+                $this->orderRepository->update($id, $requestData);
+                $this->orderItemRepository->update($id, $lines);
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->back()->with('fails', $e->getMessage())->withInput();
+        }
         $this->syncCustomerPrices($partyPriceRepository, (int) $id, $before);
 
         return redirect()->route('order.show', $id)->with('success', 'Record Updated Successfully');
@@ -526,7 +534,14 @@ class OrderController extends Controller
         }
 
         try {
-            $this->orderRepository->update($id, ['order_status' => $status]);
+            DB::transaction(function () use ($id, $status) {
+                // Allowed transitions only (D5); re-open is admin only
+                $order = Order::whereKey($id)->lockForUpdate()->firstOrFail();
+                $this->orderRepository->assertStatusChange($order, $status, auth()->user());
+                $this->orderRepository->update($id, ['order_status' => $status]);
+            });
+        } catch (DocumentLockedException $e) {
+            return redirect()->route('order')->with('fails', $e->getMessage());
         } catch (\Exception $e) {
             \Log::error('Order status update failed: '.$e->getMessage(), ['order_id' => $id]);
 

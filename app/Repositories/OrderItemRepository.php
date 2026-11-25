@@ -304,7 +304,7 @@ class OrderItemRepository implements GlobalInterface
             $product = $data['product_type_id'][$key] ?? null;
             $stage = $data['product_stage_id'][$key] ?? null;
             $price = $data['price'][$key] ?? null;
-            $total = $data['total'][$key] ?? null;
+            $total = (float) $price * (float) $quantity; // computed here, never posted by the form
             $orderItem = [
                 'order_id' => $id,
                 'product_type_id' => $product,

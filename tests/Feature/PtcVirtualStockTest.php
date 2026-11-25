@@ -63,6 +63,11 @@ class PtcVirtualStockTest extends TestCase
                 ]);
             }
         }
+        // Material stock may never go below 0 (D3): seed opening stock of the issued material too
+        StockItem::create([
+            'stock_id' => 1, 'product_type_id' => 0, 'material_id' => $this->materialId, 'quantity' => 100000,
+            'stage_id' => 0, 'work_logs' => '0', 'work_wages' => '0', 'created_by' => $admin->id,
+        ]);
     }
 
     public function test_full_ptc_flow_keeps_stock_accurate(): void

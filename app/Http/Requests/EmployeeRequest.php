@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Uploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EmployeeRequest extends FormRequest
@@ -59,6 +60,8 @@ class EmployeeRequest extends FormRequest
             'employment_history.*.to_date' => 'nullable|date',
             'employment_history.*.salary' => 'nullable|numeric|min:0',
             'employment_history.*.reason_for_leaving' => 'nullable|string|max:500',
+            'image' => 'nullable|array',
+            'image.*' => Uploads::imageRules(),
         ];
     }
 }

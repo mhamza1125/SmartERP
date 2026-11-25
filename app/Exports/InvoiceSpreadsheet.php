@@ -226,7 +226,7 @@ class InvoiceSpreadsheet
         ]));
         foreach ($contacts as $i => $line) {
             $cell = $right.($i + 1);
-            $this->sheet->setCellValue($cell, $line);
+            $this->sheet->setCellValueExplicit($cell, (string) $line, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING); // text, never a formula (F-27)
             $this->sheet->mergeCells($cell.':'.$this->last.($i + 1));
             $this->sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
             $this->sheet->getStyle($cell)->getFont()->setSize(9);
@@ -279,7 +279,7 @@ class InvoiceSpreadsheet
         $this->row++;
         foreach (array_values($lines) as $i => $line) {
             $cell = 'A'.$this->row;
-            $this->sheet->setCellValue($cell, (string) $line);
+            $this->sheet->setCellValueExplicit($cell, (string) $line, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING); // party / address text, never a formula (F-27)
             $this->sheet->mergeCells("{$cell}:{$this->last}{$this->row}");
             $this->sheet->getStyle($cell)->getAlignment()->setWrapText(true);
             if ($i === 0) {
@@ -424,7 +424,7 @@ class InvoiceSpreadsheet
         $this->sheet->getStyle("A{$this->row}")->getFont()->setBold(true);
         $this->row++;
         $cell = "A{$this->row}";
-        $this->sheet->setCellValue($cell, $text);
+        $this->sheet->setCellValueExplicit($cell, (string) $text, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING); // free text, never a formula (F-27)
         $this->sheet->mergeCells("{$cell}:{$this->last}{$this->row}");
         $this->sheet->getStyle($cell)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
         $lines = max(1, substr_count($text, "\n") + 1 + intdiv(mb_strlen($text), 110));

@@ -34,9 +34,10 @@ class DeliveryRequest extends FormRequest
             'selected_orders' => 'nullable|array',
             'selected_orders.*' => 'nullable|exists:orders,order_id',
             'employee_id' => 'required',
-            'table_name' => 'required',
-            'stock_type' => 'required',
-            'stock_status' => 'required',
+            // Control columns are set by the server (Delivery::STOCK_HEADER); posted values only checked
+            'table_name' => 'nullable|in:delivery',
+            'stock_type' => 'nullable|in:2',
+            'stock_status' => 'nullable|in:3',
             'description' => '',
             // Delivery Table
             'tshipping' => '',
@@ -44,10 +45,10 @@ class DeliveryRequest extends FormRequest
             'tport_no' => '',
             'fport_no' => '',
             'delivery_method' => 'required',
-            'delivery_status' => 'required',
+            'delivery_status' => 'required|in:1,2,3,4',
             'fi_no' => 'nullable|string|max:255',
             'freight_charges' => 'nullable|numeric|min:0',
-            'delivery_no' => 'nullable|string|max:255',
+            'delivery_no' => 'nullable|string|max:255|unique:deliveries,delivery_no', // empty = SLE-D number (D7: unique)
             'delivery_date' => 'nullable|date',
             // Tranaction Table
             'payee_id.*' => '',
@@ -57,7 +58,7 @@ class DeliveryRequest extends FormRequest
             // Stock Items Table
             'product_type_id.*' => 'required',
             'material_id.*' => 'required',
-            'quantity.*' => 'required',
+            'quantity.*' => 'required|numeric|min:0',
             'stage_id.*' => 'required',
             // Delivery Boxes Table
             'vehicle_no.*' => '',

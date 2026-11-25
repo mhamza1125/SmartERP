@@ -1,0 +1,31 @@
+# Uploaded files (public/resources/*) are data, never code.
+# Applies to every sub-folder (product, product_file, customer, vendor, ...).
+
+# 1) Refuse anything that could be executed or is not meant to be downloaded.
+<FilesMatch "(?i)\.(php\d*|phtml|pht|phps|phar|cgi|pl|py|sh|asp|aspx|jsp|shtml|htaccess|htpasswd|mdb|accdb|sql)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 2) Same refusal through mod_rewrite (needs only the override Laravel already uses),
+#    including double extensions such as x.php.jpg.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (?i)\.(php\d*|phtml|pht|phps|phar|cgi|pl|py|sh|asp|aspx|jsp|shtml)(\.|$) - [F]
+    RewriteRule (?i)\.(mdb|accdb|sql)$ - [F]
+</IfModule>
+
+# 3) Never hand a file to the PHP interpreter from here.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+
+Options -Indexes -ExecCGI

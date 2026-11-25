@@ -542,7 +542,7 @@ class TransactionRepository implements GlobalInterface
         // Vendor Ledger - Amount of Received Purchase Items
         // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchases = \DB::table('purchases')
-            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.approved_qty * purchase_items.price) as debit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
@@ -589,7 +589,7 @@ class TransactionRepository implements GlobalInterface
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
             ->where('purchases.purchase_date', '<', $dfrom)
-            ->select(\DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
+            ->select(\DB::raw('SUM(receive_materials.approved_qty * purchase_items.price) as debit'))
             ->first();
 
         // Purchase returns decrease liability (stored as credit conceptually, but reduces debit)
@@ -619,7 +619,7 @@ class TransactionRepository implements GlobalInterface
         // Vendor Ledger - Between Date From and Date To
         // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchases = \DB::table('purchases')
-            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.quantity * purchase_items.price) as debit'))
+            ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(receive_materials.approved_qty * purchase_items.price) as debit'))
             ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
             ->join('receive_materials', 'purchase_items.purchase_item_id', 'receive_materials.purchase_item_id')
             ->where('purchases.vendor_id', $id)
@@ -839,6 +839,50 @@ class TransactionRepository implements GlobalInterface
         $update->update($data);
 
         return $update->transaction_id;
+    }
+
+    /**
+     * Row-locks the money accounts until the transaction ends, so balance checks and the entries
+     * that follow are done one save at a time per account. A bank account locks its `banks` row;
+     * cash (bank_id 0) has no row of its own and locks the single `company` row instead.
+     * Order: cash first, then banks by id (no deadlocks). Call it as the FIRST read of the
+     * transaction: the REPEATABLE READ snapshot of the balance query is taken after the lock.
+     */
+    public function lockMoneyAccounts(array $bankIds): void
+    {
+        $ids = collect($bankIds)->map(fn ($id) => (int) $id)->unique()->sort()->values();
+        if ($ids->contains(0)) {
+            DB::table('company')->orderBy('id')->limit(1)->lockForUpdate()->pluck('id');
+        }
+        $banks = $ids->filter(fn ($id) => $id > 0)->all();
+        if ($banks !== []) {
+            DB::table('banks')->whereIn('bank_id', $banks)->orderBy('bank_id')->lockForUpdate()->pluck('bank_id');
+        }
+    }
+
+    /** Cash (bank_id 0) or bank account balance, as the cash book / bank ledger show it (debit - credit). */
+    public function accountBalance(int $bankId): float
+    {
+        if ($bankId === 0) {
+            return (float) $this->cashBalance();
+        }
+        $row = $this->bankBalance2($bankId);
+
+        return (float) ($row->tdebit ?? 0) - (float) ($row->tcredit ?? 0);
+    }
+
+    /**
+     * What an existing entry adds to its account's balance today (0 when it is not counted in
+     * the cash book / bank ledger: ledger_flag 0 or a journal voucher), so an edit can treat
+     * its own old amount as available again.
+     */
+    public function balanceEffect(Transaction $transaction, int $bankId): float
+    {
+        if ((int) $transaction->bank_id !== $bankId || (int) $transaction->ledger_flag === 0 || $transaction->transaction_type === 'generalVoucher') {
+            return 0.0;
+        }
+
+        return (float) $transaction->debit - (float) $transaction->credit;
     }
 
     public function getOB($id, $tto)
@@ -1295,7 +1339,7 @@ class TransactionRepository implements GlobalInterface
         )
             ->whereIn('purchase_items.purchase_id', $purchaseIds)
             ->groupBy('purchase_items.purchase_item_id', 'purchase_items.purchase_id', DB::raw($itemName))
-            ->selectRaw("purchase_items.purchase_id as doc_id, {$itemName} as item, SUM(receive_materials.quantity) as qty")
+            ->selectRaw("purchase_items.purchase_id as doc_id, {$itemName} as item, SUM(receive_materials.approved_qty) as qty")
             ->get()->groupBy('doc_id');
 
         $returnItems = $returnIds->isEmpty() ? collect() : $withNames(

@@ -52,9 +52,12 @@ Route::group(['middleware' => 'auth'], function () {
     ], function () {
         // Add Routes Here
 
-        // TEMPORARY one-time cleanup (Settings > Reset Test Data) - remove after use
-        Route::get('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'index'])->name('data-reset.index');
-        Route::post('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'run'])->name('data-reset.run');
+        // TEMPORARY one-time cleanup (Settings > Reset Test Data). Destructive: registered only when
+        // ALLOW_DATA_RESET=true in .env (default false, D10); otherwise these URLs do not exist.
+        if (config('app.allow_data_reset')) {
+            Route::get('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'index'])->name('data-reset.index');
+            Route::post('/settings/reset-data', [\App\Http\Controllers\DataResetController::class, 'run'])->name('data-reset.run');
+        }
     });
 });
 
@@ -225,7 +228,7 @@ Route::post('/delivery', [DeliveryController::class, 'store'])->name('delivery.s
 Route::get('/delivery/{id}', [DeliveryController::class, 'show'])->name('delivery.show');
 Route::get('/editDelivery/{id}', [DeliveryController::class, 'edit'])->name('delivery.edit');
 Route::post('/delivery/{id}', [DeliveryController::class, 'update'])->name('delivery.update');
-Route::get('/deliveryStatus/{id}/{status}', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
+Route::post('/deliveryStatus/{id}/{status}', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
 Route::get('/delivery/{id}/delete-check', [DeliveryController::class, 'deleteCheck'])->name('delivery.deleteCheck');
 Route::delete('/delivery/{id}', [DeliveryController::class, 'destroy'])->name('delivery.destroy');
 
@@ -289,7 +292,7 @@ Route::post('/receive', [ReceiveController::class, 'store'])->name('receive.stor
 Route::get('/receive/{id}', [ReceiveController::class, 'show'])->name('receive.show');
 Route::get('/editReceive/{id}', [ReceiveController::class, 'edit'])->name('receive.edit');
 Route::post('/receive/{id}', [ReceiveController::class, 'update'])->name('receive.update');
-Route::get('/receiveStatus/{id}/{status}', [ReceiveController::class, 'updateStatus'])->name('receive.updateStatus');
+Route::post('/receiveStatus/{id}/{status}', [ReceiveController::class, 'updateStatus'])->name('receive.updateStatus');
 Route::get('/receive/{id}/delete-check', [ReceiveController::class, 'deleteCheck'])->name('receive.deleteCheck');
 Route::delete('/receive/{id}', [ReceiveController::class, 'destroy'])->name('receive.destroy');
 

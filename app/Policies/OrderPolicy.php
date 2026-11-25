@@ -30,4 +30,13 @@ class OrderPolicy
     {
         return $user->hasPermission('orders_delete');
     }
+
+    /**
+     * Moving an order back to an earlier status (re-open, incl. from Cancelled / Delivered).
+     * No permission grants it: only the Admin role passes (Gate::before in AuthServiceProvider).
+     */
+    public function reopen(User $user): bool
+    {
+        return false;
+    }
 }

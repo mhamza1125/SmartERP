@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -32,9 +34,19 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        // At most 5 failed attempts per minute for one email from one IP (F-10)
+        $throttleKey = 'login|'.Str::lower((string) $request->input('email')).'|'.$request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return back()->with('fails', 'Too many login attempts. Try again in '.RateLimiter::availableIn($throttleKey).' seconds.')
+                ->withInput($request->only('email'));
+        }
+
         if (! (auth()->attempt($request->only('email', 'password'), $request->remember))) {
+            RateLimiter::hit($throttleKey, 60);
+
             return back()->with('fails', 'Invalid Login Details');
         }
+        RateLimiter::clear($throttleKey);
 
         if (auth()->user()->isAdmin()) {
             return redirect()->route('dashboard')->with('success', 'Logged In Successfully');
@@ -43,9 +55,12 @@ class AuthController extends Controller
         return redirect()->route('dashboard');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
         auth()->logout();
+        // End the session itself and issue a new CSRF token (F-28)
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('login');
     }

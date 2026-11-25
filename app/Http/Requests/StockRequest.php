@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Uploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StockRequest extends FormRequest
@@ -26,16 +27,18 @@ class StockRequest extends FormRequest
             'batch_qty' => 'nullable|array',
             'batch_qty.*' => 'nullable|array',
             'batch_qty.*.*' => 'nullable|numeric|min:0',
-            'issue_id' => '',
+            // Server decides stock_type / stock_status / table_name (StockRepository::issuanceHeader);
+            // the posted values are only checked against the allowed lists.
+            'issue_id' => 'nullable|integer',
             'stock_no' => 'required',
             'issue_for' => '',
             'order_id' => 'required',
             'machine_id' => '',
             'employee_id' => 'required',
-            'table_name' => 'required',
+            'table_name' => 'required|in:employee,vendor',
             'stock_date' => 'required',
-            'stock_type' => 'required',
-            'stock_status' => 'required',
+            'stock_type' => 'nullable|in:1,2',
+            'stock_status' => 'nullable|in:0,1,2,4',
             'description' => '',
             // Stock Items
             'product_type_id.*' => 'required',
@@ -44,6 +47,8 @@ class StockRequest extends FormRequest
             'igroup_id.*' => '',
             'stage_id.*' => '',
             'work_logs.*' => '',
+            'image' => 'nullable|array',
+            'image.*' => Uploads::imageRules(),
         ];
     }
 }

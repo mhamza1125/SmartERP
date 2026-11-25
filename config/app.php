@@ -60,6 +60,12 @@ return [
     'asset_url' => env('ASSET_URL'),
 
     /*
+    | Settings > Reset Test Data (destructive, temporary). Its routes exist only when this is true.
+    | Set ALLOW_DATA_RESET=true in .env only while it is needed, then back to false (D10).
+    */
+    'allow_data_reset' => (bool) env('ALLOW_DATA_RESET', false),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

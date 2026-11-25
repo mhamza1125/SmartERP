@@ -13,6 +13,8 @@ use App\Repositories\HeadRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\StockRepository;
 use App\Http\Requests\DeliveryRequest;
+use App\Http\Requests\DeliveryUpdateRequest;
+use App\Exceptions\DocumentLockedException;
 use App\Http\Requests\CommercialInvoiceRequest;
 use App\Repositories\CompanyRepository;
 use App\Repositories\CustomerRepository;
@@ -244,7 +246,7 @@ class DeliveryController extends Controller
     public function store(DeliveryRequest $request)
     {
         $this->authorize('create', Delivery::class);
-        $validatedData = $request->validated();
+        $validatedData = array_merge($request->validated(), Delivery::STOCK_HEADER);
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
@@ -298,29 +300,15 @@ class DeliveryController extends Controller
             $orderIds = $request->input('order_ids');
             $selectedOrders = $request->input('selected_orders', []);
 
-            if ($orderIds) {
-                // Multi-order delivery
-                $orderIdArray = explode(',', $orderIds);
-                foreach ($orderIdArray as $orderId) {
-                    $this->orderRepository->update($orderId, $orderStatus);
-                }
-            } elseif (!empty($selectedOrders)) {
-                // Multiple orders selected via checkboxes
-                foreach ($selectedOrders as $orderId) {
-                    $this->orderRepository->update($orderId, $orderStatus);
-                }
-            } else {
-                // Single order delivery (backward compatibility)
-                $this->orderRepository->update($request->input('order_id'), $orderStatus);
-            }
-
             $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $this->lineOrderIds($request)); // Delivery Items
             $this->allocateBatches($getId, $request);
+            // Order status chosen on the form, after the lines exist (allowed transitions only, D5)
+            $this->applyOrderStatus($this->deliveryOrderIds($request), $orderStatus['order_status']);
             $this->storeEI($validatedData, $heads, $banks, $debits, $remarks); // Expenses
             $this->storeDB($validatedData, $vehicles, $rowQtys, $totalQtys); // Delivery Boxes
 
             DB::commit();
-        } catch (StockBatchException $e) {
+        } catch (StockBatchException|DocumentLockedException $e) {
             DB::rollBack();
 
             return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
@@ -649,7 +637,7 @@ class DeliveryController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(DeliveryUpdateRequest $request, $id)
     {
         $this->authorize('edit', Delivery::class);
         if (array_sum($request->input('quantity', [])) == 0) {
@@ -658,42 +646,30 @@ class DeliveryController extends Controller
 
         // Get the delivery to check if it's multi-order
         $delivery = $this->deliveryRepository->get($id);
+        abort_unless($delivery, 404);
         $isMultiOrder = $this->isMultiOrderDelivery($delivery);
+        // The stock row is the delivery's own, never one named by the form
+        $stockId = (int) $delivery->stock_id;
 
         // Product stock is re-taken from batches; nothing is saved when the allowed batches fall short
         DB::beginTransaction();
         try {
             $this->transactionRepository->updateDE($id, $request->input());
 
-            // Update stock but exclude stock_no (will be set separately)
-            $stockData = $request->input();
-            unset($stockData['stock_no']);
-            $this->stockRepository->update($request->input('stock_id'), $stockData);
+            // Header columns from an explicit list (stock_no is set separately); control columns fixed
+            $stockData = array_merge($request->safe()->only(['stock_date', 'employee_id', 'order_id', 'description']), Delivery::STOCK_HEADER);
+            $this->stockRepository->update($stockId, $stockData);
 
-            $this->deliveryRepository->update($id, $request->input());
+            $this->deliveryRepository->update($id, $request->safe()->only(Delivery::EDITABLE_FIELDS));
 
             // Update stock_no with delivery_id only for single deliveries
             $orderIds = $request->input('order_ids');
             if ($orderIds) {
-                $this->stockRepository->update($request->input('stock_id'), ['stock_no' => str_replace(',', '|', $orderIds)]);
+                $this->stockRepository->update($stockId, ['stock_no' => str_replace(',', '|', $orderIds)]);
             } elseif (!$isMultiOrder) {
-                $this->stockRepository->update($request->input('stock_id'), ['stock_no' => (string) $id]);
+                $this->stockRepository->update($stockId, ['stock_no' => (string) $id]);
             }
 
-            $orderStatus = ['order_status' => $request->input('order_status')];
-
-            // Handle both single and multi-order deliveries
-            $orderIds = $request->input('order_ids');
-            if ($orderIds) {
-                // Multi-order delivery - update all related orders
-                $orderIdArray = explode(',', $orderIds);
-                foreach ($orderIdArray as $orderId) {
-                    $this->orderRepository->update($orderId, $orderStatus);
-                }
-            } else {
-                // Single order delivery
-                $this->orderRepository->update($request->input('order_id'), $orderStatus);
-            }
 
             $this->deliveryBoxRepository->delete($id);
             $this->storeDB(
@@ -712,11 +688,15 @@ class DeliveryController extends Controller
             } else {
                 unset($itemData['line_order_id']);
             }
-            $this->stockItemRepository->update($request->input('stock_id'), $itemData);
-            $this->allocateBatches($request->input('stock_id'), $request, $relatedOrderIds ?: null);
+            $itemData['table_name'] = Delivery::STOCK_HEADER['table_name'];
+            $this->stockItemRepository->update($stockId, $itemData);
+            $this->allocateBatches($stockId, $request, $relatedOrderIds ?: null);
+            // Order status chosen on the form, after the lines exist (allowed transitions only, D5)
+            $statusOrderIds = $request->input('order_ids') ? explode(',', $request->input('order_ids')) : [$request->input('order_id')];
+            $this->applyOrderStatus($statusOrderIds, $request->input('order_status'));
 
             DB::commit();
-        } catch (StockBatchException $e) {
+        } catch (StockBatchException|DocumentLockedException $e) {
             DB::rollBack();
 
             return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
@@ -726,6 +706,31 @@ class DeliveryController extends Controller
         }
 
         return redirect()->route('delivery.show', $id)->with('success', 'Record Updated Successfully');
+    }
+
+    /**
+     * Sets the order status chosen on the delivery form. Same status = no change; any other move
+     * must be an allowed transition (OrderRepository::assertStatusChange); the order row is locked.
+     *
+     * @throws DocumentLockedException
+     */
+    private function applyOrderStatus(array $orderIds, $status): void
+    {
+        // The server-side twin of the form's "remaining" limit (F-40), once the lines are saved
+        foreach (array_unique(array_map('intval', $orderIds)) as $orderId) {
+            $this->orderRepository->assertNotOverDelivered($orderId);
+        }
+        if ($status === null || $status === '') {
+            return;
+        }
+        foreach (array_unique(array_map('intval', $orderIds)) as $orderId) {
+            $order = \App\Models\Order::whereKey($orderId)->lockForUpdate()->first();
+            if (! $order) {
+                continue;
+            }
+            $this->orderRepository->assertStatusChange($order, (int) $status, auth()->user());
+            $this->orderRepository->update($orderId, ['order_status' => (int) $status]);
+        }
     }
 
     /**
@@ -780,7 +785,8 @@ class DeliveryController extends Controller
     public function updateStatus($id, $status)
     {
         $this->authorize('edit', Delivery::class);
-        $deliveryStatus = ['delivery_status' => $status];
+        abort_unless(array_key_exists((int) $status, Delivery::STATUSES) && ctype_digit((string) $status), 404);
+        $deliveryStatus = ['delivery_status' => (int) $status];
         $this->deliveryRepository->update($id, $deliveryStatus);
 
         return redirect()->route('delivery')->with('success', 'Status Updated Successfully');

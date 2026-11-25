@@ -135,14 +135,10 @@ class PurchaseItemRepository implements GlobalInterface
         // Receive Purchase Items
         return PurchaseItem::where('purchase_id', $id)
             ->join('materials', 'materials.material_id', '=', 'purchase_items.material_id')
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', function ($join) {
-                $join->on('return_materials.receive_material_id', '=', 'receive_materials.receive_material_id');
-            })
+            ->leftJoinSub($this->receivedPerLine(), 'line_totals', 'line_totals.purchase_item_id', '=', 'purchase_items.purchase_item_id')
             ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
             ->select('purchase_items.*', 'materials.name', 'materials.material_no', 'heads.name as uname')
-            ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received, COALESCE(SUM(return_materials.quantity), 0) as returned')
-            ->groupBy('purchase_items.purchase_item_id')
+            ->selectRaw('COALESCE(line_totals.received, 0) as received, COALESCE(line_totals.returned, 0) as returned')
             ->get();
     }
 
@@ -154,14 +150,25 @@ class PurchaseItemRepository implements GlobalInterface
             ->join('products', 'products.product_id', '=', 'product_types.product_id')
             ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
             ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
-            ->leftJoin('receive_materials', 'receive_materials.purchase_item_id', '=', 'purchase_items.purchase_item_id')
-            ->leftJoin('return_materials', function ($join) {
-                $join->on('return_materials.receive_material_id', '=', 'receive_materials.receive_material_id');
-            })
+            ->leftJoinSub($this->receivedPerLine(), 'line_totals', 'line_totals.purchase_item_id', '=', 'purchase_items.purchase_item_id')
             ->select('purchase_items.*', 'products.name', 'products.article_no', 'heads.name as hname', 'shead.name as sname')
-            ->selectRaw('COALESCE(SUM(receive_materials.quantity), 0) as received, COALESCE(SUM(return_materials.quantity), 0) as returned')
-            ->groupBy('purchase_items.purchase_item_id')
+            ->selectRaw('COALESCE(line_totals.received, 0) as received, COALESCE(line_totals.returned, 0) as returned')
             ->get();
+    }
+
+    /**
+     * Per purchase line: received (gross receipt quantity, incl. rejected / pending) and returned.
+     * Returns are summed per receipt line first (StockItemRepository::returnsPerReceiptLine),
+     * so a receipt with several partial returns is counted once.
+     */
+    private function receivedPerLine(): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('receive_materials')
+            ->leftJoinSub(app(StockItemRepository::class)->returnsPerReceiptLine(), 'returned', 'returned.receive_material_id', '=', 'receive_materials.receive_material_id')
+            ->groupBy('receive_materials.purchase_item_id')
+            ->select('receive_materials.purchase_item_id')
+            ->selectRaw('SUM(receive_materials.quantity) as received')
+            ->selectRaw('IFNULL(SUM(returned.quantity), 0) as returned');
     }
 
     public function estimate($id)
@@ -294,5 +301,72 @@ class PurchaseItemRepository implements GlobalInterface
 
     public function delete($id)
     {
+    }
+
+    /** Gross received quantity (incl. rejected / pending) per line of a purchase: purchase_item_id => qty. */
+    public function receivedByLine(int $purchaseId): \Illuminate\Support\Collection
+    {
+        return DB::table('receive_materials')
+            ->join('purchase_items', 'purchase_items.purchase_item_id', '=', 'receive_materials.purchase_item_id')
+            ->where('purchase_items.purchase_id', $purchaseId)
+            ->groupBy('receive_materials.purchase_item_id')
+            ->selectRaw('receive_materials.purchase_item_id, SUM(receive_materials.quantity) as qty')
+            ->pluck('qty', 'purchase_item_id')
+            ->map(fn ($qty) => (float) $qty);
+    }
+
+    /**
+     * D4: once something was received on a purchase line, the line keeps its item and price, its
+     * quantity cannot go below what was received, and it cannot be removed. Lines are matched
+     * the way update() matches them (material + product size + stage). Call inside the save's
+     * transaction, after locking the purchase's lines.
+     *
+     * @throws \App\Exceptions\DocumentLockedException
+     */
+    public function assertReceivedLinesKept(int $purchaseId, array $data): void
+    {
+        $received = $this->receivedByLine($purchaseId)->filter(fn ($qty) => $qty > 0.0001);
+        if ($received->isEmpty()) {
+            return;
+        }
+
+        $new = [];
+        foreach ((array) ($data['quantity'] ?? []) as $key => $quantity) {
+            $lineKey = (int) ($data['material_id'][$key] ?? 0).'|'.(int) ($data['product_type_id'][$key] ?? 0).'|'.(int) ($data['product_stage_id'][$key] ?? 0);
+            $new[$lineKey] = ['quantity' => (float) $quantity, 'price' => (float) ($data['price'][$key] ?? 0)];
+        }
+
+        $existing = PurchaseItem::where('purchase_id', $purchaseId)->whereIn('purchase_item_id', $received->keys())->get();
+        foreach ($existing as $item) {
+            $got = $received[$item->purchase_item_id];
+            $lineKey = (int) $item->material_id.'|'.(int) $item->product_type_id.'|'.(int) $item->product_stage_id;
+            $label = $this->lineLabel($item);
+            $line = $new[$lineKey] ?? null;
+            $problem = match (true) {
+                $line === null => 'cannot be removed or changed to another item',
+                abs($line['price'] - (float) $item->price) > 0.0001 => 'cannot change its price ('.$this->qty((float) $item->price).')',
+                $line['quantity'] < $got - 0.0001 => 'cannot be ordered below what was received',
+                default => null,
+            };
+            if ($problem) {
+                throw new \App\Exceptions\DocumentLockedException(
+                    "{$label}: {$this->qty($got)} already received, so this line {$problem}.".\App\Exceptions\DocumentLockedException::ASK_ADMIN
+                );
+            }
+        }
+    }
+
+    private function lineLabel(PurchaseItem $item): string
+    {
+        if ((int) $item->material_id > 0) {
+            return (string) (DB::table('materials')->where('material_id', $item->material_id)->value(DB::raw("CONCAT(material_no, ' - ', name)")) ?? 'Material #'.$item->material_id);
+        }
+
+        return app(StockBatchRepository::class)->productLabel((int) $item->product_type_id, (int) $item->product_stage_id);
+    }
+
+    private function qty(float $quantity): string
+    {
+        return rtrim(rtrim(number_format($quantity, 2, '.', ','), '0'), '.');
     }
 }

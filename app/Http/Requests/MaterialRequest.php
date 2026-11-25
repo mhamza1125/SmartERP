@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Uploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class MaterialRequest extends FormRequest
@@ -29,6 +30,8 @@ class MaterialRequest extends FormRequest
             'name' => 'required|max:255',
             'location' => '',
             'description' => '',
+            'image' => 'nullable|array',
+            'image.*' => Uploads::imageRules(),
         ];
     }
 }

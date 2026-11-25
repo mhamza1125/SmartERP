@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Uploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class MachineRequest extends FormRequest
@@ -27,6 +28,8 @@ class MachineRequest extends FormRequest
             'employee_id' => 'required',
             'location' => '',
             'description' => '',
+            'image' => 'nullable|array',
+            'image.*' => Uploads::imageRules(),
         ];
     }
 }

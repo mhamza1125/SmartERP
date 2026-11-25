@@ -817,6 +817,9 @@ class PtcStockRepository implements GlobalInterface
     {
         return DB::transaction(function () use ($ptcId, $header, $lines, $pins) {
             $ptc = $this->lockOpenPtc($ptcId);
+            // Material lines may not take a material below 0: lock before the first plain read
+            $materialIds = array_column($lines, 'material_id');
+            $this->stockItemRepository->lockMaterials($materialIds);
             $ptcProductTypeId = $this->ptcProductTypeId($ptcId);
             $lines = $this->normalizeLines($lines, $ptcProductTypeId, $ptc->current_stage_id);
             $lines = $this->componentStageLines($lines, $ptc->order_id);
@@ -853,6 +856,7 @@ class PtcStockRepository implements GlobalInterface
             }
 
             $this->allocateGeneralStock($issueId, $pins);
+            $this->assertMaterials($materialIds, $issueId);
 
             $this->advanceCurrentStage($ptc, $issueFor);
 
@@ -870,6 +874,9 @@ class PtcStockRepository implements GlobalInterface
     {
         DB::transaction(function () use ($ptcId, $issuanceId, $header, $quantities) {
             $ptc = $this->lockOpenPtc($ptcId);
+            // Material lines may not go below 0: their materials are locked before the first plain read
+            $materialIds = StockItem::where('stock_id', $issuanceId)->where('material_id', '>', 0)->lockForUpdate()->pluck('material_id')->all();
+            $this->stockItemRepository->lockMaterials($materialIds);
 
             $issuance = Stock::where('stock_id', $issuanceId)->where('ptc_id', $ptcId)->where('stock_type', 2)->first();
             if (! $issuance) {
@@ -909,6 +916,7 @@ class PtcStockRepository implements GlobalInterface
                 }
             }
             $this->allocateGeneralStock($issuanceId);
+            $this->assertMaterials($materialIds, (int) $issuanceId);
 
             $this->advanceCurrentStage($ptc, $issuance->issue_for);
         });
@@ -1185,6 +1193,16 @@ class PtcStockRepository implements GlobalInterface
         }
 
         return $result;
+    }
+
+    /** @throws PtcStockException when a material would go below 0 */
+    private function assertMaterials(array $materialIds, int $stockId): void
+    {
+        try {
+            $this->stockItemRepository->assertMaterialsAvailable($materialIds, [$stockId]);
+        } catch (StockBatchException $e) {
+            throw new PtcStockException($e->getMessage());
+        }
     }
 
     private function allocateGeneralStock($stockId, array $pins = []): void

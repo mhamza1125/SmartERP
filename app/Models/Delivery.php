@@ -11,6 +11,15 @@ class Delivery extends Model
 
     protected $primaryKey = 'delivery_id';
 
+    /** Control columns of a delivery's stocks row: always set by the server. */
+    public const STOCK_HEADER = ['stock_type' => 2, 'stock_status' => Stock::STATUS_DELIVERY, 'table_name' => 'delivery'];
+
+    /** deliveries.delivery_status values (the delivery form and the list's status menu). */
+    public const STATUSES = [1 => 'Pending', 2 => 'Dispatched', 3 => 'Delivered', 4 => 'Returned'];
+
+    /** Columns a delivery edit may change (delivery_no and stock_id are not among them). */
+    public const EDITABLE_FIELDS = ['fshipping', 'tshipping', 'fport_no', 'tport_no', 'delivery_method', 'delivery_status', 'fi_no', 'freight_charges', 'delivery_date'];
+
     protected $fillable = [
         'stock_id',
         'fshipping',
@@ -35,14 +44,8 @@ class Delivery extends Model
      */
     public static function generateDeliveryNo()
     {
-        $currentYear = date('Y');
-        $lastTwoDigits = substr($currentYear, -2);
-
-        // Get the count of deliveries created this year
-        $count = self::whereYear('created_at', $currentYear)->count();
-        $sequentialNo = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-
-        return "SLE-D{$sequentialNo}-{$lastTwoDigits}";
+        // Highest SLE-D number of the year (Asia/Karachi) + 1; locked inside a save, a preview otherwise
+        return (new \App\Support\DocumentNumbers())->nextDeliveryNo(\Illuminate\Support\Facades\DB::transactionLevel() === 0);
     }
 
     /**

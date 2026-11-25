@@ -91,8 +91,9 @@ Add domain-specific methods beyond these five as needed in each concrete reposit
 ## 13. Security Rules
 - All input must pass through FormRequest `->validated()` — never use `$request->all()` or `$request->input()` directly for mass assignment
 - No raw SQL with user input — use Eloquent query builder bindings or `DB::select('...', [$param])`
-- File uploads: validate MIME type and size in FormRequest; store via `Storage` facade
-- Enforce permissions at two layers: route middleware (`is_admin`, `all`) AND controller Policy check
+- File uploads: rules from `App\Support\Uploads` in the FormRequest (`imageRules()` / `productFileRules()`: allowed extensions, content type, size, no SVG, no double extensions), then store with `storeImage()` / `storeFile()` (random name, extension from the file's content, under `public/resources/{folder}`, which `public/resources/.htaccess` keeps from running scripts). Never keep the client's file name or extension
+- Enforce permissions at two layers: `$this->middleware(['auth', 'all'])` in the controller constructor (routes carry no middleware, D9) AND the controller Policy check
+- Control columns are set by the server, never taken from the form: `stock_type` / `stock_status` / `table_name` (`StockRepository::issuanceHeader()`, `Delivery::STOCK_HEADER`), order status / numbers / creator, line totals (price x quantity), `ledger_flag` / `transfer_pair_id`. Edits use an explicit field list, never `$request->input()`
 - Log all create/update/delete operations on critical models via Spatie activity log
 
 ## 14. Frontend / AJAX Rules
@@ -110,14 +111,23 @@ Add domain-specific methods beyond these five as needed in each concrete reposit
 - Pass the paginator to the view and render with `$results->links()` using the Bootstrap preset
 
 ## 16. Testing Rules
-- PHPUnit is installed but no test coverage is currently expected for routine feature work
-- If a bug is fixed that previously had no test, consider adding a regression test in `tests/Feature/`
+- Tests run only against the database `smarterp_test` (`.env.testing`, `phpunit.xml`; `tests/TestCase.php` aborts the run otherwise). The whole suite is safe to run: `php artisan test` (docs/TESTING.md)
+- Every test uses `DatabaseTransactions`, never `RefreshDatabase` (it would empty `smarterp_test`, whose master data the tests use)
+- A bug fix gets a regression test in `tests/Feature/` that fails before the fix
 - Do not write unit tests for repository methods that only wrap Eloquent calls
 
 ## 17. Artisan Command Rules
 - Add Artisan commands in `app/Console/Commands/` only for scheduled tasks, batch jobs, or one-off data operations
 - Do not duplicate logic already in repositories inside commands — call the repository from the command
 - Register commands in `app/Console/Kernel.php`
+
+## 17b. Integrity Rules (2026-11-25)
+- Stock: use the shared formula in `StockItemRepository` (`materialStock()`, `pStock(?array $productTypeIds)`, `productStockAggregate()`, `materialReceiptTotals()` / `productReceiptTotals()`, `returnsPerReceiptLine()`); never join `return_materials` straight to `receive_materials` and SUM both (one receipt line with two returns would count twice)
+- Material stock-outs: `lockMaterials($ids)` as the FIRST read of the save's transaction, write the lines, then `assertMaterialsAvailable($ids, [$stockId])` (never negative, D3). Money: `TransactionRepository::lockMoneyAccounts([$bankIds])` first (cash locks the `company` row), then the balance check. Under REPEATABLE READ the snapshot is taken at the first plain SELECT, so the lock must come before it
+- Every multi-statement save runs in one `DB::transaction` (orders, purchases, receipts, MProcess, payments + bank charges, transfers)
+- Document numbers: `App\Support\DocumentNumbers` inside the save's transaction (MAX + 1 under a lock, Asia/Karachi), never COUNT + 1
+- Lock once used (D4): refuse with `DocumentLockedException` (message ends with `ASK_ADMIN`); harmless fields (dates, remarks, descriptions) stay editable
+- Order status changes go through `OrderRepository::assertStatusChange()` (`Order::TRANSITIONS`; moving back is `reopen`, admin only)
 
 ## 18. Quick-Reference Don'ts
 - Don't call Eloquent directly in controllers — always go through a repository

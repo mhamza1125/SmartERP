@@ -7,7 +7,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\Validator;
+use App\Support\Uploads;
 
 class Controller extends BaseController
 {
@@ -32,45 +32,25 @@ class Controller extends BaseController
         throw new AuthorizationException('This action is unauthorized.');
     }
 
+    /** Stores one image (validated, random name, content extension) and returns the stored name. */
     protected function getImage($image, $folder)
     {
-        $fileNameWithExtension = $image->getClientOriginalName();
-        $fileName = pathinfo($fileNameWithExtension, PATHINFO_FILENAME);
-        $extension = $image->getClientOriginalExtension();
-        $fileNameToStore = $fileName.'_'.time().'.'.$extension;
-        $path = $image->move(public_path('resources/'.$folder), $fileNameToStore);
-
-        return $fileNameToStore;
-        // $validatedData['image'] = $fileNameToStore;
+        return Uploads::store($image, $folder, Uploads::IMAGE_EXTENSIONS, Uploads::IMAGE_MAX_KB, 'image');
     }
 
     protected function storeImage($image, $folder, $table, $tableId)
     {
-        $validator = Validator::make(['image' => $image], [
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
-        ])->validate();
-
-        $fileNameWithExtension = $image->getClientOriginalName();
-        $fileName = pathinfo($fileNameWithExtension, PATHINFO_FILENAME);
-        $extension = $image->getClientOriginalExtension();
-        $fileNameToStore = $fileName.'_'.time().'.'.$extension;
-        $path = $image->move(public_path('resources/'.$folder), $fileNameToStore);
+        $fileNameToStore = Uploads::store($image, $folder, Uploads::IMAGE_EXTENSIONS, Uploads::IMAGE_MAX_KB, 'image');
         $store = ['table_name' => $table, 'table_id' => $tableId, 'image' => $fileNameToStore];
-        $getId = $this->imageRepository->store($store);
 
-        return $getId;
+        return $this->imageRepository->store($store);
     }
 
     protected function storeFile($image, $folder, $table, $tableId, $title)
     {
-        $fileNameWithExtension = $image->getClientOriginalName();
-        $fileName = pathinfo($fileNameWithExtension, PATHINFO_FILENAME);
-        $extension = $image->getClientOriginalExtension();
-        $fileNameToStore = $fileName.'_'.time().'.'.$extension;
-        $path = $image->move(public_path('resources/'.$folder), $fileNameToStore);
+        $fileNameToStore = Uploads::store($image, $folder, Uploads::PRODUCT_FILE_EXTENSIONS, Uploads::PRODUCT_FILE_MAX_KB, 'file');
         $store = ['table_name' => $table, 'table_id' => $tableId, 'image' => $fileNameToStore, 'file_title' => $title, 'file_type' => '1'];
-        $getId = $this->imageRepository->store($store);
 
-        return $getId;
+        return $this->imageRepository->store($store);
     }
 }

@@ -12,6 +12,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StockRequest;
+use App\Http\Requests\StockUpdateRequest;
 use App\Repositories\HeadRepository;
 use App\Repositories\ImageRepository;
 use App\Repositories\OrderRepository;
@@ -494,15 +495,24 @@ class StockController extends Controller
         $stages = $request->input('stage_id');
         $works = $request->input('work_logs');
         $componentIds = $request->input('component_id', []);
+        // stock_type / stock_status / table_name are decided by the kind of document, not the form
+        [$header, $parent] = $this->stockRepository->issuanceHeader($validatedData);
+        $lineData = array_merge($request->input(), ['table_name' => $header['table_name']]);
         try {
             // An issuance takes its products from the order's batches, then free stock
-            $getId = DB::transaction(function () use ($request, $validatedData, $ptid, $mid, $quantities, $stages, $works, $componentIds) {
-                if ($request->has('issue_id')) { // Add Receive Issuance
-                    $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+            // A stock-out may not take a material below 0 (checked under a row lock on the material)
+            $outMaterials = (int) $header['stock_type'] === 2 ? (array) $mid : [];
+            $getId = DB::transaction(function () use ($request, $header, $parent, $ptid, $mid, $quantities, $stages, $works, $componentIds, $lineData, $outMaterials) {
+                $this->stockItemRepository->lockMaterials($outMaterials);
+                if ($parent) { // Receive Issuance: the issuance takes the receiving status
+                    $this->stockRepository->update($parent->stock_id, ['stock_status' => $header['stock_status']]);
                 }
-                $getId = $this->stockRepository->store($validatedData);
-                $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $componentIds, $request->input());
+                // The number is assigned here (highest + 1 under a lock), not taken from the form
+                $header['stock_no'] = $parent ? $this->stockRepository->refNo2($parent->stock_id) : $this->stockRepository->refNo();
+                $getId = $this->stockRepository->store($header);
+                $this->storeSI($getId, $ptid, $mid, $quantities, $stages, $works, $componentIds, $lineData);
                 $this->stockBatchRepository->allocateRecord($getId, (array) $request->input('batch_qty', []));
+                $this->stockItemRepository->assertMaterialsAvailable($outMaterials, [$getId]);
 
                 return $getId;
             });
@@ -533,11 +543,16 @@ class StockController extends Controller
         }
         $igroups = $request->input('igroup_id');
         $quantities = $request->input('quantity');
+        [$header] = $this->stockRepository->issuanceHeader(array_diff_key($validatedData, array_flip(['issue_id', 'machine_id'])));
         try {
-            $getId = DB::transaction(function () use ($validatedData, $igroups, $quantities) {
-                $getId = $this->stockRepository->store($validatedData);
+            $outMaterials = DB::table('igroup_items')->whereIn('igroup_id', (array) $igroups)->pluck('material_id')->all();
+            $getId = DB::transaction(function () use ($header, $igroups, $quantities, $outMaterials) {
+                $this->stockItemRepository->lockMaterials($outMaterials);
+                $header['stock_no'] = $this->stockRepository->refNo();
+                $getId = $this->stockRepository->store($header);
                 $this->storeIGroup($getId, $igroups, $quantities);
                 $this->stockBatchRepository->allocateRecord($getId);
+                $this->stockItemRepository->assertMaterialsAvailable($outMaterials, [$getId]);
 
                 return $getId;
             });
@@ -772,22 +787,30 @@ class StockController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(StockUpdateRequest $request, $id)
     {
         $this->authorize('edit', Stock::class);
-        // Update Issuance
+        // Update Issuance / machine issue / issuance receipt (nothing else is edited through /issue)
+        $stock = Stock::findOrFail($id);
+        abort_if($this->stockRepository->issuanceKind($stock) === null, 404);
         if (array_sum($request->input('quantity', [])) == 0) {
             return redirect()->back()->with(['fails' => 'Fill the form properly'])->withInput();
         }
+        // Header columns from an explicit list; control columns from the stored record
+        [$header, $parent] = $this->stockRepository->issuanceHeader($request->input(), $stock);
+        $lineData = array_merge($request->input(), ['table_name' => $header['table_name']]);
         try {
-            DB::transaction(function () use ($request, $id) {
-                $this->stockRepository->update($id, $request->input());
-                if ($request->has('issue_id')) {
-                    $this->stockRepository->update($request->input('issue_id'), ['stock_status' => $request->input('stock_status')]);
+            $outMaterials = (int) $header['stock_type'] === 2 ? (array) $request->input('material_id', []) : [];
+            DB::transaction(function () use ($request, $id, $header, $parent, $lineData, $outMaterials) {
+                $this->stockItemRepository->lockMaterials($outMaterials);
+                $this->stockRepository->update($id, $header);
+                if ($parent) {
+                    $this->stockRepository->update($parent->stock_id, ['stock_status' => $header['stock_status']]);
                 }
-                $this->stockItemRepository->update($id, $request->input());
+                $this->stockItemRepository->update($id, $lineData);
                 // An issuance re-takes its products from the order's batches, then free stock
                 $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_qty', []));
+                $this->stockItemRepository->assertMaterialsAvailable($outMaterials, [(int) $id]);
             });
         } catch (StockBatchException $e) {
             return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();
@@ -1311,6 +1334,9 @@ class StockController extends Controller
 
         try {
             $ptcId = DB::transaction(function () use ($ptcData, $quantities, $materialIds, $productTypeIds, $stageIdsInput, $componentIds, $productTypeId, $startStageId) {
+                // Material lines may not take a material below 0 (row lock first, check after the lines)
+                $this->stockItemRepository->lockMaterials((array) $materialIds);
+                $ptcData['stock_no'] = $this->stockRepository->ptcRefNo(); // assigned under a lock, not from the form
                 $ptcId = $this->stockRepository->store($ptcData);
 
                 foreach ($quantities as $key => $quantity) {
@@ -1347,6 +1373,7 @@ class StockController extends Controller
 
                 // Products issued from general stock come from the order's batches, then free stock
                 $this->stockBatchRepository->allocateRecord($ptcId, (array) request()->input('batch_qty', []));
+                $this->stockItemRepository->assertMaterialsAvailable((array) $materialIds, [$ptcId]);
 
                 return $ptcId;
             });
@@ -1878,6 +1905,7 @@ class StockController extends Controller
             }
 
             DB::transaction(function () use ($ptc, $request, $id, $items) {
+                $this->stockItemRepository->lockMaterials((array) ($items['material_id'] ?? []));
                 // Update PTC record
                 $ptc->update([
                     'stock_date' => $request->input('stock_date', $ptc->stock_date),
@@ -1889,6 +1917,7 @@ class StockController extends Controller
                 // Update stock items
                 $this->stockItemRepository->update($id, $items);
                 $this->stockBatchRepository->allocateRecord($id, (array) $request->input('batch_qty', []));
+                $this->stockItemRepository->assertMaterialsAvailable((array) ($items['material_id'] ?? []), [(int) $id]);
             });
         } catch (StockBatchException $e) {
             return redirect()->back()->with(['fails' => $e->getMessage()])->withInput();

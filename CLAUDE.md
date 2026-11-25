@@ -22,7 +22,7 @@ npm run dev
 # Build assets for production
 npm run build
 
-# Run all tests
+# Run all tests (safe: only ever against the database smarterp_test, see docs/TESTING.md)
 php artisan test
 
 # Run a single test file
@@ -73,7 +73,7 @@ Route → Middleware → Controller → Repository → Model/DB
 3. Call repository method
 4. Return view or redirect with `->with('success'/'error', '...')`
 
-**Repositories hold all business logic and DB queries.** All 38 repositories implement `GlobalInterface` (`app/Repositories/GlobalInterface.php`) with 5 required methods: `all()`, `get($id)`, `store(array $data)`, `update($id, array $data)`, `delete($id)`.
+**Repositories hold all business logic and DB queries.** The repositories (46 of the 49 classes in `app/Repositories/` as of 2026-11-25) implement `GlobalInterface` (`app/Repositories/GlobalInterface.php`) with 5 required methods: `all()`, `get($id)`, `store(array $data)`, `update($id, array $data)`, `delete($id)`.
 
 **Models have no Eloquent relationship methods.** All joins and related-data fetching are done inside repository methods. Do not add `hasMany`/`belongsTo` without explicit instruction.
 
@@ -94,7 +94,7 @@ Route middleware:
 - `all` — any authenticated user with a role
 - `auth` — standard Laravel auth
 
-Authorization is two-layered: **route middleware** (coarse) + **Policy `$this->authorize()`** (fine-grained). Both must be present. Policies are registered in `app/Providers/AuthServiceProvider.php`.
+Authorization is two-layered: **middleware applied in each controller's constructor** (`$this->middleware(['auth', 'all'])`; routes in `web.php` carry none, owner decision D9, 2026-11-25) + **Policy `$this->authorize()`** (fine-grained) in every action. Both must be present. Policies are registered in `app/Providers/AuthServiceProvider.php`.
 
 ### View Naming Convention
 
@@ -114,9 +114,12 @@ All routes in `routes/web.php`, grouped by module with `Route::prefix()`. Named 
 
 ### Critical Business Rules
 
-- **Approved qty, not ordered qty** — stock is updated using approved qty from the receive record
+- **Approved qty, not ordered qty** — stock is updated using approved qty from the receive record, and the vendor is billed for approved qty only (vendor balance and vendor ledger, D1 2026-11-25)
 - **Vendor payments** — linked to a purchase (`order_id` = purchase_id), or a **General Payment** (`order_id` = 0) when not for a specific purchase (user decision 2026-11-14)
 - **Job number format** — `{customer_no}/J{YY}-{NNN}` (e.g., `CU0001/J25-001`)
 - **Delivery number format** — `SLE-D001-26`
+- **Document numbers** — highest existing + 1, taken under a lock inside the save (`App\Support\DocumentNumbers`), year/month in Asia/Karachi; unique, gaps allowed (D7). Never COUNT + 1
+- **Stock figures** — one formula in `StockItemRepository` (`materialStock`, `pStock`, `productStockAggregate`, receipt totals with returns summed per receipt line first); never copy it. Negative stock is never allowed (D3)
+- **Locks once used (D4)** — delivered order lines, received purchase lines and returned / used receipt lines cannot be changed in price / party / item or lowered below what was delivered / received / used; refusals end with "ask an admin" (`DocumentLockedException`)
 - **Stock statuses** — defined as constants on the `Stock` model (0–7); see `claude-memory.md` for the full table
 - **Finance** — all money flows through the `Transaction` model using double-entry (`debit`/`credit`); `transfer_pair_id` links bank transfer pairs

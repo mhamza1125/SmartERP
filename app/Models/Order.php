@@ -32,6 +32,33 @@ class Order extends Model
         self::STATUS_CANCELLED,
     ];
 
+    /**
+     * D5: allowed status moves (OrderRepository::assertStatusChange). Forward along
+     * Draft -> Confirmed -> Dispatched -> Delivered (Dispatched may be skipped); Cancel only from
+     * Draft / Confirmed. Dispatched / Delivered need a delivery; Cancelled needs no delivery and
+     * no reserved stock. Moving back to an earlier status (re-open, incl. from Cancelled) is for
+     * admins only and the target's conditions still apply. Anything else is refused.
+     */
+    const TRANSITIONS = [
+        self::STATUS_DRAFT => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
+        self::STATUS_CONFIRMED => [self::STATUS_DISPATCHED, self::STATUS_DELIVERED, self::STATUS_CANCELLED],
+        self::STATUS_DISPATCHED => [self::STATUS_DELIVERED],
+        self::STATUS_DELIVERED => [],
+        self::STATUS_CANCELLED => [],
+    ];
+
+    /** Statuses a new order may be created with. */
+    const INITIAL_STATUSES = [self::STATUS_DRAFT, self::STATUS_CONFIRMED];
+
+    /** Position in the sequence; a move to a lower position is a re-open. Cancelled is terminal. */
+    const SEQUENCE = [
+        self::STATUS_DRAFT => 1,
+        self::STATUS_CONFIRMED => 2,
+        self::STATUS_DISPATCHED => 3,
+        self::STATUS_DELIVERED => 4,
+        self::STATUS_CANCELLED => 5,
+    ];
+
     public static function isEditableStatus($status): bool
     {
         return ! in_array((int) $status, self::LOCKED_STATUSES, true);
@@ -59,13 +86,7 @@ class Order extends Model
      */
     public static function generateOrderNo()
     {
-        $currentYear = date('Y');
-        $lastTwoDigits = substr($currentYear, -2);
-
-        // Get the count of orders created this year
-        $count = self::whereYear('created_at', $currentYear)->count();
-        $sequentialNo = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-
-        return "SLE-O{$sequentialNo}-{$lastTwoDigits}";
+        // Highest SLE-O number of the year (Asia/Karachi) + 1; locked inside a save, a preview otherwise
+        return (new \App\Support\DocumentNumbers())->nextOrderNo(\Illuminate\Support\Facades\DB::transactionLevel() === 0);
     }
 }

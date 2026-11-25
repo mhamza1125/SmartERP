@@ -1,3 +1,14 @@
+# Database files must never be downloadable (att2000.mdb is read by the app from disk, not over HTTP).
+<FilesMatch "(?i)\.(mdb|accdb|sql)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

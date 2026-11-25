@@ -426,23 +426,14 @@ class StockRepository implements GlobalInterface
 
     public function refNo()
     {
-        // For Issuance
-        $yearMonth = Carbon::now()->format('ym');
-        $count = Stock::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
-            ->where('stock_type', '2')->count();
-        $fourDigitNumber = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
-        return 'I'.$yearMonth.$fourDigitNumber;
+        // For Issuance: I{YYMM}{NNNN}, highest + 1 (Asia/Karachi month); locked inside a save, a preview otherwise
+        return (new \App\Support\DocumentNumbers())->nextIssuanceNo(DB::transactionLevel() === 0);
     }
 
     public function refNo2($id)
     {
-        // For Receive Issuance
-        $yearMonth = Carbon::now()->format('ym');
-        $count = Stock::where('issue_id', $id)->count();
-
-        return 'R'.$count + 1;
+        // For Receive Issuance: R{n}, the n-th receipt of this issuance (highest + 1)
+        return (new \App\Support\DocumentNumbers())->nextIssuanceReceiptNo((int) $id, DB::transactionLevel() === 0);
     }
 
     /**
@@ -451,14 +442,8 @@ class StockRepository implements GlobalInterface
      */
     public function ptcRefNo()
     {
-        $yearMonth = Carbon::now()->format('ym');
-        $count = Stock::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
-            ->where('is_ptc_master', 1)
-            ->count();
-        $threeDigitNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-
-        return $yearMonth . $threeDigitNumber;
+        // {YYMM}{NNN}: highest PTC number of the month (Asia/Karachi) + 1; locked inside a save, a preview otherwise
+        return (new \App\Support\DocumentNumbers())->nextPtcNo(DB::transactionLevel() === 0);
     }
 
     /**
@@ -568,6 +553,94 @@ class StockRepository implements GlobalInterface
         $update->update($data);
 
         return $update->stock_id;
+    }
+
+    /** Who an issuance is made to: the user's choice on the issuance forms. */
+    public const ISSUANCE_WORKERS = ['employee', 'vendor'];
+
+    /** Header columns the issuance / machine-issue / issuance-receipt forms may set. */
+    private const ISSUANCE_HEADER_FIELDS = ['stock_no', 'stock_date', 'employee_id', 'order_id', 'issue_for', 'machine_id', 'description'];
+
+    /**
+     * Header row for an issuance, a machine-material issue or an issuance receipt (/issue routes).
+     * The control columns are decided here from the kind of document, never taken from the form:
+     *
+     *   issuance        stock_type 2, status 0 on create (kept on edit), table_name employee|vendor
+     *   machine issue   stock_type 2, status 4, table_name employee
+     *   receipt         stock_type 1, status 1|2 (Completely / Partially received), table_name and
+     *                   issue_id = the issuance it receives (which must be a normal, non-PTC issuance)
+     *
+     * On edit ($existing) the kind comes from the stored record. Returns [header, parent issuance|null].
+     *
+     * @return array{0: array<string, mixed>, 1: Stock|null}
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function issuanceHeader(array $input, ?Stock $existing = null): array
+    {
+        $header = array_intersect_key($input, array_flip(self::ISSUANCE_HEADER_FIELDS));
+        $kind = $existing ? $this->issuanceKind($existing) : (! empty($input['issue_id']) ? 'receipt' : (! empty($input['machine_id']) ? 'machine' : 'issuance'));
+
+        if ($kind === 'receipt') {
+            $parent = Stock::find($existing ? $existing->issue_id : (int) $input['issue_id']);
+            if (! $parent || $this->issuanceKind($parent) !== 'issuance') {
+                throw \Illuminate\Validation\ValidationException::withMessages(['issue_id' => 'Only a normal issuance can be received here.']);
+            }
+            $status = (int) ($input['stock_status'] ?? 0);
+            if (! in_array($status, [Stock::STATUS_COMPLETELY_RECEIVED, Stock::STATUS_PARTIALLY_RECEIVED], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['stock_status' => 'Choose Completely or Partially Received.']);
+            }
+
+            return [$header + [
+                'issue_id' => $parent->stock_id,
+                'stock_type' => 1,
+                'stock_status' => $status,
+                'table_name' => $parent->table_name,
+            ], $parent];
+        }
+
+        if ($kind === 'machine') {
+            return [$header + ['stock_type' => 2, 'stock_status' => Stock::STATUS_MACHINE_MATERIAL, 'table_name' => 'employee'], null];
+        }
+
+        $worker = $input['table_name'] ?? ($existing->table_name ?? null);
+        if (! in_array($worker, self::ISSUANCE_WORKERS, true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['table_name' => 'Choose an employee or a vendor.']);
+        }
+
+        return [$header + [
+            'stock_type' => 2,
+            'stock_status' => $existing ? (int) $existing->stock_status : Stock::STATUS_NOT_RECEIVED,
+            'table_name' => $worker,
+        ], null];
+    }
+
+    /**
+     * 'issuance' | 'machine' | 'receipt' for documents edited through the /issue routes, else null
+     * (PTC rows, deliveries, releases, adjustments, return pairs, opening stock).
+     */
+    public function issuanceKind(Stock $stock): ?string
+    {
+        if ((int) $stock->stock_id === 1 || ! empty($stock->ptc_id) || (int) $stock->is_ptc_master === 1) {
+            return null;
+        }
+        $type = (int) $stock->stock_type;
+        $status = (int) $stock->stock_status;
+
+        if ($type === 2 && $status === Stock::STATUS_MACHINE_MATERIAL) {
+            return 'machine';
+        }
+        if (! in_array($stock->table_name, self::ISSUANCE_WORKERS, true)) {
+            return null;
+        }
+        if ($type === 2 && in_array($status, [Stock::STATUS_NOT_RECEIVED, Stock::STATUS_COMPLETELY_RECEIVED, Stock::STATUS_PARTIALLY_RECEIVED], true)) {
+            return 'issuance';
+        }
+        if ($type === 1 && ! empty($stock->issue_id) && in_array($status, [Stock::STATUS_COMPLETELY_RECEIVED, Stock::STATUS_PARTIALLY_RECEIVED], true)) {
+            return 'receipt';
+        }
+
+        return null;
     }
 
     public function updateStatus($id, array $data)
