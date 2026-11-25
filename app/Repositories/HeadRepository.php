@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Support\DeletionImpact;
 use App\Repositories\Concerns\ChecksReferences;
 use App\Models\Head;
+use Carbon\Carbon;
 use DB;
 
 class HeadRepository implements GlobalInterface
@@ -135,8 +136,10 @@ class HeadRepository implements GlobalInterface
     public const DEPARTMENT_TYPE = 3;
 
     /**
-     * Working hours belong to department heads only (empty = no late time / overtime; Settings > Company hours/day for payroll). A head of any
-     * other type has none. On update, a form without the fields keeps the stored hours.
+     * Working hours and break belong to department heads only (no times = no late time / overtime and
+     * no payroll hours per day). A head of any other type has none. The break comes in as
+     * break_hours + break_mins and is stored as break_minutes. On update, a form without the fields
+     * keeps the stored values.
      */
     private function departmentTimes(array $data, ?Head $head = null): array
     {
@@ -149,7 +152,47 @@ class HeadRepository implements GlobalInterface
             }
         }
 
+        if ($type !== self::DEPARTMENT_TYPE) {
+            $data['break_minutes'] = 0;
+        } elseif (array_key_exists('break_hours', $data) || array_key_exists('break_mins', $data)) {
+            $data['break_minutes'] = (int) ($data['break_hours'] ?? 0) * 60 + (int) ($data['break_mins'] ?? 0);
+        }
+        unset($data['break_hours'], $data['break_mins']);
+
         return $data;
+    }
+
+    /**
+     * Actual daily working hours of a department: Work In to Work Out (an end at or before the start
+     * is a night shift ending the next day) minus the break. Null when a time is missing or the break
+     * is not shorter than the shift. E.g. 09:00-18:00 with a 60 min break = 8.
+     */
+    public static function workingHours(?string $start, ?string $end, $breakMinutes = 0): ?float
+    {
+        if (! $start || ! $end) {
+            return null;
+        }
+        $from = Carbon::parse('2000-01-01 '.$start);
+        $to = Carbon::parse('2000-01-01 '.$end);
+        if ($to->lte($from)) {
+            $to->addDay();
+        }
+        $minutes = $from->diffInMinutes($to) - (int) $breakMinutes;
+
+        return $minutes > 0 ? round($minutes / 60, 2) : null;
+    }
+
+    /** A break in minutes as text: 90 -> "1 h 30 min", 45 -> "45 min", 0 -> "No break". */
+    public static function breakLabel($breakMinutes): string
+    {
+        $minutes = (int) $breakMinutes;
+        if ($minutes <= 0) {
+            return 'No break';
+        }
+        $hours = intdiv($minutes, 60);
+        $rest = $minutes % 60;
+
+        return trim(($hours ? $hours.' h ' : '').($rest ? $rest.' min' : ''));
     }
 
     /**

@@ -32,7 +32,6 @@ class CompanyRequest extends FormRequest
             // Payroll defaults (Settings > Company)
             'overtime_multiplier' => 'nullable|numeric|min:0|max:10',
             'late_multiplier' => 'nullable|numeric|min:0|max:10',
-            'work_hours_per_day' => 'nullable|numeric|min:1|max:24',
             // Attendance machine database (ATT2000.mdb); checked in withValidator()
             'attendance_db_path' => 'nullable|string|max:500',
             'address' => 'nullable|string',

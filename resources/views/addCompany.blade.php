@@ -93,8 +93,8 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Default Working Hours per Day</label>
-                    <input type="number" step="0.5" min="1" max="24" class="form-control" name="work_hours_per_day" value="{{ old('work_hours_per_day', 8) }}">
+                    <label>Working Hours per Day</label>
+                    <p class="form-control-plaintext small text-muted mb-0">Worked out per department: Work In to Work Out minus the break (Settings &gt; Heads &gt; Departments).</p>
                   </div>
                 </div>
               </div>

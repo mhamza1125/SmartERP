@@ -75,15 +75,11 @@ class HeadController extends Controller
         return redirect()->route('head.add')->with('success', 'Record Inserted Successfully');
     }
 
-    public function update(Request $request, $id)
+    public function update(HeadRequest $request, $id)
     {
         $this->authorize('edit', Head::class);
-        // Department heads: working hours (both optional; an end at or before the start = next day)
-        $request->validate([
-            'work_start_time' => 'nullable|date_format:H:i,H:i:s',
-            'work_end_time' => 'nullable|date_format:H:i,H:i:s',
-        ]);
-        $this->headRepository->update($id, $request->input());
+        // Department heads: working hours + break (an end at or before the start = next day)
+        $this->headRepository->update($id, $request->validated());
 
         return redirect()->route('head')->with('success', 'Record Updated Successfully');
     }

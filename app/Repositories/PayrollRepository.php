@@ -120,6 +120,13 @@ class PayrollRepository implements GlobalInterface
                 $input['fixed_advance'] = $this->openFixedLoan((int) $employeeId);
                 // Hours per day always come from the department, never from the form
                 $input['hours_per_day'] = $hours[$employeeId]['hours'];
+                // Without department hours there is no hourly wage, so overtime / late time cannot be paid / deducted
+                if (! $input['hours_per_day'] && ((float) ($input['overtime_hours'] ?? 0) > 0 || (float) ($input['late_hours'] ?? 0) > 0)) {
+                    $errors["employees.{$employeeId}.overtime_hours"] = "{$employee->name}: the department has no Work In / Work Out times, so overtime"
+                        .' and late time cannot be calculated. Set them under Settings > Heads > Departments, or enter 0.';
+
+                    continue;
+                }
                 $item = $this->calculate((float) $employee->salary, $input, $period);
                 if ($item['net_salary'] < 0) {
                     $errors["employees.{$employeeId}.fixed_advance_deduction"] = "{$employee->name}: deductions ("
@@ -209,8 +216,6 @@ class PayrollRepository implements GlobalInterface
         $company = Company::first();
 
         return [
-            // Only for employees whose department has no Work In / Work Out times
-            'default_hours_per_day' => (float) ($company->work_hours_per_day ?? 8) ?: 8,
             'overtime_multiplier' => (float) ($company->overtime_multiplier ?? 2),
             'late_multiplier' => (float) ($company->late_multiplier ?? 1),
         ];
@@ -228,12 +233,13 @@ class PayrollRepository implements GlobalInterface
     {
         // The salary is divided by the employee's own total days (default: the header's)
         $headerDays = (float) $period['total_working_days'];
-        $hoursPerDay = (float) ($input['hours_per_day'] ?? 0) ?: $this->settings()['default_hours_per_day'];
+        // The department's working hours (0 = the department has none: no hourly wage)
+        $hoursPerDay = (float) ($input['hours_per_day'] ?? 0);
         $ownTotalDays = (float) (($input['total_working_days'] ?? '') === '' ? $headerDays : $input['total_working_days']);
         $totalDays = $ownTotalDays > 0 ? $ownTotalDays : $headerDays;
         $actualDays = (float) ($input['actual_working_days'] ?? $ownTotalDays);
         $paidLeaves = (float) ($input['paid_leaves'] ?? 0);
-        $hourly = $totalDays > 0 ? $gross / $totalDays / $hoursPerDay : 0;
+        $hourly = $totalDays > 0 && $hoursPerDay > 0 ? $gross / $totalDays / $hoursPerDay : 0;
 
         $salaryForDays = $totalDays > 0 ? $gross * ($actualDays + $paidLeaves) / $totalDays : 0;
         $overtimeHours = round((float) ($input['overtime_hours'] ?? 0), 2);
@@ -254,7 +260,7 @@ class PayrollRepository implements GlobalInterface
             'total_working_days' => $ownTotalDays,
             'actual_working_days' => $actualDays,
             'paid_leaves' => $paidLeaves,
-            'hours_per_day' => $round($hoursPerDay),
+            'hours_per_day' => $hoursPerDay > 0 ? $round($hoursPerDay) : null,
             'salary_for_days' => $salaryForDays,
             'overtime_hours' => $overtimeHours,
             'overtime_rate' => $round($overtimeRate),
@@ -405,33 +411,28 @@ class PayrollRepository implements GlobalInterface
     }
 
     /**
-     * Daily working hours per employee: their department's Work In to Work Out (Settings > Heads >
-     * Departments; an end at or before the start is a night shift ending the next day). Employees
-     * whose department has no times get the Settings > Company hours.
+     * Actual daily working hours per employee, worked out from their department (Settings > Heads >
+     * Departments): Work In to Work Out minus the break (HeadRepository::workingHours; an end at or
+     * before the start is a night shift ending the next day). There is no manual hours setting: an
+     * employee whose department has no times gets hours null (source 'missing'), so no hourly wage.
      *
-     * @return array<int, array{hours: float, source: string, from: ?string, to: ?string}> by employee_id
+     * @return array<int, array{hours: ?float, source: string, from: ?string, to: ?string, break: int}> by employee_id
      */
     public function hoursPerDay(Collection $employees): array
     {
         $departments = app(AttendanceRepository::class)->departmentHours();
-        $default = $this->settings()['default_hours_per_day'];
         $result = [];
 
         foreach ($employees as $employee) {
             $department = $departments->get($employee->department_id);
-            $hours = null;
-            if ($department && $department->work_start_time && $department->work_end_time) {
-                $start = Carbon::parse('2000-01-01 '.$department->work_start_time);
-                $end = Carbon::parse('2000-01-01 '.$department->work_end_time);
-                if ($end->lte($start)) {
-                    $end->addDay();
-                }
-                $hours = round($start->diffInMinutes($end) / 60, 2);
-            }
+            $hours = $department
+                ? HeadRepository::workingHours($department->work_start_time, $department->work_end_time, $department->break_minutes ?? 0)
+                : null;
 
             $result[$employee->employee_id] = $hours
-                ? ['hours' => $hours, 'source' => 'department', 'from' => substr($department->work_start_time, 0, 5), 'to' => substr($department->work_end_time, 0, 5)]
-                : ['hours' => $default, 'source' => 'default', 'from' => null, 'to' => null];
+                ? ['hours' => $hours, 'source' => 'department', 'from' => substr($department->work_start_time, 0, 5),
+                    'to' => substr($department->work_end_time, 0, 5), 'break' => (int) ($department->break_minutes ?? 0)]
+                : ['hours' => null, 'source' => 'missing', 'from' => null, 'to' => null, 'break' => 0];
         }
 
         return $result;

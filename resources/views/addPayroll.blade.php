@@ -95,9 +95,10 @@
                 </div>
               </div>
               <p class="text-muted small mb-3">
-                Hourly wage = gross salary / employee's Total days / hours per day. Hours per day come from the
-                employee's department Work In / Work Out times (Settings &gt; Heads &gt; Departments); a department
-                without times uses the Settings &gt; Company hours. Each employee's Total days
+                Hourly wage = gross salary / employee's Total days / hours per day. Hours per day are worked out from the
+                employee's department: Work In to Work Out minus the break (Settings &gt; Heads &gt; Departments); they are
+                never entered by hand. A department without times has no hourly wage, so its employees get no overtime /
+                late deduction (shown in red). Each employee's Total days
                 can be changed and the salary is divided by that row's days;
                 paid Leaves are not deducted. Overtime and late time are in hours. Defaults come from
                 @if(auth()->user()->can('access', App\Models\Settings::class))<a href="{{ route('company') }}">Settings &gt; Company</a>@endif. Temporary advances and the open fixed loan are filled in
@@ -174,19 +175,25 @@
                         $field = fn ($name, $default) => old("employees.{$id}.{$name}", $default);
                         $checked = $oldIds !== null ? in_array((string) $id, array_map('strval', $oldIds), true) : $row->included;
                       @endphp
-                      <tr class="payroll-row" data-gross="{{ (float) $row->employee->salary }}" data-hours="{{ $row->hours_per_day['hours'] }}">
+                      <tr class="payroll-row" data-gross="{{ (float) $row->employee->salary }}" data-hours="{{ $row->hours_per_day['hours'] ?? 0 }}">
                         <td><input type="checkbox" name="employee_ids[]" value="{{ $id }}" class="employee-checkbox" {{ $checked ? 'checked' : '' }}></td>
                         <td class="text-nowrap">
                           <strong>{{ $row->employee->name }}</strong>
                           <div class="small text-muted">{{ $row->employee->employee_no }}{{ $row->employee->designation ? ' · ' . $row->employee->designation : '' }}</div>
                           @php $hrs = $row->hours_per_day; @endphp
-                          <div class="small {{ $hrs['source'] === 'department' ? 'text-muted' : 'text-warning' }}"
-                               title="{{ $hrs['source'] === 'department' ? 'Department Work In ' . $hrs['from'] . ' to Work Out ' . $hrs['to'] : 'The department has no Work In / Work Out times: Settings > Company hours are used' }}">
-                            {{ $num($hrs['hours']) }} hrs/day{{ $hrs['source'] === 'department' ? ' (' . $hrs['from'] . '–' . $hrs['to'] . ')' : ' (default)' }}
-                            @if($row->saved_hours_per_day !== null && abs($row->saved_hours_per_day - $hrs['hours']) > 0.001)
-                              <span class="text-danger" title="This line was saved with {{ $num($row->saved_hours_per_day) }} hrs/day; saving again uses {{ $num($hrs['hours']) }}">· saved {{ $num($row->saved_hours_per_day) }}</span>
-                            @endif
-                          </div>
+                          @if($hrs['hours'])
+                            <div class="small text-muted"
+                                 title="Department Work In {{ $hrs['from'] }} to Work Out {{ $hrs['to'] }} minus {{ App\Repositories\HeadRepository::breakLabel($hrs['break']) }}">
+                              {{ $num($hrs['hours']) }} hrs/day ({{ $hrs['from'] }}–{{ $hrs['to'] }}{{ $hrs['break'] ? ', break ' . App\Repositories\HeadRepository::breakLabel($hrs['break']) : '' }})
+                              @if($row->saved_hours_per_day !== null && abs($row->saved_hours_per_day - $hrs['hours']) > 0.001)
+                                <span class="text-danger" title="This line was saved with {{ $num($row->saved_hours_per_day) }} hrs/day; saving again uses {{ $num($hrs['hours']) }}">· saved {{ $num($row->saved_hours_per_day) }}</span>
+                              @endif
+                            </div>
+                          @else
+                            <div class="small text-danger" title="Set Work In / Work Out (and break) for the department under Settings > Heads > Departments">
+                              No working hours: department has no Work In / Out
+                            </div>
+                          @endif
                         </td>
                         <td class="num">{{ number_format((float) $row->employee->salary, 2) }}</td>
                         <td><input type="number" step="0.01" min="0" max="31" class="form-control form-control-sm js-input" data-field="total" name="employees[{{ $id }}][total_working_days]" value="{{ $field('total_working_days', $row->total_working_days !== null ? $num($row->total_working_days) : '') }}" title="This employee's total days (default: the header's). The salary is divided by these days."></td>
@@ -275,13 +282,13 @@
         var actualInput = row.querySelector('[data-field="actual"]');
         if (actualInput.value === '') actualInput.value = ownInput.value;
         var gross = parseFloat(row.dataset.gross) || 0;
-        var hoursPerDay = parseFloat(row.dataset.hours) || 8; // the department's Work In to Work Out
+        var hoursPerDay = parseFloat(row.dataset.hours) || 0; // the department's Work In to Work Out minus break (0 = none set)
         var ownDays = input('total');
         var actual = input('actual');
         var leaves = input('leaves');
         // Rate from this employee's own total days (header's when blank/0); worked days + paid leaves are paid at that rate
         var rateDays = ownDays > 0 ? ownDays : totalDays;
-        var hourly = rateDays > 0 ? gross / rateDays / hoursPerDay : 0;
+        var hourly = rateDays > 0 && hoursPerDay > 0 ? gross / rateDays / hoursPerDay : 0;
         var salaryDays = round2(rateDays > 0 ? gross * (actual + leaves) / rateDays : 0);
         var otRate = hourly * otMultiplier;
         var otAmount = round2(round2(input('ot')) * otRate);

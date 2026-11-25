@@ -18,6 +18,7 @@ class Head extends Model
         // Department heads (type 3): working hours of the department
         'work_start_time',
         'work_end_time',
+        'break_minutes', // department break, deducted from Work In -> Work Out for payroll hours
         'created_by',
         'updated_at',
     ];

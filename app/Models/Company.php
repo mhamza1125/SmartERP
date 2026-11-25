@@ -31,7 +31,6 @@ class Company extends Model
         'statement_of_origin',
         'overtime_multiplier',
         'late_multiplier',
-        'work_hours_per_day',
         'attendance_db_path',
         'created_by',
         'updated_at',

@@ -22,13 +22,15 @@ class AttendanceRepository implements GlobalInterface
 
     /**
      * Working hours set on department heads (head type 3), keyed by head_id: work_start_time /
-     * work_end_time ('H:i:s' or null). Late time and overtime are only calculated for departments with both.
+     * work_end_time ('H:i:s' or null) and break_minutes. Late time and overtime are only calculated for
+     * departments with both times (the break does not change them); payroll hours per day = the times
+     * minus the break (HeadRepository::workingHours).
      */
     public function departmentHours()
     {
         return \App\Models\Head::where('head_type_id', HeadRepository::DEPARTMENT_TYPE)
             ->where(fn ($q) => $q->whereNotNull('work_start_time')->orWhereNotNull('work_end_time'))
-            ->get(['head_id', 'work_start_time', 'work_end_time'])
+            ->get(['head_id', 'work_start_time', 'work_end_time', 'break_minutes'])
             ->keyBy('head_id');
     }
 
