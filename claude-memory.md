@@ -360,6 +360,7 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - `product_cost_logs`: every change of a product_costs row (general / employee / vendor = contractor wage): old_amount, amount, action added | changed | removed | opening. Written by `ProductCostRepository::store/update` (update re-saves every row; only real amount changes are logged)
 - Employee page and contractor page (partial `personWages`): own wage per product + work head vs the general wage, last change date, and the person's wage change history (`personWages()`, `wageHistory()`). Product Costing / Wages tab shows the product's wage history. `product_cost_logs.table_name` uses utf8mb4_general_ci to match product_costs
 - Deleting an employee / contractor deletes their own wage rates + history
+- Deleting an employee also deletes their `salaries` rows (own salary rate + history) and opening balance entry (any amount). Until 2026-11-26 `salaries` rows blocked the delete, and every employee has one, so no employee could be deleted. Still blocking: payroll items, stock records, machines, non-opening ledger transactions, bank accounts
 
 ## Vendor balance (2026-11-21)
 - /vendor Balance = the ledger's (vendor.detail): received purchases (approved qty x price, D1 2026-11-25) - purchase returns + SUM(debit - credit) of all vendor / contractor transactions of the vendor (`VendorRepository::vendorWithBalance`). It used to add credits and drop wages / contractor rows

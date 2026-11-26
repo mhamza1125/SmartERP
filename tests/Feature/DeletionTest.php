@@ -71,6 +71,34 @@ class DeletionTest extends TestCase
         $this->assertDatabaseHas('activity_log', ['log_name' => 'delete', 'description' => 'Customer CUTEST (Delete Me) deleted']);
     }
 
+    public function test_employee_with_only_salary_rates_and_zero_opening_balance_can_be_deleted(): void
+    {
+        // A copy of an existing employee, with nothing using it but its own rows
+        $row = (array) DB::table('employees')->first();
+        unset($row['employee_id']);
+        $row['employee_no'] = 'EMTEST';
+        $id = DB::table('employees')->insertGetId($row);
+        // Salary rate + history (every employee gets one on create; edits add more)
+        DB::table('salaries')->insert([
+            ['employee_id' => $id, 'amount' => 30000, 'status' => '0', 'created_by' => 1],
+            ['employee_id' => $id, 'amount' => 35000, 'status' => '1', 'created_by' => 1],
+        ]);
+        DB::table('transactions')->insert([
+            'transaction_to' => 'employee', 'transaction_type' => 'openingBalance', 'bank_id' => 0,
+            'payee_id' => $id, 'debit' => 0, 'credit' => null, 'transaction_date' => now()->toDateString(), 'payee_bank_id' => 0, 'created_by' => 1,
+        ]);
+
+        $check = $this->actingAs($this->admin())->getJson(route('employee.deleteCheck', $id))->assertOk();
+        $this->assertTrue($check->json('data.can_delete'), implode('; ', $check->json('data.blockers')));
+        $this->assertStringContainsString('salary rate', implode(' ', $check->json('data.cascades')));
+
+        $this->delete(route('employee.destroy', $id), ['confirmed' => 1])
+            ->assertRedirect(route('employee'))->assertSessionHas('success');
+        $this->assertDatabaseMissing('employees', ['employee_id' => $id]);
+        $this->assertDatabaseMissing('salaries', ['employee_id' => $id]);
+        $this->assertDatabaseMissing('transactions', ['transaction_to' => 'employee', 'payee_id' => $id]);
+    }
+
     public function test_record_with_dependents_is_refused_and_kept(): void
     {
         $customerId = DB::table('orders')->value('customer_id');

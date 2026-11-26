@@ -98,7 +98,8 @@ class EmployeeRepository implements GlobalInterface
 
     /**
      * An employee can be deleted only while no payroll, issuance, machine or ledger entry uses
-     * them; their own opening balance entry and images are deleted with them.
+     * them; their own opening balance entry (whatever its amount), salary rate history, images
+     * and wage rates are deleted with them.
      */
     public function deletionImpact($id): DeletionImpact
     {
@@ -111,11 +112,12 @@ class EmployeeRepository implements GlobalInterface
         $impact->blockIf($this->refCount('payroll_items', 'employee_id', $id), 'monthly payroll entry', 'monthly payroll entries');
         $impact->blockIf($this->refCount('stocks', 'employee_id', $id, $employeeStock), 'issuance / receiving / PTC record', 'issuance / receiving / PTC records', $this->refExamples('stocks', 'employee_id', $id, 'stock_no', $employeeStock));
         $impact->blockIf($this->refCount('machines', 'employee_id', $id), 'machine', null, $this->refExamples('machines', 'employee_id', $id, 'machine_no'));
-        $impact->blockIf($this->refCount('salaries', 'employee_id', $id), 'salary record');
         $impact->blockIf($this->refCount('transactions', 'payee_id', $id, $ledger), 'ledger transaction (salary / loan / payment)', 'ledger transactions (salaries / loans / payments)');
         $impact->blockIf($this->refCount('banks', 'banker_id', $id, fn ($q) => $q->where('bank_holder', 'employee')), 'bank account');
 
         $impact->cascadeIf($this->refCount('transactions', 'payee_id', $id, $opening), 'opening balance entry', 'opening balance entries');
+        // The employee's own salary rate (and its history); every employee gets one on create
+        $impact->cascadeIf($this->refCount('salaries', 'employee_id', $id), 'salary rate entry', 'salary rate entries');
         $impact->cascadeIf(app(ImageRepository::class)->countFor('employees', $id), 'image');
         $impact->cascadeIf(app(ProductCostRepository::class)->countForPerson('employee', (int) $id), 'own product wage rate');
 
@@ -125,6 +127,7 @@ class EmployeeRepository implements GlobalInterface
     public function delete($id)
     {
         DB::table('transactions')->where('transaction_to', 'employee')->where('transaction_type', 'openingBalance')->where('payee_id', $id)->delete();
+        DB::table('salaries')->where('employee_id', $id)->delete();
         app(ImageRepository::class)->deleteFor('employees', $id);
         app(ProductCostRepository::class)->deleteForPerson('employee', (int) $id);
 
