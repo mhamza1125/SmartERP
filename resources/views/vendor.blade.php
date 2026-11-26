@@ -34,9 +34,6 @@
                       <td>{{$item->fname}}</td>
                       <td>{{$item->vtname}}</td>
                       <td>{{number_format($item->balance)}}</td>
-                      {{-- <td><b>@if($item->vendor_type) 
-                        <span class="badge badge-success">Active</span> @else 
-                        <span class="badge badge-danger">Inactive</span> @endif</td>  --}}
                       <td>
                         @if(auth()->user()->can('show', App\Models\Vendor::class))<a href="{{ route('vendor.show', $item->vendor_id) }}" class="btn btn-info btn-sm">View</a>@endif
                         @can('edit', App\Models\Vendor::class)<a href="{{ route('vendor.edit', $item->vendor_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan

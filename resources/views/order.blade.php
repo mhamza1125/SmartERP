@@ -35,13 +35,6 @@
                       <td>{{$item->order_no}}</td>
                       <td>{{$item->job_no}}</td>
                       <td>{{$item->customer_no}} - {{$item->fname}} {{$item->lname}}</td>
-                      {{-- <td>
-                        @if($item->expected_delivery_date)
-                          <span class="badge badge-info">{{ formatDate($item->expected_delivery_date) }}</span>
-                        @else
-                          <span class="text-muted">Not set</span>
-                        @endif
-                      </td> --}}
                       <td>
                         @php
                           $statusLabel = \App\Models\Order::STATUS_LABELS[$item->order_status] ?? 'Unknown';

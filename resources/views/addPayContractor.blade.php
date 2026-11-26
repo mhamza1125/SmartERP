@@ -125,28 +125,6 @@
 </section>
 
 <script>
-  // document.addEventListener('DOMContentLoaded', function () {
-  //     var transactionTypeSelect = document.getElementById('transaction_type');
-  //     var orderIdSelect = document.getElementById('order_id');
-  //     var display1 = document.getElementById('display1');
-  //     var display2 = document.getElementById('display2');
-
-  //     // Function to update the display and required attribute
-  //     function updateDisplay() {
-  //         if (transactionTypeSelect.value === 'payment') {
-  //             display1.style.display = 'block';
-  //             display2.style.display = 'none';
-  //             orderIdSelect.setAttribute('required', 'required');
-  //         } else {
-  //             display1.style.display = 'none';
-  //             display2.style.display = 'block';
-  //             orderIdSelect.removeAttribute('required');
-  //         }
-  //     }
-  //     transactionTypeSelect.addEventListener('change', updateDisplay);
-  //     updateDisplay();
-  // });
-
   var isPayPage = true;
   var isPayVendorPage = true;
   var ajaxBankUrl = "{{ route('ajaxBank') }}";

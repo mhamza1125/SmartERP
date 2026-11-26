@@ -351,16 +351,6 @@
                                       <td></td>
                                     </tr> 
                                   </tbody>
-                                  {{-- <tfoot>
-                                    <tr>
-                                      <th>Sr.</th>
-                                      <th>Material No</th>
-                                      <th>Material Name</th>
-                                      <th>Quantity</th>
-                                      <th>Price</th>
-                                      <th>Units</th>
-                                    </tr>
-                                  </tfoot> --}}
                                 </table>
                               </div>
                             @endfor

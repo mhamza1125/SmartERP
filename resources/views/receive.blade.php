@@ -38,21 +38,6 @@
                         <span class="badge badge-success">Checked</span> @else 
                         <span class="badge badge-danger">Pending</span> @endif
                       </td>
-                      {{-- <td>
-                        <div class="btn-group">
-                          <button class="btn <?php 
-                              if($item->receive_status == 0){ echo 'btn-warning'; $status = 'Pending'; }
-                              elseif($item->receive_status == 1){ echo 'btn-success'; $status = 'Checked'; }
-                              else{ echo 'btn-danger'; $status = 'Unknown'; }
-                             ?> btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            {{$status}}
-                          </button>
-                          <div class="dropdown-menu">
-                            @if(auth()->user()->can('edit', App\Models\Receive::class))<a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '0']) }}">Pending</a>@endif
-                            @if(auth()->user()->can('edit', App\Models\Receive::class))<a class="dropdown-item" href="{{ route('receive.updateStatus', ['id' => $item->receive_id, 'status' => '1']) }}">Checked</a>@endif
-                          </div>
-                        </div>
-                      </td> --}}
                       <td>
                         @if(auth()->user()->can('show', App\Models\Receive::class))<a href="{{ route('receive.show', $item->receive_id) }}" class="btn btn-info btn-sm">View</a>@endif
                         @can('edit', App\Models\Receive::class)<a href="{{ route('receive.edit', $item->receive_id) }}" class="btn btn-primary btn-sm">Edit</a>@endcan

@@ -160,9 +160,6 @@
                           @if($role->id != App\Models\User::ROLE_ADMIN || auth()->user()->isAdmin())<option value="{{ $role->id }}" {{ $role->id == $item->role_id ? 'selected' : '' }}>{{ $role->name }}</option>@endif
                         @endforeach
                       </select>
-                    {{-- @else
-                      <input type="text" class="form-control" name="role" value="{{$item->role->name}}" required readonly>
-                    @endif --}}
                   </div>
                 </div>
               </div>

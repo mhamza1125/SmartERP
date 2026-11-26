@@ -185,27 +185,6 @@
                 </div>
               </div>
               
-              {{-- <div class="row">
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="available_stock">Total Required</label>  
-                    <input type="text" class="form-control" id="materialQty0" readonly>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="available_stock">Issued</label>  
-                    <input type="text" class="form-control" id="materialQty1" readonly>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="available_stock">To Issue</label>  
-                    <input type="text" class="form-control" id="materialQty2" readonly>
-                  </div>
-                </div>
-              </div> --}}
-              
               <div class="row">
                 <div class="col-md-5">
                   <div class="form-group">

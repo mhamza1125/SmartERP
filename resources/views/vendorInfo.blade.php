@@ -29,13 +29,6 @@
                 </tr>
                 <tr>
                   <td><b>Vendor Type: </b> {{ $vendor['vtname'] }}</td>
-                  {{-- <td><b>Vendor as Worker: </b>
-                    @if($vendor['vendor_type'])
-                      <span class="badge badge-success">Active</span>
-                    @else
-                      <span class="badge badge-danger">Inactive</span>
-                    @endif
-                  </td> --}}
                   <td><b>City: </b> {{ $vendor['cname'] }}</td>
                   <td><b>Contact No: </b> {{ $vendor['phone1'] }}</td>
                 </tr>

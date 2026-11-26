@@ -123,9 +123,6 @@
                           <span class="badge badge-secondary">0 {{$item->unit_name}}</span>
                           @endif
                         </td>
-                        <!-- <td>
-                          <span class="badge badge-info">{{number_format($item->net_delivered_quantity)}} {{$item->unit_name}}</span>
-                        </td> -->
                         <td>
                           @if($item->remaining_quantity > 0)
                           <span class="badge badge-warning">{{number_format($item->remaining_quantity)}} {{$item->unit_name}}</span>
@@ -147,15 +144,6 @@
                           <span class="badge badge-success">0</span>
                           @endif
                         </td>
-                        <!-- <td>
-                          @if($item->remaining_quantity <= 0)
-                            <span class="badge badge-success">Completed</span>
-                            @elseif($item->net_delivered_quantity > 0)
-                            <span class="badge badge-warning">Partially Delivered</span>
-                            @else
-                            <span class="badge badge-danger">Pending</span>
-                            @endif
-                        </td> -->
 
                         <td>
                           <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#orderStageModal{{ $item->product_type_id }}" title="View Stages">

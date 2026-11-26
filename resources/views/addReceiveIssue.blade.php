@@ -85,16 +85,6 @@
                           @endforeach
                       @endif
                     </select>                
-                    {{-- <select class="form-control select2" name="material_id" id="material_id">
-                      <option value="" disabled selected>Select Material</option>
-                      @if($issueItem->count())
-                          @foreach($issueItem as $item)
-                              @if($item->material_id)
-                                <option value="{{$item->material_id}}|{{$item->product_type_id}}">{{$item->name}} | {{$item->article_no}} - Size {{$item->sname}} | Avg {{bcdiv($item->quantity, $item->pqty, 1)}}</option>
-                              @endif
-                          @endforeach
-                      @endif
-                    </select> --}}
                   </div>
                 </div>
                 <div class="col-md-3">                  

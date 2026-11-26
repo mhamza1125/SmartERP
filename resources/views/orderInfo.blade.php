@@ -70,9 +70,6 @@
                     @if($order['due_date'])
                     <tr><td><b>Delivery Date:</b> {{\Carbon\Carbon::parse($order['due_date'])->format('d-m-Y')}}</td></tr>
                     @endif
-                    {{-- @if($order['expected_delivery_date'])
-                    <tr><td><b>Expected Delivery:</b> {{ formatDate($order['expected_delivery_date']) }}</td></tr>
-                    @endif --}}
                     
                   </tbody>
                 </table>
@@ -92,14 +89,6 @@
             @endif
 
             <!-- Tab Navigation -->
-            {{-- <ul class="nav nav-tabs" id="orderTabs" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="order-details-tab" data-toggle="tab" href="#order-details" role="tab" aria-controls="order-details" aria-selected="true">Order Details</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="packing-list-tab" data-toggle="tab" href="#packing-list" role="tab" aria-controls="packing-list" aria-selected="false">Packing List</a>
-              </li>
-            </ul> --}}
 
             <!-- Tab Content -->
             <div class="tab-content" id="orderTabContent">

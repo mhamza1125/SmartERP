@@ -57,14 +57,6 @@
               </div>
 
               <!-- Product Split Summary Section -->
-              {{-- <div class="row mb-3">
-                <div class="col-12">
-                  <div class="alert alert-info" id="splitSummary" style="display: none;">
-                    <h6 class="alert-heading">Product Allocation Summary</h6>
-                    <div id="splitSummaryContent"></div>
-                  </div>
-                </div>
-              </div> --}}
 
               <!-- Carton Groups Section -->
               <div class="row">

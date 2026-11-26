@@ -1739,28 +1739,6 @@ $(document).ready(function () {
             });
         }
 
-        // Function to load all available products for Default Production
-        function loadAllProducts() {
-            $.ajax({
-                url: appUrl('ajax/getAllProducts'), // We'll need to create this route
-                type: "GET",
-                dataType: "json",
-                success: function (response) {
-                    $('#product_type_id').empty().append('<option value="" disabled selected>Select Product</option>');
-                    response.data.forEach(function (item) {
-                        // Handle undefined size names
-                        var sizeText = item.hname ? ' - Size ' + item.hname : (item.sname ? ' - Size ' + item.sname : '');
-                        var optionText = item.article_no + sizeText;
-                        $('#product_type_id').append(new Option(optionText, item.product_type_id));
-                    });
-                    $('#product_type_id').trigger('change');
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.error('Failed to load all products:', textStatus, errorThrown);
-                }
-            });
-        }
-
         // Function to load all products (for issuance forms - regardless of stock)
         function loadAllProductsWithStock() {
             $.ajax({
@@ -3008,28 +2986,6 @@ $(document).ready(function () {
             }
         });
 
-        // Function to update available stock, It shows only issued Material Qty
-        function updateAvailableStockOld(materialId, productId) {
-            var totalQuantityInTable = 0;
-            $('#items-table tbody tr').each(function () {
-                var rowMaterialId = $(this).find('input[name="material_id[]"]').val();
-                var rowProductId = $(this).find('input[name="product_type_id[]"]').val();
-
-                // Checking both material ID and product ID to accurately identify the row
-                if (rowMaterialId === materialId && rowProductId === productId) {
-                    totalQuantityInTable += parseInt($(this).find('input[name="quantity[]"]').val()) || 0;
-                }
-            });
-
-            // Find the issueItem based on both material_id and product_type_id
-            var issueItem = issueItems.find(item => item.material_id.toString() === materialId && item.product_type_id.toString() === productId);
-            if (issueItem) {
-                var availableStock = issueItem.quantity - totalQuantityInTable;
-                $('#receiveable_stock').val(availableStock > 0 ? availableStock : 0);
-            } else {
-                $('#receiveable_stock').val(0);
-            }
-        }
         // It Also Calculate material based on Received Items
         function updateAvailableStock(materialId, productId) {
             var totalQuantityInTable = 0;
@@ -3092,11 +3048,6 @@ $(document).ready(function () {
             }
 
             var srNo = $('#items-table tbody tr').length + 1;
-
-            // var pcostInputs = '';
-            // selectedOptions.forEach(pcost => {
-            //     pcostInputs += `<input type="hidden" name="pcost_id[]" value="${productId}|${pcost}">`;
-            // });
 
             var markup = `<tr>
                 <td>${srNo}</td>

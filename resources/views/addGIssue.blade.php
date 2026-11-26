@@ -106,16 +106,6 @@
                     <div class="valid-feedback">Good job!</div>
                   </div>
                 </div>
-                {{-- <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Issuance Groups</label>
-                    <select class="form-control select2" name="igroup_id" id="igroup_id">
-                      <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled>Select Group</option>
-                      <!-- You can keep this option or remove it, depending on your needs -->
-                  </select>
-                  </div>
-                </div> --}}
                 <div class="col-md-2">
                   <div class="form-group">
                     <label for="available_stock">Available Stock</label>

@@ -63,9 +63,6 @@
                       <td>
                         @if(auth()->user()->can('show', App\Models\Stock::class))<a href="{{ route('ptc.show', $item->stock_id) }}" class="btn btn-info btn-sm">View</a>@endif
 @can('delete', App\Models\Stock::class)@include('deleteButton', ['url' => route('stock.destroy', $item->stock_id), 'check' => route('stock.deleteCheck', $item->stock_id), 'label' => 'PTC '.$item->stock_no, 'class' => 'btn btn-danger btn-sm'])@endcan
-                        {{-- @if($item->stock_status == 6)
-                          @if(auth()->user()->can('edit', App\Models\Stock::class))<a href="{{ route('ptc.move.form', $item->stock_id) }}" class="btn btn-success btn-sm">Move Stage</a>@endif
-                        @endif --}}
                       </td>
                     </tr>
                     @endforeach

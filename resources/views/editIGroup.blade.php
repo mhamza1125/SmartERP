@@ -44,31 +44,6 @@
                 </div>
               </div>
               <div class="row">
-                {{-- <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Issuance For Orders</label>
-                    <select class="form-control select2" name="order_id" id="order_id" required>
-                      <option value="0" {{ $igroup['order_id'] == 0 ? 'selected' : '' }}>Default Issuance</option>
-                      <option value="" disabled>Select Order</option>
-                      @if($order->count())
-                        @foreach($order as $item)
-                          <option value="{{$item->order_id}}" {{ $igroup['order_id'] == $item->order_id ? 'selected' : '' }}>{{$item->job_no}}</option>
-                        @endforeach
-                      @endif
-                    </select>
-                    <div class="valid-feedback">Good job!</div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Products</label>
-                    <select class="form-control select2" name="product_type_id" id="product_type_id">
-                      <!-- Options will be dynamically added here via JavaScript -->
-                      <option value="" disabled>Select Product</option>
-                      <!-- You can keep this option or remove it, depending on your needs -->
-                  </select>
-                  </div>
-                </div> --}}
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Products</label>

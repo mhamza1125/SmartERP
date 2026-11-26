@@ -57,11 +57,6 @@
                           <option data-type="employee" value="{{$item->employee_id}}" {{ old('employee_id') == $item->employee_id ? 'selected' : '' }}>{{$item->employee_no}} - {{$item->name}}</option>
                         @endforeach
                       @endif
-                      {{-- @if($vendor->count())
-                        @foreach($vendor as $item)
-                          <option data-type="vendor" value="{{$item->vendor_id}}" {{ old('vendor_id') == $item->vendor_id ? 'selected' : '' }}>{{$item->vendor_no}} - {{$item->fname}}</option>
-                        @endforeach
-                      @endif --}}
                     </select>
                     <div class="valid-feedback">Good job!</div>
                     <div class="invalid-feedback">Select Employee</div>
