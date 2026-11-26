@@ -8,10 +8,10 @@ Manufacturing/trading ERP built on Laravel 10 + Blade for a single company. Hand
 ## Tech Stack
 - **Backend:** Laravel 10.10, PHP 8.1+, MySQL (`smarterp_erp` DB per .env, localhost; an older `smarterp` DB also exists)
 - **Auth:** Session-based; Sanctum for API; full RBAC via Role/Permission models + Policies
-- **Frontend:** Blade + jQuery/vanilla JS; Bootstrap, DataTables, ApexCharts, AmCharts, CKEditor
+- **Frontend:** Blade + jQuery/vanilla JS; Bootstrap, DataTables, ApexCharts, Summernote (AmCharts / CKEditor bundles were never loaded; removed 2026-11-26)
 - **Build:** Vite 5 (laravel-vite-plugin), Axios
 - **Packages:** spatie/laravel-activitylog, guzzlehttp/guzzle
-- **Drivers:** Session=DB, Cache=DB, Queue=DB, Mail=Log, Broadcast=Log
+- **Drivers:** Session=DB, Cache=file (config/cache.php reads `CACHE_DRIVER`, default file; a `CACHE_STORE` key in .env is a Laravel 11 name and is not read), Queue=DB, Mail=Log, Broadcast=Log
 - **Dev URL:** http://05_smarterp.test (XAMPP)
 
 ---
@@ -34,7 +34,7 @@ app/
   Support/             DocumentNumbers, Uploads, UniqueIndexGuard, DeletionImpact, ...
 database/migrations/   73 migration files; database/schema/mysql-schema.sql = core table structure
 resources/views/       246 Blade files
-  Template/            Shared layouts (header, sidebar, footer, bundled assets)
+  index.blade.php      Main layout (header, sidebar, footer); assets come from public/assets/
   print/               Self-contained print templates
   reports/             Report-specific views
 routes/
@@ -46,12 +46,10 @@ routes/
 
 ## RBAC & Auth System
 
-### User Roles (hardcoded constants on User model)
-| Constant | Value | Role |
-|---|---|---|
-| `User::ROLE_ADMIN` | 1 | Full access |
-| `User::ROLE_MANAGER` | 2 | Operational access |
-| `User::ROLE_ACCOUNTANT` | 3 | Finance access |
+### User Roles
+- Roles are data (`roles` table, Settings > Roles); what a role may do comes only from its permissions.
+- The only role constant is `User::ROLE_ADMIN = 1` (full access via `Gate::before`). `ROLE_MANAGER` / `ROLE_ACCOUNTANT` were removed 2026-11-26 (unused, and id 2 is not Manager).
+- Roles in the test copy of the data (2026-11-26): 1 Admin, 2 Store Incharge, 3 Accountant, 4 Export, 5 Director, 6 Manager.
 
 ### Permission Flow
 1. `permissions` table stores named permissions
@@ -78,14 +76,14 @@ routes/
 | Module | Controllers | Notes |
 |---|---|---|
 | Auth/Admin | AuthController, AdminController | Login, user & role management |
-| Orders | OrderController | Job numbers (SLE-O001-25 format), stage tracking |
+| Orders | OrderController | Order no `SLE-O001-25`, job no `{customer_no}/J{YY}-{NNN}`, stage tracking |
 | Delivery | DeliveryController, PackingListController | Packing cartons, commercial invoices |
 | Purchase | PurchaseController, ReceiveController, ReturnController | POs, receiving, returns |
 | Inventory/Stock | StockController | Daily issuance, PTC, wages ledger |
 | Products | ProductController, ProductCostController, ProductMaterialController | BOM-style materials |
 | Finance | TransactionController, BankController, AssetController, LiabilityController | Multi-currency, dual ledger, asset / liability registers |
 | HR | AttendanceController, PayrollController | External MDB DB for attendance data |
-| Config | CategoryController, HeadController, CompanyController, RoleController | Lookup tables |
+| Config | CategoryController, HeadController, CompanyController (roles: AdminController) | Lookup tables |
 | Reports | ReportController | Stock requirements, ledger analysis |
 
 ---
@@ -99,7 +97,7 @@ routes/
 - **Procurement:** `Purchase`, `PurchaseItem`, `Receive`, `ReceiveMaterial`, `Returns`, `ReturnMaterial`
 - **Inventory:** `Stock`, `StockItem`, `IGroup`, `IGroupItem`, `MProcess`
 - **Finance:** `Transaction`, `Bank`, `Asset`, `Liability` (same `assets` table, `kind` column)
-- **HR:** `Salary`, `Attendance` (WorkTime / WorkHoliday removed 2026-11-21; tables kept, unused)
+- **HR:** `Salary`, `Attendance` = policy target only (`Attendance::class` => AttendancePolicy; the file app/Models/Attendance.php declares `AttendanceModule`, so the name never loads a class; works because the policy map is keyed by the string) (WorkTime / WorkHoliday removed 2026-11-21; tables kept, unused)
 - **System:** `Image`, `Settings` (dummy — policy binding only, no DB table)
 
 ### Model Notes
@@ -376,7 +374,7 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 
 ## Permissions (audited 2026-11-16)
 - Only policies decide. The single role rule: `Gate::before` in AuthServiceProvider lets the system Admin role (id 1) pass everything; policies themselves have no role checks. The Admin role is locked to all permissions in the role editor
-- 114 permissions, `{module}_{action}`, actions access (list + menu) / show (view, print, export) / create / edit / delete. Labels, sections and descriptions: `App\Support\PermissionCatalog` (also used by the role editor partial `rolePermissions.blade.php` and the roles list summary)
+- 123 permissions in the test copy (2026-11-26; live database not checked), `{module}_{action}`, actions access (list + menu) / show (view, print, export) / create / edit / delete. Labels, sections and descriptions: `App\Support\PermissionCatalog` (also used by the role editor partial `rolePermissions.blade.php` and the roles list summary)
 - Dependency rule applied on every role save (`AdminRepository::syncPermissions` -> `PermissionCatalog::normalize`): any permission of a module adds its `_access`; `_edit` adds `_show`. The editor ticks them live. Migration 2026_11_16_000001 applied it to existing roles and removed 11 dead permissions (stocks_create/delete, reports_show/create/edit/delete, attendance_show, heads_show, categories_show, users_show, roles_show)
 - Cross-module needs: party ledgers (customer / vendor / contractor / employee) need the party's View AND transactions_show; Cash Balance and bank ledgers need transactions; prints / Excel exports need the module's show
 - Views: every link / action is wrapped in the check of its target route (`@can` or `@if(auth()->user()->can(...))`); `tests/Feature/RoleLinkCrawlTest.php` crawls the app as each real role and fails on any visible link answering 403 / 500
@@ -388,7 +386,7 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - Employee `attendance_id` = the device's machine number = `USERINFO.Badgenumber` (joined to `CHECKINOUT.USERID`), compared without leading zeros
 - Day pairing: first punch = check-in, last punch = check-out (CHECKTYPE is unreliable: staff press IN in the evening); punches within 120 s count once; a lone punch is in or out by CHECKTYPE. Late time only on days with both punches (existing rule). Employees without a machine number and numbers shared by several employees are listed as warnings; the employee filter uses employee_id
 - Only salaried employees (employee_type_id 39), as before
-- Department working hours (2026-11-19): `heads.work_start_time` / `work_end_time` on department heads (type 3, Settings > Heads, `HeadRepository::DEPARTMENT_TYPE`). Late time = check-in after the department start + Work Hours grace; overtime = check-out after the department end (end <= start = next day). A department without hours falls back to Payroll > Work Hours for that date. Attendance and summary show late and overtime in hours (2 decimals)
+- Department working hours (2026-11-19): `heads.work_start_time` / `work_end_time` on department heads (type 3, Settings > Heads, `HeadRepository::DEPARTMENT_TYPE`). Late time = check-in after the department start (no grace time); overtime = check-out after the department end (end <= start = next day). A department without hours gets no late time / overtime and a warning (the Payroll > Work Hours fallback was removed 2026-11-21). Attendance and summary show late and overtime in hours (2 decimals)
 
 ## Product Purchase Ledger (2026-11-19)
 - `product.ledger` (`/productLedger`, Reports menu, `ProductController::ledger`, view `productLedger`): like the Material Ledger, for products. Rows from `ProductRepository::purchaseLedger()`: purchase receipts (approved qty), purchase returns, general-stock product / component lines (ptc_virtual 0; stock_type 1 in / 2 out, labelled Opening / Delivery / Delivery Return / PTC Release / PTC Issuance / Issuance / Receive Issuance). With one size selected: opening (before Date From) + running balance, which ends at the `pStock()` figure
@@ -415,11 +413,11 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 | Product Stock Forecast | /reports/product-stock-forecast | reports.product.stock.ledger | current stock + PTCs in progress - open orders (was "Product Stock Ledger") |
 
 ## Purchase Ledger by item (2026-11-19)
-- Reports > Purchase Ledger = `/pLedger` (`purchase.ledger`, GET `?item=material:{id}|product:{id}&dfrom&dto`, searches on the Search button only; `ReportController::purchaseHistory`, view `reports/purchase-history`; access: purchases access OR reports_access): vendor price comparison + every purchase line of the item. It replaced the old Purchase Ledger (all purchases / returns / vendor payments with a running balance; PurchaseController::purchaseLedger / printPurchaseLedger, TransactionRepository::pLedger / pLedgerFilter, views purchaseLedger + print/purchase-ledger) at the user's request 2026-11-19
+- Reports > Purchase Price History (named "Purchase Ledger" until 2026-11-22) = `/reports/purchase-prices`, old URL `/pLedger` 301-redirects (`purchase.ledger`, GET `?item=material:{id}|product:{id}&dfrom&dto`, searches on the Search button only; `ReportController::purchaseHistory`, view `reports/purchase-history`; access: purchases access OR reports_access): vendor price comparison + every purchase line of the item. It replaced the old Purchase Ledger (all purchases / returns / vendor payments with a running balance; PurchaseController::purchaseLedger / printPurchaseLedger, TransactionRepository::pLedger / pLedgerFilter, views purchaseLedger + print/purchase-ledger) at the user's request 2026-11-19
 - Data = the same queries as the Price History on the item pages: `PurchaseItemRepository::materialPriceHistory` / `productPriceHistory` (optional dates, `received_qty` = SUM approved_qty) and `vendorComparison()` (per vendor: purchases, qty, received, lowest / highest / qty-weighted average / last price + date; processing lines left out; cheapest last price first). Partial `purchaseVendorComparison` is shown on the report, /material/{id} and /product/{id} (Price History tab)
 - The Vendors page only lists materials / products assigned on the vendor profile, not purchases
 
-## Stabilisation 2026-11-25 (audit docs/AUDIT_2026-11-25.md, owner decisions D1-D13)
+## Stabilisation 2026-11-25 (audit of 2026-11-25, report not kept in the repository; owner decisions D1-D13)
 - **Tests:** only on DB `smarterp_test` (guard in tests/TestCase.php; docs/TESTING.md); all files `DatabaseTransactions`
 - **Uploads:** `App\Support\Uploads` (images jpg/jpeg/png/gif 5 MB, no SVG; product files pdf/images/doc(x)/xls(x) 10 MB); random names, content extension; `public/resources/.htaccess` denies scripts and .mdb/.sql; `public/.htaccess` denies .mdb/.sql
 - **Issuance header:** `StockRepository::issuanceHeader()` decides stock_type / stock_status / table_name (issuance 2/0/employee|vendor, machine issue 2/4/employee, receipt 1/1|2/parent's); `/issue/{id}` edits only those kinds (`issuanceKind()`, else 404). Delivery control columns `Delivery::STOCK_HEADER`; delivery edit uses the delivery's own stock row. Status links (deliveryStatus, receiveStatus) are POST with allowed lists
@@ -433,7 +431,7 @@ When receiving purchase items, the **approved qty** (not ordered/delivered qty) 
 - **Security:** login throttled 5 / minute per email + IP; logout invalidates the session; Reset Test Data always in Settings for the Admin role only (is_admin + SettingsPolicy::resetData; the ALLOW_DATA_RESET switch was removed 2026-11-25 at the user's request)
 - **Dashboard:** Low Stock = product sizes whose /stock total (all stages but Rejection 105) < 50, from one `pStock()`; Expense This Month = credit - debit; Running PTCs one row per PTC, with an Order column (job no, "Default PTC" when none) and the same DataTables search / sort / column reorder as the Orders / Purchases tables (`.js-dashboard-table`, id dashboardPtcs). Receipt print status = purchase fully received as of that receipt (1) or partially (2)
 - **Indexes** (migration 2026_11_25_100000): stock_items(stock_id), (product_type_id, stage_id), (material_id); stocks(ptc_id), (issue_id), (order_id), (table_name, stock_type); transactions(transaction_to, payee_id), (bank_id), (transaction_date)
-- Owner follow-ups: docs/OWNER_ACTIONS.md, docs/DATA_FIXES.md, docs/BACKUP.md; open questions Q19-Q24 in docs/AUDIT_QUESTIONS.md
+- Owner follow-ups: docs/OWNER_ACTIONS.md, docs/DATA_FIXES.md, docs/BACKUP.md; open questions in docs/AUDIT_QUESTIONS.md (Q25 onwards; the texts of Q17 and Q19-Q24 were not kept in the repository)
 
 ## Key DB Tables
 ```
@@ -459,5 +457,5 @@ images, sessions, cache, jobs
 - **URL:** http://05_smarterp.test (XAMPP local)
 - **DB:** MySQL, database `smarterp_erp` (DB_DATABASE in .env); tests use `smarterp_test` (docs/TESTING.md)
 - **Debug:** Enabled (local)
-- **Timezone:** UTC
+- **Timezone:** UTC, hard-coded in config/app.php (an `APP_TIMEZONE` key in .env is not read by Laravel 10); document numbers use Asia/Karachi explicitly
 - **Git:** `main` is stable; use feature branches for changes

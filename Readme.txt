@@ -2,8 +2,8 @@
 
 ## Attendance System  
 
-- MDB File Path: `resources/att2000.mdb`  
-	{{ URL::asset('resources/att2000.mdb') }}
+- MDB File Path: `public/resources/att2000.mdb` (default; set another path in Settings > Company or `ATTENDANCE_DB_PATH`)
+	The file is read from disk only; downloading it over HTTP is refused by `.htaccess`.
 - Inner File Name: `CHECKINOUT`  
 
 ## System Requirements  

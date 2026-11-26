@@ -170,7 +170,7 @@ GROUP BY pi.purchase_item_id HAVING received > ordered;
 If 125 is right, the purchase can be edited to order 125 (allowed: not below what was received; the
 price cannot change). If 125 is wrong, an admin must correct the receipt.
 
-## F. F-16 / D8: the 10 duplicate stock numbers (read Q20 in AUDIT_QUESTIONS.md first)
+## F. F-16 / D8: the 10 duplicate stock numbers (decide Q20, the stock number index, first; [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md) holds the open questions, the text of Q20 itself was not kept in the repository)
 
 The migration `2026_11_25_100004_add_unique_index_to_stocks_stock_no` refuses to run while these exist
 (it lists them). They are legacy issuances / receipts of three PTCs from 2026-09-30, stored before PTC

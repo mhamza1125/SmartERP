@@ -53,7 +53,7 @@ php artisan make:policy ProductPolicy --model=Product
 
 This is a manufacturing/trading ERP on **Laravel 10 + Blade**. The stack is:
 - Backend: Laravel 10, PHP 8.1+, MySQL
-- Frontend: Blade + jQuery/Bootstrap + DataTables + ApexCharts/AmCharts
+- Frontend: Blade + jQuery/Bootstrap + DataTables + ApexCharts (editor: Summernote)
 - Build: Vite 5
 - Auth: Session-based; Sanctum for API
 - Key packages: `spatie/laravel-activitylog`, `guzzlehttp/guzzle`
@@ -81,20 +81,20 @@ Route → Middleware → Controller → Repository → Model/DB
 
 - `app/helpers.php` (autoloaded in `composer.json`) — global helpers delegating to `NumberHelper`; format currency with `NumberHelper`, never manually
 - `app/Http/View/Composers/PrintComposer.php` — automatically injects `$company` into all print views; never pass it manually
-- `resources/views/Template/` — contains static vendor assets (DataTables, ApexCharts, Bootstrap bundles); do not modify
+- Static vendor assets (theme CSS/JS, DataTables, ApexCharts, Bootstrap bundles) live in `public/assets/`; the main layout `resources/views/index.blade.php` loads them. The theme's demo copy `resources/views/Template/` was removed 2026-11-26 (the original theme zip is kept outside git)
 - Print views: `resources/views/print/` — self-contained with inline CSS; portrait by default, `@page { size: landscape }` only for wide tables
 - Report views: `resources/views/reports/`
 
 ### RBAC
 
-Three hardcoded roles on `User`: `ROLE_ADMIN=1`, `ROLE_MANAGER=2`, `ROLE_ACCOUNTANT=3`.
+Roles and their permissions are data (`roles`, `permission_role`; editable in Settings > Roles). Only the Admin role is special: `User::ROLE_ADMIN = 1` (`Gate::before` lets it pass everything). Other role ids carry no meaning in code (in the test copy of the data: 2 Store Incharge, 3 Accountant, 4 Export, 5 Director, 6 Manager).
 
 Route middleware:
 - `is_admin` — role_id == 1 only
 - `all` — any authenticated user with a role
 - `auth` — standard Laravel auth
 
-Authorization is two-layered: **middleware applied in each controller's constructor** (`$this->middleware(['auth', 'all'])`; routes in `web.php` carry none, owner decision D9, 2026-11-25) + **Policy `$this->authorize()`** (fine-grained) in every action. Both must be present. Policies are registered in `app/Providers/AuthServiceProvider.php`.
+Authorization is two-layered: **middleware applied in each controller's constructor** (`$this->middleware(['auth', 'all'])`; routes in `web.php` carry none, owner decision D9, 2026-11-25; the one exception is the Settings > Reset Test Data group, which also has `auth` + `is_admin` on the routes) + **Policy `$this->authorize()`** (fine-grained) in every action. Both must be present. Policies are registered in `app/Providers/AuthServiceProvider.php`.
 
 ### View Naming Convention
 
@@ -106,7 +106,7 @@ Authorization is two-layered: **middleware applied in each controller's construc
 | `{entity}Info.blade.php` | Detail/show |
 | `{entity}Detail.blade.php` | Sub-detail |
 
-All views extend a layout from `resources/views/` root (e.g., `@extends('layouts.app')`). JS goes in `@push('scripts')` at the bottom.
+Screens extend `@extends('index')` (`resources/views/index.blade.php`); prints extend `print.layout` or `print.layout-voucher`. JS goes in `@push('scripts')` at the bottom.
 
 ### Route Conventions
 

@@ -1,6 +1,6 @@
 # SmartERP stabilisation, 2026-11-25
 
-What was changed to fix the defects found in the audit of 2026-11-25 ([AUDIT_2026-11-25.md](AUDIT_2026-11-25.md)).
+What was changed to fix the defects found in the audit of 2026-11-25 (its report, AUDIT_2026-11-25.md, is not kept in the repository).
 No new features: only validation, guards, locks, transactions, bug fixes, security, indexes, tests and docs.
 
 - Branch `surgical-fix`, based on commit `aae6bf9`.
@@ -115,5 +115,5 @@ Orders, purchases, receipts, material processing, payments and transfers each sa
 - **Dependency updates (Q23):** checked, not installed. Both possible updates also touch packages outside the vulnerable list.
 - **Data corrections:** written in [DATA_FIXES.md](DATA_FIXES.md), not run. They include the 395 hidden units on `/stock`, the negative product 407 at stage 146, the batch rebuild and an orphan vendor entry.
 - **Stock-number index (Q20):** don't remove the 10 duplicate stock numbers until Q20 is answered.
-- **Other open questions:** Q19-Q24 in [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md).
+- **Other open questions:** Q19-Q24 (texts not kept in the repository); later questions in [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md).
 - **Production steps:** in [OWNER_ACTIONS.md](OWNER_ACTIONS.md). Backups: [BACKUP.md](BACKUP.md).

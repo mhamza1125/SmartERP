@@ -9,8 +9,8 @@ Things only you can do (production server, passwords, data). In order of urgency
   - `2026_11_25_000001` (department break) and `2026_11_25_100000` (lookup indexes) and the UNIQUE indexes
     on order no, job no and delivery no apply;
   - `2026_11_25_100004` (UNIQUE stock no) **stops with a message listing 10 duplicate stock numbers**. That is
-    intended: it changes nothing. Leave it until question Q20 in [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md) is
-    answered (the message will repeat on every `migrate` until then).
+    intended: it changes nothing. Leave it until question Q20 (stock number index; open questions are in
+    [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md), the text of Q20 was not kept in the repository) is answered (the message will repeat on every `migrate` until then).
   - If one of the other UNIQUE migrations stops, it lists the duplicate numbers: correct them by hand, run again.
 - [ ] Clear caches after deploying: `php artisan optimize:clear`.
 
@@ -63,7 +63,7 @@ checks could not be made from here. On the real server (or once the dev vhost wo
 
 ## 7. Decisions waiting for you
 
-- [ ] Questions Q19-Q24 in [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md), in particular Q20 (stock number index) and
-  Q23 (dependency patches: nothing was installed).
+- [ ] Questions Q19-Q24 (their texts were not kept in the repository), in particular Q20 (stock number index) and
+  Q23 (dependency patches: nothing was installed); later questions are in [AUDIT_QUESTIONS.md](AUDIT_QUESTIONS.md).
 - [ ] The attendance-machine path: `ATTENDANCE_DB_PATH` / Settings > Company. The deny rule for `.mdb` files
   only blocks downloads over HTTP; the import reads the file from disk and is not affected.
