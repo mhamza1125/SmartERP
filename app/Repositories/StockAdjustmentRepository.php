@@ -6,7 +6,6 @@ use App\Exceptions\DeletionBlockedException;
 use App\Models\Stock;
 use App\Models\StockAdjustment;
 use App\Support\DeletionImpact;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

@@ -9,24 +9,20 @@ use App\Repositories\ProductRepository;
 use App\Repositories\PurchaseItemRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\StockRequirementRepository;
-use App\Repositories\ProductMaterialRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
     protected $stockItemRepository;
-    protected $productMaterialRepository;
     protected $stockRequirementRepository;
 
     public function __construct(
         StockItemRepository $stockItemRepository,
-        ProductMaterialRepository $productMaterialRepository,
         StockRequirementRepository $stockRequirementRepository
     ) {
         $this->middleware(['auth', 'all']);
         $this->stockItemRepository = $stockItemRepository;
-        $this->productMaterialRepository = $productMaterialRepository;
         $this->stockRequirementRepository = $stockRequirementRepository;
     }
 

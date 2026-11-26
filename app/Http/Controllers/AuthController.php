@@ -65,11 +65,6 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    public function register()
-    {
-        return view('register');
-    }
-
     public function store(UserRequest $request)
     {
         $this->authorize('users_create', User::class);
@@ -103,18 +98,6 @@ class AuthController extends Controller
         $user->update($data);
 
         return redirect()->back()->with('success', 'User Updated Successfully');
-
-        // $user->update([
-        //     'name' => $request->name,
-        //     'email' => $request->email,
-        //     'role' => $request->role,
-        // ]);
-
-        // if ($request->filled('password')) {
-        //     $user->password = Hash::make($request->password);
-        //     $user->save();
-        // }
-
     }
 
     /**

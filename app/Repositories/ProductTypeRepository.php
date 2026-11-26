@@ -51,15 +51,6 @@ class ProductTypeRepository implements GlobalInterface
         }
     }
 
-    public function updatePro($id, array $data)
-    {
-        // Used by Product Material for Updating product_id
-        $update = ProductType::findOrFail($id);
-        $update->update($data);
-
-        return $update->product_type_id;
-    }
-
     public function delete($id)
     {
     }

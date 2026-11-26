@@ -50,14 +50,6 @@ class CategoryController extends Controller
         return redirect()->route('category')->with('success', 'Record Updated Successfully');
     }
 
-    public function edit(Category $category)
-    {
-    }
-
-    public function show(Category $category)
-    {
-    }
-
     /**
      * What deleting this record would affect (JSON for the delete button's confirmation).
      */

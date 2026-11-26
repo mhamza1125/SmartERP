@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Delivery;
-use App\Models\DeliveryReturn;
 use Illuminate\Http\Request;
 use App\Http\Requests\DeliveryReturnRequest;
 use App\Repositories\DeliveryRepository;
 use App\Repositories\StockItemRepository;
 use App\Repositories\StockRepository;
-use App\Repositories\OrderRepository;
 use App\Repositories\DeliveryReturnRepository;
 use App\Repositories\DeliveryReturnItemRepository;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +18,6 @@ class DeliveryReturnController extends Controller
     protected $deliveryRepository;
     protected $stockItemRepository;
     protected $stockRepository;
-    protected $orderRepository;
     protected $deliveryReturnRepository;
     protected $deliveryReturnItemRepository;
 
@@ -28,7 +25,6 @@ class DeliveryReturnController extends Controller
         DeliveryRepository $deliveryRepository,
         StockItemRepository $stockItemRepository,
         StockRepository $stockRepository,
-        OrderRepository $orderRepository,
         DeliveryReturnRepository $deliveryReturnRepository,
         DeliveryReturnItemRepository $deliveryReturnItemRepository
     ) {
@@ -36,7 +32,6 @@ class DeliveryReturnController extends Controller
         $this->deliveryRepository = $deliveryRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->stockRepository = $stockRepository;
-        $this->orderRepository = $orderRepository;
         $this->deliveryReturnRepository = $deliveryReturnRepository;
         $this->deliveryReturnItemRepository = $deliveryReturnItemRepository;
     }

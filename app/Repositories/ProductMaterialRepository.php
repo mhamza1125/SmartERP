@@ -146,22 +146,6 @@ class ProductMaterialRepository implements GlobalInterface
     }
 
     /**
-     * Get material components for a product type
-     */
-    public function getMaterialComponents($productTypeId)
-    {
-        return ProductMaterial::where('product_materials.product_type_id', $productTypeId)
-            ->where(function($query) {
-                $query->where('component_type', 'material')
-                      ->orWhereNull('component_type');
-            })
-            ->join('materials', 'materials.material_id', '=', 'product_materials.material_id')
-            ->join('heads', 'heads.head_id', '=', 'materials.unit_id')
-            ->select('product_materials.*', 'materials.*', 'heads.name as hname')
-            ->get();
-    }
-
-    /**
      * Get product components for a product type
      */
     public function getProductComponents($productTypeId)
@@ -174,17 +158,6 @@ class ProductMaterialRepository implements GlobalInterface
             ->select('product_materials.*', 'product_types.product_type_id as component_pt_id',
                 'products.article_no', 'products.name as product_name', 'heads.name as size_name')
             ->get();
-    }
-
-    /**
-     * Store a product component
-     */
-    public function storeProductComponent(array $data)
-    {
-        $data['component_type'] = 'product';
-        $data['created_by'] = auth()->id();
-        $store = ProductMaterial::create($data);
-        return $store->product_material_id;
     }
 
     /**
@@ -228,15 +201,5 @@ class ProductMaterialRepository implements GlobalInterface
                 ProductMaterial::create($productMaterial);
             }
         }
-    }
-
-    /**
-     * Delete all product components for a product type
-     */
-    public function deleteProductComponents($productTypeId)
-    {
-        ProductMaterial::where('product_type_id', $productTypeId)
-            ->where('component_type', 'product')
-            ->delete();
     }
 }

@@ -45,11 +45,6 @@ class ProductMaterialController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        $this->authorize('create', Product::class);
-    }
-
     public function create2($id)
     {
         $this->authorizeAny([['create', Product::class], ['edit', Product::class]]); // adding a product's costs / BOM: product creators and editors
@@ -134,11 +129,6 @@ class ProductMaterialController extends Controller
         $this->productMaterialRepository->update($id, $request->input());
 
         return redirect()->route('productMaterial.show', $id)->with('success', 'Record Updated Successfully');
-    }
-
-    public function destroy(Purchase $purchase)
-    {
-        $this->authorize('delete', Product::class);
     }
 
     private function storePM($getId, $products, $quantities)

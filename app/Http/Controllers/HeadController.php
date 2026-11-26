@@ -6,7 +6,6 @@ use App\Http\Requests\HeadRequest;
 use App\Models\Head;
 use App\Repositories\HeadRepository;
 use App\Repositories\HeadTypeRepository;
-use Illuminate\Http\Request;
 
 class HeadController extends Controller
 {
@@ -82,14 +81,6 @@ class HeadController extends Controller
         $this->headRepository->update($id, $request->validated());
 
         return redirect()->route('head')->with('success', 'Record Updated Successfully');
-    }
-
-    public function show(Head $head)
-    {
-    }
-
-    public function edit(Head $head)
-    {
     }
 
     /**

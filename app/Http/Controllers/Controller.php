@@ -32,12 +32,6 @@ class Controller extends BaseController
         throw new AuthorizationException('This action is unauthorized.');
     }
 
-    /** Stores one image (validated, random name, content extension) and returns the stored name. */
-    protected function getImage($image, $folder)
-    {
-        return Uploads::store($image, $folder, Uploads::IMAGE_EXTENSIONS, Uploads::IMAGE_MAX_KB, 'image');
-    }
-
     protected function storeImage($image, $folder, $table, $tableId)
     {
         $fileNameToStore = Uploads::store($image, $folder, Uploads::IMAGE_EXTENSIONS, Uploads::IMAGE_MAX_KB, 'image');

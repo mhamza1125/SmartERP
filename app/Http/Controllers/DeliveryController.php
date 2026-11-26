@@ -62,8 +62,8 @@ class DeliveryController extends Controller
         CompanyRepository $companyRepository,
         StockBatchRepository $stockBatchRepository,
     ) {
-        $this->middleware(['auth', 'all'])->except(['getCustomerOrders', 'getCustomerAddress']);
-        $this->middleware('auth')->only(['getCustomerOrders', 'getCustomerAddress']);
+        $this->middleware(['auth', 'all'])->except(['getCustomerOrders']);
+        $this->middleware('auth')->only(['getCustomerOrders']);
         $this->headRepository = $headRepository;
         $this->bankRepository = $bankRepository;
         $this->orderRepository = $orderRepository;
@@ -100,12 +100,6 @@ class DeliveryController extends Controller
             'customers' => $customers,
             'relatedOrdersMap' => $relatedOrdersMap,
         ]);
-    }
-
-    public function create($id)
-    {
-        // This is GET method
-        $this->authorize('create', Delivery::class);
     }
 
     public function create2($id = null)
@@ -855,23 +849,6 @@ class DeliveryController extends Controller
                 ];
                 $this->deliveryBoxRepository->store($dBoxes);
             }
-        }
-    }
-
-    /**
-     * Get customer address for AJAX request (for auto-populating shipping address)
-     */
-    public function getCustomerAddress($customerId)
-    {
-        $this->authorizeAny([['create', Delivery::class], ['edit', Delivery::class]]);
-        try {
-            $customer = $this->customerRepository->get($customerId);
-            if ($customer && isset($customer['address'])) {
-                return response()->json(['address' => $customer['address']]);
-            }
-            return response()->json(['address' => '']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to load customer address'], 500);
         }
     }
 

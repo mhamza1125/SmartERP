@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Http\Requests\PayrollRequest;
-use App\Models\Transaction;
 use App\Repositories\BankRepository;
 use App\Repositories\PayrollRepository;
 use App\Repositories\TransactionRepository;

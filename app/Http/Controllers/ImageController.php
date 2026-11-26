@@ -16,30 +16,6 @@ class ImageController extends Controller
         $this->imageRepository = $imageRepository;
     }
 
-    public function index()
-    {
-    }
-
-    public function create()
-    {
-    }
-
-    public function store(Request $request)
-    {
-    }
-
-    public function show(Image $image)
-    {
-    }
-
-    public function edit(Image $image)
-    {
-    }
-
-    public function update(Request $request, Image $image)
-    {
-    }
-
     /**
      * Images / files belong to a record of another module: deleting one needs edit permission on
      * that module. The file location comes from the image row, never from the URL.

@@ -98,16 +98,6 @@ class BankController extends Controller
         return redirect()->route('bank.add')->with('success', 'Record Inserted Successfully');
     }
 
-    public function show($id)
-    {
-        $this->authorize('show', Bank::class);
-    }
-
-    public function edit(Box $id)
-    {
-        $this->authorize('edit', Bank::class);
-    }
-
     public function update(Request $request, $id)
     {
         $this->authorize('edit', Bank::class);

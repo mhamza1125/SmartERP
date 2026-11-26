@@ -97,35 +97,6 @@ class ReceiveMaterialRepository implements GlobalInterface
             ->get();
     }
 
-    public function rSumProduct($id)
-    {
-        // Subquery for received quantities
-        $receivedSubquery = ReceiveMaterial::selectRaw('purchase_item_id, SUM(quantity) as total_received')
-            ->groupBy('purchase_item_id');
-
-        // Subquery for returned quantities
-        $returnedSubquery = ReturnMaterial::selectRaw('receive_materials.purchase_item_id, SUM(return_materials.quantity) as total_returned')
-            ->join('receive_materials', 'return_materials.receive_material_id', '=', 'receive_materials.receive_material_id')
-            ->groupBy('receive_materials.purchase_item_id');
-
-        // Main query
-        return DB::table('purchase_items')->where('purchase_items.purchase_id', $id)
-            ->joinSub($receivedSubquery, 'received', function ($join) {
-                $join->on('purchase_items.purchase_item_id', '=', 'received.purchase_item_id');
-            })
-            ->leftJoinSub($returnedSubquery, 'returned', function ($join) {
-                $join->on('purchase_items.purchase_item_id', '=', 'returned.purchase_item_id');
-            })
-            ->join('purchases', 'purchases.purchase_id', '=', 'purchase_items.purchase_id')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-            ->join('heads as shead', 'shead.head_id', '=', 'purchase_items.product_stage_id')
-
-            ->leftJoin('orders', 'orders.order_id', '=', 'purchases.order_id')
-            ->selectRaw('purchase_items.purchase_item_id, purchase_items.quantity, products.name, products.article_no, heads.name as hname, shead.name as sname, orders.job_no, COALESCE(received.total_received, 0) as rqty, COALESCE(returned.total_returned, 0) as rqty2')
-            ->get();
-    }
-
     public function rAll($id)
     {
         // Used by PurchaseInfo

@@ -43,17 +43,6 @@ class VendorController extends Controller
         $this->materialRepository = $materialRepository;
     }
 
-    public function index()
-    {
-        $this->authorize('access', Vendor::class);
-        // Not Used Gone to Two Separate Pages
-        $vendor = $this->vendorRepository->all();
-
-        return view('vendor', [
-            'vendor' => $vendor,
-        ]);
-    }
-
     public function vendor()
     {
         $this->authorize('access', Vendor::class);

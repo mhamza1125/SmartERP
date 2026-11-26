@@ -20,11 +20,6 @@ class PackingCartonItem extends Model
         'updated_at',
     ];
 
-    public function packingCarton()
-    {
-        return $this->belongsTo(PackingCarton::class, 'packing_carton_id', 'packing_carton_id');
-    }
-
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id', 'product_id');

@@ -19,10 +19,6 @@ class AdminRepository implements GlobalInterface
         return Role::all();
     }
 
-    public function permission(){
-        return Permission::all();
-    }
-
     /**
      * Permissions grouped by section and module, labelled for the Roles & Permissions screen.
      */

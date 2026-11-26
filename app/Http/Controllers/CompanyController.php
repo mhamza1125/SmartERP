@@ -7,7 +7,6 @@ use App\Models\Settings;
 use App\Http\Requests\CompanyRequest;
 use App\Repositories\AttendanceRepository;
 use App\Repositories\CompanyRepository;
-use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
@@ -87,14 +86,6 @@ class CompanyController extends Controller
         $this->companyRepository->update($company->id, $validatedData);
 
         return redirect()->route('company.edit', $company->id)->with('success', 'Company Record Updated Successfully');
-    }
-
-    public function destroy(Company $company)
-    {
-        $this->authorize('delete', Settings::class);
-        $this->companyRepository->delete($company->id);
-
-        return redirect()->route('company')->with('success', 'Company Record Deleted Successfully');
     }
 
     /**

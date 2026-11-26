@@ -144,11 +144,6 @@ class ProductCostController extends Controller
         return redirect()->route('productCost.show', $id)->with('success', 'Record Updated Successfully');
     }
 
-    public function destroy(Purchase $purchase)
-    {
-        $this->authorize('delete', Product::class);
-    }
-
     private function storePC($products, $amounts, $heads, $tnames, $tids)
     {
         foreach ($amounts as $key => $amount) {

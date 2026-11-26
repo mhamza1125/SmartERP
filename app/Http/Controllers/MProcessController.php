@@ -19,7 +19,6 @@ use App\Repositories\TransactionRepository;
 use App\Repositories\VendorRepository;
 use App\Exceptions\DocumentLockedException;
 use App\Exceptions\StockBatchException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MProcessController extends Controller

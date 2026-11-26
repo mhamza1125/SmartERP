@@ -74,11 +74,6 @@ class DeletionImpact
         return ! empty($this->blockers);
     }
 
-    public function hasDependents(): bool
-    {
-        return ! empty($this->cascades);
-    }
-
     public function blockers(): array
     {
         return $this->blockers;

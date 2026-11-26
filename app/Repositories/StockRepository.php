@@ -247,90 +247,6 @@ class StockRepository implements GlobalInterface
         ];
     }
 
-    public function wagesNotUsed()
-    {
-        // For Wages.blade.php page Monthly Wages
-        $stocks = Stock::where('stock_type', '1') // StockIN
-            ->join('stock_items', 'stocks.stock_id', '=', 'stock_items.stock_id')
-            ->leftJoin('employees', function ($join) {
-                $join->on('employees.employee_id', '=', 'stocks.employee_id')
-                    ->where('stocks.table_name', 'employee');
-            })
-            ->leftJoin('vendors', function ($join) {
-                $join->on('vendors.vendor_id', '=', 'stocks.employee_id')
-                    ->where('stocks.table_name', 'vendor');
-            })
-            ->select('*', 'stocks.employee_id', 'employees.*', 'vendors.*', 'employees.name')
-            ->where('work_wages', '!=', '0')
-            ->orderBy('stocks.stock_date', 'desc')
-            ->get();
-
-        if ($stocks->isEmpty()) {
-            return ['employees' => [], 'vendors' => []];
-        }
-
-        $employeeWages = [];
-        $vendorWages = [];
-
-        foreach ($stocks as $stock) {
-            $stockDate = Carbon::parse($stock->stock_date);
-            $monthYear = $stockDate->format('F Y');
-
-            $groupKey = $monthYear.'_'.$stock->table_name.'_'.$stock->employee_id;
-
-            // Initialize the employee or vendor record if not set
-            if (! isset($employeeWages[$groupKey]) && $stock->table_name == 'employee') {
-                $employeeWages[$groupKey] = [
-                    'stock_id' => $stock->stock_id,
-                    'month_year' => $monthYear,
-                    'table_name' => $stock->table_name,
-                    'employee_id' => $stock->employee_id,
-                    'employee_no' => $stock->employee_no,
-                    'name' => $stock->name,
-                    'total_wages' => 0,
-                    'records' => [],
-                ];
-            } elseif (! isset($vendorWages[$groupKey]) && $stock->table_name == 'vendor') {
-                $vendorWages[$groupKey] = [
-                    'stock_id' => $stock->stock_id,
-                    'month_year' => $monthYear,
-                    'table_name' => $stock->table_name,
-                    'employee_id' => $stock->employee_id,
-                    'vendor_no' => $stock->vendor_no,
-                    'fname' => $stock->fname,
-                    'total_wages' => 0,
-                    'records' => [],
-                ];
-            }
-
-            // Calculate total wages for the stock
-            $quantity = $stock->quantity;
-            $workWages = explode('|', $stock->work_wages);
-            $totalWages = 0;
-            foreach ($workWages as $wage) {
-                $totalWages += (int) $wage * $quantity;
-            }
-
-            // Add the total wages to the corresponding employee or vendor
-            if ($stock->table_name == 'employee') {
-                $employeeWages[$groupKey]['total_wages'] += $totalWages;
-                $employeeWages[$groupKey]['records'][] = $stock->toArray();
-            } elseif ($stock->table_name == 'vendor') {
-                $vendorWages[$groupKey]['total_wages'] += $totalWages;
-                $vendorWages[$groupKey]['records'][] = $stock->toArray();
-            }
-        }
-
-        // Reindex the arrays to start with 0
-        $employeeWages = array_values($employeeWages);
-        $vendorWages = array_values($vendorWages);
-
-        return [
-            'employees' => $employeeWages,
-            'vendors' => $vendorWages,
-        ];
-    }
-
     public function wagesInfo($id)
     {
         // For Wagesinfo.blade.php page
@@ -525,18 +441,6 @@ class StockRepository implements GlobalInterface
 
             return $this->store($data);
         });
-    }
-
-    public function receivingIssue($id, $empId)
-    {
-        // Add / Edit Receiving Issuance
-        return Stock::where('order_id', $id)->where('employee_id', $empId)
-            ->join('stock_items', 'stock_items.stock_id', '=', 'stocks.stock_id')
-            ->join('product_types', 'product_types.product_type_id', '=', 'stock_items.product_type_id')
-            ->join('products', 'products.product_id', '=', 'product_types.product_id')
-            ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-            ->groupBy('stock_items.product_type_id')
-            ->get();
     }
 
     public function store(array $data)

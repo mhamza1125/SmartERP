@@ -7,7 +7,6 @@ use App\Models\Attendance;
 use App\Repositories\AttendanceRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\TransactionRepository;
-use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {

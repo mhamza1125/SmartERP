@@ -47,14 +47,6 @@ class ImageRepository implements GlobalInterface
         Image::destroy($id);
     }
 
-    public function delete2($tname, $tid)
-    {
-        // All Delete Not Used
-        Image::where('table_name', $tname)
-            ->where('table_id', $tid)
-            ->delete();
-    }
-
     /**
      * Upload folder (under public/resources) of each images.table_name; product files
      * (file_type set) are kept apart from product images.

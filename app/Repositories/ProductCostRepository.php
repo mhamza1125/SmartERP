@@ -35,25 +35,6 @@ class ProductCostRepository implements GlobalInterface
             ->get();
     }
 
-    // public function getAll123($id){
-    //     // Used By ProductInfo to Display All Costs
-    //     return ProductCost::where('product_types.product_id', $id)
-    //     ->join('heads', 'heads.head_id', '=', 'product_costs.head_id')
-    //     ->join('product_types', 'product_types.product_type_id', '=', 'product_costs.product_type_id')
-    //     ->leftJoin('employees', function($join) {
-    //         $join->on('employees.employee_id', '=', 'product_costs.table_id')
-    //             ->where('product_costs.table_name', 'employee');
-    //     })
-    //     ->leftJoin('vendors', function($join) {
-    //         $join->on('vendors.vendor_id', '=', 'product_costs.table_id')
-    //             ->where('product_costs.table_name', 'vendor');
-    //     })
-    //     ->select('product_costs.*', 'heads.name as hname', 'employees.*', 'vendors.*')
-    //     ->addSelect(\DB::raw("COALESCE(employees.name, vendors.name) as name"))
-    //     ->orderBy('product_costs.table_id')
-    //     ->get();
-    // }
-
     public function pcost($id)
     {
         // Ajax Product Cost Used By Stock ReceiveIssuance
@@ -71,16 +52,6 @@ class ProductCostRepository implements GlobalInterface
             ->groupBy('heads.head_id')
             ->get();
     }
-
-    // public function times123($id){
-    //     // Used By ProductInfo to Display All Costs
-    //     return ProductCost::where('product_types.product_id', $id)
-    //     ->join('product_types', 'product_types.product_type_id', '=', 'product_costs.product_type_id')
-    //     ->join('heads', 'heads.head_id', '=', 'product_types.size_id')
-    //     ->groupBy('product_types.product_type_id')
-    //     ->orderBy('heads.head_id')
-    //     ->select('heads.name', 'product_costs.product_type_id')->get();
-    // }
 
     public function wages($pid, $work, $tid, $tname)
     {

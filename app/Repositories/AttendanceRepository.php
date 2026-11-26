@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\Company;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDO;
 use RuntimeException;

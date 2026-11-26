@@ -7,44 +7,34 @@ use App\Models\IGroup;
 use App\Models\Stock;
 use App\Repositories\IGroupItemRepository;
 use App\Repositories\IGroupRepository;
-use App\Repositories\MaterialRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\StockItemRepository;
-use App\Repositories\StockRepository;
 use Illuminate\Http\Request;
 
 class IGroupController extends Controller
 {
     protected $orderRepository;
 
-    protected $stockRepository;
-
     protected $productRepository;
 
     protected $igroupRepository;
-
-    protected $materialRepository;
 
     protected $stockItemRepository;
 
     protected $igroupItemRepository;
 
     public function __construct(
-        StockRepository $stockRepository,
         ProductRepository $productRepository,
         StockItemRepository $stockItemRepository,
         IGroupRepository $igroupRepository,
         OrderRepository $orderRepository,
-        MaterialRepository $materialRepository,
         IGroupItemRepository $igroupItemRepository,
     ) {
         $this->middleware(['auth', 'all']);
         $this->orderRepository = $orderRepository;
         $this->productRepository = $productRepository;
         $this->igroupRepository = $igroupRepository;
-        $this->stockRepository = $stockRepository;
-        $this->materialRepository = $materialRepository;
         $this->stockItemRepository = $stockItemRepository;
         $this->igroupItemRepository = $igroupItemRepository;
     }
@@ -149,10 +139,6 @@ class IGroupController extends Controller
         $this->igroupItemRepository->update($id, $request->input());
 
         return redirect()->route('igroup.show', $id)->with('success', 'Record Updated Successfully');
-    }
-
-    public function destroy(Stock $stock)
-    {
     }
 
     private function storeSI($getId, $ptids, $mids, $quantities, $stages)

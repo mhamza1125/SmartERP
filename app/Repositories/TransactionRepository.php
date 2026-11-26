@@ -531,14 +531,6 @@ class TransactionRepository implements GlobalInterface
 
     public function vDetail($id)
     {
-        // Vendor Ledger
-        // $purchases = \DB::table('purchases') // Amount of Purchase Items, Regardless of Receiving
-        //     ->select('purchases.*', 'purchases.created_at as timestamp', \DB::raw('SUM(purchase_items.total) as credit'))
-        //     ->join('purchase_items', 'purchase_items.purchase_id', '=', 'purchases.purchase_id')
-        //     ->where('purchases.vendor_id', $id)
-        //     ->groupBy('purchases.purchase_id')
-        //     ->get();
-
         // Vendor Ledger - Amount of Received Purchase Items
         // Purchases increase liability, so store as debit (displays in Credit column after reversal)
         $purchases = \DB::table('purchases')

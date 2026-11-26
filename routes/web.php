@@ -231,9 +231,7 @@ Route::get('/delivery/{id}/delete-check', [DeliveryController::class, 'deleteChe
 Route::delete('/delivery/{id}', [DeliveryController::class, 'destroy'])->name('delivery.destroy');
 
 // AJAX Routes for Multi-Order Delivery
-Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/ajax/customer-orders/{customer_id}', [DeliveryController::class, 'getCustomerOrders'])->name('ajax.customer-orders');
-});
+Route::get('/ajax/customer-orders/{customer_id}', [DeliveryController::class, 'getCustomerOrders'])->name('ajax.customer-orders');
 
 // Packing List
 Route::get('/packingList', [PackingListController::class, 'index'])->name('packingList');
@@ -540,8 +538,6 @@ Route::get('/transfer/print/{id}', [TransactionController::class, 'printTransfer
 Route::get('/bank', [BankController::class, 'index'])->name('bank');
 Route::get('/addBank', [BankController::class, 'create'])->name('bank.add');
 Route::post('/bank', [BankController::class, 'store'])->name('bank.store');
-Route::get('/bank/{id}', [BankController::class, 'show'])->name('bank.show');
-Route::get('/editBank/{id}', [BankController::class, 'edit'])->name('bank.edit');
 Route::post('/bank/{id}', [BankController::class, 'update'])->name('bank.update');
 Route::get('/bank/{id}/delete-check', [BankController::class, 'deleteCheck'])->name('bank.deleteCheck');
 Route::delete('/bank/{id}', [BankController::class, 'destroy'])->name('bank.destroy');
@@ -589,4 +585,3 @@ Route::post('/company', [CompanyController::class, 'store'])->name('company.stor
 Route::get('/company/{company}', [CompanyController::class, 'show'])->name('company.show');
 Route::get('/editCompany/{company}', [CompanyController::class, 'edit'])->name('company.edit');
 Route::post('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
-Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');

@@ -10,7 +10,6 @@ use App\Repositories\PurchaseItemRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\ReceiveMaterialRepository;
 use App\Repositories\ReceiveRepository;
-use Illuminate\Http\Request;
 
 class ReceiveController extends Controller
 {

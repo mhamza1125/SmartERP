@@ -28,12 +28,4 @@ class ProductMaterial extends Model
     {
         return $this->component_type === 'material' || $this->component_type === null;
     }
-
-    /**
-     * Check if this component is a product
-     */
-    public function isProduct(): bool
-    {
-        return $this->component_type === 'product';
-    }
 }

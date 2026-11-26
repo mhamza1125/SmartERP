@@ -257,11 +257,6 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        $this->authorize('create', Transaction::class);
-    }
-
     public function createBRS()
     {
         $this->authorize('create', Transaction::class);
@@ -341,19 +336,6 @@ class TransactionController extends Controller
             'bank' => $bank,
             'order' => $order,
             'customer' => $customer,
-        ]);
-    }
-
-    public function createCashBalance()
-    {
-        $this->authorize('create', Transaction::class);
-        // Cash Balance
-        $bank = $this->bankRepository->self();
-        $expense = $this->headRepository->get('7');
-
-        return view('addExpense', [
-            'bank' => $bank,
-            'expense' => $expense,
         ]);
     }
 
@@ -533,7 +515,6 @@ class TransactionController extends Controller
     {
         $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
         $tableId = $request->input('vendorId');
-        // error_log("Vendor ID: " . $tableId);
         $purchase = $this->purchaseRepository->getPurchase($tableId);
         // Journal vouchers on the vendor's payable balance, with what is still unpaid
         // (the payment being edited does not count as paid)
@@ -590,33 +571,6 @@ class TransactionController extends Controller
         }
 
         return response()->json($payees);
-    }
-
-    public function ajaxGetCustomerCurrency(Request $request)
-    {
-        $this->authorizeAny([['create', Transaction::class], ['edit', Transaction::class], ['access', Transaction::class]]);
-        $customerId = $request->input('customer_id');
-
-        if (!$customerId) {
-            return response()->json(['currency' => '']);
-        }
-
-        try {
-            $customer = $this->customerRepository->find($customerId);
-            
-            if (!$customer || !$customer->currency_id) {
-                return response()->json(['currency' => '']);
-            }
-
-            // Fetch the currency name from heads table using currency_id
-            $currency = \DB::table('heads')
-                ->where('heads_id', $customer->currency_id)
-                ->value('name');
-
-            return response()->json(['currency' => $currency ?? '']);
-        } catch (\Exception $e) {
-            return response()->json(['currency' => '']);
-        }
     }
 
     public function store(TransactionRequest $request)
@@ -1019,11 +973,6 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function edit(Box $id)
-    {
-        $this->authorize('edit', Transaction::class);
-    }
-
     public function editEPayment(Transaction $id)
     {
         $this->authorize('edit', Transaction::class);
@@ -1422,42 +1371,6 @@ class TransactionController extends Controller
                 return $this->transactionRepository->getGeneralVoucher($id);
             default:
                 return null;
-        }
-    }
-
-    /**
-     * Determine debit account based on transaction type
-     */
-    private function getDebitAccount($transaction)
-    {
-        if ($transaction['bank_id']) {
-            return $transaction['bname'] ?? 'Bank Account';
-        }
-
-        return 'CASH';
-    }
-
-    /**
-     * Determine credit account based on transaction type
-     */
-    private function getCreditAccount($transaction)
-    {
-        switch ($transaction['transaction_to']) {
-            case 'employee':
-                return ($transaction['employee_no'] ?? '') . ' - ' . ($transaction['name'] ?? 'Employee');
-            case 'vendor':
-                return ($transaction['vendor_no'] ?? '') . ' - ' . ($transaction['fname'] ?? 'Vendor');
-            case 'contractor':
-                return ($transaction['vendor_no'] ?? '') . ' - ' . ($transaction['fname'] ?? 'Contractor');
-            case 'customer':
-                return ($transaction['customer_no'] ?? '') . ' - ' . ($transaction['fname'] ?? 'Customer');
-            case 'expense':
-                return 'Expense Account';
-            default:
-                if ($transaction['payee_bank_id']) {
-                    return $transaction['rname'] ?? 'Payee Bank';
-                }
-                return 'CASH';
         }
     }
 
